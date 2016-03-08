@@ -107,7 +107,7 @@ If Application Launcher in the menu is not working or programme is crashing then
 
 #Uninstall
 
-Simply remove '/usr/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/'
+Simply remove the application launcher '/usr/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
 
 #Brief Documentation:
 
