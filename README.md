@@ -1,5 +1,5 @@
 # AnimeWatch
-AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from any media player frontend designed for linux.
+AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
 
 #Normal Mode
 ![AnimeWatch](/Images/Video.png)
@@ -21,8 +21,6 @@ In thumbnail mode, Thumbnails of local video files are automatically generated w
 ![AnimeWatch](/Images/Thumbnail.png)
 
 It supports certain D-bus functionalities. Therefore if you have created global keyboard shortcuts for play/pause,Next,Previous or Stop then they can work with this player also. 
-
-It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg' 
 
 It is not very powerful music organizer, but provide certain decent functionalities. When using with mplayer, it's cpu usage is just 1-2 % which makes it very ideal for low end machines.
 
@@ -127,7 +125,7 @@ Once video is opened, if it not focussed then take mouse pointer over the video.
 
 There is no fullscreen button and play/pause button. People have to use keyboard shortcuts(f:fullscreen; spacebar:play/pause). It is not full fledge front end, the player has been written with different aim in mind. Therefore, i've tried to reduce buttons as much as possible so as not to clutter the interface, especially with respect to player. But if you still feel the need for more buttons then you can select smplayer or vlc or kodi from settings menu, or you can request the feature. If it does not clutters the interface more, then I'll think about adding it.
 
-#Player Shortcuts(once video is focussed, if it's not focussed take mouse cursor over the playing video):
+#Player Shortcuts(once video is focussed, if it's not focussed take mouse pointer over the playing video):
 
 q : quit
 
@@ -280,4 +278,4 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 
 3. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause'
 
-
+It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
