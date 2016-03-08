@@ -81,11 +81,11 @@ sudo pip3 install jsbeautifier (optional)
 
 #Once Dependencies are installed Download the folder. Goto AnimeWatch Directory. Open Terminal in the directory and use following command:
 
-In Arch:
+#In Arch:
 
 python install.py
 
-In Ubuntu 14.04:
+#In Ubuntu 14.04:
 
 python3 install.py
 
