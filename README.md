@@ -115,7 +115,7 @@ Once video is opened, if it not focussed then take mouse pointer over the video.
 
 There is no fullscreen button and play/pause button. People have to use keyboard shortcuts(f:fullscreen; spacebar:play/pause). It is not full fledge front end, the player has been written with different aim in mind. Therefore, i've tried to reduce buttons as much as possible so as not to clutter the interface, especially with respect to player. But if you still feel the need for more buttons then you can select smplayer or vlc or kodi from settings menu, or you can request the feature. If it does not clutters the interface more, then I'll think about adding it.
 
-#Player Shortcuts(once video is focussed):
+#Player Shortcuts(once video is focussed, if it's not focussed take mouse cursor over the playing video):
 
 q : quit
 
@@ -159,7 +159,7 @@ PgDown : 300s-
 
 9 : 5s- 
 
-a : change aspect ratio (works with mpv: default aspect is 16:9 for mpv
+a : change aspect ratio (works with mpv: default aspect is 16:9 for mpv)
 
 
 for mplayer set aspect in ~/.mplayer/config, all the properties of the mplayer global config file will be taken by the internal mplayer.
