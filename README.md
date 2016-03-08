@@ -268,3 +268,6 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 
 3. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause'
 
+
+#Few ScreenShots
+![My image](https://github.com/abhishek-archlinux/AnimeWatch/tree/master/Images/Video.png)
