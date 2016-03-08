@@ -270,4 +270,4 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 
 
 #Few ScreenShots
-![Sample](/Images/video.png)
+![Sample](/Images/Video.png)
