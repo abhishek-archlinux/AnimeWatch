@@ -1,6 +1,12 @@
 # AnimeWatch
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from any media player frontend designed for linux.
 
+#Normal Mode
+![AnimeWatch](/Images/Video.png)
+
+#Playing Mode
+![AnimeWatch](/Images/Watch.png)
+
 It tries to be a simple media manager for your audio and video collection with special emphasis on your anime collection, along with powerful playing capabilities of mpv and mplayer. You can organise your anime collection properly into various groups and categories such as watching,incomplete etc.. You can create your own group also for any special category in the bookmark section.  It will also keep track of number of episodes that you have watched in a series. It will also manage history ,and you will have complete control over it.
 
 You can fetch fanart and posters from TVDB website. If proper match is not found then you can directly go to the website using inbuilt browser. In the inbuilt browser right click has been tweaked, so that when when you find relevant url of fanart ,poster or anime; you can directly right click on the option to save it as fanart or poster or find anime info. In the same way you can find Episode Names or thumbnails of the anime. If you are in Music section then you can use the inbuilt browser to get artist information and poster directly from Last.fm, if default perfect match is not found.
@@ -11,11 +17,17 @@ Users can see their entire collection in Thumbnail mode in Grid Layout, once you
 
 In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail mode itself by right clicking and selecting appropriate option. If you don't like generated thumbnail then right click it and select another.
 
+#Thumbnail Mode
+![AnimeWatch](/Images/Video.png)
+
 It supports certain D-bus functionalities. Therefore if you have created global keyboard shortcuts for play/pause,Next,Previous or Stop then they can work with this player also. 
 
 It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg' 
 
 It is not very powerful music organizer, but provide certain decent functionalities. When using with mplayer, it's cpu usage is just 1-2 % which makes it very ideal for low end machines.
+
+#Minimal Music Player
+![AnimeWatch](/Images/Music.png)
 
 #Addon (Plugins) Structure
 
@@ -269,5 +281,3 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 3. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause'
 
 
-#Few ScreenShots
-![Sample](/Images/Video.png)
