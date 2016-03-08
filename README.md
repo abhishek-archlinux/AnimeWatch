@@ -105,6 +105,10 @@ All other configuration files will be created in "~/.config/AnimeWatch/"
 
 If Application Launcher in the menu is not working or programme is crashing then directly go to "~/.config/AnimeWatch/src/", open terminal there and run "python3 animeWatch.py" or "python animeWatch.py" as per your default python setup. If there is some problem in installation, then you will get idea about it, whether it is missing dependency or something else, or you can report the error as per the message in terminal.
 
+#Uninstall
+
+Simply remove '/usr/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/'
+
 #Brief Documentation:
 
 If everything goes well and if you are able to open the player, then you will come across Three Columns.
