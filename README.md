@@ -270,4 +270,4 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 
 
 #Few ScreenShots
-![My image](github.com/abhishek-archlinux/AnimeWatch/Images/video.png)
+![Sample](/Images/video.png)
