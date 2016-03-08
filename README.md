@@ -257,7 +257,7 @@ PgDown: Move Entry Down
 
 '-' : decrease size of Thumbnails
 
-#Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in thumbnail mode.
+#Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in the mode.
 
 #Apart from shortcuts:
 You can explore Right click menu of both Playlist Column and Title List Column for getting TVDB, Last.fm profiles for your collection either manually or automatically. If you are getting some problem while setting profiles from TVDB or Last.fm , or having problems accessing addons,then empty the cache directory '/tmp/AnimeWatch/', This option is available with right click menu of Title List and Playlist column also.
