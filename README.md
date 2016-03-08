@@ -18,7 +18,7 @@ Users can see their entire collection in Thumbnail mode in Grid Layout, once you
 In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail mode itself by right clicking and selecting appropriate option. If you don't like generated thumbnail then right click it and select another.
 
 #Thumbnail Mode
-![AnimeWatch](/Images/Video.png)
+![AnimeWatch](/Images/Thumbnail.png)
 
 It supports certain D-bus functionalities. Therefore if you have created global keyboard shortcuts for play/pause,Next,Previous or Stop then they can work with this player also. 
 
