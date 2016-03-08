@@ -253,9 +253,9 @@ PgDown: Move Entry Down
 
 #Thumbnail Mode:
 
-= : increase size of Thumbnails
+'=' (Remenber '+' key) : increase size of Thumbnails
 
-- : decrease size of Thumbnails
+'-' : decrease size of Thumbnails
 
 #Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in thumbnail mode.
 
