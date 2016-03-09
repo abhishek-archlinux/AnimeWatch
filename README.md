@@ -1,4 +1,4 @@
-# AnimeWatch
+﻿# AnimeWatch
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
 
 #Normal Mode
@@ -33,7 +33,8 @@ In this player, a weak addon structure has been created, so that one can write a
 
 Most of the above things are possible in KODI or Plex . But I wanted some simple player with either mpv or mplayer as backend with decent media management functionality and addon structure. Therefore, I decided to create the application.
 
-This player is made only for GNU/Linux systems.
+This player is made mainly for GNU/Linux systems. But probably it may work on BSD and other Unix-like systems, if dependencies are satisfied. And one thing is sure it can't work on Windows.
+
 It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 #Dependencies and Installation:
