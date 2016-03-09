@@ -108,7 +108,7 @@ All other configuration files will be created in "~/.config/AnimeWatch/"
 
 #Uninstall
 
-Simply remove the application launcher '/usr/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
+Simply remove the application launcher '~/.local/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
 
 #Troubleshooting
 
