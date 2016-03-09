@@ -100,7 +100,7 @@ python install.py
 
 python3 install.py
 
-During Installation,it will ask for root password for copying AnimeWatch.desktop file in directory “/usr/share/applications/” , so that application launcher can become visible in menu “Sound & Video” or "Multimedia" section. If you don't want to give root password then press 'ctrl+c' and cancel the copying process, and manually copy file '~/.config/AnimeWatch/AnimeWatch.desktop' to the directory '/usr/share/applications/'
+Application Launcher will be created as "~/.local/share/applications/AnimeWatch.desktop"
 
 All other configuration files will be created in "~/.config/AnimeWatch/"
 
@@ -113,6 +113,8 @@ Simply remove the application launcher '/usr/share/applications/AnimeWatch.deskt
 #Troubleshooting
 
 If Application Launcher in the menu is not working or programme is crashing then directly go to "~/.config/AnimeWatch/src/", open terminal there and run "python3 animeWatch.py" or "python animeWatch.py" as per your default python setup. If there is some problem in installation, then you will get idea about it, whether it is missing dependency or something else, or you can report the error as per the message in terminal.
+
+If you do not find application launcher in the menu then try copying manually "~/.config/AnimeWatch/AnimeWatch.desktop" to either "~/.local/share/applications/" or "/usr/share/applications/"
 
 #Brief Documentation:
 
