@@ -92,3 +92,5 @@ subprocess.call(['cp',home+'/AnimeWatch.desktop',dest_file])
 print ("\nInstalled Successfully!\n")
 
 print('If Application Launcher is not visible in Sound & Video or Multimedia, then manually copy '+home+'/AnimeWatch.desktop to /usr/share/applications/ using "sudo"')
+
+print ("\nIf You Are Running Ubuntu Unity then You'll have to either logout and login again or Reboot to see the AnimeWatch Launcher in the Unity Dash Menu\n")
