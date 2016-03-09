@@ -77,7 +77,7 @@ mpv or mplayer (having both is good option, for streaming video mpv is the best 
 
 #In arch installation.
 
-sudo pacman -S python python-pyqt4 python-requests python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil python-pip curl wget libnotify mpv mplayer phantomjs ffmpegthumbnailer sqlite3
+sudo pacman -S python python-pyqt4 python-pycurl python-requests python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil python-pip curl wget libnotify mpv mplayer phantomjs ffmpegthumbnailer sqlite3
 
 (pytaglib is available in AUR but I preferred to install it from pip)
 
