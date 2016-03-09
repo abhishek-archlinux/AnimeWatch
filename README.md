@@ -85,7 +85,7 @@ sudo pip install pytaglib jsbeautifier
 
 #In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
 
-sudo apt-get install python3 python3-pyqt4 python3-requests python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib python3-pip curl wget libnotify-bin mpv mplayer phantomjs ffmpegthumbnailer sqlite3
+sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-requests python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib python3-pip curl wget libnotify-bin mpv mplayer phantomjs ffmpegthumbnailer sqlite3
 
 sudo pip3 install jsbeautifier (optional)
 
