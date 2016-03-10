@@ -85,10 +85,9 @@ if not os.path.exists(picn):
 #dest_file = '/usr/share/applications/AnimeWatch.desktop'
 dest_file = home1+'/.local/share/applications/AnimeWatch.desktop'
 print ('\nApplication Launcher Copying To:'+dest_file)
-#print("Please Give Permission to copy AnimeWatch.desktop file to /usr/share/applications/"+'\n')
-#print("If you don't want to give permission then press 'ctrl+c' to cancel and manually copy '"+home+ "/AnimeWatch.desktop' to the directory '/usr/share/applications/'"+' For creating Application Launcher in The Menu'+'\n' )
 
-subprocess.call(['cp',home+'/AnimeWatch.desktop',dest_file])
+shutil.copy(home+'/AnimeWatch.desktop',dest_file)
+
 print ("\nInstalled Successfully!\n")
 
 print('If Application Launcher is not visible in Sound & Video or Multimedia, then manually copy '+home+'/AnimeWatch.desktop to /usr/share/applications/ using "sudo"')
