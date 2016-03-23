@@ -76,7 +76,7 @@ jsbeautifier(optional: required for resolving certain links)
 
 mpv or mplayer (having both is good option, for streaming video mpv is the best because it's seeking capability within live stream is very efficient and it's buffer management is also very good, and for listening music mplayer is very cost-effective. Cpu usage is just 1 to 2 % when playing music with mplayer. When playing local video files mplayer cpu utilization always remains 4-5 % point less than that of mpv atleast on my system)
 
-#In arch installation.
+#Dependencies installation in Arch.
 
 sudo pacman -S python python-pyqt4 python-pycurl python-requests python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil python-pip curl wget libnotify mpv mplayer phantomjs ffmpegthumbnailer sqlite3
 
