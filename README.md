@@ -258,6 +258,8 @@ s : select SD quality
 
 h : select HD quality
 
+b : select SD480p quality
+
 w : toggle watch/unwatch
 
 PgUp: Move Entry UP
