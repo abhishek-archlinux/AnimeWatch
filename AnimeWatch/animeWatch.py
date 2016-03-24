@@ -3345,6 +3345,10 @@ class List2(QtGui.QListWidget):
 			quality = "hd"
 			msg = "Video Quality Set to 720P HD"
 			subprocess.Popen(["notify-send",msg])
+		elif event.key() == QtCore.Qt.Key_B: 
+			quality = "sd480p"
+			msg = "Video Quality Set to 480P SD"
+			subprocess.Popen(["notify-send",msg])
 		elif event.key() == QtCore.Qt.Key_S:
 			msg = "Video Quality Set to SD"
 			subprocess.Popen(["notify-send",msg]) 

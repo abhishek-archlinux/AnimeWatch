@@ -2108,6 +2108,7 @@ class SubbedAnime():
 			new_name = name.rsplit('-',1)[0]
 			new_c = name.split('-')[-1]
 			url = "http://moetube.net/watch/" + new_c+'/'+new_name + "/" + epn
+			print('url=',url)
 		elif siteName == "GoodAnime":
 			url = "http://www.goodanime.net/" + epn
 		elif siteName == "Anime-Freak":
@@ -2521,14 +2522,77 @@ class SubbedAnime():
 		elif siteName == "AnimeHQ":
 			content = ccurl(url)
 			soup = BeautifulSoup(content)
-			link = soup.find('div',{'id':'vidholder'})
-			link1 = link.find('source')['src']
+			"""
+			#link = soup.find('div',{'id':'vidholder'})
+			link = soup.find('div',{'id':'moaroptions'})
+			#link1 = link.find('source')['src']
+			link2 = link.findAll('a')
+			for i in link2:
+				if 'href' in str(i):
+					k = i['href']
+					link1 = 'http://moetube.net'+k
+					if 'download' in k:
+						break
 			print(link1)
+			"""
+			glink1 = re.findall("var glink = '[^']*",content)
+			glink = re.sub("var glink = '",'',glink1[0])
+			print(glink)
+			url1 = urllib.parse.quote(url)
+			link1 = "https://docs.google.com/get_video_info?eurl="+url1+"&authuser=&docid="+glink
+			print(link1)
+			content = (subprocess.check_output(['curl','-L','-A',self.hdr,link1]))
+			content = getContentUnicode(content)
+			content = urllib.parse.unquote(content)
+			#print(content)
+			cont1 = content.split('|')
+			#print(cont1)
+			sd =""
+			hd =""
+			sd480 =""
+			sd44 =""
+			for i in range(len(cont1)):
+				if 'itag=18' in cont1[i]:
+					sd = cont1[i]
+					break
+					
+			for i in range(len(cont1)):
+				if 'itag=22' in cont1[i]:
+					hd = cont1[i]
+					break
+			for i in range(len(cont1)):
+				if 'itag=35' in cont1[i]:
+					sd480 = cont1[i]
+					break
+			for i in range(len(cont1)):
+				if 'itag=44' in cont1[i]:
+					sd44 = cont1[i]
+					break
+			print(sd)
+			print(hd)
+			print(sd480)
+			print(sd44)
+			if quality == 'sd':
+				link1 = sd
+			elif quality == "sd480p":
+				if sd480:
+					link1 = sd480
+				elif sd:
+					link1 = sd
+			elif quality == 'hd':
+				if hd:
+					link1 = hd
+				elif sd480:
+					link1 = sd480
+				elif sd:
+					link1 = sd
+				
 			content = (subprocess.check_output(['curl','-I','-L','-A',self.hdr,link1]))
 			content = getContentUnicode(content)
+			
 			m = re.findall('Location: [^\n]*',content)
-			final = re.sub('Location: |\r','',m[0])
-			final = final+'?start=0'
+			final = re.sub('Location: |\r','',m[-1])
+			#final = final
 			print(final)
 		elif (siteName == "AnimeWow") or (siteName == "AnimePlus") or (siteName == "Anime44") or (siteName == "Animegalaxy") or (siteName == "Animehere") or (siteName == "GoodAnime"):
 			
