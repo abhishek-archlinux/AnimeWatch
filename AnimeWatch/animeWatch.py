@@ -15230,12 +15230,7 @@ if __name__ == "__main__":
 	ui.dockWidget_4.hide()
 	#ui.text.hide()
 	
-	picn = home+'/default.jpg'
-	palette	= QtGui.QPalette()
-	palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(picn)))
 	
-	MainWindow.setPalette(palette)
-	ui.buttonStyle()
 	
 	try:
 		bus = QDBusConnection.sessionBus()
@@ -15249,6 +15244,38 @@ if __name__ == "__main__":
 		#server.pl_signal.connect(server.Metadata)
 	except:
 		pass
+	if not os.path.exists(home):
+		os.makedirs(home)
+	if not os.path.exists(home+'/src'):
+		os.makedirs(home+'/src')
+		if os.path.exists('/usr/share/AnimeWatch/input.conf'):
+			shutil.copy('/usr/share/AnimeWatch/input.conf',home+'/src/input.conf')
+		if os.path.exists('/usr/share/AnimeWatch/1.png'):
+			shutil.copy('/usr/share/AnimeWatch/1.png',home+'/src/1.png')
+		if os.path.exists('/usr/share/AnimeWatch/default.html'):
+			shutil.copy('/usr/share/AnimeWatch/default.html',home+'/src/default.html')
+	picn = home+'/default.jpg'
+	if not os.path.exists(picn):
+		picn_1 = '/usr/share/AnimeWatch/default.jpg'
+		shutil.copy(picn_1,picn)
+		
+	palette	= QtGui.QPalette()
+	palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(picn)))
+	
+	MainWindow.setPalette(palette)
+	ui.buttonStyle()
+	
+	if not os.path.exists(home+'/src/Plugins'):
+		os.makedirs(home+'/src/Plugins')
+		plugin_Dir = home+'/src/Plugins'
+		s_dir = '/usr/share/AnimeWatch/Plugins'
+		if os.path.exists(s_dir):
+			m_tmp = os.listdir(s_dir)
+			for i in m_tmp:
+				k = s_dir+'/'+i
+				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
+					shutil.copy(k,plugin_Dir)
+						
 	if os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","r")
 		lines = f.readlines()
@@ -15283,8 +15310,7 @@ if __name__ == "__main__":
 		#sys.path.append(home)
 	if os.path.exists(home+'/src'):
 		os.chdir(home+'/src')
-		
-		#sys.path.append(home+'/src')
+		sys.path.append(home+'/src')
 	
 	if not os.path.exists(home+"/History"):
 		os.makedirs(home+"/History")
@@ -15304,6 +15330,9 @@ if __name__ == "__main__":
 	if not os.path.exists(home+"/Playlists/Default"):
 		f = open(home+"/Playlists/Default","w")
 		f.close()
+	
+	if os.path.exists('/usr/share/AnimeWatch'):
+		sys.path.append('/usr/share/AnimeWatch')
 	
 	if os.path.exists(home+'/src/Plugins'):
 		sys.path.append(home+'/src/Plugins')
