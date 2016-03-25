@@ -1,6 +1,8 @@
 ﻿# AnimeWatch
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
 
+(Arch users can directly go to Release section ,download appropriate package and install it using 'yaourt -U pkg_name')
+
 #Normal Mode
 ![AnimeWatch](/Images/Video.png)
 
@@ -38,7 +40,12 @@ This player is made mainly for GNU/Linux systems. But probably it may work on BS
 It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 #Dependencies and Installation:
+
 (This player is mainly written in pyqt4 and python3)
+
+(Arch users can directly go to Release section ,download appropriate package. The package can be installed using 'yaourt -U pkg_name' instead of 'sudo pacman -U pkg_name' because some dependencies are available in AUR. They have to install only 'jsbeautifier' using 'pip' which is optional. Then they can skip all other steps. Package can be uninstalled using 'sudo pacman -R AnimeWatch')
+
+#Dependencies
 
 python3
 
@@ -80,9 +87,9 @@ mpv or mplayer (having both is good option, for streaming video mpv is the best 
 
 sudo pacman -S python python-pyqt4 python-pycurl python-requests python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil python-pip curl wget libnotify mpv mplayer phantomjs ffmpegthumbnailer sqlite3
 
-(pytaglib is available in AUR but I preferred to install it from pip)
+install pytaglib via AUR : yaourt python-pytaglib
 
-sudo pip install pytaglib jsbeautifier
+OR install it using pip : sudo pip install pytaglib jsbeautifier
 
 #In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
 
@@ -109,6 +116,7 @@ All other configuration files will be created in "~/.config/AnimeWatch/"
 #Uninstall
 
 Simply remove the application launcher '~/.local/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
+
 
 #Troubleshooting
 
