@@ -47,7 +47,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 (Arch users can directly go to Release section ,download appropriate package. The package can be installed using 'yaourt -U pkg_name' instead of 'sudo pacman -U pkg_name' because some dependencies are available in AUR. They have to install only 'jsbeautifier' using 'pip' which is optional. Then they can skip all other steps. Package can be uninstalled using 'sudo pacman -R AnimeWatch')
 
-(Ubuntu or Debian based distro users can directly go to Release section,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. For removing the package use 'sudo apt-get remove AnimeWatch' )
+(Ubuntu or Debian based distro users can directly go to Release section,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Users have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier' which is optional. For removing the package use 'sudo apt-get remove AnimeWatch' )
 
 #Dependencies
 
