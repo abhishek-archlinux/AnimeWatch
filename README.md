@@ -132,7 +132,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 4. If Addons are not working after some time then clear contents of the local directory '~/.config/AnimeWatch/src/Plugins'. Then download or clone the github AnimeWatch directory, and copy contents of github 'AnimeWatch/Plugins' directory into local directory '~/.config/AnimeWatch/src/Plugins'.
 
-5. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, if you want latest updated addons.
+5. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
 
 #Brief Documentation:
 
