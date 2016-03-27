@@ -217,10 +217,10 @@ class MyServer(QObject):
 			try:
 				t1 = epnArrList[r].split('	')
 				if len(t1) > 2:
-					t = t1.split('	')[0]
-					art = t1.split('	')[2]
+					t = t1[0]
+					art = t1[2]
 				else:
-					t = t1.split('	')[0]
+					t = t1[0]
 					art = t
 			except:
 				pass

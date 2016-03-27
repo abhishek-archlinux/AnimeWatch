@@ -181,7 +181,7 @@ class MPRIS2Helper(object):
 		#values = {('xesam:title'):('AnimeWatch')}
 		#lst = [interface,{property:values}]
 		self.signal.setArguments(
-		[interface,{property:values},list()]
+		[interface,{property:values},list]
 		)
 		
 		print (self.signal.arguments())
@@ -214,13 +214,14 @@ class MyServer(QObject):
 		
 		if epnArrList and (site == "Music" or site == "PlayLists"):
 			r = ui.list2.currentRow()
+			print(epnArrList[r])
 			try:
 				t1 = epnArrList[r].split('	')
 				if len(t1) > 2:
-					t = t1.split('	')[0]
-					art = t1.split('	')[2]
+					t = t1[0]
+					art = t1[2]
 				else:
-					t = t1.split('	')[0]
+					t = t1[0]
 					art = t
 			except:
 				pass
@@ -2660,11 +2661,12 @@ class List1(QtWidgets.QListWidget):
 				else:
 					music_opt = ""
 				pls = os.listdir(home+'/Playlists')
+				item_m = []
 				for i in pls:
 					i = i.replace('.txt','')
-					item = submenuR.addAction(i)
-					receiver = lambda taskType=i: self.triggerPlaylist(taskType)
-					item.triggered.connect(receiver)
+					item_m.append(submenuR.addAction(i))
+					#receiver = lambda taskType=i: self.triggerPlaylist(taskType)
+					#item.triggered.connect(receiver)
 				submenuR.addSeparator()
 				new_pls = submenuR.addAction("Create New Playlist")
 				profile = menu.addAction("Find Last.fm Profile(manually)")
@@ -2675,6 +2677,10 @@ class List1(QtWidgets.QListWidget):
 				thumbnail = menu.addAction("Show Thumbnail View")
 				cache = menu.addAction("Clear Cache")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
+				
+				for i in range(len(item_m)):
+					if action == item_m[i]:
+						self.triggerPlaylist(pls[i].replace('.txt',''))
 				
 				if action == fav:
 					r = self.currentRow()
@@ -2808,12 +2814,13 @@ class List1(QtWidgets.QListWidget):
 				#bookmark_array = ['bookmark','Watching','Completed','Incomplete','Later','Interesting','Music-Videos']
 				bookmark_array = ['bookmark']
 				pls = os.listdir(home+'/Bookmark')
+				item_m = []
 				for i in pls:
 					i = i.replace('.txt','')
 					if i not in bookmark_array:
-						item = submenu.addAction(i)
-						receiver = lambda taskType=i: self.triggerBookmark(taskType)
-						item.triggered.connect(receiver)
+						item_m.append(submenu.addAction(i))
+						#receiver = lambda taskType=i: self.triggerBookmark(taskType)
+						#item.triggered.connect(receiver)
 					
 				submenu.addSeparator()
 				new_pls = submenu.addAction("Create New Bookmark Category")
@@ -2839,6 +2846,10 @@ class List1(QtWidgets.QListWidget):
 				#refresh = menu.addAction("Refresh Episode List")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
 				#actionSub = submenu.exec_(self.mapToGlobal(event.pos()))
+				
+				for i in range(len(item_m)):
+					if action == item_m[i]:
+						self.triggerBookmark(pls[i].replace('.txt',''))
 				
 				if action == new_pls:
 					print ("creating new bookmark category")
@@ -3604,8 +3615,9 @@ class List2(QtWidgets.QListWidget):
 		print ('Menu Clicked')
 		print (value)
 		file_path = home+'/Playlists/'+str(value)
+		print(file_path)
 		if site == "Music" or site == "Video" or site == "Local" or site == "None":
-			#print epnArrList
+			#print (epnArrList)
 			if os.path.exists(file_path):
 				i = self.currentRow()
 				f = open(file_path,'a')
@@ -3745,17 +3757,21 @@ class List2(QtWidgets.QListWidget):
 			go_to = menu.addAction("Go To Last.fm")
 			fix_ord = menu.addAction("Lock Order (Playlist Only)")
 			pls = os.listdir(home+'/Playlists')
+			j = 0
+			item_m = []
 			for i in pls:
-				item = submenuR.addAction(i)
-				receiver = lambda taskType=i: self.triggerPlaylist(taskType)
-				item.triggered.connect(receiver)
-				
+				item_m.append(submenuR.addAction(i))
+				#item[j].triggered.connect(lambda x=i: self.triggerPlaylist(str(x)))
+			
 			submenuR.addSeparator()
 			new_pls = submenuR.addAction("Create New Playlist")
 			default = menu.addAction("Set Default Background")
 			delPosters = menu.addAction("Delete Poster")
 			delInfo = menu.addAction("Delete Info")
 			action = menu.exec_(self.mapToGlobal(event.pos()))
+			for i in range(len(item_m)):
+				if action == item_m[i]:
+					self.triggerPlaylist(pls[i])
 			if action == new_pls:
 				print ("creating")
 				item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Playlist Name')
@@ -3830,10 +3846,11 @@ class List2(QtWidgets.QListWidget):
 			menu.addMenu(submenuR)
 			
 			pls = os.listdir(home+'/Playlists')
+			item_m = []
 			for i in pls:
-				item = submenuR.addAction(i)
-				receiver = lambda taskType=i: self.triggerPlaylist(taskType)
-				item.triggered.connect(receiver)
+				item_m.append(submenuR.addAction(i))
+				#receiver = lambda taskType=i: self.triggerPlaylist(taskType)
+				#item.triggered.connect(receiver)
 				
 			submenuR.addSeparator()
 			new_pls = submenuR.addAction("Create New Playlist")
@@ -3862,6 +3879,10 @@ class List2(QtWidgets.QListWidget):
 			
 			
 			action = menu.exec_(self.mapToGlobal(event.pos()))
+			
+			for i in range(len(item_m)):
+				if action == item_m[i]:
+					self.triggerPlaylist(pls[i])
 			
 			if action == new_pls:
 				print ("creating")
@@ -13380,7 +13401,7 @@ class Ui_MainWindow(object):
 						#exec p1
 						#idw = str(mn)
 						length_1 = self.list2.count()
-						q3="self.label_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
+						q3="self.label_epn_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
 						exec (q3)
 						QtWidgets.QApplication.processEvents()
 					
@@ -13394,8 +13415,8 @@ class Ui_MainWindow(object):
 		global mpvplayer,epn,new_epn,epn_name_in_list,fullscr,mpv_start,Player,cur_label_num,epn_name_in_list,site
 		if self.tab_5.isHidden() and thumbnail_indicator:
 			length_1 = self.list2.count()
-			#q3="self.label_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
-			#exec(q3)
+			q3="self.label_epn_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
+			exec(q3)
 			QtWidgets.QApplication.processEvents()
 		print ("Process Started")
 		print (mpvplayer.pid())
