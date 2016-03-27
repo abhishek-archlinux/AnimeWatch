@@ -150,7 +150,13 @@ def findurl(url):
 				print("File Does Not exist")
 			print(url)
 			content = (subprocess.check_output(["curl","-L","-I","-A",hdr,"-e",i,url]))
-			content = getContentUnicode(content)
+			if isinstance(content,bytes):
+				print("I'm byte")
+				content = str((content).decode('utf-8'))
+			else:
+				print(type(content))
+				content = str(content)
+				print("I'm unicode")
 			if "Location:" in content:
 				m = re.findall('Location: [^\n]*',content)
 				found = re.sub('Location: |\r','',m[-1])
@@ -466,47 +472,96 @@ class DubbedAnime():
 						break
 					mirrorNo = mirrorNo + 1
 		elif siteName == "CartoonMax":
-			url = "http://watchcartoonweb.com/" + epn
-			print(url)
+			final = ''
+			url = "http://gogocartoon.net/" + epn
+			print(url,'----------')
 			content = ccurl(url,"")
-			soup = BeautifulSoup(content)
-			sd = ""
-			hd = ""
-			full_hd = ""
-			link = soup.find('select',{'id':'selectQuality'})
-			j = link.findAll('option')
-			for i in j:
-				k = i['value']
-				if 'itag=18' in k:
-					sd = k
-				elif 'itag=22' in k:
-					hd = k
-				elif 'itag=37' in k:
-					full_hd = k
-				elif '=m18' in k:
-					sd = k
-				elif '=m22' in k:
-					hd = k
-			if not hd:
-				hd = sd
-			if qualityVideo == "sd":
-				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,sd]))
+			soup = BeautifulSoup(content,'lxml')
+			link = soup.find('div',{'class':'anime_video_body_watch'})
+			sd = ''
+			hd = ''
+			sd480 = ''
+			if link:
+				link2 = link.find('iframe')['src']
+				if link2:
+					if 'src' in str(link2):
+						link1 = link2['src']
+						print(link1,'---')
+						if link1:
+							content1 = ccurl(link1,'')
+							soup = BeautifulSoup(content1,'lxml')
+							links = soup.findAll('source')
+							for i in links:
+								if 'src' in str(i):
+									j = i['src']
+									if 'itag=22' in j:
+										hd = j
+									elif 'itag=18' in j:
+										sd = j
+									elif 'itag=59' in j:
+										sd480 = j
+									elif 'itag=43' in j:
+										sd = j
+				print (sd)
+				print(sd480)
+				print(hd)
+				
+			if not sd and not hd and not sd480:
+				soup = BeautifulSoup(content,'lxml')
+				link = soup.find('select',{'id':'selectQuality'})
+				if link:
+					link1 = link.findAll('option')
+					for i in link1:
+						j = i['value']
+						if 'itag=18' in j:
+							sd = j
+						elif 'itag=22' in j:
+							hd = j
+						elif 'itag=37' in j:
+							full_hd = j
+						elif '=m18' in j:
+							sd = j
+						elif '=m22' in j:
+							hd = j
+							
+						
+			final_cnt = 0
+			final_quality = ''
+			if sd:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + 'SD '
+			if sd480:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + '480P '
+			if hd:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + 'HD '
+				
+			msg = "Total " + str(final_cnt) + " Quality Video Available "+final_quality+" Selecting "+str(quality) + " Quality"
+			subprocess.Popen(["notify-send",msg])
+			
+			if quality == "sd":
+				final_q = sd
+			elif quality == 'sd480p':
+				final_q = sd480
+			elif quality == 'hd':
+				final_q = hd
+			if not final_q and sd:
+				final_q = sd
+			print(final_q)
+			if final_q:
+				
+				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,final_q]))
 				content = self.getContent(content)
-				m = re.findall('https[^\n]*', content)
+				print(content)
+				m = re.findall('Location: https[^\n]*', content)
 				#print(m
 				if m:
 					#print(m
 					final = m[0]
-					final = re.sub('\r', '', final)
-			elif qualityVideo == "hd":
-				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,hd]) )
-				content = self.getContent(content)
-				m = re.findall('https[^\n]*', content)
-				#print(m
-				if m:
-					#print(m
-					final = m[0]
-					final = re.sub('\r', '', final)
+					final = re.sub('Location: |\r', '', final)
+			else:
+				final = ''
 		return final
 		
 	def getCompleteList(self,siteName,category,opt):
@@ -538,7 +593,7 @@ class DubbedAnime():
 			else:
 				url = "http://www.animestatic.co/anime-list/"
 		elif siteName == "CartoonMax":
-			url = "http://watchcartoonweb.com/cartoon-list.html"
+			url = "http://gogocartoon.net/cartoon-list.html"
 		print(url)
 		if siteName == "Animetycoon" or siteName == "AnimeStatic":
 			hdrs = {'user-agent':self.hdr}
@@ -632,8 +687,8 @@ class DubbedAnime():
 			else:
 				url = "http://www.animestatic.co/anime/" + name + '/'
 		elif siteName == "CartoonMax":
-			url = "http://watchcartoonweb.com/category/" + name 
-			base = "http://watchcartoonweb.com/"
+			url = "http://gogocartoon.net/category/" + name 
+			base = "http://gogocartoon.net/"
 			
 		
 		print(url)

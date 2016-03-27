@@ -2362,69 +2362,95 @@ class SubbedAnime():
 			else:
 				"No Url"
 		elif siteName == "AnimeMax":
+			final = ''
 			content = ccurl(url)
-			soup = BeautifulSoup(content)
-			sd = ""
-			hd = ""
-			full_hd = ""
-			arr = []
-			link = soup.find('select',{'id':'selectQuality'})
-			link1 = soup.find('input',{'id':'key'})
-			idVal = link1['value']
-			print(idVal)
-			j = link.findAll('option')
-			sd = "http://watchcartoonweb.com/anime/getLinkPicasaErrorAnime?key="+idVal+"&select_key=360p"
-			arr.append(sd)
-			if len(j) > 1:
-				hd = "http://watchcartoonweb.com/anime/getLinkPicasaErrorAnime?key="+idVal+"&select_key=720p"
-				arr.append(hd)
-			print(sd)
-			"""
-			for i in j:
-				k = i['value']
-				if 'itag=18' in k:
-					sd = k
-				elif 'itag=22' in k:
-					hd = k
-				elif 'itag=37' in k:
-					full_hd = k
-				elif '=m18' in k:
-					sd = k
-				elif '=m22' in k:
-					hd = k
-			"""
-			if qualityVideo == "sd":
-				sd = arr[0]
-			else:
-				sd = arr[-1]
-			if mirrorNo == 1:
-				content1 = (subprocess.check_output(['curl','-L','-A',self.hdr,sd]))
-				content1 = getContentUnicode(content1)
-				sd1 = re.findall('https[^"]*',content1)
-				sd = sd1[0]
-				print(sd)
-				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,sd]))
+			soup = BeautifulSoup(content,'lxml')
+			link = soup.find('div',{'class':'anime_video_body_watch'})
+			sd = ''
+			hd = ''
+			sd480 = ''
+			if link:
+				link2 = link.find('iframe')
+				if link2:
+					if 'src' in str(link2):
+						link1 = link2['src']
+						print(link1,'---')
+						if link1:
+							content1 = ccurl(link1)
+							soup = BeautifulSoup(content1,'lxml')
+							links = soup.findAll('source')
+							for i in links:
+								if 'src' in str(i):
+									j = i['src']
+									if 'itag=22' in j:
+										hd = j
+									elif 'itag=18' in j:
+										sd = j
+									elif 'itag=59' in j:
+										sd480 = j
+									elif 'itag=43' in j:
+										sd = j
+				print (sd)
+				print(sd480)
+				print(hd)
+				
+			if not sd and not hd and not sd480:
+				soup = BeautifulSoup(content,'lxml')
+				link = soup.find('select',{'id':'selectQuality'})
+				if link:
+					link1 = link.findAll('option')
+					for i in link1:
+						j = i['value']
+						if 'itag=18' in j:
+							sd = j
+						elif 'itag=22' in j:
+							hd = j
+						elif 'itag=37' in j:
+							full_hd = j
+						elif '=m18' in j:
+							sd = j
+						elif '=m22' in j:
+							hd = j
+							
+			
+			final_cnt = 0
+			final_quality = ''
+			if sd:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + 'SD '
+			if sd480:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + '480P '
+			if hd:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + 'HD '
+			
+				
+			msg = "Total " + str(final_cnt) + " Quality Video Available "+final_quality+" Selecting "+str(quality) + " Quality"
+			subprocess.Popen(["notify-send",msg])
+			
+			if quality == "sd":
+				final_q = sd
+			elif quality == 'sd480p':
+				final_q = sd480
+			elif quality == 'hd':
+				final_q = hd
+			if not final_q and sd:
+				final_q = sd
+			print(final_q)
+			if final_q:
+				
+				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,final_q]))
 				content = getContentUnicode(content)
 				print(content)
-				m = re.findall('https[^\n]*', content)
+				m = re.findall('Location: https[^\n]*', content)
 				#print(m
 				if m:
 					#print(m
 					final = m[0]
-					final = re.sub('\r', '', final)
-			elif mirrorNo == 2:
-				content1 = (subprocess.check_output(['curl','-L','-A',self.hdr,hd]))
-				content1 = getContentUnicode(content1)
-				hd1 = re.findall('https[^"]*lh1',content1)
-				hd = hd1[0]
-				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,hd])) 
-				content = getContentUnicode(content)
-				m = re.findall('https[^\n]*', content)
-				#print(m
-				if m:
-					#print(m
-					final = m[0]
-					final = re.sub('\r', '', final)
+					final = re.sub('Location: |\r', '', final)
+			else:
+				final = ''
 				
 		elif siteName == "AnimeNet":
 			finalArr = []

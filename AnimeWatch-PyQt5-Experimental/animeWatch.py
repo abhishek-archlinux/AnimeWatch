@@ -181,7 +181,7 @@ class MPRIS2Helper(object):
 		#values = {('xesam:title'):('AnimeWatch')}
 		#lst = [interface,{property:values}]
 		self.signal.setArguments(
-		[interface,{property:values},list]
+		[interface,{property:values},list()]
 		)
 		
 		print (self.signal.arguments())
