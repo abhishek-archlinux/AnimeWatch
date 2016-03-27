@@ -1138,12 +1138,11 @@ class SubbedAnime():
 			m = random.sample(m, len(m))
 		elif siteName == "AnimeSquare":
 			m = []
-			n = re.findall('"episode_count":"[^"]*","slug":"[^"]*"',content)
+			
+			n = re.findall('"episode_count":[^,]*,"slug":"[^"]*"',content)
 			for i in n:
 				p = re.sub('"episode_count":|"slug":|"',"",i)
 				m.append(p)
-			
-		
 			#m = random.sample(m, len(m))
 		elif siteName == "AnimeMix":
 			m = []
@@ -1524,27 +1523,30 @@ class SubbedAnime():
 				img.append("No.jpg")
 				
 		elif siteName == "AnimeSquare":
-			link = soup.find('div',{ 'class':'info'})
-			link1 = link.findAll('p')
-			emb = ""
-			for i in link1:
-				if 'Episodes' in i.text:
-					emb = i.text
-					break
-			if emb:
-				emb = emb.replace('Episodes','')
-				emb = emb.replace(' ','')
-				embed = int(emb)
-			summary = ""
-			link = soup.find('div',{ 'class':'synopsis'})
-			img = []
-			summary = link.text
-			link = soup.find('div',{ 'class':'title'})
-			link1 = link.find('h1')
-			title = link1.text
-			desc = link.find('div',{ 'class':'description'})
-			descr = desc.text
-			summary = title + " (" + descr + ")\n" + summary  
+			try:
+				link = soup.find('div',{ 'class':'info'})
+				link1 = link.findAll('p')
+				emb = ""
+				for i in link1:
+					if 'Episodes' in i.text:
+						emb = i.text
+						break
+				if emb:
+					emb = emb.replace('Episodes','')
+					emb = emb.replace(' ','')
+					embed = int(emb)
+				summary = ""
+				link = soup.find('div',{ 'class':'synopsis'})
+				img = []
+				summary = link.text
+				link = soup.find('div',{ 'class':'title'})
+				link1 = link.find('h1')
+				title = link1.text
+				desc = link.find('div',{ 'class':'description'})
+				descr = desc.text
+				summary = title + " (" + descr + ")\n" + summary  
+			except:
+				summary = ""
 		if not summary:
 			summary = "Summary Not Available"
 		try:
@@ -2239,30 +2241,79 @@ class SubbedAnime():
 				final = findurl(str(m[mirrorNo]))
 				 
 		elif siteName == "AnimeSquare":
-			content = ccurlM(url)
+			content = ccurl(url)
 			soup = BeautifulSoup(content)
+			content1 = soup.findAll('script',{'type':'text/javascript'})
+			final = ""
+			for i in content1:
+				#print (i.text)
+				if 'mirrors:' in i.text:
+					content11 = (i.text)
+			m = re.findall('"quality"[^,]*|"embed_id"[^,]*|"embed_prefix"[^,]*',content11)
+			#print(m)
+			for i in range(len(m)):
+				m[i] = re.sub('"|embed_id":|embed_prefix":|quality":','',m[i])
+				m[i] = re.sub("'",'',m[i])
+				m[i] = m[i].replace('[\\]','')
+			#print(m)
+			n = []
+			for i in m:
+				
+				if '/' in i:
+					#print (i)
+					j = i.split('\\')
+					#print(j)
+					nm = j[0]
+					for k in range(len(j)-1):
+						nm = nm + j[k+1]
+					#print(nm)
+					n.append(nm)
+				else:
+					#print(i)
+					n.append(i)
+			sd_arr =[]
+			hd_arr =[]
+			for i in range(0,len(n),3):
+				if '480' in n[i+1]:
+					sd_arr.append(n[i+2]+n[i])
+				elif '720' in n[i+1]:
+					hd_arr.append(n[i+2]+n[i])
+
+			print(sd_arr)
+			print(hd_arr)
 			
-			link = soup.find('div',{'id':'video'})
-			print(link)
-			final1 = link.find('iframe')['src']
-			if not final1:
-				final1 = link.find('IFRAME')['SRC']
-			final = findurl(final1)
 			
-			"""
-			content = ccurlM(final1)
-			soup = BeautifulSoup(content)
-			try:
-				link = soup.find('video',{'id':'video'})
-				final = link.find('source')['src']
-				if 'http' not in final:
-					final = 'http:'+final
-			except:
-				link = soup.find('div',{'id':'video'})
-				final = link.find('iframe')['src']
-				if 'http' not in final:
-					final = 'http:'+final
-			"""
+			total_cnt = 0
+			final_sd_hd_arr =[]
+			if quality == 'sd' and sd_arr:
+				url = sd_arr[mirrorNo-1]
+				total_cnt = len(sd_arr)
+				final_sd_hd_arr = sd_arr
+			elif quality == 'hd' and hd_arr:
+				url = hd_arr[mirrorNo-1]
+				total_cnt = len(hd_arr)
+				final_sd_hd_arr = hd_arr
+			elif quality == 'hd' and not hd_arr:
+				url = sd_arr[mirrorNo-1]
+				total_cnt = len(sd_arr)
+				final_sd_hd_arr = sd_arr
+				quality = 'sd'
+			print(url)
+			msg = "Total " + str(len(sd_arr)) + " SD Mirrors And \n"+ str(len(hd_arr)) + " HD Mirrors+\n"+'Selecting '+str(quality) + " Mirror No. " + str(mirrorNo)
+			subprocess.Popen(["notify-send",msg]) 
+			
+			if mirrorNo == 1:
+				for i in range(len(final_sd_hd_arr)):
+					msg = 'Selecting '+str(quality) + " Mirror No. " + str(i+1)
+					subprocess.Popen(["notify-send",msg]) 
+					final = findurl(final_sd_hd_arr[i])
+					if final:
+						break
+					
+						
+			else:
+				final = findurl(final_sd_hd_arr[mirrorNo-1])
+			
 		elif siteName == "AnimeMix":
 			
 			if "adf.acb.im" in url:

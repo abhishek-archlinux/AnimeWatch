@@ -8496,11 +8496,12 @@ class Ui_MainWindow(object):
 						if (site=="Local" or site=="None" or site == "Music" or site == "Video") and not os.path.exists(picn):
 							subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t","10",'-q','10','-s','350'])
 						if site == "Music":
-							if os.stat(picn).st_size == 0:
-								art_n =(epnArrList[browse_cnt]).split('	')[2]
-								pic = home+'/Music/Artist/'+art_n+'/'+'poster.jpg'
-								if os.path.exists(pic):
-									picn = pic
+							if os.path.exists(picn):
+								if os.stat(picn).st_size == 0:
+									art_n =(epnArrList[browse_cnt]).split('	')[2]
+									pic = home+'/Music/Artist/'+art_n+'/'+'poster.jpg'
+									if os.path.exists(pic):
+										picn = pic
 								
 					elif site == "PlayLists":
 						item = self.list2.item(browse_cnt)
@@ -10512,24 +10513,42 @@ class Ui_MainWindow(object):
 		#print item_index
 		if item_index:
 			i = 0
-			while(i < length):
-				if item_index[i] == 1:
-					t = "self.label_"+str(i)+".show()"
-					
-					exec (t)
-					t = "self.label_"+str(i+length1)+".show()"
-					
-					exec (t)
-				else:
-					t = "self.label_"+str(i)+".hide()"
-					
-					exec (t)
-					
-					t = "self.label_"+str(i+length1)+".hide()"
-					
-					exec (t)
-				i = i+1
-			
+			if not self.scrollArea.isHidden():
+				while(i < length):
+					if item_index[i] == 1:
+						t = "self.label_"+str(i)+".show()"
+						
+						exec (t)
+						t = "self.label_"+str(i+length1)+".show()"
+						
+						exec (t)
+					else:
+						t = "self.label_"+str(i)+".hide()"
+						
+						exec (t)
+						
+						t = "self.label_"+str(i+length1)+".hide()"
+						
+						exec (t)
+					i = i+1
+			else:
+				while(i < length):
+					if item_index[i] == 1:
+						t = "self.label_epn_"+str(i)+".show()"
+						
+						exec (t)
+						t = "self.label_epn_"+str(i+length1)+".show()"
+						
+						exec (t)
+					else:
+						t = "self.label_epn_"+str(i)+".hide()"
+						
+						exec (t)
+						
+						t = "self.label_epn_"+str(i+length1)+".hide()"
+						
+						exec (t)
+					i = i+1
 			
 	def filter_label_list(self):
 		global opt,pgn,site,list1_items,base_url,filter_on,base_url,embed,hist_arr
