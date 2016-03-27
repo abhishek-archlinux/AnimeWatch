@@ -5,7 +5,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 (Ubuntu or Debian based distro users can also go to Release section or PAckage directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb' )
 
-(If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/)
+(If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/)
 
 #Normal Mode
 ![AnimeWatch](/Images/Video.png)
