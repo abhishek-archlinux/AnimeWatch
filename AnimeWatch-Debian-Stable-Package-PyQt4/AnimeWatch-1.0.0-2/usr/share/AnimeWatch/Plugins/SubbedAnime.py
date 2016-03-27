@@ -897,7 +897,7 @@ class SubbedAnime():
 			url = "http://www.watch-anime.net/anime-list-all/"
 			urlM = "http://www.watch-anime.net/anime-movies/"
 		elif siteName == "AnimeMax":
-			url = "http://watchcartoonweb.com/anime-list.html"
+			url = "http://gogocartoon.net/anime-list.html"
 		elif siteName == "AnimeStream":
 			url = "http://www.ryuanime.com/animelist.php"
 		elif siteName == "AnimeMix":
@@ -1248,8 +1248,8 @@ class SubbedAnime():
 			url = "http://www.watch-anime.net/" + name + "/"
 			base = "http://www.watch-anime.net/"
 		elif siteName == "AnimeMax":
-			url = "http://watchcartoonweb.com/category-anime/" + name 
-			base = "http://watchcartoonweb.com/"
+			url = "http://gogocartoon.net/category-anime/" + name 
+			base = "http://gogocartoon.net/"
 		elif siteName == "AnimeStream":
 			url = "http://www.ryuanime.com/watch-anime/" + name + '/' 
 			base = "http://www.ryuanime.com/"
@@ -2122,7 +2122,7 @@ class SubbedAnime():
 		elif siteName == "AnimeNet":
 			url = "http://www.watch-anime.net/" +name+'/'+ epn +'/'
 		elif siteName == "AnimeMax":
-			url = "http://watchcartoonweb.com/" + epn
+			url = "http://gogocartoon.net/" + epn
 		elif siteName == "AnimeStream":
 			if "Subbed" in epn:
 				epn = re.sub('Subbed-',"",epn)
