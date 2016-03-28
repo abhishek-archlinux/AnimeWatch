@@ -2209,6 +2209,31 @@ class SubbedAnime():
 			content = ccurl(url)
 			soup = BeautifulSoup(content)
 			link = soup.findAll('iframe',{'id':'embed'})
+			if not link:
+				url_v =''
+				n_v = ''
+				id_v = ''
+				link1 = soup.findAll('script',{'type':'text/javascript'})
+				for i in link1:
+					j = i.text
+					if 'var datas' in j:
+						var_datas = j
+						break
+				m_v = re.findall("n: '[^']*|id: '[^']*|url:[^,]*",var_datas)
+				print(m_v)
+				for i in m_v:
+					if 'n:' in i:
+						n_v = re.sub("n: |'",'',i)
+					elif 'id:' in i:
+						id_v = re.sub("id: |'",'',i)
+					elif 'url: ' in i:
+						url_v = re.sub('url: |"','',i)
+				url_n = url_v+'?n='+n_v+'&id='+id_v
+				print (url_n)
+				if url_n:
+					content = ccurl(url_n)
+					soup = BeautifulSoup(content,'lxml')
+					link = soup.findAll('iframe',{'id':'embed'})
 			for i in link:
 				j = i['src']
 				if "vidcrazy" in j or "uploadcrazy" in j or "auengine" in j:
