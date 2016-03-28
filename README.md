@@ -1,9 +1,9 @@
 ﻿# AnimeWatch
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
 
-(Arch users can directly go to Release section or Package directory,download appropriate pkg.tar.xz package and install it using 'yaourt -U pkg_name')
+(Arch users can directly go to Release section or Package directory,download appropriate pkg.tar.xz package and install it using 'yaourt -U pkg_name',They have to install only 'jsbeautifier' using 'sudo pip install jsbeautifier')
 
-(Ubuntu or Debian based distro users can also go to Release section or PAckage directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb' )
+(Ubuntu or Debian based distro users can also go to Release section or PAckage directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb',they have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier' )
 
 (If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/)
 
@@ -47,9 +47,9 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 (This player is mainly written in pyqt4 and python3)
 
-(Arch users can directly go to Release section or Package directory ,download appropriate package. The package can be installed using 'yaourt -U pkg_name' instead of 'sudo pacman -U pkg_name' because some dependencies are available in AUR. They have to install only 'jsbeautifier' using 'pip' which is optional. Then they can skip all other steps. Package can be uninstalled using 'sudo pacman -R AnimeWatch')
+(Arch users can directly go to Release section or Package directory ,download appropriate package. The package can be installed using 'yaourt -U pkg_name' instead of 'sudo pacman -U pkg_name' because some dependencies are available in AUR. They have to install only 'jsbeautifier' using 'pip'. Then they can skip all other steps. Package can be uninstalled using 'sudo pacman -R AnimeWatch')
 
-(Ubuntu or Debian based distro users can directly go to Release section or Package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Users have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier' which is optional. For removing the package use 'sudo apt-get remove AnimeWatch' )
+(Ubuntu or Debian based distro users can directly go to Release section or Package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Users have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier'. For removing the package use 'sudo apt-get remove AnimeWatch' )
 
 #Dependencies
 
@@ -77,15 +77,15 @@ curl
 
 wget
 
-ffmpegthumbnailer
+ffmpegthumbnailer(Thumbnail Generator for Local Files)
 
-phantomjs
+phantomjs(Headless Browser)
 
-libnotify
+libnotify(required for Desktop Notification)
 
-pytaglib
+pytaglib(required for mp3 Tagging)
 
-jsbeautifier(optional: required for resolving certain links)
+jsbeautifier(required for resolving certain links)
 
 mpv or mplayer (having both is good option, for streaming video mpv is the best because it's seeking capability within live stream is very efficient and it's buffer management is also very good, and for listening music mplayer is very cost-effective. Cpu usage is just 1 to 2 % when playing music with mplayer. When playing local video files mplayer cpu utilization always remains 4-5 % point less than that of mpv atleast on my system)
 
@@ -105,7 +105,7 @@ If you want to try PyQt5 Experimental Version then install 'python-pyqt5' packag
 
 sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-requests python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib python3-pip curl wget libnotify-bin mpv mplayer phantomjs ffmpegthumbnailer sqlite3
 
-sudo pip3 install jsbeautifier (optional)
+sudo pip3 install jsbeautifier
 
 PyQt5 Experimental version can't work on Ubuntu 14.04
 

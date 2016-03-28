@@ -864,7 +864,7 @@ class SubbedAnime():
 		elif siteName == "Animegalaxy":
 			url = "http://www.chia-anime.tv/index/"
 		elif siteName == "Animeget":
-			url = "https://animeget.ch/full-anime-list"
+			url = "http://www.animeget.io/full-anime-list/"
 		elif siteName == "Animehere":
 			if category == "Movies":
 				url = "http://www.animehere.com/anime-movie.html"
@@ -950,7 +950,7 @@ class SubbedAnime():
 		
 		elif siteName == "Animeget" or siteName == "Animegalaxy":
 			if siteName == "Animeget":
-				m = re.findall('https://animeget.ch/episodes/[^"]*',content)
+				m = re.findall('http://www.animeget.io/anime/[^"]*',content)
 			else:
 				m = re.findall('http://www.chia-anime.tv/episode/[^"]*/',content)
 			#print(m
@@ -960,7 +960,7 @@ class SubbedAnime():
 			j = 0
 			for i in m:
 				if siteName == "Animeget":
-					i = re.sub('https://animeget.ch/episodes/',"",i)
+					i = re.sub('http://www.animeget.io/anime/',"",i)
 				else:
 					i = re.sub('http://www.chia-anime.tv/episode/',"",i)
 				i = re.sub('/',"",i)
@@ -1213,8 +1213,8 @@ class SubbedAnime():
 			url = "http://www.chia-anime.tv/episode/" + name + '/'
 			base = "http://www.chia-anime.tv/"
 		elif siteName == "Animeget":
-			url = "https://animeget.ch/episodes/" + name
-			base = "https://animeget.ch/episode/"
+			url = "http://www.animeget.io/anime/" + name + '/'
+			base = "http://www.animeget.io/anime/"
 		elif siteName == "Animehere":
 			url = "http://www.animehere.com/anime/" + name + ".html"
 			base = "http://www.animehere.com/"
@@ -1289,6 +1289,7 @@ class SubbedAnime():
 		soup = BeautifulSoup(content)
 		summary = ""
 		#print(link
+		print(url)
 		if (siteName == "Anime44") or (siteName == "AnimePlus") or (siteName == "AnimeWow"):
 			link = soup.findAll('div', { "id" : 'series_details' })
 			for i in link:
@@ -2102,7 +2103,7 @@ class SubbedAnime():
 		elif siteName == "Animegalaxy":
 			url = "http://www.chia-anime.tv/" + epn + '/'
 		elif siteName == "Animeget":
-			url = "https://animeget.ch/episode/" + epn
+			url = "http://www.animeget.io/episode/" + epn
 		elif siteName == "Animehere":
 			url = "http://www.animehere.com/" + epn + ".html"
 		elif siteName == "AnimePlus":
@@ -2174,7 +2175,7 @@ class SubbedAnime():
 						t = k.split('/')
 						num = t[-1]
 						if siteName == "Animeget":
-							final1 = "https://animeget.ch/watch/" + t[-3] +'/' + num + '/'
+							final1 = "http://www.animeget.io/watch/" + t[-3] +'/' + num + '/'
 						else:
 							final1 = "http://www.chia-anime.tv/view/" + t[-3] +'/' + num + '/'
 						print(final1)
