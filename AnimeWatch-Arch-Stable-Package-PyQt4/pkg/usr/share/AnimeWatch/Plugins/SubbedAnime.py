@@ -1443,6 +1443,7 @@ class SubbedAnime():
 			#summary = summary[1:]
 			print(summary)
 		elif siteName == "AnimeHQ":
+			img_hq = ''
 			link = soup.findAll('div', {'id' : 'desc'})
 			if link:
 				summary = link[0].text
@@ -1456,7 +1457,9 @@ class SubbedAnime():
 				#summary = re.sub('\n',' ',summary)
 				summary=summary[1:]
 				"""
-			
+			img_l = soup.find('div',{'id':'img'})
+			if img_l:
+				img_hq = img_l.find('img')['src']
 		elif siteName == "Anime-Freak":
 			l = re.findall('http://www.animeboy.info/anime-info/[^"]*',content)
 			if l:
@@ -1561,7 +1564,12 @@ class SubbedAnime():
 				img =[]
 				img.append(img1)
 			elif siteName == "AnimeHQ":
-				img = re.findall('http[^"]*.jpg|http[^"]*jpeg|http[^"]*png',content)
+				img = []
+				if img_hq:
+					img.append(img_hq)
+				else:
+					img = re.findall('http[^"]*.jpg|http[^"]*jpeg|http[^"]*png',content)
+				print(img[0])
 			elif siteName == "AnimeStream":
 				img = re.findall('/[^"]*.jpg',content)
 				img[0] = "http://www.ryuanime.com" + img[0]
