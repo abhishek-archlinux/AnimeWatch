@@ -6928,9 +6928,12 @@ class Ui_MainWindow(object):
 				i = i.replace('\n','')
 				#print i
 				self.listLibrary.addItem(i)
-		QtCore.QObject.connect(self.AddLibraryFolder, QtCore.SIGNAL(_fromUtf8("clicked()")), self.addFolderLibrary)
-		QtCore.QObject.connect(self.RemoveLibraryFolder, QtCore.SIGNAL(_fromUtf8("clicked()")), self.removeFolderLibrary)
-		QtCore.QObject.connect(self.LibraryClose, QtCore.SIGNAL(_fromUtf8("clicked()")), self.LibraryDialog.close)
+		#QtCore.QObject.connect(self.AddLibraryFolder, QtCore.SIGNAL(_fromUtf8("clicked()")), self.addFolderLibrary)
+		self.AddLibraryFolder.clicked.connect(self.addFolderLibrary)
+		#QtCore.QObject.connect(self.RemoveLibraryFolder, QtCore.SIGNAL(_fromUtf8("clicked()")), self.removeFolderLibrary)
+		self.RemoveLibraryFolder.clicked.connect(self.removeFolderLibrary)
+		#QtCore.QObject.connect(self.LibraryClose, QtCore.SIGNAL(_fromUtf8("clicked()")), self.LibraryDialog.close)
+		self.LibraryClose.clicked.connect(self.LibraryDialog.close)
 		
 		
 		self.LibraryClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
@@ -6982,7 +6985,7 @@ class Ui_MainWindow(object):
 	def addFolderLibrary(self):
 		global home,lastDir
 		print ("add")
-		fname = QtGui.QFileDialog.getExistingDirectory(self.LibraryDialog,'open folder',lastDir)
+		fname = QtWidgets.QFileDialog.getExistingDirectory(self.LibraryDialog,'open folder',lastDir)
 		lastDir = fname
 		print (lastDir)
 		print (fname)
@@ -14309,7 +14312,10 @@ class Ui_MainWindow(object):
 				self.updateOnStartMusicDB(music_db,music_file,music_file_bak)
 				update_start = 1
 				self.text.clear()
-			music_opt = str(self.list3.currentItem().text())
+			if self.list3.currentItem():
+				music_opt = str(self.list3.currentItem().text())
+			else:
+				music_opt = ""
 			print (music_opt)
 			#if music_opt == "Update":
 			
@@ -14359,7 +14365,10 @@ class Ui_MainWindow(object):
 			video_file = video_dir+'/Video.txt'
 			video_file_bak = video_dir+'/Video_bak.txt'
 			
-			video_opt = str(self.list3.currentItem().text())
+			if self.list3.currentItem():
+				video_opt = str(self.list3.currentItem().text())
+			else:
+				video_opt = "History"
 			if val == 'history':
 				video_opt = "History"
 			if not os.path.exists(video_db):
