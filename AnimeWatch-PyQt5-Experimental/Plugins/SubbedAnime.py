@@ -2685,6 +2685,26 @@ class SubbedAnime():
 			print(hd)
 			print(sd480)
 			print(sd44)
+			
+			final_cnt = 0
+			final_quality = ''
+			if sd:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + 'SD '
+			if sd44:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + 'SD '
+			if sd480:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + '480P '
+			if hd:
+				final_cnt = final_cnt+1
+				final_quality = final_quality + 'HD '
+			
+				
+			msg = "Total " + str(final_cnt) + " Quality Video Available "+final_quality+" Selecting "+str(quality) + " Quality"
+			subprocess.Popen(["notify-send",msg]) 
+			
 			if quality == 'sd':
 				link1 = sd
 			elif quality == "sd480p":
@@ -2704,8 +2724,10 @@ class SubbedAnime():
 			content = getContentUnicode(content)
 			
 			m = re.findall('Location: [^\n]*',content)
-			final = re.sub('Location: |\r','',m[-1])
-			#final = final
+			if m:
+				final = re.sub('Location: |\r','',m[-1])
+			else:
+				final = link1
 			print(final)
 		elif (siteName == "AnimeWow") or (siteName == "AnimePlus") or (siteName == "Anime44") or (siteName == "Animegalaxy") or (siteName == "Animehere") or (siteName == "GoodAnime"):
 			
