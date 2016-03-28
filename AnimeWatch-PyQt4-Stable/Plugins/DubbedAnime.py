@@ -285,14 +285,13 @@ def mp4star(url):
 	
 def uploadcrazy(url):
 	content = ccurl(url,"")
-	m = re.findall('http[^"]*uploadcrazy.net[^"]*mp4[^"]*,',content)
+	m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
 	if m:
-		r = m[0].split(',')
-		url = r[0][:-1]
+		url = re.sub('file: "','',m[0])
+		
 	else:
 		url = ""
 	return url
-	
 	
 class DubbedAnime():
 	def __init__(self):
