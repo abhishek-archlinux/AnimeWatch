@@ -2334,13 +2334,19 @@ class SubbedAnime():
 				for i in range(len(final_sd_hd_arr)):
 					msg = 'Selecting '+str(quality) + " Mirror No. " + str(i+1)
 					subprocess.Popen(["notify-send",msg]) 
-					final = findurl(final_sd_hd_arr[i])
+					url = final_sd_hd_arr[i]
+					if 'mp4upload' in url and not url.endswith('.html'):
+						url = url+'.html'
+					final = findurl(url)
 					if final:
 						break
 					
 						
 			else:
-				final = findurl(final_sd_hd_arr[mirrorNo-1])
+				url = final_sd_hd_arr[mirrorNo-1]
+				if 'mp4upload' in url and not url.endswith('.html'):
+					url = url+'.html'
+				final = findurl(url)
 			
 		elif siteName == "AnimeMix":
 			
