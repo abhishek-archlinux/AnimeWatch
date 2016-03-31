@@ -1,5 +1,5 @@
 pkgname = AnimeWatch
-pkgver = 1.0.0-2
+pkgver = 1.1.0-1
 pkgdesc = An Audio/Video Manager and Front End for mpv/mplayer with special emphasis on Anime Collection
 arch = any
 license = GPL

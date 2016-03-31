@@ -385,20 +385,18 @@ class Browser(QtWebKitWidgets.QWebView):
 		hit = self.page().currentFrame().hitTestContent(event.pos())
 		url = hit.linkUrl()
 		arr = ['Download As Fanart','Download As Cover','Artist/Series Link','Season Episode Link']
+		action = []
 		if not url.isEmpty():
 			menu.addSeparator()
 			j = 0
-			#for  i in arr:
+			for i in range(len(arr)):
+				action.append(menu.addAction(arr[i]))
 				
-			action1 = menu.addAction(arr[0])
-			action1.triggered.connect(lambda: self.download(url,arr[0]))
-			action2 = menu.addAction(arr[1])
-			action2.triggered.connect(lambda: self.download(url,arr[1]))
-			action3 = menu.addAction(arr[2])
-			action3.triggered.connect(lambda: self.download(url,arr[2]))
-			action4 = menu.addAction(arr[3])
-			action4.triggered.connect(lambda: self.download(url,arr[3]))
-			menu.exec_(event.globalPos())
+			act = menu.exec_(event.globalPos())
+			
+			for i in range(len(action)):
+				if act == action[i]:
+					self.download(url,arr[i])
 			#j = j+1
 		#menu.exec_(event.globalPos())
 		super(Browser, self).contextMenuEvent(event)
@@ -1450,7 +1448,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			else:
 		
 					
-					self.emit(QtCore.SIGNAL('clicked()'))
+					#self.emit(QtCore.SIGNAL('clicked()'))
 					quitReally = "no"
 					
 					#sending_button = self.sender()
@@ -1919,7 +1917,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					picn = home+'/thumbnails/'+nm+'/'+name+'-'+a+'.jpg'
 				if os.path.exists(picn):
 					os.remove(picn)
-					q1="ui.label_"+str(num)+".clear()"
+					q1="ui.label_epn_"+str(num)+".clear()"
 					exec (q1)
 			elif site =="Local" or finalUrlFound == True or site=="PlayLists":
 				if '	' in epnArrList[num]:
@@ -2033,7 +2031,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					if path_final_Url.startswith('/'):
 						path_final_Url = '"'+path_final_Url+'"'
 						
-					subprocess.call(["mpv","--ytdl=no","--quiet","--no-audio","--vo=image:outdir=/tmp/AnimeWatch","--start="+str(interval)+"%","--frames=1",path_final_Url])
+					subprocess.call(["mpv","--no-sub","--ytdl=no","--quiet","--no-audio","--vo=image:outdir=/tmp/AnimeWatch","--start="+str(interval)+"%","--frames=1",path_final_Url])
 					if os.path.exists('/tmp/AnimeWatch/00000001.jpg'):
 						shutil.copy('/tmp/AnimeWatch/00000001.jpg',picn)
 						os.remove('/tmp/AnimeWatch/00000001.jpg')
@@ -5600,9 +5598,10 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_7.setObjectName(_fromUtf8("horizontalLayout_7"))
 		self.gridLayout.addLayout(self.horizontalLayout_7, 1, 0, 1, 1)
 		
-		self.VerticalLayoutLabel = QtWidgets.QVBoxLayout()
+		self.VerticalLayoutLabel = QtWidgets.QHBoxLayout()
 		self.VerticalLayoutLabel.setObjectName(_fromUtf8("VerticalLayoutLabel"))
 		self.gridLayout.addLayout(self.VerticalLayoutLabel, 0, 1, 1, 1)
+		#self.VerticalLayoutLabel.setContentsMargins(0,0,0,0)
 		#self.VerticalLayoutLabel.setSpacing(5)
 		#self.VerticalLayoutLabel.setAlignment(QtCore.Qt.AlignTop)
 		
@@ -5634,7 +5633,7 @@ class Ui_MainWindow(object):
 		#self.text.setMaximumSize(QtCore.QSize(450, 250))
 		#self.text.setMinimumSize(QtCore.QSize(450, 250))
 		#self.text.setMaximumWidth(300)
-		self.text.setMaximumHeight(200)
+		self.text.setMaximumHeight(250)
 		self.VerticalLayoutLabel.insertWidget(0,self.label,0)
 		self.VerticalLayoutLabel.insertWidget(1,self.text,0)
 		#self.text.hide()
@@ -5643,6 +5642,7 @@ class Ui_MainWindow(object):
 		self.VerticalLayoutLabel.setAlignment(QtCore.Qt.AlignBottom)
 		self.VerticalLayoutLabel.setSpacing(5)
 		self.VerticalLayoutLabel.setContentsMargins(0,0,0,0)
+		#self.text.hide()
 		#self.opacity = QtGui.QGraphicsOpacityEffect()
 		#self.opacity.setOpacity(0.9)
 		#self.label.setGraphicsEffect(self.opacity)
@@ -5829,7 +5829,9 @@ class Ui_MainWindow(object):
 		self.slider.setMouseTracking(True)
 		
 		self.list1.setMaximumWidth(300)
+		#self.list1.setMaximumHeight(250)
 		self.list2.setMaximumWidth(300)
+		#self.list2.setMaximumHeight(250)
 		self.frame.setMaximumWidth(300)
 		self.list4.setMaximumWidth(300)
 		self.list5.setMaximumWidth(300)
@@ -9520,14 +9522,15 @@ class Ui_MainWindow(object):
 				newEpn = str(newEpn)
 				newEpn = newEpn.replace('#','')
 				dest = home+"/thumbnails/"+name+'/'+newEpn+'.jpg'
-				print(r,m[r])
-				img_url= m[r].split(':')[2]
-				if img_url.startswith('//'):
-					img_url = "http:"+img_url
-					command = "wget --user-agent="+'"'+hdr+'" '+'"'+img_url+'"'+" -O "+'"'+dest+'"'
-					#ua = "--user-agent="+'"'+hdr+'"'
-					#subprocess.Popen(["wget",ua,img_url,"-O",dest])
-					self.downloadWget.append(command)
+				if r < len(m):
+					print(r,m[r])
+					img_url= m[r].split(':')[2]
+					if img_url.startswith('//'):
+						img_url = "http:"+img_url
+						command = "wget --user-agent="+'"'+hdr+'" '+'"'+img_url+'"'+" -O "+'"'+dest+'"'
+						#ua = "--user-agent="+'"'+hdr+'"'
+						#subprocess.Popen(["wget",ua,img_url,"-O",dest])
+						self.downloadWget.append(command)
 					
 			if self.downloadWget:
 				length = len(self.downloadWget)
@@ -11105,6 +11108,7 @@ class Ui_MainWindow(object):
 			print (site)
 			#cmd = site +"()"
 			#site_var=eval(cmd)
+			
 			module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 			site_var = getattr(module,site)()
 			if site_var:
@@ -11129,14 +11133,17 @@ class Ui_MainWindow(object):
 					self.line.clear()
 					self.list1.clear()
 					genre_num = 0
+					self.text.setText('Wait...Loading')
+					QtWidgets.QApplication.processEvents()
 					m = site_var.search(name)
+					self.text.setText('Load Complete!')
 					if type(m) is list:
 						for i in m:
 							self.list1.addItem(i)
 					else:
 						self.list1.addItem("Sorry No Search Function")
 				del site_var
-		
+			
 		
 		elif site == "Local":
 			criteria = ["List",'History','All']
@@ -11194,6 +11201,7 @@ class Ui_MainWindow(object):
 		elif site == "DubbedAnime" or site == "SubbedAnime":
 			#cmd = site +"()"
 			#site_var=eval(cmd)
+			
 			module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 			site_var = getattr(module,site)()
 			if site_var:
@@ -11210,11 +11218,12 @@ class Ui_MainWindow(object):
 					self.line.clear()
 					self.list1.clear()
 					genre_num = 0
-					
+					self.text.setText('Wait...Loading')
+					QtWidgets.QApplication.processEvents()
 					m = site_var.getCompleteList(siteName,category,'Search')
+					self.text.setText('Load Complete!')
 					for i in m:
 						self.list1.addItem(i)
-		
 		list1_items[:] = []
 		if m:
 			for i in m:
@@ -11313,7 +11322,10 @@ class Ui_MainWindow(object):
 					#site_var=eval(cmd)
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
+					self.text.setText('Wait...Loading')
+					QtWidgets.QApplication.processEvents()
 					m = site_var.getEpnList(name,opt)
+					self.text.setText('Load..Complete')
 					del site_var
 					epnArrList[:]=[]
 					for i in m:
@@ -11528,20 +11540,29 @@ class Ui_MainWindow(object):
 						f.write(name)
 					else:
 						lines = tuple(open(home+'/History/' + site + '/' + siteName + '/history.txt', 'r'))
-						f.write('\n'+name)
+						#f.write('\n'+name)
+						line_list = []
+						for i in lines :
+							i = re.sub("\n","",i)
+							line_list.append(i)
+						if name not in line_list:
+							f.write('\n'+name)
 					f.close()
 				code = 3
 				if opt != "History" :
-					
+					self.text.setText('Wait...Loading')
+					QtWidgets.QApplication.processEvents()
 					#cmd = site +"()"
 					#site_var=eval(cmd)
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
+					
 					if site_var:
 						if '#' in t_name:
 							m = site_var.getEpnList(siteName,t_name,embed,category)
 						else:
 							m = site_var.getEpnList(siteName,name,embed,category)
+							
 						
 						if ("LINK:" in m[0]) or '#' in t_name:
 							
@@ -11586,6 +11607,8 @@ class Ui_MainWindow(object):
 								epnArrList.append(i)
 							epnArrList.pop()
 							epnArrList.pop()
+							
+					self.text.setText('Load Complete!')
 				else:
 						if os.path.exists(home+'/History/' + site + '/' + siteName + '/' + name+ '/Ep.txt'):
 							lines = tuple(open(home+'/History/' + site + '/' + siteName + '/' + name+ '/Ep.txt', 'r'))
@@ -11757,6 +11780,8 @@ class Ui_MainWindow(object):
 				if opt != "History":
 					#cmd = site +"()"
 					#site_var=eval(cmd)
+					self.text.setText('Wait...Loading')
+					QtWidgets.QApplication.processEvents()
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
 					if site_var:
@@ -11766,6 +11791,7 @@ class Ui_MainWindow(object):
 						epnArrList.append(i)
 					epnArrList.pop()
 					epnArrList.pop()
+					self.text.setText('Load Complete!')
 				else:
 						if os.path.exists(home+'/History/' + site + '/' + siteName + '/' + name+ '/Ep.txt'):
 							lines = tuple(open(home+'/History/' + site + '/' + siteName + '/' + name+ '/Ep.txt', 'r'))
@@ -12402,6 +12428,9 @@ class Ui_MainWindow(object):
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
 				#print (cmd)
+				#self.text.setText('Loading..Please Wait!')
+				self.progressEpn.setFormat('Wait..')
+				QtWidgets.QApplication.processEvents()
 				finalUrl = site_var.getFinalUrl(name,epn,mirrorNo,quality)
 				del site_var
 			
@@ -12480,6 +12509,9 @@ class Ui_MainWindow(object):
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
 					if cmd:
+						#self.text.setText('Loading..Please Wait!')
+						self.progressEpn.setFormat('Wait..')
+						QtWidgets.QApplication.processEvents()
 						finalUrl = site_var.urlResolve(epnArrList[r].split('	')[1])
 				else:
 					#cmd = site +"()"
@@ -12487,6 +12519,9 @@ class Ui_MainWindow(object):
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
 					if site_var:
+						#self.text.setText('Loading..Please Wait!')
+						self.progressEpn.setFormat('Wait..')
+						QtWidgets.QApplication.processEvents()
 						finalUrl = site_var.getFinalUrl(siteName,name,epn,mirrorNo,category,quality) 
 				if category == "Movies" and not opt_movies_indicator and (type(finalUrl) is list):
 					self.list2.clear()
@@ -12504,6 +12539,11 @@ class Ui_MainWindow(object):
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
 					if site_var:
+						
+						#self.text.setText('Loading..Please Wait!')
+						
+						self.progressEpn.setFormat('Wait..')
+						QtWidgets.QApplication.processEvents()
 						finalUrl = site_var.urlResolve(epnArrList[0].split('	')[1])
 					epn_name_in_list = name+"-"+self.list2.currentItem().text()
 				
@@ -12515,6 +12555,10 @@ class Ui_MainWindow(object):
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
 				if site_var:
+					
+					#self.text.setText('Loading..Please Wait!')
+					self.progressEpn.setFormat('Wait..')
+					QtWidgets.QApplication.processEvents()
 					finalUrl = site_var.getFinalUrl(siteName,name,epn,mirrorNo,quality) 
 		
 		elif site == "None" or site == "Music" or site == "Video" or site == "Local":
@@ -12955,8 +12999,12 @@ class Ui_MainWindow(object):
 				#print m[0]
 				n = re.findall('[^%]*',m[0])
 				if n:
-					val = int(n[0])
+					try:
+						val = int(n[0])
+					except:
+						val = 0
 					self.progress.setValue(val)
+						
 				out = str(m[0])+" "+sizeFile
 				#self.goto_epn.setText(out)
 				self.progress.setFormat(out)
@@ -13799,7 +13847,10 @@ class Ui_MainWindow(object):
 				#site_var=eval(cmd)
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
+				self.progressEpn.setFormat('Wait..')
+				QtWidgets.QApplication.processEvents()
 				finalUrl = site_var.getFinalUrl(name,epn,mirrorNo,quality)
+				#self.progressEpn.setFormat('Wait..')
 				del site_var
 			
 		elif finalUrlFound == True:
@@ -13843,6 +13894,8 @@ class Ui_MainWindow(object):
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
 					if site_var:
+						self.progressEpn.setFormat('Wait..')
+						QtWidgets.QApplication.processEvents()
 						finalUrl = site_var.urlResolve(epnArrList[r].split('	')[1])
 				else:
 					#cmd = site +"()"
@@ -13850,6 +13903,8 @@ class Ui_MainWindow(object):
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
 					if site_var:
+						self.progressEpn.setFormat('Wait..')
+						QtWidgets.QApplication.processEvents()
 						finalUrl = site_var.getFinalUrl(siteName,name,epn,mirrorNo,category,quality) 
 			
 			elif site == "DubbedAnime":
@@ -13860,6 +13915,8 @@ class Ui_MainWindow(object):
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
 				if site_var:
+					self.progressEpn.setFormat('Wait..')
+					QtWidgets.QApplication.processEvents()
 					finalUrl = site_var.getFinalUrl(siteName,name,epn,mirrorNo,quality) 
 		
 		elif site == "None" or site == "Music" or site == "Video" or site == "Local":
@@ -14077,7 +14134,10 @@ class Ui_MainWindow(object):
 				#site_var=eval(cmd)
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
+				self.text.setText('Wait...Loading')
+				QtWidgets.QApplication.processEvents()
 				m = site_var.getCompleteList(t_opt,genre_num)
+				self.text.setText('Load Complete!')
 				genre_num = 1
 				opt = t_opt
 				for i in m:
@@ -14111,7 +14171,10 @@ class Ui_MainWindow(object):
 				#site_var=eval(cmd)
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
+				self.text.setText('Wait...Loading')
+				QtWidgets.QApplication.processEvents()
 				m = site_var.getCompleteList(t_opt,genre_num)
+				self.text.setText('Load Complete!')
 				list1_items = m
 				for i in m:
 					self.list1.addItem(i)
@@ -14124,7 +14187,10 @@ class Ui_MainWindow(object):
 					#site_var=eval(cmd)
 					module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 					site_var = getattr(module,site)()
+					self.text.setText('Wait...Loading')
+					QtWidgets.QApplication.processEvents()
 					m = site_var.getCompleteList(t_opt,genre_num)
+					self.text.setText('Load Complete!')
 					list1_items[:] = []
 					for i in m:
 						self.list1.addItem(i)
@@ -14133,12 +14199,16 @@ class Ui_MainWindow(object):
 					self.forward.show()
 					self.backward.show()
 			else:
+				
 				opt = t_opt
 				#cmd = site +"()"
 				#site_var=eval(cmd)
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
+				self.text.setText('Wait...Loading')
+				QtWidgets.QApplication.processEvents()
 				m = site_var.getCompleteList(t_opt,0)
+				self.text.setText('Load Complete!')
 				list1_items[:] = []
 				for i in m:
 					self.list1.addItem(i)
@@ -14148,6 +14218,7 @@ class Ui_MainWindow(object):
 				self.backward.hide()
 		elif site == "SubbedAnime" or site == "DubbedAnime":
 			code = 2
+			
 			siteName = str(self.list3.currentItem().text())
 			#if insidePreopt
 			if val == "clicked":
@@ -14175,13 +14246,18 @@ class Ui_MainWindow(object):
 				self.line.clear()
 				self.list1.clear()
 				self.list2.clear()
-				self.text.clear()
+				#self.text.clear()
+				
+				#time.sleep(1)
 				#cmd = site +"()"
 				#site_var=eval(cmd)
 				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
 				site_var = getattr(module,site)()
 				if site_var:
+					self.text.setText('Wait...Loading')
+					QtWidgets.QApplication.processEvents()
 					m = site_var.getCompleteList(siteName,category,opt) 
+					self.text.setText('Load Complete!')
 				list1_items[:] = []
 				
 				for i in m:

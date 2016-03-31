@@ -1,4 +1,3 @@
-from PyQt5 import QtCore, QtGui,QtWidgets
 import sys
 import urllib
 import pycurl
@@ -23,19 +22,7 @@ try:
 except:
 	pass
 
-class ListMirror(QtWidgets.QListWidget):
-	def __init__(self):
-		super(ListMirror, self).__init__()
-		global mirrorItem
-	def keyPressEvent(self, event):
-		global mirrorItem
-		if event.key() == QtCore.Qt.Key_Enter:
-			mirrorItem = str(self.currentItem().text())
-			self.hide()
-		super(ListMirror, self).keyPressEvent(event)
-	def getItem(self):
-		global mirrorItem
-		return mirrorItem
+
 
 def getContentUnicode(content):
 		if isinstance(content,bytes):
@@ -265,84 +252,23 @@ def naturallysorted(l):
 	return sorted(l, key = alphanum_key)
 
 def progressBar(cmd):
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
-	#content = cmd
-	#print(content
-	#content = ccurl(cmd,"")
+	
 	content = subprocess.check_output(cmd)
 	content = getContentUnicode(content)
-	progress.setValue(100)
-	progress.hide()
-	#print(content
+	
 	return (content)
 
 def ccurl(url):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	
 	
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,80)
-	progress.setWindowTitle("Wait Loading")
-	progress.show()
-	progress.setValue(0)
-	
 	content = (subprocess.check_output(['curl','-L','-A',hdr,url]))
 	content = getContentUnicode(content)
-	"""
-	try:
-		c = pycurl.Curl()
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		url = str(url)
-		print(url
-		
-		c.setopt(c.URL, url)
-		
-		
-		storage = StringIO()
-		c.setopt(c.WRITEFUNCTION, storage.write)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		progress.setValue(100)
-		progress.hide()
-	except UnicodeEncodeError:
-		url = re.sub('\u2605','%E2%98%85',url)
-		url = re.sub('\u2606','%E2%98%86',url)
-		content = subprocess.check_output(['curl','-A',hdr,url])
-	"""
-	progress.setValue(100)
-	progress.hide()
+	
 	return content
 
 def ccurl_setcookie(url):
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,80)
-	progress.setWindowTitle("Wait Loading")
-	progress.show()
-	progress.setValue(0)
+	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
@@ -356,22 +282,11 @@ def ccurl_setcookie(url):
 	c.close()
 	content = storage.getvalue()
 	content = getContentUnicode(content)
-	progress.setValue(100)
-	progress.hide()
+	
 	return (content)
 
 def ccurl_cookie(url):
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,80)
-	progress.setWindowTitle("Wait Loading")
-	progress.show()
-	progress.setValue(0)
+	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
@@ -385,22 +300,11 @@ def ccurl_cookie(url):
 	c.close()
 	content = storage.getvalue()
 	content = getContentUnicode(content)
-	progress.setValue(100)
-	progress.hide()
+	
 	return (content)
 	
 def ccurlM(url):
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,80)
-	progress.setWindowTitle("Wait Loading")
-	progress.show()
-	progress.setValue(0)
+	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
@@ -415,23 +319,12 @@ def ccurlM(url):
 	c.close()
 	content = storage.getvalue()
 	content = getContentUnicode(content)
-	progress.setValue(100)
-	progress.hide()
+	
 	return (content)
 
 def ccurlPost(url,value):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
+	
 	c = pycurl.Curl()
 	if value == "no_redir":
 		print("no redirect")
@@ -453,8 +346,7 @@ def ccurlPost(url,value):
 	c.close()
 	content = storage.getvalue()
 	content = getContentUnicode(content)
-	progress.setValue(100)
-	progress.hide()
+	
 	return (content)
 
 def replace_all(text, di):
@@ -471,26 +363,19 @@ def findurl(i):
 			content = (subprocess.check_output(['curl','-L','-A',hdr,i]))
 			content = getContentUnicode(content)
 			soup = BeautifulSoup(content)
-			#link = soup.find('div',{'class':'btns'})
-			link = soup.find('div',{'id':'ddl-row'})
+			link = soup.find('div',{'class':'buttons'})
+			#link = soup.find('div',{'id':'ddl-row'})
 			#print(link
 			link1 = link.find('a')
 			found = link1['href']
 			return found
 	elif "mediafire" in i:
 			
-			if not os.path.isfile('/tmp/AnimeWatch/firefox.txt'):
-				content = (subprocess.check_output(["bash","-c","./sqlite.sh"]))
-				content = getContentUnicode(content)
-				m = re.findall('.mediafire[^\n]*\n',content)
-				f = open('/tmp/AnimeWatch/firefox.txt','w')
-				for j in m:
-					f.write(j)
-				f.close()
 			
-			content = (subprocess.check_output(['curl','-L','-b','/tmp/AnimeWatch/firefox.txt',i]))
+			
+			content = (subprocess.check_output(['curl','-L','-A',hdr,i]))
 			content = getContentUnicode(content)
-			#print(content
+			print(content)
 			final1 = re.findall('kNO = "[^"]*',content)
 			if final1:
 				found = re.sub('kNO = "',"",final1[0])
@@ -505,7 +390,9 @@ def findurl(i):
 				return found
 			"""
 	elif "tusfiles" in i:
-			content = (subprocess.check_output(['phantomjs','phantom1.js',i]))
+			"""
+			plugin_path = os.path.expanduser('~')+"/.config/AnimeWatch/src/Plugins/phantom1.js"
+			content = (subprocess.check_output(['phantomjs',plugin_path,i]))
 			content = getContentUnicode(content)
 			#print(content
 			final1 = re.findall('embed id="[^>]*',content)
@@ -514,6 +401,41 @@ def findurl(i):
 				if found1:
 					found = re.sub('src="',"",found1[0])
 					return found
+			"""
+			found = ''
+			content = ccurl(i)
+			soup = BeautifulSoup(content,'lxml')
+			link = soup.findAll('textarea')
+			print(link)
+			k = ''
+			for i in link:
+				if 'iframe' in str(i).lower():
+					j = i.find('iframe')
+					if j:
+						k = j['src']
+					else:
+						j = i.find('IFRAME')
+						if j:
+							k = j['SRC']
+			if k:
+				content = ccurl(k)
+				soup = BeautifulSoup(content,'lxml')
+				link = soup.findAll('script',{'type':'text/javascript'})
+				for i in link:
+					if 'tusfiles' in i.text:
+						#print(i.text)
+						packed = i.text
+				if packed:
+					val = packer.unpack(packed)
+					print(val)
+					soup = BeautifulSoup(val,'lxml')
+					link = soup.find('param',{'name':'src'})['value']
+					print(link)
+					if link:
+						found = link
+					else:
+						found = ''
+			return found
 	elif "embedupload" in i:
 			content = ccurl(i)
 			m = re.findall('http://www.embedupload.com/\?MF=[^"]*',content)
@@ -524,7 +446,8 @@ def findurl(i):
 					#print(n
 					final1 = re.sub('\t','',n[0])
 					print(final1)
-					content = (subprocess.check_output(['phantomjs','phantom1.js',final1]))
+					plugin_path = os.path.expanduser('~')+"/.config/AnimeWatch/src/Plugins/phantom1.js"
+					content = (subprocess.check_output(['phantomjs',plugin_path,final1]))
 					content = getContentUnicode(content)
 					#print(content
 					final2 = re.findall('kNO = "[^"]*',content)
@@ -595,7 +518,33 @@ def findurl(i):
 			found = ""
 		return found
 	elif "myvidstream" in i:
+			packed = ''
+			final = ""
 			content = ccurl(i)
+			soup = BeautifulSoup(content,'lxml')
+			link = soup.findAll('script',{'type':'text/javascript'})
+			for i in link:
+				if 'myvidstream' in i.text:
+					#print(i.text)
+					packed = i.text
+					break
+			if packed:
+				val = packer.unpack(packed)
+				print(val)
+				soup = BeautifulSoup(val,'lxml')
+				m = (re.search('file[^)]*',val)).group()
+				print(m)
+				if m:
+					n = re.search("http[^']*",m).group()
+					if n:
+						print(n)
+						final = n
+						final = re.sub(' |"','',final)
+						final = re.sub("'",'',final)
+						fi = final.split('\\')
+						if fi:
+							final = fi[0]
+			"""
 			link = re.findall('eval[(][^"]*.split',content)
 			print(len(link))
 			req = str(link[1])
@@ -631,6 +580,7 @@ def findurl(i):
 				#final = "http://"+server+".myvidstream.net/files/"+num+"/"+icode+"/video.mp4?start=0"
 				final = "http://"+server+".myvidstream.net:182/d/"+icode+"/video.mp4"
 			print(final)
+			"""
 			return final
 	elif "mp4upload" in i:
 			content = ccurl(i)
@@ -848,7 +798,7 @@ class SubbedAnime():
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 		
 	def getOptions(self):
-			criteria = ['Anime1','AnimeSquare','AnimeNet','AnimeMax','AnimeStream','AnimePlus','Animefun','Animegalaxy','AnimeWow','Animehere','Anime44','Animeget','Animebox','AnimeHQ','GoodAnime','Anime-Freak','AnimeBaka','AnimeAll']
+			criteria = ['Anime1','Anime44','AnimePlus','AnimeWow','Animehere','GoodAnime','AnimeNet','AnimeMax','AnimeStream','Animefun','Animegalaxy','Animebox','Anime-Freak','AnimeBaka','AnimeHQ','AnimeSquare','Animeget','AnimeAll','AnimeMix']
 			return criteria
 			
 	def getCompleteList(self,siteName,category,opt):
@@ -1205,7 +1155,7 @@ class SubbedAnime():
 		return m
 
 	def getEpnList(self,siteName,name,embed,category):
-		
+		url = ""
 		if siteName == "Anime44":
 			url = "http://www.animenova.org/category/" + name
 			base = "http://www.animenova.org/"
@@ -1428,8 +1378,9 @@ class SubbedAnime():
 				m = m[:-1]
 				m = list(set(m))
 				print(len(m))
-				print(m[1])
-				summary = m[1]
+				if len(m) == 2:
+					print(m[1])
+					summary = m[1]
 			
 			if n:
 				n = list(set(n))
@@ -1687,6 +1638,7 @@ class SubbedAnime():
 			m = m1+m2
 			
 		elif (siteName == "AnimeMix"):
+			m = []
 			if embed == 0:
 				content = (subprocess.check_output(['curl','-L','-A',self.hdr,url]))
 				content = getContentUnicode(content)
@@ -1788,8 +1740,15 @@ class SubbedAnime():
 				
 				output = re.sub('\n','',name)
 				forward_link = output.split('#')[1]
-				print(forward_link)
-				
+				output1 = output.split('#')[0]
+				output1 = output1.replace(' ','-')
+				print(forward_link,'----')
+				if forward_link.endswith('.jpg'):
+					forward_link = forward_link.replace('.jpg','')
+					print(forward_link,'.jpg removed')
+				if '=http' in forward_link:
+					forward_link = forward_link.split('=')[-1]
+					print(forward_link,'--split--')
 				if "linkbucks" in forward_link or "bc.vc" in forward_link or "qqc.co" in forward_link or "urlbeat.net" in forward_link:
 					if "linkbucks" in forward_link or "qqc.co" in forward_link or "urlbeat.net" in forward_link:
 						content = (subprocess.check_output(['curl','-I','-L',forward_link]))
@@ -1803,7 +1762,8 @@ class SubbedAnime():
 							print(final1)
 					else:
 						final1 = forward_link
-					ff_profile = webdriver.FirefoxProfile("")
+					profile = os.path.expanduser('~')+'/.mozilla/firefox/webdriver'
+					ff_profile = webdriver.FirefoxProfile(profile)
 					browser = webdriver.Firefox(ff_profile)
 					browser.get(final1)
 					time.sleep(15)
@@ -1813,6 +1773,7 @@ class SubbedAnime():
 		
 			
 				else:
+					final1 = ''
 					if "adf.ly" in forward_link:
 						forward_link = re.sub('http:','https:',forward_link)
 						final1= unshorten_url(forward_link)
@@ -1824,6 +1785,9 @@ class SubbedAnime():
 					elif "adf.acb.im" in forward_link:
 						#final1 = cloudfare(forward_link)
 						final1= unshorten_url(forward_link)
+						print(final1)
+					elif "lnk.acb.im" in forward_link:
+						final1= forward_link
 						print(final1)
 					elif "mt0.org" in forward_link:
 						final1= shrink_url(forward_link)
@@ -1839,7 +1803,8 @@ class SubbedAnime():
 							final1 = m[0]
 							final1 = re.sub('Location: |\r', '', final1)
 							print(final1)
-			
+					if not final1:
+						final1 = forward_link
 					#content = open('1.txt','r').read()
 					hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 					
@@ -1851,6 +1816,7 @@ class SubbedAnime():
 				link = soup.find('table')
 				table1 = str(link)
 				t_n = re.findall('<div class="title"[^#]*</table>',table1)
+				k =''
 				for i in t_n:
 					l = re.sub('\t|\r|-|\n','',i)
 					j = re.sub('</div><br />|</div><br/>','</div><p>',l)
@@ -1859,16 +1825,19 @@ class SubbedAnime():
 					k = re.sub('</a></p><br />|</a></p><br/>','</a></p><p>',k)
 					#k = re.sub('\n','',k)
 					#print(k
-				soup = BeautifulSoup(k)
-				link = soup.findAll('p')
-				for i in link:
-					if 'href' in str(i):
-						l=i.text.split('=')[0]
-						l = re.sub(' ','-',l) 
-						j = i.find('a')
-						k = j['href']
-						print(l + ' '+ k )
-						m.append(l+' '+k)
+				if k:
+					soup = BeautifulSoup(k)
+					link = soup.findAll('p')
+					for i in link:
+						if 'href' in str(i):
+							l=i.text.split('=')[0]
+							l = re.sub(' ','-',l) 
+							j = i.find('a')
+							k = j['href']
+							print(l + ' '+ k )
+							m.append(l+' '+k)
+				else:
+					m.append(output1+' '+forward_link)
 				m.insert(0,"LINK:FINAL")
 		elif (siteName == "AnimeMax"):
 			m = []

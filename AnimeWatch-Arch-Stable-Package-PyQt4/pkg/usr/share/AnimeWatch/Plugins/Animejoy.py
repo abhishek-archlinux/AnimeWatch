@@ -1,4 +1,3 @@
-#from PyQt4 import QtCore, QtGui
 import sys
 import urllib
 import pycurl
@@ -19,31 +18,7 @@ def naturallysorted(l):
 
 def ccurl(url):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
-	"""
-	MainWindow = QtGui.QWidget()
-	progress = QtGui.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
 	
-	c = pycurl.Curl()
-	c.setopt(c.USERAGENT, hdr)
-	url = str(url)
-	c.setopt(c.URL, url)
-	storage = StringIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
-	c.perform()
-	c.close()
-	content = storage.getvalue()
-	#progress.setValue(100)
-	#progress.hide()
-	"""
 	content = subprocess.check_output(['curl','-L','-A',hdr,url]) 
 	if isinstance(content,bytes):
 		print("I'm byte")

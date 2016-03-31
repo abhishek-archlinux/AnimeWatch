@@ -8,8 +8,11 @@ from subprocess import check_output
 import random
 from bs4 import BeautifulSoup  
 import os.path
-from PyQt4 import QtCore, QtGui
 import requests
+try:
+	import jsbeautifier.unpackers.packer as packer
+except:
+	pass
 
 def naturallysorted(l):
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -23,17 +26,7 @@ def replace_all(text, di):
 	
 def ccurl(url,value):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:35.0) Gecko/20100101 Firefox/35.0"
-	MainWindow = QtGui.QWidget()
-	progress = QtGui.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
+	
 	c = pycurl.Curl()
 	if value == "no_redir":
 		print("no redirect")
@@ -57,8 +50,7 @@ def ccurl(url,value):
 		content = (storage.getvalue()).decode('utf-8')
 	except:
 		content = str(storage.getvalue())
-	progress.setValue(100)
-	progress.hide()
+	
 	return (content)
 	
 def simplyfind(i):
@@ -86,7 +78,33 @@ def findurl(url):
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 	if "myvidstream" in str(url):
 		#print("myvidstream="+url
+		packed = ''
 		content = ccurl(url,"")
+		soup = BeautifulSoup(content,'lxml')
+		link = soup.findAll('script',{'type':'text/javascript'})
+		for i in link:
+			if 'myvidstream' in i.text:
+				#print(i.text)
+				packed = i.text
+				break
+		if packed:
+			val = packer.unpack(packed)
+			print(val)
+			soup = BeautifulSoup(val,'lxml')
+			m = (re.search('file[^)]*',val)).group()
+			print(m)
+			if m:
+				n = re.search("http[^']*",m).group()
+				if n:
+					print(n)
+					final = n
+					final = re.sub(' |"','',final)
+					final = re.sub("'",'',final)
+					fi = final.split('\\')
+					if fi:
+						final = fi[0]
+			
+		"""
 		link = re.findall('eval[(][^"]*.split',content)
 		print(len(link))
 		req = str(link[1])
@@ -122,6 +140,7 @@ def findurl(url):
 			#final = "http://"+server+".myvidstream.net/files/"+num+"/"+icode+"/video.mp4?start=0"
 			final = "http://"+server+".myvidstream.net:182/d/"+icode+"/video.mp4"
 		print(final)
+		"""
 	elif "vidup" in str(url):
 		m = re.findall('http://[^"]*&bg',url)
 		m1 = re.sub('&bg*','',m[0])
@@ -288,10 +307,10 @@ def uploadcrazy(url):
 	m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
 	if m:
 		url = re.sub('file: "','',m[0])
-		
 	else:
 		url = ""
 	return url
+	
 	
 class DubbedAnime():
 	def __init__(self):
@@ -536,7 +555,6 @@ class DubbedAnime():
 			if hd:
 				final_cnt = final_cnt+1
 				final_quality = final_quality + 'HD '
-			
 				
 			msg = "Total " + str(final_cnt) + " Quality Video Available "+final_quality+" Selecting "+str(quality) + " Quality"
 			subprocess.Popen(["notify-send",msg])
@@ -563,8 +581,6 @@ class DubbedAnime():
 					final = re.sub('Location: |\r', '', final)
 			else:
 				final = ''
-		
-			
 		return final
 		
 	def getCompleteList(self,siteName,category,opt):

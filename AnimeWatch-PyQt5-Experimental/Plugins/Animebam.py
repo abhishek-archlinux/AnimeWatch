@@ -8,9 +8,9 @@ from subprocess import check_output
 import random
 from bs4 import BeautifulSoup
 import os.path
-from PyQt5 import QtCore, QtGui,QtWidgets
-from PyQt5.QtWidgets import QInputDialog
-
+#from PyQt5 import QtCore, QtGui,QtWidgets
+#from PyQt5.QtWidgets import QInputDialog
+"""
 class DlgBox(QtWidgets.QWidget):
 	
 	def __init__(self,i,j):
@@ -25,7 +25,7 @@ class DlgBox(QtWidgets.QWidget):
 		    self.itemR=item
 	def returnItem(self):
 		return self.itemR
-
+"""
 def replace_all(text, di):
 	for i, j in di.iteritems():
 		text = text.replace(i, j)
@@ -39,17 +39,6 @@ def naturallysorted(l):
 def ccurl(url,rfr):
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 	
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
 	if rfr:
 		content = subprocess,check_output(['curl','-A',hdr,'-e',rfr,url])
 	else:
@@ -65,21 +54,7 @@ def ccurl(url,rfr):
 		print (type(content))
 		content = str(content)
 		print("I'm unicode")
-	"""
-	c = pycurl.Curl()
-	c.setopt(c.USERAGENT, hdr)
-	if rfr:
-		c.setopt(pycurl.REFERER, rfr)
-	url = str(url)
-	c.setopt(c.URL, url)
-	storage = StringIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
-	c.perform()
-	c.close()
-	content = storage.getvalue()
-	"""
-	progress.setValue(100)
-	progress.hide()
+	
 	return (content)
 
 

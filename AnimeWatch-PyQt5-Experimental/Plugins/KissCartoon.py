@@ -1,4 +1,3 @@
-from PyQt5 import QtCore, QtGui,QtWidgets
 import sys
 import urllib
 import pycurl
@@ -8,9 +7,6 @@ import subprocess
 from subprocess import check_output
 from bs4 import BeautifulSoup 
 import os.path
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from PyQt5.QtWebKit import *
 import time
 import shutil
 from tempfile import mkstemp
@@ -66,17 +62,7 @@ def cloudfare():
 def ccurl(url):
 	global hdr
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
+	
 	content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieC.txt','-L','-A',hdr,url]) 
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -88,38 +74,11 @@ def ccurl(url):
 		print(type(content))
 		content = str(content)
 		print("I'm unicode")
-	"""
-	c = pycurl.Curl()
-	c.setopt(c.USERAGENT, hdr)
-	if os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieD.txt')
-	url = str(url)
-	c.setopt(c.URL, url)
-	storage = StringIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
-	c.perform()
-	c.close()
-	content = storage.getvalue()
-	"""
-	progress.setValue(100)
-	progress.hide()
+	
 	return (content)
 
 def progressBar(cmd):
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
-	#content = cmd
-	#print(content
-	#content = ccurl(cmd,"")
+	
 	content = subprocess.check_output(cmd)
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -131,9 +90,7 @@ def progressBar(cmd):
 		print(type(content))
 		content = str(content)
 		print("I'm unicode")
-	progress.setValue(100)
-	progress.hide()
-	#print(content
+	
 	return (content)
 
 
@@ -269,6 +226,8 @@ class KissCartoon():
 			cloudfare()
 		url = 'http://kisscartoon.me/Cartoon/' + name + '/' + epn
 		print(url)
+		sd = ''
+		hd = ''
 		if not os.path.isfile('/tmp/AnimeWatch/kcookieC.txt'):
 			cloudfare(url)
 		content = ccurl(url)
