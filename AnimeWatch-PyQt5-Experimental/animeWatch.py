@@ -10418,11 +10418,12 @@ class Ui_MainWindow(object):
 		global epnArrList,home,site
 		#self.text.hide()
 		self.list4.hide()
-		if self.list2.currentItem():
+		num = self.list2.currentRow()
+		if self.list2.currentItem() and num < len(epnArrList):
 				epn_h = self.list2.currentItem().text()
 				#self.goto_epn.setText(epn_h)
 				inter_val = 10
-				num = self.list2.currentRow()
+				
 				if '	' in epnArrList[num]:
 					a = (epnArrList[num]).split('	')[0]
 					path = (epnArrList[num]).split('	')[1]
