@@ -16,7 +16,6 @@ depend = python-psutil
 depend = curl
 depend = wget
 depend = phantomjs
-depend = python-pytaglib
 depend = libnotify
 depend = mpv
 depend = mplayer

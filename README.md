@@ -1,7 +1,7 @@
 ﻿# AnimeWatch
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
 
-(Arch users can directly go to Release section or Package directory,download appropriate pkg.tar.xz package and install it using 'yaourt -U pkg_name'. After that they have to install only 'jsbeautifier' using 'sudo pip install jsbeautifier')
+(Arch users can directly go to Release section or Package directory,download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. After that they have to install only 'jsbeautifier' and 'pytaglib' using 'sudo pip install jsbeautifier pytaglib')
 
 (Ubuntu or Debian based distro users can also go to Release section or PAckage directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb. After that they have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier' )
 
@@ -47,7 +47,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 (This player is mainly written in pyqt4 and python3)
 
-(Arch users can directly go to Release section or Package directory ,download appropriate package. The package can be installed using 'yaourt -U pkg_name' instead of 'sudo pacman -U pkg_name' because dependency python-pytaglib is available in AUR. They have to install only 'jsbeautifier' using 'pip'. Then they can skip all other steps. Package can be uninstalled using 'sudo pacman -R AnimeWatch')
+(Arch users can directly go to Release section or Package directory ,download appropriate package. The package can be installed using 'sudo pacman -U pkg_name'. Then they have to install only 'jsbeautifier' and 'pytaglib' using 'sudo pip install jsbeautifier pytaglib'. Then they can skip all other steps. Package can be uninstalled using 'sudo pacman -R AnimeWatch')
 
 (Ubuntu or Debian based distro users can directly go to Release section or Package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Users have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier'. For removing the package use 'sudo apt-get remove AnimeWatch' )
 
@@ -93,9 +93,7 @@ mpv or mplayer (having both is good option, for streaming video mpv is the best 
 
 sudo pacman -S python python-pyqt4 python-pycurl python-requests python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil python-pip curl wget libnotify mpv mplayer phantomjs ffmpegthumbnailer sqlite3
 
-install pytaglib via AUR : yaourt python-pytaglib
-
-OR install it using pip : sudo pip install pytaglib jsbeautifier
+sudo pip install pytaglib jsbeautifier
 
 If you want to try PyQt5 Experimental Version then install 'python-pyqt5' package also.
 
