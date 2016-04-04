@@ -290,7 +290,7 @@ PgDown: Move Entry Down
 
 #Thumbnail Mode:
 
-'=' (Remenber '+' key) : increase size of Thumbnails
+'=' (Remember '+' key) : increase size of Thumbnails
 
 '-' : decrease size of Thumbnails
 
