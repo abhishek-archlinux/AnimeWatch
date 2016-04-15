@@ -11,7 +11,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 1. 'phantomjs' no longer required. The player has it's own version of headless browser with javascript support and it's own adblock.
 
-2. 'wget' no longer required, all the webpages are fetched using 'pucurl'.
+2. 'wget' no longer required, all the webpages are fetched using 'pycurl'.
 
 3. Less number of dependencies required as phantomjs and wget are no longer required.
 
