@@ -9,6 +9,7 @@ import random
 from bs4 import BeautifulSoup
 import os.path
 import base64
+from headlessBrowser import BrowseUrl
 try:
 	from selenium import webdriver
 except:
@@ -79,7 +80,7 @@ def unshorten_url(url):
 
 def cloudfare(url):
 			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
-			home1 = expanduser("~")
+			home1 = os.path.expanduser("~")
 			#home1 = "/usr/local/share"
 			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
 			if not os.path.isfile('/tmp/AnimeWatch/klm.txt'):
@@ -154,10 +155,11 @@ def cloudfare(url):
 				return url
 
 
-
 def cloudfareUrl(url):
+	web = BrowseUrl(url)
+def cloudfareUrlOld(url):
 			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
-			home1 = expanduser("~")
+			home1 = os.path.expanduser("~")
 			#home1 = "/usr/local/share"
 			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
 			temp = subprocess.check_output(["phantomjs", pluginDir+"/ma.js",url])
@@ -183,26 +185,37 @@ def cloudfareUrl(url):
 			#print(n
 			cookiefile = ".masterani.me	TRUE	/	FALSE	"+str(e[0])+"	__cfduid	" + str(e[1]) + "\n" + ".masterani.me	TRUE	/	FALSE	"+str(n[0])+"	cf_clearance	" + str(n[1])
 			print(cookiefile)
-			f = open('/tmp/AnimeWatch/anime.txt', 'w')
+			f = open('/tmp/AnimeWatch/animeSquare.txt', 'w')
 			f.write(cookiefile)
 			f.close()
 			cfc_val = n[1]
 			cfd_val = e[1]
-			#print(cfc_val
-			#print(cfd_val
-			#content = subprocess.check_output(["curl","-b","/tmp/AnimeWatch/anime.txt",'-A',hdr,url])
-			#return content
+			
 	
 def shrink_url(url):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	if "linkshrink" in url:
-		content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-I','-L',url])
-		content = getContentUnicode(content)
-		content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-L',url])
-		content = getContentUnicode(content)
+		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-I','-L',url])
+		#content = getContentUnicode(content)
+		content = ccurl(url+'#'+'-Icb'+'#'+'/tmp/animeWatch/link.txt')
+		print(content,'----linkshrink---------')
+		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-L',url])
+		#content = getContentUnicode(content)
+		content = ccurl(url+'#'+'-bc'+'#'+'/tmp/animeWatch/link.txt')
+		print(content,'----linkshrink---------')
 		soup = BeautifulSoup(content)
 		shrink = soup.find('a',{'class':'bt'})
 		shrink_link = shrink['href']
+		content = ccurl(shrink_link+'#'+'-Ie'+'#'+url)
+		m = re.findall('Location: [^\n]*', content)
+		#print(m
+		if m:
+			#print(m
+			final1 = m[0]
+			final1 = re.sub('Location: |\r', '', final1)
+			shrink_link = final1
+		else:
+			shrink_link = ""
 	elif "sh.st" in url:
 		shrink_link = url
 	elif "adf.ly" in url:
@@ -218,18 +231,21 @@ def shrink_url(url):
 		shrink_link=str(unshorten_url(url))
 	elif "mt0.org" in url:
 		try:
-			content = (subprocess.check_output(['curl','-A',hdr,url]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(['curl','-A',hdr,url]))
+			#content = getContentUnicode(content)
+			content = ccurl(url+'#'+'-L')
 			print(content)
 			url = (re.search('http[^"]*index.php[^"]*',str(content))).group()
-			content = (subprocess.check_output(['curl','-A',hdr,url]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(['curl','-A',hdr,url]))
+			#content = getContentUnicode(content)
+			content = ccurl(url+'#'+'-L')
 			print(content)
 			url = (re.search('http[^"]*index.php[^"]*',str(content))).group()
 		except:
 			pass
-		content = (subprocess.check_output(['curl','-A',hdr,'-I','-L',url]))
-		content = getContentUnicode(content)
+		#content = (subprocess.check_output(['curl','-A',hdr,'-I','-L',url]))
+		#content = getContentUnicode(content)
+		content = ccurl(url+'#'+'-I')
 		m = re.findall('Location: [^\n]*', content)
 		#print(m
 		if m:
@@ -259,11 +275,105 @@ def progressBar(cmd):
 	return (content)
 
 def ccurl(url):
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print(url)
+	c = pycurl.Curl()
+	
+	
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		elif curl_opt == '-Ie':
+			rfr = nUrl.split('#')[2]
+		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
+			cookie_file = nUrl.split('#')[2]
+	url = str(url)
+	print(url,'----------url------')
+	try:
+		c.setopt(c.URL, url)
+	except UnicodeEncodeError:
+		c.setopt(c.URL, url.encode('utf-8'))
+	storage = BytesIO()
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Ie':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-IA':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Icb':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			if os.path.exists(cookie_file):
+				os.remove(cookie_file)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-Ib':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-bc':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-b':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-L':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		else:
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
+def ccurlPhantom(url):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	
-	
-	content = (subprocess.check_output(['curl','-L','-A',hdr,url]))
-	content = getContentUnicode(content)
+	home1 = os.path.expanduser("~")
+	pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
+	try:
+		content = subprocess.check_output(["phantomjs", pluginDir+"/phantom1.js",url])
+		content = getContentUnicode(content)
+	except:
+		content = ccurl(url)
 	
 	return content
 
@@ -277,7 +387,7 @@ def ccurl_setcookie(url):
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
+	c.setopt(c.WRITEDATA, storage)
 	c.perform()
 	c.close()
 	content = storage.getvalue()
@@ -295,7 +405,7 @@ def ccurl_cookie(url):
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
+	c.setopt(c.WRITEDATA, storage)
 	c.perform()
 	c.close()
 	content = storage.getvalue()
@@ -309,18 +419,66 @@ def ccurlM(url):
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
-	if os.path.exists('/tmp/AnimeWatch/anime.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/anime.txt')
+	if os.path.exists('/tmp/AnimeWatch/animeSquare.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeSquare.txt')
+	else:
+		print('inside ccurlM')
+		cloudfareUrl('http://www.masterani.me/')
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeSquare.txt')
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
+	c.setopt(c.WRITEDATA, storage)
 	c.perform()
 	c.close()
 	content = storage.getvalue()
 	content = getContentUnicode(content)
 	
 	return (content)
+
+def ccurlGet(url):
+	
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	c = pycurl.Curl()
+	
+	if os.path.exists('/tmp/AnimeWatch/animeget.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeget.txt')
+	else:
+		print('inside ccurlGet')
+		cloudfareUrl('http://www.animeget.io/')
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeget.txt')
+	
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		
+	url = str(url)
+	c.setopt(c.URL, url)
+	storage = BytesIO()
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		c.setopt(c.WRITEDATA, storage)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return (content)
 
 def ccurlPost(url,value):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
@@ -341,7 +499,7 @@ def ccurlPost(url,value):
 	c.setopt(c.URL, url)
 	
 	storage = BytesIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
+	c.setopt(c.WRITEDATA, storage)
 	c.perform()
 	c.close()
 	content = storage.getvalue()
@@ -360,8 +518,9 @@ def findurl(i):
 	print(i)
 	global qualityVideo
 	if "solidfiles" in i:
-			content = (subprocess.check_output(['curl','-L','-A',hdr,i]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(['curl','-L','-A',hdr,i]))
+			content = ccurl(i)
+			#content = getContentUnicode(content)
 			soup = BeautifulSoup(content)
 			link = soup.find('div',{'class':'buttons'})
 			#link = soup.find('div',{'id':'ddl-row'})
@@ -373,8 +532,9 @@ def findurl(i):
 			
 			
 			
-			content = (subprocess.check_output(['curl','-L','-A',hdr,i]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(['curl','-L','-A',hdr,i]))
+			#content = getContentUnicode(content)
+			content = ccurl(i)
 			print(content)
 			final1 = re.findall('kNO = "[^"]*',content)
 			if final1:
@@ -459,8 +619,9 @@ def findurl(i):
 		content = getContentUnicode(content)
 		url = re.findall('http[^"]*solidfiles[^\n]*',content)
 		if url:
-			content = (subprocess.check_output(['curl','-L','-A',hdr,url[0]]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(['curl','-L','-A',hdr,url[0]]))
+			#content = getContentUnicode(content)
+			content = ccurl(url[0])
 			soup = BeautifulSoup(content)
 			link = soup.find('div',{'class':'btns'})
 			#print(link
@@ -507,8 +668,9 @@ def findurl(i):
 			
 			
 			
-			content = (subprocess.check_output(['curl','-L','-I','-A',hdr,url]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(['curl','-L','-I','-A',hdr,url]))
+			#content = getContentUnicode(content)
+			content = ccurl(url+'#'+'-I')
 			if "Location:" in content:
 				m = re.findall('Location: [^\n]*',content)
 				found = re.sub('Location: |\r','',m[-1])
@@ -616,8 +778,9 @@ def findurl(i):
 				url = ""
 				print("File Does Not exist")
 			print(url)
-			content = (subprocess.check_output(["curl","-L","-I","-A",hdr,"-e",i,url]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,"-e",i,url]))
+			#content = getContentUnicode(content)
+			content = ccurl(url+'#'+'-Ie'+'#'+i)
 			if "Location:" in content:
 				m = re.findall('Location: [^\n]*',content)
 				found = re.sub('Location: |\r','',m[-1])
@@ -625,8 +788,9 @@ def findurl(i):
 				url = found
 			return url
 	elif "mp4star" in i or "justmp4" in i:
-			content = (subprocess.check_output(["curl","-L","-I","-A",hdr,i]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,i]))
+			#content = getContentUnicode(content)
+			content = ccurl(i+'#'+'-I')
 			found = ""
 			if "Location:" in content:
 				m = re.findall('Location: [^\n]*',content)
@@ -666,10 +830,12 @@ def findurl(i):
 			if m:
 				#content = ccurl(m[0],"")
 				if qualityVideo == "sd":
-					content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[0]]))
+					#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[0]]))
+					content = ccurl(m[0]+'#'+'-I')
 				else:
-					content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[-1]]))
-				content = getContentUnicode(content)
+					#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[-1]]))
+					content = ccurl(m[-1]+'#'+'-I')
+				#content = getContentUnicode(content)
 				if "Location:" in content:
 					m = re.findall('Location: [^\n]*',content)
 					found = re.sub('Location: |\r','',m[-1])
@@ -684,8 +850,9 @@ def findurl(i):
 		soup = BeautifulSoup(content)
 		src = soup.find('source')['src']
 		
-		content = (subprocess.check_output(['curl','-I','-L','-A',hdr,src]))
-		content = getContentUnicode(content)
+		#content = (subprocess.check_output(['curl','-I','-L','-A',hdr,src]))
+		#content = getContentUnicode(content)
+		content = ccurl(src+'#'+'-I')
 		#print(content
 		if "Location:" in content:
 			m = re.findall('Location: [^\n]*',content)
@@ -711,8 +878,9 @@ def findurl(i):
 			src = re.sub('file:"','',a1[0])
 		else:
 			return ""
-		content = (subprocess.check_output(['curl','-L','-I','-A',hdr,src]))
-		content = getContentUnicode(content)
+		#content = (subprocess.check_output(['curl','-L','-I','-A',hdr,src]))
+		#content = getContentUnicode(content)
+		content = ccurl(src+'#'+'-I')
 		if "Location:" in content:
 			m = re.findall('Location: [^\n]*',content)
 			found = re.sub('Location: |\r','',m[0])
@@ -729,8 +897,9 @@ def findurl(i):
 				#print(n
 				found = str(urllib.parse.unquote(n))
 				print(found)
-				content1 = (subprocess.check_output(['curl','-L','-I','-A',hdr,found]))
-				content1 = getContentUnicode(content1)
+				#content1 = (subprocess.check_output(['curl','-L','-I','-A',hdr,found]))
+				#content1 = getContentUnicode(content1)
+				content1 = ccurl(found+'#'+'-I')
 				if "Location:" in content1:
 					m = re.findall('Location: [^\n]*',content1)
 					found = re.sub('Location: |\r','',m[0])
@@ -742,8 +911,9 @@ def findurl(i):
 						n1 = re.sub('_url = "','',m1[0])
 						found = str(urllib.parse.unquote(n1))
 						print(found)
-						content2 = (subprocess.check_output(['curl','-L','-I','-A',hdr,found]))
-						content2 = getContentUnicode(content2)
+						#content2 = (subprocess.check_output(['curl','-L','-I','-A',hdr,found]))
+						#content2 = getContentUnicode(content2)
+						content2 = ccurl(found+'#'+'-I')
 						if "Location:" in content2:
 							m = re.findall('Location: [^\n]*',content2)
 							found = re.sub('Location: |\r','',m[-1])
@@ -773,18 +943,21 @@ def findurl(i):
 					found1 = found[0]
 				else:
 					found1 = found
-				content = (subprocess.check_output(['curl','-I','-A',hdr,found1]))
-				content = getContentUnicode(content)
+				#content = (subprocess.check_output(['curl','-I','-A',hdr,found1]))
+				#content = getContentUnicode(content)
+				content = ccurl(found1+'#'+'-I')
 				if ('video/mp4' in content) or ('video/x-flv' in content):
 					return found1
 				else:
 					
-					content = (subprocess.check_output(['curl','-I','-A',hdr,found1]))
-					content = getContentUnicode(content)
+					#content = (subprocess.check_output(['curl','-I','-A',hdr,found1]))
+					#content = getContentUnicode(content)
+					content = ccurl(found1+'#'+'-I')
 					m = re.findall('Location: [^\n]*',content)
 					found = re.sub('Location: |\r','',m[0])
-					content = (subprocess.check_output(['curl','-I','-A',hdr,found]))
-					content = getContentUnicode(content)
+					#content = (subprocess.check_output(['curl','-I','-A',hdr,found]))
+					#content = getContentUnicode(content)
+					content = ccurl(found+'#'+'-I')
 					if ('video/mp4' in content) or ('video/x-flv' in content):
 						return found
 					else:
@@ -854,9 +1027,7 @@ class SubbedAnime():
 			url = "http://www.animechiby.com/index/"
 		elif siteName == "AnimeSquare":
 			url = "http://www.masterani.me/"
-			#if not os.path.isfile('/tmp/AnimeWatch/anime.txt'):
-			#	cloudfareUrl(url)
-			#content = subprocess.check_output(["curl","-c","/tmp/AnimeWatch/anime.txt",'-b','/tmp/AnimeWatch/anime.txt','-A',hdr,url])
+			
 			url = "http://www.masterani.me/api/anime-all"
 		elif siteName == "Anime1":
 			url = "http://www.anime1.com/content/list/"
@@ -873,11 +1044,18 @@ class SubbedAnime():
 				content1 = ccurl(urlM)
 				content2 = ccurl(url)
 			elif siteName == "AnimeSquare":
-				 content = ccurlM(url)
-			#elif siteName == "Anime1":
-			#	hdrs = {'user-agent':self.hdr}
-			#	req = requests.get(url,headers=hdrs)
-			#	content = req.text
+				content = ccurlM(url)
+				#if 'checking_browser' in content:
+				#	 content = cloudfareUrl(url)
+				#	 content = ccurlM(url)
+			elif siteName == "AnimeHQ":
+				#	hdrs = {'user-agent':self.hdr}
+				#	req = requests.get(url,headers=hdrs)
+				#	content = req.text
+				content = ccurl(url)
+			elif siteName == "Animeget":
+				content = ccurlGet(url)
+				
 			else:
 				content = ccurl(url)
 		else:
@@ -1164,7 +1342,7 @@ class SubbedAnime():
 			base = "http://www.chia-anime.tv/"
 		elif siteName == "Animeget":
 			url = "http://www.animeget.io/anime/" + name + '/'
-			base = "http://www.animeget.io/anime/"
+			base = "http://www.animeget.io/watch/"
 		elif siteName == "Animehere":
 			url = "http://www.animehere.com/anime/" + name + ".html"
 			base = "http://www.animehere.com/"
@@ -1231,6 +1409,10 @@ class SubbedAnime():
 				content = "<html>Hello World</html>"
 			elif siteName == "AnimeSquare":
 				content = ccurlM(url)
+			elif siteName == "AnimeHQ":
+				content = ccurl(url)
+			elif siteName == "Animeget":
+				content = ccurlGet(url)
 			else:
 				content = ccurl(url)
 		else:
@@ -1305,7 +1487,7 @@ class SubbedAnime():
 				print(img)
 			except:
 				img[:]=[]
-		elif siteName == "Animeget" or siteName == "Animegalaxy":
+		elif siteName == "Animegalaxy":
 			genre = ""
 			summary = ""
 			link = soup.findAll('span', { "class" : "info" })
@@ -1317,6 +1499,13 @@ class SubbedAnime():
 					genre = i.text
 					genre = genre[:-1]
 			summary = name + "\n" + summary + "\n" + genre
+		elif siteName == "Animeget":
+			genre = ""
+			summary = ""
+			link = soup.find('div', { "class" : "details" })
+			#for i in link:
+			summary = link.text
+			
 		elif siteName == "Animebox":
 			link = soup.find('div',{'id':'main-content'})
 			links = link.findAll('p')
@@ -1474,6 +1663,30 @@ class SubbedAnime():
 				if link1:
 					image = link1['src']
 					img.append(image)
+				print(img,'---------------img-------------')
+				picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				
+				if not img:
+					link = soup.findAll('meta')
+					print(link,'-------------LinkMeta-----------')
+					for i in link:
+						if 'meta content=' in str(i):
+							k = i['content']
+							if k:
+								k = re.sub(' ','',k)
+								img.append(k)
+								print(img)
+				
+				if not img:
+					img.append("No.jpg")
+					picn = "No.jpg"
+				
+				print(picn)
+			
+				if img and '#' not in picn:
+					print(img[0])
+					if img[0] != 'No.jpg':
+						ccurl(img[0]+'#'+'-o'+'#'+picn)
 			elif embed == 0:
 				img.append("No.jpg")
 			elif embed == 2:
@@ -1512,8 +1725,12 @@ class SubbedAnime():
 			elif siteName == "Animehere":
 				img = re.findall('/res/covers/[^"]*.jpg[^"]*|/images/[^"]*.jpg',content)
 				img[0] = "http://www.animehere.com" + img[0]
-			elif siteName == "Animeget" or siteName == "Animegalaxy":
+			elif siteName == "Animegalaxy":
 				img = re.findall('http[^"]*.jpg|http[^"]*jpeg',content)
+			elif siteName == "Animeget":
+				img = re.findall('/cover-anime/[^"]*.jpg[^"]*',content)
+				if img:
+					img[0]='http://www.animeget.io'+img[0]
 			elif siteName == "Animebox":
 				img =[]
 				img.append(img1)
@@ -1567,6 +1784,16 @@ class SubbedAnime():
 				print(img_src)
 				if img_src:
 					img.append(img_src)
+				print(img)
+				if not img:
+					link = soup.findAll('meta')
+					for i in link:
+						if 'meta content=' in str(i):
+							k = i['content']
+							if k:
+								k = re.sub(' ','',k)
+								img.append(k)
+								print(img)
 			#print(img
 			#if img[0] != "No.jpg":
 			#jpgn = img[0].split("/")[-1]
@@ -1580,7 +1807,11 @@ class SubbedAnime():
 		
 			if not os.path.isfile(picn) and '#' not in picn:
 				print(img[0])
-				subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
+				#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
+				if siteName == "Animeget":
+					ccurlGet(img[0]+'#'+'-o'+'#'+picn)
+				else:
+					ccurl(img[0]+'#'+'-o'+'#'+picn)
 			else:
 				print("No Image")
 		except:
@@ -1640,8 +1871,9 @@ class SubbedAnime():
 		elif (siteName == "AnimeMix"):
 			m = []
 			if embed == 0:
-				content = (subprocess.check_output(['curl','-L','-A',self.hdr,url]))
-				content = getContentUnicode(content)
+				#content = (subprocess.check_output(['curl','-L','-A',self.hdr,url]))
+				#content = getContentUnicode(content)
+				content = ccurl(url)
 				soup = BeautifulSoup(content)
 				link = soup.findAll('div',{'class':'post_content'})
 				m = []
@@ -1657,8 +1889,9 @@ class SubbedAnime():
 				print("hello")
 				m =[]
 				m[:]=[]
-				content = (subprocess.check_output(['curl','-L','-A',self.hdr,str(url)]))
-				content = getContentUnicode(content)
+				#content = (subprocess.check_output(['curl','-L','-A',self.hdr,str(url)]))
+				#content = getContentUnicode(content)
+				content = ccurl(str(url))
 				soup = BeautifulSoup(content)
 				link = []
 				link = soup.findAll('div',{'class':'su-spoiler-title'})
@@ -1751,8 +1984,9 @@ class SubbedAnime():
 					print(forward_link,'--split--')
 				if "linkbucks" in forward_link or "bc.vc" in forward_link or "qqc.co" in forward_link or "urlbeat.net" in forward_link:
 					if "linkbucks" in forward_link or "qqc.co" in forward_link or "urlbeat.net" in forward_link:
-						content = (subprocess.check_output(['curl','-I','-L',forward_link]))
-						content = getContentUnicode(content)
+						#content = (subprocess.check_output(['curl','-I','-L',forward_link]))
+						#content = getContentUnicode(content)
+						content = ccurl(forward_link+'#'+'-I')
 						m = re.findall('Location: [^\n]*', content)
 						#print(m
 						if m:
@@ -1794,8 +2028,10 @@ class SubbedAnime():
 						print(final1)
 					else:
 			
-						content = (subprocess.check_output(['curl','-I','-L',forward_link]))
-						content = getContentUnicode(content)
+						#content = (subprocess.check_output(['curl','-I','-L',forward_link]))
+						#content = getContentUnicode(content)
+						content = ccurl(forward_link+'#'+'-IA')
+						print(content)
 						m = re.findall('Location: [^\n]*', content)
 						#print(m
 						if m:
@@ -1808,8 +2044,9 @@ class SubbedAnime():
 					#content = open('1.txt','r').read()
 					hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 					
-					content = (subprocess.check_output(['curl','-L','-A',self.hdr,final1]))
-					content = getContentUnicode(content)
+					#content = (subprocess.check_output(['curl','-L','-A',self.hdr,final1]))
+					#content = getContentUnicode(content)
+					content = ccurl(final1)
 				m = []
 				m[:]=[]
 				soup = BeautifulSoup(content)
@@ -1915,15 +2152,24 @@ class SubbedAnime():
 			elif siteName == "GoodAnime":
 				link = soup.findAll('div',{ 'class':'postlist'})
 			elif siteName == "Animeget":
-				link = soup.findAll('div',{ 'class':'abso'})
+				#link = soup.findAll('div',{ 'class':'abso'})
+				#print(content)
+				li = re.findall("/ep.php[^']id[^']*",content)
+				if li:
+					li1 = 'http://www.animeget.io'+li[0]
+					print(li1)
+					content1 = ccurlGet(li1)
+					soup1 = BeautifulSoup(content1,'lxml')
+					link = soup1.findAll('a')
 			elif siteName == "Animegalaxy":
 				#link = soup.findAll('div',{ 'class':'post'})
 				link = soup.findAll('a',{ 'itemprop':'url'})
 			else:
 				link = soup.findAll('div',{ 'id':'videos'})
-			if siteName == "Animegalaxy":
+			if siteName == "Animegalaxy" or siteName == "Animeget":
 				for i in link:
-					m.append(i['href'])
+					if 'href' in str(i):
+						m.append(i['href'])
 			else:
 				for i in link:
 						
@@ -1942,6 +2188,7 @@ class SubbedAnime():
 			soup = BeautifulSoup(content)
 			link = soup.findAll('li')
 			m = []
+			print(link,'---------animehq---epn')
 			for i in link:
 				j = i.find('a')
 				if j and 'href' in str(j):
@@ -1953,12 +2200,14 @@ class SubbedAnime():
 							m.append(l[0])
 							m.append(l[1])
 			print(m)
-
-			lower = int(m[0])
-			upper = int(m[-1])
-			m[:]=[]
-			for i in range(lower,upper+1):
-				m.append(str(i))
+			try:
+				lower = int(m[0])
+				upper = int(m[-1])
+				m[:]=[]
+				for i in range(lower,upper+1):
+					m.append(str(i))
+			except:
+				print('No Episode Found')
 				
 			print(m)
 			
@@ -2072,13 +2321,15 @@ class SubbedAnime():
 		elif siteName == "Animegalaxy":
 			url = "http://www.chia-anime.tv/" + epn + '/'
 		elif siteName == "Animeget":
-			url = "http://www.animeget.io/episode/" + epn
+			url = "http://www.animeget.io/watch/" + epn
 		elif siteName == "Animehere":
 			url = "http://www.animehere.com/" + epn + ".html"
 		elif siteName == "AnimePlus":
 			url = "http://www.animeplus.tv/" + epn
 			if not os.path.isfile('/tmp/AnimeWatch/cookie.txt'):
-					subprocess.call(["curl","-A",self.hdr,"-c","/tmp/AnimeWatch/cookie.txt","-I","http://www.animeplus.tv"])
+					#subprocess.call(["curl","-A",self.hdr,"-c","/tmp/AnimeWatch/cookie.txt","-I","http://www.animeplus.tv"])
+					ccurl_setcookie('http://www.animeplus.tv/')
+					#content = ccurl_cookie(url)
 		elif siteName == "AnimeWow":
 			url = "http://www.animewow.org/" + epn
 		elif siteName == "Animebox":
@@ -2115,8 +2366,7 @@ class SubbedAnime():
 			name1 = name.split(',',1)[1]
 			epncnt = name.split(',',1)[0]
 			url = "http://www.masterani.me/anime/watch/" + name1+"/" + epn
-			#if not os.path.isfile('/tmp/AnimeWatch/anime.txt'):
-			#	cloudfareUrl(url)
+			
 		elif siteName == "Anime1":
 			url = "http://www.anime1.com/watch/"+name+"/" + epn
 		elif siteName == "AnimeAll":
@@ -2128,7 +2378,7 @@ class SubbedAnime():
 			url = epn.split(' ')[1]
 		print(url)
 		
-		if siteName == "Animeget" or siteName == "Animegalaxy":
+		if siteName == "Animegalaxy":
 				content = ccurl(url)
 				final = ""
 				soup = BeautifulSoup(content)
@@ -2171,7 +2421,20 @@ class SubbedAnime():
 						final2 = re.findall('http://[^"]*video44[^"]*',content)
 						if final2:
 							final = findurl(final2[0])
-			
+		elif siteName == "Animeget":
+			content = ccurlGet(url)
+			m = re.findall('/download[^"]id[^"]*',content)
+			print(m)
+			if m:
+				urlN = "http://www.animeget.io"+m[0]
+				content = ccurl(urlN+'#'+'-Ib'+'#'+'/tmp/AnimeWatch/animeget.txt')
+				n = re.findall('Location: [^\n]*', content)
+				print(n)
+				if n:
+					#print(m
+					final1 = n[-1]
+					final = re.sub('Location: |\r', '', final1)
+					
 		elif siteName == "Animebox":
 			content = ccurl(url)
 			m = re.findall('http[^"]*hash[^"]*',content)
@@ -2248,7 +2511,7 @@ class SubbedAnime():
 				final = findurl(str(m[mirrorNo]))
 				 
 		elif siteName == "AnimeSquare":
-			content = ccurl(url)
+			content = ccurlM(url)
 			soup = BeautifulSoup(content)
 			content1 = soup.findAll('script',{'type':'text/javascript'})
 			final = ""
@@ -2337,14 +2600,16 @@ class SubbedAnime():
 			else:
 				shrink_link = shrink_url(str(url))
 
-	
+			if 'linkshrink' in shrink_link:
+				shrink_link = shrink_url(str(url))
 	
 			if "mediafire" in shrink_link or "embedupload" in shrink_link or "solidfiles" in shrink_link or "mirrorcreator" in shrink_link or "tusfiles" in shrink_link:
 				final = findurl(shrink_link)
 			else:
-				content = (subprocess.check_output(['curl','-I','-L',shrink_link]))
-				content = getContentUnicode(content)
+				#content = (subprocess.check_output(['curl','-I','-L',shrink_link]))
+				#content = getContentUnicode(content)
 				#print(content
+				content = ccurl(shrink_link+'#'+'-IA')
 				m = []
 				m[:] = []
 				m = re.findall('Location: [^\n]*', content)
@@ -2452,8 +2717,9 @@ class SubbedAnime():
 			print(final_q)
 			if final_q:
 				
-				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,final_q]))
-				content = getContentUnicode(content)
+				#content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,final_q]))
+				#content = getContentUnicode(content)
+				content = ccurl(final_q+'#'+'-I')
 				print(content)
 				m = re.findall('Location: https[^\n]*', content)
 				#print(m
@@ -2530,8 +2796,9 @@ class SubbedAnime():
 						arr.append(tmp)
 					final1 = arr[0]
 					print(final1)
-					content = (subprocess.check_output(["curl","-A",self.hdr,"-I",final1]))
-					content = getContentUnicode(content)
+					#content = (subprocess.check_output(["curl","-A",self.hdr,"-I",final1]))
+					#content = getContentUnicode(content)
+					content = ccurl(final1+'#'+'-I')
 					print(content)
 					m[:]=[]
 					m = re.findall('https[^\n]*', content)
@@ -2612,7 +2879,13 @@ class SubbedAnime():
 							print(final1)
 							final.append(final1)
 		elif siteName == "AnimeHQ":
-			content = ccurl(url)
+			#content = ccurl(url)
+			#soup = BeautifulSoup(content)
+			
+			#content = ccurl(url)
+			cloudfareUrl(url)
+			content = open('/tmp/AnimeWatch/moetube.txt').read()
+			print(content)
 			soup = BeautifulSoup(content)
 			"""
 			#link = soup.find('div',{'id':'vidholder'})
@@ -2628,13 +2901,15 @@ class SubbedAnime():
 			print(link1)
 			"""
 			glink1 = re.findall("var glink = '[^']*",content)
+			print(glink1)
 			glink = re.sub("var glink = '",'',glink1[0])
 			print(glink)
 			url1 = urllib.parse.quote(url)
 			link1 = "https://docs.google.com/get_video_info?eurl="+url1+"&authuser=&docid="+glink
 			print(link1)
-			content = (subprocess.check_output(['curl','-L','-A',self.hdr,link1]))
-			content = getContentUnicode(content)
+			#content = (subprocess.check_output(['curl','-L','-A',self.hdr,link1]))
+			#content = getContentUnicode(content)
+			content = ccurl(link1)
 			content = urllib.parse.unquote(content)
 			#print(content)
 			cont1 = content.split('|')
@@ -2699,9 +2974,9 @@ class SubbedAnime():
 				elif sd:
 					link1 = sd
 				
-			content = (subprocess.check_output(['curl','-I','-L','-A',self.hdr,link1]))
-			content = getContentUnicode(content)
-			
+			#content = (subprocess.check_output(['curl','-I','-L','-A',self.hdr,link1]))
+			#content = getContentUnicode(content)
+			content = ccurl(link1+'#'+'-I')
 			m = re.findall('Location: [^\n]*',content)
 			if m:
 				final = re.sub('Location: |\r','',m[-1])

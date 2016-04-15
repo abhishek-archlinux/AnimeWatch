@@ -1,7 +1,7 @@
 import urllib 
 import sys
 import pycurl
-from io import StringIO
+from io import StringIO,BytesIO
 import re
 import subprocess
 from subprocess import check_output
@@ -18,10 +18,7 @@ def naturallysorted(l):
 	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
 	return sorted(l, key = alphanum_key)
 	
-def ccurl(url):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
-	
-	content = subprocess.check_output(['curl','-L','-A',hdr,url]) 
+def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
 		try:
@@ -32,8 +29,94 @@ def ccurl(url):
 		print(type(content))
 		content = str(content)
 		print("I'm unicode")
+	return content
+def ccurl(url):
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print(url)
+	c = pycurl.Curl()
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	postfield = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		elif curl_opt == '-Ie':
+			rfr = nUrl.split('#')[2]
+		elif curl_opt == '-Icb' or curl_opt == '-bc':
+			cookie_file = nUrl.split('#')[2]
+		if curl_opt == '-d':
+			post = nUrl.split('#')[2]
+			post = re.sub('"','',post)
+			post = re.sub("'","",post)
+			post1 = post.split('=')[0]
+			post2 = post.split('=')[1]
+			post_data = {post1:post2}
+			postfield = urllib.parse.urlencode(post_data)
+	url = str(url)
+	c.setopt(c.URL, url)
+	storage = BytesIO()
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Ie':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-IA':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Icb':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			if os.path.exists(cookie_file):
+				os.remove(cookie_file)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-bc':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-L':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		elif curl_opt == '-d':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.POSTFIELDS,postfield)
+		else:
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
 	
-	return (content)
 
 
 class AnimePlace():
@@ -118,14 +201,9 @@ class AnimePlace():
 				print(final)
 
 			print("Mirror: " + mir)
-			content = (subprocess.check_output(["curl","-I","-A",self.hdr,final]))
-			if isinstance(content,bytes):
-				print("I'm byte")
-				content = str((content).decode('utf-8'))
-			else:
-				print(type(content))
-				content = str(content)
-				print("I'm unicode")
+			#content = (subprocess.check_output(["curl","-I","-A",self.hdr,final]))
+			content = ccurl(final+'#'+'-I')
+			
 			location = re.findall("Location:[^\n]*",content)
 			location1 = ""
 			if location:
@@ -135,14 +213,9 @@ class AnimePlace():
 				final = mir + url[0]
 				final = re.sub("&res=","",final)
 				print(final)
-				content = (subprocess.check_output(["curl","-I","-A",self.hdr,final]))
-				if isinstance(content,bytes):
-					print("I'm byte")
-					content = str((content).decode('utf-8'))
-				else:
-					print(type(content))
-					content = str(content)
-					print("I'm unicode")
+				#content = (subprocess.check_output(["curl","-I","-A",self.hdr,final]))
+				content = ccurl(final+'#'+'-I')
+				
 				location = re.findall("Location:[^\n]*",content)
 				location1 = ""
 				if location:
@@ -172,7 +245,8 @@ class AnimePlace():
 		picn = "/tmp/AnimeWatch/" + name + ".jpg"
 		try:
 			if not os.path.isfile(picn):
-				subprocess.call(["curl","-A",self.hdr,"-o",picn,img[0]])
+				#subprocess.call(["curl","-A",self.hdr,"-o",picn,img[0]])
+				ccurl(img[0]+'#'+'-o'+'#'+picn)
 		except:
 			print("No Cover")
 		soup = BeautifulSoup(content)

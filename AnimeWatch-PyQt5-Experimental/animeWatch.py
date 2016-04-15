@@ -18,7 +18,7 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-from PyQt5 import QtCore, QtGui,QtNetwork,QtWebKit,QtWidgets,QtWebKitWidgets
+from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebKitWidgets
 import sys
 import urllib
 import pycurl
@@ -61,7 +61,7 @@ from PyQt5 import QtDBus
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,
                           pyqtProperty)
 from PyQt5.QtDBus import QDBusConnection, QDBusAbstractAdaptor
-
+#import gc
 
 def getContentUnicode(content):
 	if isinstance(content,bytes):
@@ -113,41 +113,101 @@ def progressBar(cmd):
 	
 	return content
 
+
+
+
 def ccurl(url):
-	global site
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
-	
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
-	#content = (subprocess.check_output(['curl','-L','-A',hdr,url]))
-	
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print(url)
 	c = pycurl.Curl()
-	c.setopt(c.FOLLOWLOCATION, True)
-	c.setopt(c.USERAGENT, hdr)
-	
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	postfield = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		elif curl_opt == '-Ie' or curl_opt == '-e':
+			rfr = nUrl.split('#')[2]
+		elif curl_opt == '-Icb' or curl_opt == '-bc':
+			cookie_file = nUrl.split('#')[2]
+		if curl_opt == '-d':
+			post = nUrl.split('#')[2]
+			post = re.sub('"','',post)
+			post = re.sub("'","",post)
+			post1 = post.split('=')[0]
+			post2 = post.split('=')[1]
+			post_data = {post1:post2}
+			postfield = urllib.parse.urlencode(post_data)
 	url = str(url)
 	c.setopt(c.URL, url)
-	
 	storage = BytesIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
-	c.perform()
-	c.close()
-	content = storage.getvalue()
-	
-	content = getContentUnicode(content)
-	progress.setValue(100)
-	progress.hide()
-	return content
-
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Ie':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-e':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-IA':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Icb':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			if os.path.exists(cookie_file):
+				os.remove(cookie_file)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-bc':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-L':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		elif curl_opt == '-d':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.POSTFIELDS,postfield)
+		else:
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
 
 class MPRIS2Helper(object):
 	def __init__(self):
@@ -450,7 +510,8 @@ class Browser(QtWebKitWidgets.QWebView):
 				thumb = '/tmp/AnimeWatch/'+name1+'.jpg'
 			else:
 				thumb = '/tmp/AnimeWatch/'+name+'.jpg'
-			subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
+			#subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
+			ccurl(final+'#'+'-o'+'#'+thumb)
 		else:
 			if site == "Music" and (option == "Download As Fanart" or option == "Download As Cover"):
 				print(url1,'--artist-link---')
@@ -474,7 +535,8 @@ class Browser(QtWebKitWidgets.QWebView):
 				thumb = '/tmp/AnimeWatch/'+name+'.jpg'
 				try:
 					if final.startswith('http'):
-						subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
+						#subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
+						ccurl(final+'#'+'-o'+'#'+thumb)
 				except:
 					pass
 		print (option)
@@ -602,9 +664,11 @@ class ThreadingExample(QtCore.QThread):
 		if img:
 			url = img[0]
 			try:
-				subprocess.call(["curl","-o",thumb,url])
+				#subprocess.call(["curl","-o",thumb,url])
+				ccurl(url+'#'+'-o'+'#'+thumb)
 			except:
-				subprocess.call(["curl",'--data-urlencode',"-o",thumb,url])
+				#subprocess.call(["curl",'--data-urlencode',"-o",thumb,url])
+				pass
 
 		f = open('/tmp/AnimeWatch/'+name+'.txt','w')
 		for i in img:
@@ -613,6 +677,20 @@ class ThreadingExample(QtCore.QThread):
 		#self.terminate()
 
 
+
+class downloadThread(QtCore.QThread):
+    
+	def __init__(self,url):
+		QtCore.QThread.__init__(self)
+	
+		self.url = url
+		self.interval = 1
+
+	def __del__(self):
+		self.wait()                        
+	
+	def run(self):
+		ccurl(self.url)
 
 class MainWindowWidget(QtWidgets.QWidget):
 	def __init__(self):
@@ -2926,7 +3004,9 @@ class List2(QtWidgets.QListWidget):
 		self.setAcceptDrops(True)
 		self.setDragEnabled(True)
 		self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
-
+		self.downloadWget = []
+		self.downloadWget_cnt = 0
+		
 	#def mouseMoveEvent(self,event):
 	#ui.dockWidget_3.hide()
 	#if not self.hasFocus():
@@ -3380,6 +3460,22 @@ class List2(QtWidgets.QListWidget):
 			nam1 = nam
 			print (nam)
 			index = ""
+			if not self.downloadWget:
+				self.downloadWget[:] = []
+				self.downloadWget_cnt = 0
+			else:
+				running = False
+				len_down = len(self.downloadWget)
+				for i in range(len_down):
+					if self.downloadWget[i].isRunning():
+						running = True
+						break
+				if not running:
+					self.downloadWget[:] = []
+					self.downloadWget_cnt = 0
+				else:
+					print('--Thread Already Running--')
+					return 0
 			#if option != "FindAll":
 			if var == 1 or var == 3:
 				scode = subprocess.check_output(["zenity","--entry","--text","Enter Anime Name Manually"])
@@ -3602,12 +3698,31 @@ class List2(QtWidgets.QListWidget):
 							newEpn = newEpn.replace('#','')
 							dest = home+"/thumbnails/"+name+'/'+newEpn+'.jpg'
 							img_url= i.replace('\n','')
-							command = "wget --user-agent="+'"'+hdr+'" '+'"'+img_url+'"'+" -O "+dest
-							ua = "--user-agent="+'"'+hdr+'"'
-							subprocess.Popen(["wget",ua,img_url,"-O",dest])
+							#command = "wget --user-agent="+'"'+hdr+'" '+'"'+img_url+'"'+" -O "+dest
+							#ua = "--user-agent="+'"'+hdr+'"'
+							#subprocess.Popen(["wget",ua,img_url,"-O",dest])
+							self.downloadWget.append(downloadThread(img_url+'#'+'-o'+'#'+dest))
+							self.downloadWget[len(self.downloadWget)-1].finished.connect(self.download_thread_finished)
 						r = r+1
 				ui.update_list2()
 				
+			if self.downloadWget:
+				length = len(self.downloadWget)
+				for i in range(5):
+					if i < length:
+						#self.infoWget(self.downloadWget[i],i)
+						self.downloadWget[i].start()
+	def download_thread_finished(self):
+		print ("Process Ended")
+		self.downloadWget_cnt = self.downloadWget_cnt+1
+		if self.downloadWget_cnt == 5:
+			self.downloadWget = self.downloadWget[5:]
+			length = len(self.downloadWget)
+			self.downloadWget_cnt = 0
+			for i in range(5):
+				if i < length:
+					self.downloadWget[i].start()
+					
 	def triggerPlaylist(self,value):
 		global epn,epn_name_in_list,path_final_Url,home,site,pre_opt,base_url,embed,name,epnArrList,opt,finalUrlFound,refererNeeded
 		print ('Menu Clicked')
@@ -5012,6 +5127,7 @@ class tab5(QtWidgets.QWidget):
 		global rfr_url
 		print ("------------ccurlHead------------")
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		"""
 		if rfr_url:
 			content = subprocess.check_output(['curl','-g','-I','-A',hdr,'-e',rfr_url,url])
 		else:
@@ -5022,6 +5138,11 @@ class tab5(QtWidgets.QWidget):
 		elif isinstance(content,bytes):
 			print("I'm byte")
 			content = (bytes(content).decode('utf-8'))
+		"""
+		if rfr_url:
+			content = ccurl(url+'#'+'-Ie'+'#'+rfr_url)
+		else:
+			content = ccurl(url+'#'+'-I')
 		return content
 	def urlResolveSize(self,url):
 		m =[]
@@ -6043,7 +6164,7 @@ class Ui_MainWindow(object):
 		
 		self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
 		self.dialog = QtWidgets.QDialog()
-		self.web = QWebView(self.tab_2)
+		#self.web = QWebView(self.tab_2)
 		self.web = Browser()
 		self.web.setObjectName(_fromUtf8("web"))
 		self.horizontalLayout_5.addWidget(self.web)
@@ -6535,6 +6656,8 @@ class Ui_MainWindow(object):
 		self.downloadWget_cnt = 0
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
+	def quitApp(self):
+		app.quit()
 	def queueList_return_pressed(self,r):
 		t = self.queue_url_list[r]
 		del self.queue_url_list[r]
@@ -8831,9 +8954,12 @@ class Ui_MainWindow(object):
 				self.tab_5.show()
 	def webHide(self):
 		global view_layout
+		#homeN = home+'/src/default.html'
+		#self.web.load(QUrl(homeN))
 		self.tab_2.hide()
 		#self.web.clear()
-	
+		#self.web.close()
+		
 		self.list1.show()
 		self.list2.show()
 		self.label.show()
@@ -9505,8 +9631,23 @@ class Ui_MainWindow(object):
 				f.close()
 		
 		self.update_list2()
-		self.downloadWget[:]=[]
-		self.downloadWget_cnt = 0
+		
+		if not self.downloadWget:
+			self.downloadWget[:] = []
+			self.downloadWget_cnt = 0
+		else:
+			running = False
+			len_down = len(self.downloadWget)
+			for i in range(len_down):
+				if self.downloadWget[i].isRunning():
+					running = True
+					break
+			if not running:
+				self.downloadWget[:] = []
+				self.downloadWget_cnt = 0
+			else:
+				print('--Thread Already Running--')
+				return 0
 		if (site != "Local" and site != "Video"):
 			for r in range(len(epnArrList)):
 				if finalUrlFound == True:
@@ -9528,17 +9669,28 @@ class Ui_MainWindow(object):
 					if img_url.startswith('//'):
 						img_url = "http:"+img_url
 						command = "wget --user-agent="+'"'+hdr+'" '+'"'+img_url+'"'+" -O "+'"'+dest+'"'
-						#ua = "--user-agent="+'"'+hdr+'"'
-						#subprocess.Popen(["wget",ua,img_url,"-O",dest])
-						self.downloadWget.append(command)
+						#self.downloadWget.append(command)
+						self.downloadWget.append(downloadThread(img_url+'#'+'-o'+'#'+dest))
+						self.downloadWget[len(self.downloadWget)-1].finished.connect(self.download_thread_finished)
+						#self.threadPool[len(self.threadPool)-1].start()
 					
 			if self.downloadWget:
 				length = len(self.downloadWget)
 				for i in range(5):
 					if i < length:
-						self.infoWget(self.downloadWget[i],i)
+						#self.infoWget(self.downloadWget[i],i)
+						self.downloadWget[i].start()
 				
-		
+	def download_thread_finished(self):
+		print ("Process Ended")
+		self.downloadWget_cnt = self.downloadWget_cnt+1
+		if self.downloadWget_cnt == 5:
+			self.downloadWget = self.downloadWget[5:]
+			length = len(self.downloadWget)
+			self.downloadWget_cnt = 0
+			for i in range(5):
+				if i < length:
+					self.downloadWget[i].start()
 	def posterfound(self,nav):
 			global name,posterManually,hdr,site,img_arr_artist
 			
@@ -9612,9 +9764,11 @@ class Ui_MainWindow(object):
 									url = img_arr_artist[0]
 									del img_arr_artist[0]
 									try:
-										subprocess.call(["curl","-o",thumb,url])
+										#subprocess.call(["curl","-o",thumb,url])
+										ccurl(url+'#'+'-o'+'#'+thumb)
 									except:
-										subprocess.call(["curl",'--data-urlencode',"-o",thumb,url])
+										#subprocess.call(["curl",'--data-urlencode',"-o",thumb,url])
+										pass
 									picn = thumb
 									self.label.clear()
 									if os.path.isfile(picn):
@@ -9625,6 +9779,7 @@ class Ui_MainWindow(object):
 							url = img_arr_artist[0]
 							del img_arr_artist[0]
 							subprocess.call(["curl","-o",thumb,url])
+							ccurl(url+'#'+'-o'+'#'+thumb)
 							picn = thumb
 							self.label.clear()
 							if os.path.isfile(picn):
@@ -9689,7 +9844,8 @@ class Ui_MainWindow(object):
 						if (".jpg" in url or ".png" in url) and "http" in url:
 							picn = "/tmp/AnimeWatch/"+name+".jpg"
 							if not nav:
-								subprocess.call(["curl","-A",hdr,"-L","-o",picn,url])
+								#subprocess.call(["curl","-A",hdr,"-L","-o",picn,url])
+								ccurl(url+'#'+'-o'+'#'+picn)
 								self.label.clear()
 								if os.path.isfile(picn):
 									img = QtGui.QPixmap(picn, "1")
@@ -9835,7 +9991,8 @@ class Ui_MainWindow(object):
 							print (lines)
 							url1 = re.sub('\n|#','',lines[0])
 							url = "http://thetvdb.com/" + url1
-							subprocess.call(["curl","-o",thumb,url])
+							#subprocess.call(["curl","-o",thumb,url])
+							ccurl(url+'#'+'-o'+'#'+thumb)
 							#subprocess.call(["sh","/home/abhishek/.kodi/addons/plugin.subbed.anime/reload.sh", thumb ])
 							picn = thumb
 							self.label.clear()
@@ -9882,8 +10039,8 @@ class Ui_MainWindow(object):
 							for i in lines:
 								f.write(i)
 							f.close()
-							subprocess.call(["curl","-o",thumb,url])
-						
+							#subprocess.call(["curl","-o",thumb,url])
+							ccurl(url+'#'+'-o'+'#'+thumb)
 							picn = thumb
 							self.label.clear()
 							if os.path.isfile(picn):
@@ -10876,7 +11033,7 @@ class Ui_MainWindow(object):
 		key = self.line.text()
 		if key:
 			name1 = str(key)
-		old_manager = self.web.page().networkAccessManager()
+		#old_manager = self.web.page().networkAccessManager()
 		
 		nam = NetWorkManager()
 		self.web.page().setNetworkAccessManager(nam)
@@ -11017,7 +11174,10 @@ class Ui_MainWindow(object):
 			else:
 				m.append("Summary Not Available")
 			j = 0
-			summary = m.pop()
+			try:
+				summary = m.pop()
+			except:
+				summary = 'Summary Not Available'
 			self.text.clear()
 			
 			self.text.lineWrapMode()
@@ -11026,7 +11186,10 @@ class Ui_MainWindow(object):
 				#self.text.insertPlainText(name +' : '+'\n')
 				pass
 			self.text.insertPlainText(summary)
-			picn = m.pop()
+			try:
+				picn = m.pop()
+			except:
+				picn = 'No.jpg'
 			
 				
 			if os.path.isfile(str(picn)):
@@ -11564,7 +11727,8 @@ class Ui_MainWindow(object):
 						else:
 							m = site_var.getEpnList(siteName,name,embed,category)
 							
-						
+						if not m:
+							return 0
 						if ("LINK:" in m[0]) or '#' in t_name:
 							
 							if "LINK:INFO" == m[0]:
@@ -11817,9 +11981,14 @@ class Ui_MainWindow(object):
 				self.text.clear()
 				self.text.lineWrapMode()
 				#self.text.insertPlainText(name +' : '+'\n')
-				
-				summary = m.pop()
-				picn = m.pop()
+				try:
+					summary = m.pop()
+				except:
+					summary = "Summary Not Available"
+				try:
+					picn = m.pop()
+				except:
+					picn = "No.jpg"
 				#print m
 				print (picn)
 				
@@ -12940,7 +13109,8 @@ class Ui_MainWindow(object):
 				url = img_arr_artist[0]
 				del img_arr_artist[0]
 				
-				subprocess.call(["curl","-o",thumb,url])
+				#subprocess.call(["curl","-o",thumb,url])
+				ccurl(url+'#'+'-o'+'#'+thumb)
 				picn = thumb
 				self.label.clear()
 				if os.path.isfile(picn):
@@ -15513,26 +15683,12 @@ if __name__ == "__main__":
 		m = os.listdir(home+'/src/Plugins')
 		m.sort()
 		for i in m:
-			 if '.py' in i and '.pyc' not in i:
-				 i = i.replace('.py','')
-				 #j = home+'/src/Plugins/'+i
-				 #cmd = 'from '+ i+' import '+i
-				 #exec (cmd)
-				 default_option_arr.append(i)
+			if '.py' in i and '.pyc' not in i:
+				i = i.replace('.py','')
+				if i != 'headlessBrowser':
+					default_option_arr.append(i)
 	
-	"""
-	if os.path.exists('./Plugins'):
-		sys.path.append('./Plugins')
-		print "plugins"
-		m = os.listdir('./Plugins')
-		for i in m:
-			 if '.py' in i and '.pyc' not in i:
-				 i = i.replace('.py','')
-				 #j = home+'/src/Plugins/'+i
-				 cmd = 'from '+ i+' import '+i
-				 exec cmd
-				 default_option_arr.append(i)
-	"""
+	
 	f = open(home+"/History/queue.m3u","w")
 	f.write("#EXTM3U")
 	f.close()
@@ -15604,7 +15760,10 @@ if __name__ == "__main__":
 	print(int(MainWindow.winId()))
 	#myFilter	 = MyEventFilter()
 	#app.installEventFilter(myFilter)
+	#gc.disable()
 	ret = app.exec_()
+	
+	#app.deleteLater()
 	if os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","w")
 		f.write("DefaultPlayer="+Player)
@@ -15613,9 +15772,11 @@ if __name__ == "__main__":
 		f.write("\nThumbnail_Size="+str(iconv_r))
 		f.write("\nView="+str(viewMode))
 		f.close()
+	
+	print(ret,'--Return--')
+	del app
 	sys.exit(ret)
-	#if os.path.isfile('cookie.txt'):
-		#os.remove('cookie.txt')
+	
 	
 	
 

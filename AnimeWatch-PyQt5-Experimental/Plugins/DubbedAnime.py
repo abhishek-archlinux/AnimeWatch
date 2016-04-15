@@ -23,9 +23,107 @@ def replace_all(text, di):
 	for i, j in di.iteritems():
 		text = text.replace(i, j)
 	return text
-	
+def getContentUnicode(content):
+	if isinstance(content,bytes):
+		print("I'm byte")
+		try:
+			content = str((content).decode('utf-8'))
+		except:
+			content = str(content)
+	else:
+		print(type(content))
+		content = str(content)
+		print("I'm unicode")
+	return content
+def ccurlNew(url):
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print(url)
+	c = pycurl.Curl()
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	postfield = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		elif curl_opt == '-Ie':
+			rfr = nUrl.split('#')[2]
+		elif curl_opt == '-Icb' or curl_opt == '-bc':
+			cookie_file = nUrl.split('#')[2]
+		if curl_opt == '-d':
+			post = nUrl.split('#')[2]
+			post = re.sub('"','',post)
+			post = re.sub("'","",post)
+			post1 = post.split('=')[0]
+			post2 = post.split('=')[1]
+			post_data = {post1:post2}
+			postfield = urllib.parse.urlencode(post_data)
+	url = str(url)
+	c.setopt(c.URL, url)
+	storage = BytesIO()
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Ie':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-IA':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Icb':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			if os.path.exists(cookie_file):
+				os.remove(cookie_file)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-bc':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-L':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		elif curl_opt == '-d':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.POSTFIELDS,postfield)
+		else:
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
+		
 def ccurl(url,value):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:35.0) Gecko/20100101 Firefox/35.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	
 	c = pycurl.Curl()
 	if value == "no_redir":
@@ -43,14 +141,11 @@ def ccurl(url,value):
 	c.setopt(c.URL, url)
 	
 	storage = BytesIO()
-	c.setopt(c.WRITEFUNCTION, storage.write)
+	c.setopt(c.WRITEDATA, storage)
 	c.perform()
 	c.close()
-	try:
-		content = (storage.getvalue()).decode('utf-8')
-	except:
-		content = str(storage.getvalue())
-	
+	content = storage.getvalue()
+	content = getContentUnicode(content)
 	return (content)
 	
 def simplyfind(i):
@@ -76,6 +171,7 @@ def simplyfind(i):
 def findurl(url):
 	final = ""
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print('--------findurl-----',url)
 	if "myvidstream" in str(url):
 		#print("myvidstream="+url
 		packed = ''
@@ -104,58 +200,22 @@ def findurl(url):
 					if fi:
 						final = fi[0]
 			
-		"""
-		link = re.findall('eval[(][^"]*.split',content)
-		print(len(link))
-		req = str(link[1])
-		print(req)
-		m = re.findall('/[a-z]/[^/]/[a-z]',req)
-		print(m)
-		if m:
-			l = m[0].split('/')
-			num = l[2]
-			print(num)
-		i = req.split('|')
-		k = 0
-		for j in i:
-			if "video" == str(j):
-				flv = i[k+1]
-				if not flv:
-					flv = i[k+2]
-				if "srv" in flv:
-					server = flv
-				elif "flvplayer" == flv:
-					server = ""
-				else:
-					server = flv
-			if 'mp4' == str(j) or "flv" == str(j):
-				icode = i[k+1]
-			k = k+1 
-		print(str(num))
-		print(icode)
-		if not server:
-			#final = "http://myvidstream.net/files/"+num+"/"+icode+"/video.mp4?start=0"
-			final = "http://myvidstream.net:182/d/"+icode+"/video.mp4"
-		else:
-			#final = "http://"+server+".myvidstream.net/files/"+num+"/"+icode+"/video.mp4?start=0"
-			final = "http://"+server+".myvidstream.net:182/d/"+icode+"/video.mp4"
-		print(final)
-		"""
+		
 	elif "vidup" in str(url):
 		m = re.findall('http://[^"]*&bg',url)
 		m1 = re.sub('&bg*','',m[0])
 		final = simplyfind(m1)
-	elif "uploadc" in str(url):
-		content = ccurl(url,'')
-		replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
-		m = re.findall("[']http://[^']*.mp4",content)
-		print(m)
+	elif 'uploadcrazy' in str(url):
+		print('------Inside Uploadcrazy----')
+		content = ccurlNew(url)
+		#print(content+'\n')
+		print('-------------uploadcrazy---------')
+		m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
 		if m:
-			#final = replace_all(m[0], replc)
-			final = str(urllib.parse.unquote(m[0]))
-			final = re.sub("[']",'',final)
-			final = final + "?start=0"
-			print(final)
+			final = re.sub('file: "','',m[0])
+		else:
+			final = ""
+	
 	elif "yourupload" in str(url):
 			i = url.replace(r'#038;','')
 			#content = subprocess.check_output(["curl","-L","-A",hdr,i])
@@ -168,14 +228,8 @@ def findurl(url):
 				url = ""
 				print("File Does Not exist")
 			print(url)
-			content = (subprocess.check_output(["curl","-L","-I","-A",hdr,"-e",i,url]))
-			if isinstance(content,bytes):
-				print("I'm byte")
-				content = str((content).decode('utf-8'))
-			else:
-				print(type(content))
-				content = str(content)
-				print("I'm unicode")
+			#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,"-e",i,url]))
+			content = ccurlNew(url+'#'+'-Ie'+'#'+i)
 			if "Location:" in content:
 				m = re.findall('Location: [^\n]*',content)
 				found = re.sub('Location: |\r','',m[-1])
@@ -189,21 +243,28 @@ def findurl(url):
 		
 		src = soup.find('source')['src']
 		if src:
-			content = (subprocess.check_output(['curl','-I','-L','-A',hdr,src]))
+			#content = (subprocess.check_output(['curl','-I','-L','-A',hdr,src]))
 			#print(content
-			if isinstance(content,bytes):
-				print("I'm byte")
-				content = str((content).decode('utf-8'))
-			else:
-				print(type(content))
-				content = str(content)
-				print("I'm unicode")
+			content = ccurlNew(src+'#'+'-I')
+			
 			if "Location:" in content:
 				m = re.findall('Location: [^\n]*',content)
 				final = re.sub('Location: |\r','',m[-1])
 				print(final)
 			else:
 				final = ""
+	
+	elif "uploadc" in str(url):
+		content = ccurl(url,'')
+		replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
+		m = re.findall("[']http://[^']*.mp4",content)
+		print(m)
+		if m:
+			#final = replace_all(m[0], replc)
+			final = str(urllib.parse.unquote(m[0]))
+			final = re.sub("[']",'',final)
+			final = final + "?start=0"
+			print(final)
 	return final
 
 def mp4star(url):
@@ -211,7 +272,8 @@ def mp4star(url):
 	
 	global qualityVideo
 	m = []
-	content = (subprocess.check_output(["curl","-L","-I","-A",hdr,url]))
+	#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,url]))
+	content = ccurlNew(url+'#'+'-I')
 	found = ""
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -226,23 +288,16 @@ def mp4star(url):
 		print(found)
 	if found:
 		#content = ccurl(found,'')
-		content = (subprocess.check_output(["curl","-A",hdr,found]))
-		if isinstance(content,bytes):
-			print("I'm byte")
-			try:
-				content = str((content).decode('utf-8'))
-			except:
-				content = str(content)
-		else:
-			print(type(content))
-			content = str(content)
-			print("I'm unicode")
+		#content = (subprocess.check_output(["curl","-A",hdr,found]))
+		content = ccurlNew(found)
+		
 		m = re.findall('value="[^"]*',content)
 	
 		value = re.sub('value="',"",m[0])
 		#print(value
 		
-		content = (subprocess.check_output(["curl","-A",hdr,'-d','id='+'"'+value+'"',found]))
+		#content = (subprocess.check_output(["curl","-A",hdr,'-d','id='+'"'+value+'"',found]))
+		content = ccurl(found,value)
 		if isinstance(content,bytes):
 			print("I'm byte")
 			try:
@@ -280,19 +335,12 @@ def mp4star(url):
 	if m:
 		#content = ccurl(m[0],"")
 		if qualityVideo == "sd":
-			content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[0]]))
+			#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[0]]))
+			content = ccurlNew(m[0]+'#'+'-I')
 		else:
-			content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[-1]]))
-		if isinstance(content,bytes):
-			print("I'm byte")
-			try:
-				content = str((content).decode('utf-8'))
-			except:
-				content = str(content)
-		else:
-			print(type(content))
-			content = str(content)
-			print("I'm unicode")
+			#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[-1]]))
+			content = ccurlNew(m[-1]+'#'+'-I')
+		
 		if "Location:" in content:
 			m = re.findall('Location: [^\n]*',content)
 			found = re.sub('Location: |\r','',m[-1])
@@ -377,26 +425,15 @@ class DubbedAnime():
 				m = re.findall('http://[^"]*uploadcrazy[^"]*|http://[^"]*vidkai[^"]*',content)
 				print(m)
 				if len(m) == 1:
-					mirrorNo = 2
-				if mirrorNo == 1:
-					final1 = m[1]
-				elif mirrorNo == 2:
-					final1 = m[0]
-				if "uploadcrazy" in final1:
-					final = uploadcrazy(final1)
-				if not final:
-					if "vidkai" in final1:
-						content = ccurl(final1,"")
-						final2 = re.findall('source data-res="360p" src="[^"]*',content)
-						final3 = re.sub('source data-res="360p" src="',"",final2[0])
-						content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,final3]) )
-						content = self.getContent(content)
-						m = re.findall('https[^\n]*', content)
-						#print(m
-						if m:
-							#print(m
-							final = m[0]
-							final = re.sub('\r', '', final)
+					final = findurl(m[0])
+				else:
+					mirrorNo = mirrorNo - 1
+					print(m[mirrorNo])
+					if mirrorNo < len(m):
+						print(m[mirrorNo],'---',len(m))
+						final = findurl(m[mirrorNo])
+				
+				
 			
 				
 		elif siteName == "Dubcrazy":
@@ -426,8 +463,9 @@ class DubbedAnime():
 								src = sd
 							else:
 								src = hd
-						content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,src]) )
-						content = self.getContent(content)
+						#content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,src]) )
+						#content = self.getContent(content)
+						content = ccurlNew(src+'#'+'-I')
 						t = re.findall('https[^\n]*', content)
 						#print(m
 						if m:
@@ -451,8 +489,9 @@ class DubbedAnime():
 				print(n)
 				post = 'confirm="Click Here to Watch Free!!"'
 				for i in n:
-					content = (subprocess.check_output(['curl','-d',post,i]))
-					content = self.getContent(content)
+					#content = (subprocess.check_output(['curl','-d',post,i]))
+					#content = self.getContent(content)
+					content = ccurlNew(i+'#'+'-d'+'#'+post)
 					print(content)
 					m = re.findall('file:[^"]*"http[^"]*',content)
 					if m:
@@ -463,8 +502,9 @@ class DubbedAnime():
 							replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
 							#k = replace_all(k, replc)
 							k = str(urllib.parse.unquote(k))
-							content = (subprocess.check_output(['curl','-L',"-I",k]))
-							content = self.getContent(content)
+							#content = (subprocess.check_output(['curl','-L',"-I",k]))
+							#content = self.getContent(content)
+							content = ccurlNew(k+'#'+'-I')
 							print(content)
 							n = re.findall('http://[^\n]*',content)
 							#final = replace_all(n[0], replc)
@@ -570,8 +610,9 @@ class DubbedAnime():
 			print(final_q)
 			if final_q:
 				
-				content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,final_q]))
-				content = self.getContent(content)
+				#content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,final_q]))
+				#content = self.getContent(content)
+				content = ccurlNew(final_q+'#'+'-I')
 				print(content)
 				m = re.findall('Location: https[^\n]*', content)
 				#print(m
@@ -615,9 +656,10 @@ class DubbedAnime():
 			url = "http://gogocartoon.net/cartoon-list.html"
 		print(url)
 		if siteName == "Animetycoon" or siteName == "AnimeStatic":
-			hdrs = {'user-agent':self.hdr}
-			req = requests.get(url,headers=hdrs)
-			content = str(req.text)
+			#hdrs = {'user-agent':self.hdr}
+			#req = requests.get(url,headers=hdrs)
+			#content = str(req.text)
+			content = ccurlNew(url)
 		else:
 			content = ccurl(url,"")
 		soup = BeautifulSoup(content)
@@ -716,8 +758,9 @@ class DubbedAnime():
 		#else:
 		#	content = ccurl(url,"no_redir")
 		if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Movies":
-			content = (subprocess.check_output(['curl','-A',self.hdr,url]))
-			content = self.getContent(content)
+			#content = (subprocess.check_output(['curl','-A',self.hdr,url]))
+			#content = self.getContent(content)
+			content = ccurlNew(url+'#'+'-L')
 		else:
 			"""
 			hdrs = {'user-agent':self.hdr}
@@ -725,8 +768,9 @@ class DubbedAnime():
 			summary = ""
 			content = req.text
 			"""
-			content = (subprocess.check_output(['curl','-A',self.hdr,url]))
-			content = self.getContent(content)
+			#content = (subprocess.check_output(['curl','-A',self.hdr,url]))
+			#content = self.getContent(content)
+			content = content = ccurlNew(url+'#'+'-L')
 		soup = BeautifulSoup(content)
 		if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Movies":
 	
@@ -743,7 +787,8 @@ class DubbedAnime():
 					
 					picn = "/tmp/AnimeWatch/"+name+'.jpg'
 					if not os.path.isfile(picn) and img:
-						subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img])
+						#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img])
+						ccurlNew(img+'#'+'-o'+'#'+picn)
 				except:
 					picn = "No.jpg"
 					img = ""
@@ -808,7 +853,8 @@ class DubbedAnime():
 					
 			picn = "/tmp/AnimeWatch/" + name + ".jpg"
 			if not os.path.isfile(picn) and img:
-				subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
+				#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
+				ccurlNew(img[0]+'#'+'-o'+'#'+picn)
 		elif siteName == "Animetycoon":
 			img =[]
 			#text = str(text)
@@ -827,7 +873,8 @@ class DubbedAnime():
 					img[0] = "http:" + img[0]
 				picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				if not os.path.isfile(picn):
-					subprocess.call(["curl","-L","-o",picn,img[0]])
+					#subprocess.call(["curl","-L","-o",picn,img[0]])
+					ccurlNew(img[0]+'#'+'-o'+'#'+picn)
 				
 			except: 
 				summary = "No Summary Available"
@@ -867,7 +914,8 @@ class DubbedAnime():
 					img.append(img_src)
 				picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				if not os.path.isfile(picn):
-					subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
+					#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
+					ccurlNew(img[0]+'#'+'-o'+'#'+picn)
 		elif siteName == "Dubcrazy":
 			
 					
@@ -884,7 +932,8 @@ class DubbedAnime():
 				print(img)
 				picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				if not os.path.isfile(picn):
-					subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img])
+					#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img])
+					ccurlNew(img+'#'+'-o'+'#'+picn)
 			except:
 				summary = "No Summary Available"
 				picn = "No"

@@ -22,7 +22,7 @@ import sys
 from PyQt5 import QtCore, QtGui,QtNetwork
 
 from PyQt5.QtNetwork import QNetworkAccessManager
-from PyQt5.QtWebKitWidgets import QWebView
+#from PyQt5.QtWebKitWidgets import QWebView
 
 class NetWorkManager(QNetworkAccessManager):
 	def __init__(self):

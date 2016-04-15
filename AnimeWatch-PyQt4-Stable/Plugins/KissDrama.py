@@ -1,7 +1,7 @@
 import sys
 import urllib
 import pycurl
-from io import StringIO
+from io import StringIO,BytesIO
 import re
 import subprocess
 from subprocess import check_output
@@ -16,7 +16,10 @@ from os.path import expanduser
 import fileinput
 import codecs
 import base64
-def cloudfare():
+from headlessBrowser import BrowseUrl
+def cloudfare(url):
+	web = BrowseUrl(url)
+def cloudfareOld():
 			home1 = expanduser("~")
 			#home1 = "/usr/local/share"
 			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
@@ -59,11 +62,8 @@ def cloudfare():
 			f = open('/tmp/AnimeWatch/kcookieD.txt', 'w')
 			f.write(cookiefile)
 			f.close()
-def ccurl(url):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
-	
-	content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieD.txt','-L','-A',hdr,url]) 
+
+def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
 		try:
@@ -74,9 +74,51 @@ def ccurl(url):
 		print(type(content))
 		content = str(content)
 		print("I'm unicode")
+	return content
 	
-	return (content)
-
+def ccurl(url):
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print(url)
+	c = pycurl.Curl()
+	c.setopt(c.FOLLOWLOCATION, True)
+	c.setopt(c.USERAGENT, hdr)
+	curl_opt = ''
+	picn_op = ''
+	nUrl = url
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+			
+			
+	if os.path.exists('/tmp/AnimeWatch/kcookieD.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieD.txt')
+	else:
+		print('inside ccurl')
+		cloudfare('http://kissasian.com')
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieD.txt')
+	url = str(url)
+	c.setopt(c.URL, url)
+	storage = BytesIO()
+	if curl_opt == '-o':
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		else:
+			c.setopt(c.WRITEFUNCTION, storage.write)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
 def progressBar(cmd):
 	
 	content = subprocess.check_output(cmd)
@@ -115,8 +157,7 @@ class KissDrama():
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
 	def search(self,name):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if name != '':
 			url = 'http://kissasian.com/Search/Drama/?keyword=' + name
 			content = ccurl(url)
@@ -131,15 +172,14 @@ class KissDrama():
 
 			return m
 	def getEpnList(self,name,opt):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		url = 'http://kissasian.com/Drama/' + name
 		print(url)
 		content = ccurl(url)
 		f = open('/tmp/AnimeWatch/1.txt','w')
 		f.write(content)
 		f.close()
-		epl = re.findall('/Drama/' + name + '[^"]*?id[^"]*', content)
+		epl = re.findall('/Drama/' + name +'/' +'[^"]*?id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
@@ -155,7 +195,8 @@ class KissDrama():
 				#img[0]=img[0].replace('kissanime.com','kissanime.to')
 				print(img[0])
 			if not os.path.isfile(picn):
-				subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieD.txt','-A',self.hdr,'-o',picn,img[0]])
+				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieD.txt','-A',self.hdr,'-o',picn,img[0]])
+				ccurl(img[0]+'#'+'-o'+'#'+picn)
 		except:
 			picn = '/tmp/AnimeWatch/' + name + '.jpg'
 		j = 0
@@ -222,22 +263,15 @@ class KissDrama():
 					m.append(k)
 		return m
 	def getFinalUrl(self,name,epn,mirror,quality):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		url = 'http://kissasian.com/Drama/' + name + '/' + epn
 		print(url)
 		sd = ''
 		hd = ''
+		sd480 = ''
 		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
 			cloudfare(url)
-		#f = open('/tmp/AnimeWatch/kcookie.txt','r')
-		#lines = f.readlines()
-		#f.close()
-		#lin = str(lines[1]).split("	")
-		#val = lin[6][:-1]
-		#t = lin[4]
-		##content = progressBar(["phantomjs", "phantom.js",url,val,t,"--load-images=false"])
-		#content = subprocess.check_output(["phantomjs", "phantom.js",url,val,t,"--load-images=false"])
+		
 		content = ccurl(url)
 		print(content)
 		soup = BeautifulSoup(content)
@@ -260,6 +294,8 @@ class KissDrama():
 				hd = i
 			elif 'itag=37' in i:
 				full_hd = i
+			elif 'itag=59' in i:
+				sd480 = i
 			elif '=m18' in i:
 				sd = i
 			elif '=m22' in i:
@@ -267,9 +303,17 @@ class KissDrama():
 		
 		if quality == "hd" and hd:
 			sd = hd
+		elif quality == 'sd480p' and sd480:
+			sd = sd480
+		
 		if not sd:
-			sd = hd
-		content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieD.txt','-L','-I','-A',self.hdr,sd])
+			if sd480:
+				sd = sd480
+			elif hd:
+				sd = hd
+		
+		#content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieD.txt','-L','-I','-A',self.hdr,sd])
+		content = ccurl(sd+'#'+'-I')
 		m = self.urlResolve(content)
 		#print(m
 		if m:
@@ -280,8 +324,7 @@ class KissDrama():
 		return final
 		
 	def getCompleteList(self,opt,genre_num):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if opt == 'Genre' and genre_num == 0:
 			url = 'http://kissasian.com/DramaList/'
 			content = ccurl(url)
@@ -328,8 +371,7 @@ class KissDrama():
 
 			return m
 	def getNextPage(self,opt,pgn,genre_num):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
@@ -350,8 +392,7 @@ class KissDrama():
 			if m:
 				return m
 	def getPrevPage(self,opt,genre_num):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:

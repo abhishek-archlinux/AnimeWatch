@@ -1,5 +1,5 @@
 pkgname = AnimeWatch
-pkgver = 1.1.0-1
+pkgver = 2.0.0-1
 pkgdesc = An Audio/Video Manager and Front End for mpv/mplayer with special emphasis on Anime Collection
 arch = any
 license = GPL
@@ -14,8 +14,6 @@ depend = python-pip
 depend = python-pycurl
 depend = python-psutil
 depend = curl
-depend = wget
-depend = phantomjs
 depend = libnotify
 depend = mpv
 depend = mplayer

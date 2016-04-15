@@ -3,9 +3,24 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 (Arch users can directly go to Release section or Package directory,download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. After that they have to install only 'jsbeautifier' and 'pytaglib' using 'sudo pip install jsbeautifier pytaglib')
 
-(Ubuntu or Debian based distro users can also go to Release section or PAckage directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb. After that they have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier' )
+(Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. After that they have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier' )
 
 (If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/)
+
+#Update AnimeWatch-2.0.0-1
+
+1. 'phantomjs' no longer required. The player has it's own version of headless browser with javascript support and it's own adblock.
+
+2. 'wget' no longer required, all the webpages are fetched using 'pucurl'.
+
+3. Less number of dependencies required as phantomjs and wget are no longer required.
+
+4. Proper implementation of multithreading.
+
+5. Addons of previous version might not work with this version so update addons also.
+
+6. If you've already old version of the application installed on your system and now want to upgrade it then before upgrading remove config directory '~/.config/AnimeWatch/src/' and if AnimeWatch.desktop file is located in '~/.local/share/applications/' then remove that .desktop file also. 
+
 
 #Normal Mode
 ![AnimeWatch](/Images/Video.png)
@@ -53,39 +68,41 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 #Dependencies
 
-python3
+python3 {Main Language}
 
-python-pyqt4
+python-pyqt4 (Main GUI Builder)
 
-python-requests
+python-requests 
 
 python-urllib3
 
-python-pillow
+python-pillow {For Image Processing}
 
-python-beautifulsoup4
+python-beautifulsoup4 {For parsing webpage}
 
 python-lxml
 
-python-pip
+python-pip {for installing jsbeautifier and pytaglib}
 
-python-pycurl
+python-pycurl {Main library for fetching pages}
 
 python-psutil
 
 curl
 
-wget
+wget { Not required for version >= 2.0.0-1}
 
 ffmpegthumbnailer(Thumbnail Generator for Local Files)
 
-phantomjs(Headless Browser)
+phantomjs(Headless Browser) { Not required for version >= 2.0.0-1}
 
 libnotify(required for Desktop Notification)
 
 pytaglib(required for mp3 Tagging)
 
 jsbeautifier(required for resolving certain links)
+
+sqlite3 (for managing local music and video database, Addons are not managed by it. Addons are managed using files.)
 
 mpv or mplayer (having both is good option, for streaming video mpv is the best because it's seeking capability within live stream is very efficient and it's buffer management is also very good, and for listening music mplayer is very cost-effective. Cpu usage is just 1 to 2 % when playing music with mplayer. When playing local video files mplayer cpu utilization always remains 4-5 % point less than that of mpv atleast on my system)
 
@@ -136,9 +153,11 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 3. In LXDE, XFCE or Cinnamon ,any new entry of launcher in '~/.local/share/applications/' is instantly shown in Start Menu (In the case of this player, entry will be shown either in Multimedia or Sound & Video). In Ubuntu Unity you will have to either logout and login again or reboot to see the entry in Unity dash Menu.
 
-4. If Addons are not working after some time then clear contents of the local directory '~/.config/AnimeWatch/src/Plugins'. Then download or clone the github AnimeWatch directory, and copy contents of github 'AnimeWatch/Plugins' directory into local directory '~/.config/AnimeWatch/src/Plugins'.
+4. If addons are not working or fanart/poster are not fetched properly, then try clearing the cache directory '/tmp/AnimeWatch/'
 
-5. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
+5. If Addons are not working after some time then clear contents of the local directory '~/.config/AnimeWatch/src/Plugins'. Then download or clone the github AnimeWatch directory, then go to github 'AnimeWatch/Plugins' directory, you will find 'installPlugins.py' file there, open terminal in the directory, run the command 'python installPlugins.py' or 'python3 installPlugins.py' . It will update the addons. 
+
+6. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
 
 #Brief Documentation:
 
@@ -267,6 +286,14 @@ t : sort the Title List
 PgUp: Move Entry UP
 
 PgDown: Move Entry Down
+
+ctrl+Right : Get Info from TVDB 
+
+c : copy fanart
+
+shift+c : copy summary
+
+ctrl+c : copy poster
 
 #Playlist Column:(If playlist column is focussed)
 

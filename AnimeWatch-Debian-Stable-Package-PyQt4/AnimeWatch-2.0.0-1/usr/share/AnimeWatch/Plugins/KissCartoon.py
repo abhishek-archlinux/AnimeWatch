@@ -1,7 +1,7 @@
 import sys
 import urllib
 import pycurl
-from io import StringIO
+from io import StringIO,BytesIO
 import re
 import subprocess
 from subprocess import check_output
@@ -16,11 +16,14 @@ from os.path import expanduser
 import fileinput
 import codecs
 import base64
-def cloudfare():
+from headlessBrowser import BrowseUrl
+def cloudfare(url):
+	web = BrowseUrl(url)
+def cloudfareOld():
 			home1 = expanduser("~")
 			#home1 = "/usr/local/share"
 			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
-			temp = progressBar(["phantomjs", pluginDir+"/kad.js","http://kissasian.com"])
+			temp = progressBar(["phantomjs", pluginDir+"/kac.js","http://kisscartoon.me"])
 			if isinstance(temp,bytes):
 				print("I'm byte")
 				try:
@@ -55,15 +58,11 @@ def cloudfare():
 			for i in a:
 				a[j] = re.sub('value": "|expiry": ',"",i)
 				j = j+1
-			cookiefile = ".kissasian.com	TRUE	/	FALSE	"+str(e[0])+"	__cfduid	" + str(e[1]) + "\n" + "kissasian.com	FALSE	/	FALSE	0	ASP.NET_SessionId	"+str(a[0])+"\n"+".kissasian.com	TRUE	/	FALSE	"+str(n[0])+"	cf_clearance	" + str(n[1])
-			f = open('/tmp/AnimeWatch/kcookieD.txt', 'w')
+			cookiefile = ".kisscartoon.me	TRUE	/	FALSE	"+str(e[0])+"	__cfduid	" + str(e[1]) + "\n" + "kisscartoon.me	FALSE	/	FALSE	0	ASP.NET_SessionId	"+str(a[0])+"\n"+".kisscartoon.me	TRUE	/	FALSE	"+str(n[0])+"	cf_clearance	" + str(n[1])
+			f = open('/tmp/AnimeWatch/kcookieC.txt', 'w')
 			f.write(cookiefile)
 			f.close()
-def ccurl(url):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
-	
-	content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieD.txt','-L','-A',hdr,url]) 
+def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
 		try:
@@ -74,8 +73,50 @@ def ccurl(url):
 		print(type(content))
 		content = str(content)
 		print("I'm unicode")
-	
-	return (content)
+	return content
+def ccurl(url):
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print(url)
+	c = pycurl.Curl()
+	c.setopt(c.FOLLOWLOCATION, True)
+	c.setopt(c.USERAGENT, hdr)
+	curl_opt = ''
+	picn_op = ''
+	nUrl = url
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+			
+			
+	if os.path.exists('/tmp/AnimeWatch/kcookieC.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieC.txt')
+	else:
+		print('inside ccurl')
+		cloudfare('http://kisscartoon.me')
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieC.txt')
+	url = str(url)
+	c.setopt(c.URL, url)
+	storage = BytesIO()
+	if curl_opt == '-o':
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		else:
+			c.setopt(c.WRITEFUNCTION, storage.write)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
 
 def progressBar(cmd):
 	
@@ -107,7 +148,7 @@ def replace_all(text, di):
 
 
 
-class KissDrama():
+class KissCartoon():
 	def __init__(self):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 		
@@ -115,35 +156,33 @@ class KissDrama():
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
 	def search(self,name):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if name != '':
-			url = 'http://kissasian.com/Search/Drama/?keyword=' + name
+			url = 'http://kisscartoon.me/Search/Cartoon/?keyword=' + name
 			content = ccurl(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Cartoon/', '', i)
 				m[j] = i
 				j = j + 1
 
 			return m
 	def getEpnList(self,name,opt):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
-		url = 'http://kissasian.com/Drama/' + name
+		
+		url = 'http://kisscartoon.me/Cartoon/' + name
 		print(url)
 		content = ccurl(url)
 		f = open('/tmp/AnimeWatch/1.txt','w')
 		f.write(content)
 		f.close()
-		epl = re.findall('/Drama/' + name + '[^"]*?id[^"]*', content)
+		epl = re.findall('/Cartoon/' + name + '[^"]*?id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
-			img = re.findall('http://kissasian.com/Uploads/Etc/[^"]*.jpg', content)
+			img = re.findall('http://kisscartoon.me/Uploads/Etc/[^"]*.jpg', content)
 			if not img:
 				img = re.findall('http://cdn.myanimelist.net/[^"]*.jpg', content)	
 			print(img)
@@ -155,12 +194,13 @@ class KissDrama():
 				#img[0]=img[0].replace('kissanime.com','kissanime.to')
 				print(img[0])
 			if not os.path.isfile(picn):
-				subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieD.txt','-A',self.hdr,'-o',picn,img[0]])
+				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieC.txt','-A',self.hdr,'-o',picn,img[0]])
+				ccurl(img[0]+'#'+'-o'+'#'+picn)
 		except:
 			picn = '/tmp/AnimeWatch/' + name + '.jpg'
 		j = 0
 		for i in epl:
-			i = re.sub('/Drama/' + name + '/', '', i)
+			i = re.sub('/Cartoon/' + name + '/', '', i)
 			epl[j] = i
 			j = j + 1
 
@@ -222,28 +262,15 @@ class KissDrama():
 					m.append(k)
 		return m
 	def getFinalUrl(self,name,epn,mirror,quality):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
-		url = 'http://kissasian.com/Drama/' + name + '/' + epn
+		
+		url = 'http://kisscartoon.me/Cartoon/' + name + '/' + epn
 		print(url)
 		sd = ''
 		hd = ''
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare(url)
-		#f = open('/tmp/AnimeWatch/kcookie.txt','r')
-		#lines = f.readlines()
-		#f.close()
-		#lin = str(lines[1]).split("	")
-		#val = lin[6][:-1]
-		#t = lin[4]
-		##content = progressBar(["phantomjs", "phantom.js",url,val,t,"--load-images=false"])
-		#content = subprocess.check_output(["phantomjs", "phantom.js",url,val,t,"--load-images=false"])
+		sd480 = ''
 		content = ccurl(url)
 		print(content)
 		soup = BeautifulSoup(content)
-		#f = open('/tmp/AnimeWatch/k.txt','w')
-		#f.write(content)
-		#f.close()
 		m = soup.findAll('select',{'id':'selectQuality'})
 		print(m)
 		arr = []
@@ -260,6 +287,8 @@ class KissDrama():
 				hd = i
 			elif 'itag=37' in i:
 				full_hd = i
+			elif 'itag=59' in i:
+				sd480 = i
 			elif '=m18' in i:
 				sd = i
 			elif '=m22' in i:
@@ -267,9 +296,16 @@ class KissDrama():
 		
 		if quality == "hd" and hd:
 			sd = hd
+		elif quality == 'sd480p' and sd480:
+			sd = sd480
+		
 		if not sd:
-			sd = hd
-		content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieD.txt','-L','-I','-A',self.hdr,sd])
+			if sd480:
+				sd = sd480
+			elif hd:
+				sd = hd
+		#content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieC.txt','-L','-I','-A',self.hdr,sd])
+		content = ccurl(sd+'#'+'-I')
 		m = self.urlResolve(content)
 		#print(m
 		if m:
@@ -280,10 +316,9 @@ class KissDrama():
 		return final
 		
 	def getCompleteList(self,opt,genre_num):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if opt == 'Genre' and genre_num == 0:
-			url = 'http://kissasian.com/DramaList/'
+			url = 'http://kisscartoon.me/CartoonList/'
 			content = ccurl(url)
 			m = re.findall('/Genre/[^"]*', content)
 			m = list(set(m))
@@ -300,71 +335,69 @@ class KissDrama():
 		if opt == 'History':
 			print('History')
 		elif opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate':
-			url = 'http://kissasian.com/DramaList/' + opt
+			url = 'http://kisscartoon.me/CartoonList/' + opt
 			pgn = 1
 			content = ccurl(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Cartoon/', '', i)
 				m[j] = i
 				j = j + 1
 
 			return m
 		if genre_num == 1:
-			url = 'http://kissasian.com/Genre/' + opt
+			url = 'http://kisscartoon.me/Genre/' + opt
 			pgn = 1
 			content = ccurl(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Cartoon/', '', i)
 				m[j] = i
 				j = j + 1
 
 			return m
 	def getNextPage(self,opt,pgn,genre_num):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
-				url = 'http://kissasian.com/DramaList/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.me/CartoonList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = ccurl(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Cartoon/', '', i)
 				m[j] = i
 				j = j + 1
 
 			if m:
 				return m
 	def getPrevPage(self,opt,genre_num):
-		if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-			cloudfare()
+		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:
-				url = 'http://kissasian.com/DramaList/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.me/CartoonList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
 			content = ccurl(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Cartoon/', '', i)
 				m[j] = i
 				j = j + 1
 
