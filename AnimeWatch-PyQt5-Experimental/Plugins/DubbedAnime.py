@@ -437,7 +437,7 @@ class DubbedAnime():
 			
 				
 		elif siteName == "Dubcrazy":
-				url = "http://www.dubbedanimeonline.org/" + epn + "/"
+				url = "http://www.dubbedanimeonline.ch/" + epn + "/"
 				content = ccurl(url,"")
 				print(url)
 				m = []
@@ -501,15 +501,23 @@ class DubbedAnime():
 							k = final1[0]
 							replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
 							#k = replace_all(k, replc)
-							k = str(urllib.parse.unquote(k))
+							#k = str(urllib.parse.unquote(k))
+							#k = re.sub(' ','%20',k)
+							k = re.sub('\n','',k)
 							#content = (subprocess.check_output(['curl','-L',"-I",k]))
 							#content = self.getContent(content)
 							content = ccurlNew(k+'#'+'-I')
-							print(content)
-							n = re.findall('http://[^\n]*',content)
+							print('----------------',content,'-------------------')
+							
+							n = re.findall('Location: [^\n]*',content)
+							final = re.sub('Location: |\r','',n[-1])
+							print(final)
+							
+							
 							#final = replace_all(n[0], replc)
-							final = str(urllib.parse.unquote(n[0]))
-							final = re.sub('\r|\n','',final)
+							#final = str(urllib.parse.unquote(n[0]))
+							#final = re.sub('\r|\n','',n[0])
+							final = re.sub(' ','%20',final)
 							if final:
 								break
 		elif siteName == "AnimeStatic":
@@ -636,9 +644,9 @@ class DubbedAnime():
 				url = "http://www.cartoon-world.tv/cartoon-list/"
 		elif siteName == "Dubcrazy":
 			if category == "Movies":
-				url = "http://www.dubbedanimeonline.org/dubbed-movies-list/"
+				url = "http://www.dubbedanimeonline.ch/dubbed-movies-list/"
 			else:
-				url = "http://www.dubbedanimeonline.org/dubbed-anime-list/"
+				url = "http://www.dubbedanimeonline.ch/dubbed-anime-list/"
 		elif siteName == "Animetycoon":
 			url = "http://www.animetycoon.net/full-index/"
 		elif siteName == "AniDub":
@@ -730,7 +738,7 @@ class DubbedAnime():
 			base = "http://www.cartoon-world.tv/"
 			url = base+ "watch/" + name+"/"
 		elif siteName == "Dubcrazy":
-			base = "http://www.dubbedanimeonline.org/"
+			base = "http://www.dubbedanimeonline.ch/"
 			url = base+ "view/" + name+"/" 
 		elif siteName == "Animetycoon":
 			base = "http://www.animetycoon.net/"
@@ -928,7 +936,7 @@ class DubbedAnime():
 					for k in j:
 						summary = k.text
 				
-				img = "http://www.dubbedanimeonline.org/images/" + name+".jpg"
+				img = "http://www.dubbedanimeonline.ch/images/" + name+".jpg"
 				print(img)
 				picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				if not os.path.isfile(picn):

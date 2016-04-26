@@ -437,7 +437,7 @@ class DubbedAnime():
 			
 				
 		elif siteName == "Dubcrazy":
-				url = "http://www.dubbedanimeonline.org/" + epn + "/"
+				url = "http://www.dubbedanimeonline.ch/" + epn + "/"
 				content = ccurl(url,"")
 				print(url)
 				m = []
@@ -644,9 +644,9 @@ class DubbedAnime():
 				url = "http://www.cartoon-world.tv/cartoon-list/"
 		elif siteName == "Dubcrazy":
 			if category == "Movies":
-				url = "http://www.dubbedanimeonline.org/dubbed-movies-list/"
+				url = "http://www.dubbedanimeonline.ch/dubbed-movies-list/"
 			else:
-				url = "http://www.dubbedanimeonline.org/dubbed-anime-list/"
+				url = "http://www.dubbedanimeonline.ch/dubbed-anime-list/"
 		elif siteName == "Animetycoon":
 			url = "http://www.animetycoon.net/full-index/"
 		elif siteName == "AniDub":
@@ -738,7 +738,7 @@ class DubbedAnime():
 			base = "http://www.cartoon-world.tv/"
 			url = base+ "watch/" + name+"/"
 		elif siteName == "Dubcrazy":
-			base = "http://www.dubbedanimeonline.org/"
+			base = "http://www.dubbedanimeonline.ch/"
 			url = base+ "view/" + name+"/" 
 		elif siteName == "Animetycoon":
 			base = "http://www.animetycoon.net/"
@@ -936,7 +936,7 @@ class DubbedAnime():
 					for k in j:
 						summary = k.text
 				
-				img = "http://www.dubbedanimeonline.org/images/" + name+".jpg"
+				img = "http://www.dubbedanimeonline.ch/images/" + name+".jpg"
 				print(img)
 				picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				if not os.path.isfile(picn):
