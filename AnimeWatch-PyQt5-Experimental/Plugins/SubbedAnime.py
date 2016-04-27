@@ -1044,10 +1044,13 @@ class SubbedAnime():
 				content1 = ccurl(urlM)
 				content2 = ccurl(url)
 			elif siteName == "AnimeSquare":
-				content = ccurlM(url)
-				#if 'checking_browser' in content:
+				content = ccurl(url)
+				if 'checking_browser' in content:
 				#	 content = cloudfareUrl(url)
-				#	 content = ccurlM(url)
+					 content = ccurlM(url)
+				else:
+					f = open('/tmp/AnimeWatch/animeSquare.txt','w')
+					f.close()
 			elif siteName == "AnimeHQ":
 				#	hdrs = {'user-agent':self.hdr}
 				#	req = requests.get(url,headers=hdrs)
