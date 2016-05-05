@@ -18,8 +18,8 @@ import codecs
 import base64
 import platform
 from headlessBrowser import BrowseUrl
-def cloudfare(url):
-	web = BrowseUrl(url)
+def cloudfare(url,quality):
+	web = BrowseUrl(url,quality)
 def cloudfareOld():
 			home1 = expanduser("~")
 			#home1 = "/usr/local/share"
@@ -97,7 +97,7 @@ def ccurl(url):
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookie.txt')
 	else:
 		print('inside ccurl')
-		cloudfare('https://kissanime.to')
+		cloudfare(url,'')
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookie.txt')
 	url = str(url)
 	c.setopt(c.URL, url)
@@ -159,11 +159,21 @@ class KissAnime():
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
+			
+	def ccurlN(self,content,url):
+		if 'checking_browser' in content:
+			if os.path.exists('/tmp/AnimeWatch/kcookie.txt'):
+				os.remove('/tmp/AnimeWatch/kcookie.txt')
+			content = ccurl(url)
+		return content
+		
 	def search(self,name):
 		
 		if name != '':
 			url = 'https://kissanime.to/Search/Anime/?keyword=' + name
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
+				
 			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -179,10 +189,13 @@ class KissAnime():
 		url = 'https://kissanime.to/Anime/' + name
 		print(url)
 		content = ccurl(url)
+		content = self.ccurlN(content,url)
+		
+			
 		f = open('/tmp/AnimeWatch/1.txt','w')
 		f.write(content)
 		f.close()
-		epl = re.findall('/Anime/' + name + '[^"]*?id[^"]*', content)
+		epl = re.findall('/Anime/' + name + '[^"]*["?"]id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
@@ -274,6 +287,9 @@ class KissAnime():
 		hd = ''
 		sd480 = ''
 		content = ccurl(url)
+		content = self.ccurlN(content,url)
+		
+		
 		#print (content)
 		soup = BeautifulSoup(content)
 		#f = open('/tmp/AnimeWatch/k.txt','w')
@@ -327,6 +343,9 @@ class KissAnime():
 		if opt == 'Genre' and genre_num == 0:
 			url = 'https://kissanime.to/AnimeList/'
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
+			
+			
 			m = re.findall('/Genre/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -345,6 +364,9 @@ class KissAnime():
 			url = 'https://kissanime.to/AnimeList/' + opt
 			pgn = 1
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
+			
+			
 			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -359,6 +381,7 @@ class KissAnime():
 			url = 'https://kissanime.to/Genre/' + opt
 			pgn = 1
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -379,6 +402,7 @@ class KissAnime():
 				url = 'https://kissanime.to/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -399,6 +423,7 @@ class KissAnime():
 			else:
 				url = 'https://kissanime.to/Genre/' + opt + '?page=' + pgnum
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()

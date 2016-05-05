@@ -14,7 +14,6 @@ try:
 	from selenium import webdriver
 except:
 	pass
-import requests
 import time
 from base64 import b64decode
 import random
@@ -155,8 +154,8 @@ def cloudfare(url):
 				return url
 
 
-def cloudfareUrl(url):
-	web = BrowseUrl(url)
+def cloudfareUrl(url,quality):
+	web = BrowseUrl(url,quality)
 def cloudfareUrlOld(url):
 			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 			home1 = os.path.expanduser("~")
@@ -423,7 +422,7 @@ def ccurlM(url):
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeSquare.txt')
 	else:
 		print('inside ccurlM')
-		cloudfareUrl('http://www.masterani.me/')
+		cloudfareUrl('http://www.masterani.me/','')
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeSquare.txt')
 	url = str(url)
 	c.setopt(c.URL, url)
@@ -445,7 +444,7 @@ def ccurlGet(url):
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeget.txt')
 	else:
 		print('inside ccurlGet')
-		cloudfareUrl('http://www.animeget.io/')
+		cloudfareUrl('http://www.animeget.io/','')
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeget.txt')
 	
 	curl_opt = ''
@@ -1044,10 +1043,13 @@ class SubbedAnime():
 				content1 = ccurl(urlM)
 				content2 = ccurl(url)
 			elif siteName == "AnimeSquare":
-				content = ccurlM(url)
-				#if 'checking_browser' in content:
+				content = ccurl(url)
+				if 'checking_browser' in content:
 				#	 content = cloudfareUrl(url)
-				#	 content = ccurlM(url)
+					 content = ccurlM(url)
+				else:
+					f = open('/tmp/AnimeWatch/animeSquare.txt','w')
+					f.close()
 			elif siteName == "AnimeHQ":
 				#	hdrs = {'user-agent':self.hdr}
 				#	req = requests.get(url,headers=hdrs)
@@ -2883,7 +2885,7 @@ class SubbedAnime():
 			#soup = BeautifulSoup(content)
 			
 			#content = ccurl(url)
-			cloudfareUrl(url)
+			cloudfareUrl(url,'')
 			content = open('/tmp/AnimeWatch/moetube.txt').read()
 			print(content)
 			soup = BeautifulSoup(content)

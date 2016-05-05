@@ -17,8 +17,8 @@ import fileinput
 import codecs
 import base64
 from headlessBrowser import BrowseUrl
-def cloudfare(url):
-	web = BrowseUrl(url)
+def cloudfare(url,quality):
+	web = BrowseUrl(url,quality)
 def cloudfareOld():
 			home1 = expanduser("~")
 			#home1 = "/usr/local/share"
@@ -95,7 +95,7 @@ def ccurl(url):
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieC.txt')
 	else:
 		print('inside ccurl')
-		cloudfare('http://kisscartoon.me')
+		cloudfare(url,'')
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieC.txt')
 	url = str(url)
 	c.setopt(c.URL, url)
@@ -155,11 +155,20 @@ class KissCartoon():
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
+			
+	def ccurlN(self,content,url):
+		if 'checking_browser' in content:
+			if os.path.exists('/tmp/AnimeWatch/kcookieC.txt'):
+				os.remove('/tmp/AnimeWatch/kcookieC.txt')
+			content = ccurl(url)
+		return content
+		
 	def search(self,name):
 		
 		if name != '':
 			url = 'http://kisscartoon.me/Search/Cartoon/?keyword=' + name
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -175,10 +184,11 @@ class KissCartoon():
 		url = 'http://kisscartoon.me/Cartoon/' + name
 		print(url)
 		content = ccurl(url)
+		content = self.ccurlN(content,url)
 		f = open('/tmp/AnimeWatch/1.txt','w')
 		f.write(content)
 		f.close()
-		epl = re.findall('/Cartoon/' + name + '[^"]*?id[^"]*', content)
+		epl = re.findall('/Cartoon/' + name + '[^"]*["?"]id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
@@ -268,6 +278,26 @@ class KissCartoon():
 		sd = ''
 		hd = ''
 		sd480 = ''
+		lnk_file = '/tmp/AnimeWatch/lnk.txt'
+		if os.path.exists(lnk_file):
+			os.remove(lnk_file)
+			
+		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
+		cloudfare(url,quality)
+		
+		
+		cnt = 0
+		
+		if os.path.exists(lnk_file):
+			link = open(lnk_file).read()
+			final = link
+			print(link)
+		else:
+			final = ''
+			print('No Link Available or Clear The Cache')
+		
+		
+		"""
 		content = ccurl(url)
 		print(content)
 		soup = BeautifulSoup(content)
@@ -313,6 +343,7 @@ class KissCartoon():
 			final = m[-1]
 		
 		print(final)
+		"""
 		return final
 		
 	def getCompleteList(self,opt,genre_num):
@@ -320,6 +351,7 @@ class KissCartoon():
 		if opt == 'Genre' and genre_num == 0:
 			url = 'http://kisscartoon.me/CartoonList/'
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Genre/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -338,6 +370,7 @@ class KissCartoon():
 			url = 'http://kisscartoon.me/CartoonList/' + opt
 			pgn = 1
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -352,6 +385,7 @@ class KissCartoon():
 			url = 'http://kisscartoon.me/Genre/' + opt
 			pgn = 1
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -372,6 +406,7 @@ class KissCartoon():
 				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -392,6 +427,7 @@ class KissCartoon():
 			else:
 				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
 			content = ccurl(url)
+			content = self.ccurlN(content,url)
 			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
 			m.sort()

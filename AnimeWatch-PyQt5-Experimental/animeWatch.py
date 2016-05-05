@@ -56,7 +56,6 @@ except:
 	pass
 from musicArtist import musicArtist
 import threading
-import requests
 from PyQt5 import QtDBus
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,
                           pyqtProperty)
@@ -145,7 +144,11 @@ def ccurl(url):
 			post_data = {post1:post2}
 			postfield = urllib.parse.urlencode(post_data)
 	url = str(url)
-	c.setopt(c.URL, url)
+	#c.setopt(c.URL, url)
+	try:
+		c.setopt(c.URL, url)
+	except UnicodeEncodeError:
+		c.setopt(c.URL, url.encode('utf-8'))
 	storage = BytesIO()
 	if curl_opt == '-o':
 		c.setopt(c.FOLLOWLOCATION, True)
@@ -472,17 +475,18 @@ class Browser(QtWebKitWidgets.QWebView):
 			content = str(content)
 			print("I'm unicode")
 		return content
-	def ccurl(self,url,rfr):
+	def ccurlT(self,url,rfr):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 	#	if rfr:
 	#		content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
 	#	else:
 	#		content = subprocess.check_output(['curl','-L','-A',hdr,url])
 			
-		hdrs = {'user-agent':hdr}
-		req = requests.get(url,headers=hdrs)
-		content = req.text
+		#hdrs = {'user-agent':hdr}
+		#req = requests.get(url,headers=hdrs)
+		#content = req.text
 		#content = self.getContentUnicode(content)
+		content = ccurl(url)
 		return content
 	def download(self, url,option):
 		global site,epnArrList
@@ -515,8 +519,8 @@ class Browser(QtWebKitWidgets.QWebView):
 		else:
 			if site == "Music" and (option == "Download As Fanart" or option == "Download As Cover"):
 				print(url1,'--artist-link---')
-				content = self.ccurl(url1,'')
-				
+				#content = self.ccurl(url1,'')
+				content = ccurl(url1)
 				soup = BeautifulSoup(content,'lxml')
 				link = soup.findAll('img')
 				
@@ -575,17 +579,17 @@ class ThreadingExample(QtCore.QThread):
 
 	def __del__(self):
 		self.wait()                        
-	def ccurl(self,url,rfr):
+	def ccurlT(self,url,rfr):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 	#	if rfr:
 	#		content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
 	#	else:
 	#		content = subprocess.check_output(['curl','-L','-A',hdr,url])
 			
-		hdrs = {'user-agent':hdr}
-		req = requests.get(url,headers=hdrs)
-		content = req.text
-		
+		#hdrs = {'user-agent':hdr}
+		#req = requests.get(url,headers=hdrs)
+		#content = req.text
+		content = ccurl(url)
 		return content
 	def run(self):
 		name = self.name1
@@ -597,7 +601,8 @@ class ThreadingExample(QtCore.QThread):
 		
 		print (url)
 		wiki = ""
-		content = self.ccurl(url,'')
+		#content = self.ccurl(url,'')
+		content = ccurl(url)
 		print (content)
 		soup = BeautifulSoup(content,'lxml')
 
@@ -628,8 +633,8 @@ class ThreadingExample(QtCore.QThread):
 		img_url = url+'/+images'
 		wiki_url = url + '/+wiki'
 		print (wiki_url)
-		content = self.ccurl(wiki_url,'')
-
+		#content = self.ccurl(wiki_url,'')
+		content = ccurl(wiki_url)
 		soup = BeautifulSoup(content)
 		link = soup.find('div',{'class':'wiki-content'})
 		print (link)
@@ -639,7 +644,8 @@ class ThreadingExample(QtCore.QThread):
 			wiki = link.text
 			#print wiki
 
-		content = self.ccurl(img_url,'')
+		#content = self.ccurl(img_url,'')
+		content = ccurl(img_url)
 		soup = BeautifulSoup(content,'lxml')
 		link = soup.findAll('ul',{'class':'image-list'})
 		img = []

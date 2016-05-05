@@ -8,7 +8,6 @@ from subprocess import check_output
 import random
 from bs4 import BeautifulSoup  
 import os.path
-import requests
 try:
 	import jsbeautifier.unpackers.packer as packer
 except:

@@ -6,15 +6,16 @@ import re
 import urllib
 import urllib3
 import time
-import requests
 import os
 import os.path
 import sys
 import calendar
 import weakref
+from bs4 import BeautifulSoup
 from datetime import datetime
 from PyQt4 import QtCore, QtGui,QtNetwork,QtWebKit
-
+from PyQt4.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
+                          pyqtProperty)
 from PyQt4.QtNetwork import QNetworkAccessManager
 
 class NetWorkManager(QNetworkAccessManager):
@@ -22,35 +23,56 @@ class NetWorkManager(QNetworkAccessManager):
 		super(NetWorkManager, self).__init__()
    
 	def createRequest(self, op, request, device = None ):
-		global lst
+		global lst,pg
 		try:
+			#print(str(request.url()))
+			urlLnk = (request.url()).toString()
+			#print(urlLnk)
 			path = str(request.url().path())
 		except UnicodeEncodeError:
 			pass
+		#print(path)
 		lower_case = path.lower()
 		#lst = tuple(open("easylist.txt", 'r'))
-		lst = ["doubleclick.net" ,"ads",'.jpg','redirector','itag=','.png','.gif','.css','google','facebook','.aspx',r"http[^'].mp4",r"http[^'].flv", r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","google","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg']
+		lst = ["doubleclick.net" ,"ads",'.jpg','.png','.gif','.css','google','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","google","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg']
 		block = False
 		for l in lst:
 			if lower_case.find(l) != -1:
 				block = True
 				break
 		if block:
-			print ("Skipping")
-			print (request.url().path())
+			#print ("Skipping")
+			#print (request.url().path())
+			
 			return QNetworkAccessManager.createRequest(self, QNetworkAccessManager.GetOperation, QtNetwork.QNetworkRequest(QtCore.QUrl()))
 		else:
-			return QNetworkAccessManager.createRequest(self, op, request, device)
+			if 'itag=' in urlLnk and 'redirector' not in urlLnk:
+				print('*********')
+				#print()
+				#print(path)
+				#print(urlLnk)
+				#pg.web.setHtml('<html>got the link</html>')
+				#self.lnkUrl.emit(path)
+				f = open('/tmp/AnimeWatch/lnk.txt','w')
+				f.write(urlLnk)
+				f.close()
+				return QNetworkAccessManager.createRequest(self, op, request, device)
+				#return QNetworkAccessManager.createRequest(self, op, request, device)
+				#return QNetworkAccessManager.createRequest(self, QNetworkAccessManager.GetOperation, QtNetwork.QNetworkRequest(QtCore.QUrl()))
+			
+			else:
+				return QNetworkAccessManager.createRequest(self, op, request, device)
 
   
 class BrowserPage(QWebPage):  
-	def __init__(self,url):
+	def __init__(self,url,quality):
 		super(BrowserPage, self).__init__()
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 		#self.loadFinished.connect(self._loadFinished)
 		self.loadProgress.connect(self._loadProgress)
 		self.url = url
-		
+		self.cnt = 0
+		self.quality = quality
 	def userAgentForUrl(self, url):
 		return self.hdr
 		
@@ -61,8 +83,9 @@ class BrowserPage(QWebPage):
 		
 		
 	def _loadProgress(self):
-		print('Progress')
-		print(self.url)
+		#print('Progress')
+		#print(self.url)
+		
 		if 'kissanime' in self.url:
 			cookie_file = '/tmp/AnimeWatch/kcookie.txt'
 		elif 'kisscartoon' in self.url:
@@ -85,9 +108,51 @@ class BrowserPage(QWebPage):
 					f = open(cookie_file,'w')
 				f.write(html)
 				f.close()
-		frame = self.mainFrame()  
-		html = frame.toHtml()
-		#print(html)
+		
+		if self.cnt == 0 and os.path.exists(cookie_file) and ('kisscartoon' in self.url or 'kissasian' in self.url):
+			frame = self.mainFrame()
+			html = frame.toHtml()
+			soup = BeautifulSoup(html,'lxml')
+			m = soup.findAll('select',{'id':'selectQuality'})
+			if m:
+				print(m)
+				arr = []
+				for i in m:
+					j = i.findAll('option')
+					for k in j:
+						l = k['value']
+						#print(l)
+						arr.append(l)
+				total_q = len(arr)
+				
+					
+						
+				if arr:
+					print('----------total Different Quality Video------',total_q)
+					if self.quality == 'sd':
+						txt = arr[-1]
+					elif self.quality == 'hd':
+						if total_q == 1:
+							txt = arr[-1]
+						elif total_q == 2:
+							txt = arr[-2]
+						elif total_q == 3 or total_q == 4:
+							txt = arr[-3]
+							
+					elif self.quality == 'sd480p':
+						if total_q == 1:
+							txt = arr[-1]
+						elif total_q == 2 or total_q == 3 or total_q == 4:
+							txt = arr[-2]
+						
+					doc = frame.documentElement()
+					bt = doc.findFirst("select[id=selectQuality]")
+					#txt = arr[-1]
+					bt.evaluateJavaScript('this.value="'+txt+'"')
+					self.cnt = 1
+		
+		
+		
 		listCookies = self.networkAccessManager().cookieJar().allCookies()
 		n = []
 		m = ''
@@ -118,7 +183,7 @@ class BrowserPage(QWebPage):
 		for i in n:
 			if 'cf_clearance' in i:
 				clr = True
-				print(n)
+				#print(n)
 		if clr:
 			for i in n:
 				if 'cf_clearance' in i:
@@ -128,9 +193,9 @@ class BrowserPage(QWebPage):
 				elif 'ASP.NET_SessionId' in i:
 					asp = self.cookie_split(i)
 		if cfc and cfd:
-			print(cfc)
-			print(cfd)
-			print(asp)
+			#print(cfc)
+			#print(cfd)
+			#print(asp)
 			str1 = cfc['domain']+'	'+cfc['HttpOnly']+'	'+cfc['path']+'	'+'FALSE'+'	'+cfc['expiry']+'	'+'cf_clearance'+'	'+cfc['cf_clearance']
 			str2 = cfd['domain']+'	'+cfd['HttpOnly']+'	'+cfd['path']+'	'+'FALSE'+'	'+cfd['expiry']+'	'+'__cfduid'+'	'+cfd['__cfduid']
 			if asp:
@@ -166,44 +231,23 @@ class BrowserPage(QWebPage):
 		return(d)
 		
 class Browser(QWebView):
-	def __init__(self,url):
+	def __init__(self,url,quality):
 		super(Browser, self).__init__()
-		self.setPage(BrowserPage(url))
+		self.setPage(BrowserPage(url,quality))
 		
 
 class BrowseUrl(QtGui.QWidget):
 
-	def __init__(self,url):
+	def __init__(self,url,quality):
 		super(BrowseUrl, self).__init__()
-		self.Browse(url)
-
-
-	def Browse(self,url):
-		MainWindow = QtGui.QWidget()
-		progress = QtGui.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-		progress.setWindowModality(QtCore.Qt.WindowModal)
-		progress.setAutoReset(True)
-		progress.setAutoClose(True)
-		progress.setMinimum(0)
-		progress.setMaximum(100)
-		progress.resize(500,100)
-		if 'moetube' in url:
-			progress.setWindowTitle("Loading, Please Wait!")
-		else:
-			progress.setWindowTitle("Loading, Please Wait! (Cloudflare Protection)")
-		progress.show()
-		progress.setValue(0)
 		
-		print('Browse: '+url)
-		self.web = Browser(url)
-		self.cookie = QtNetwork.QNetworkCookieJar()
+		self.Browse(url,quality)
+	
 		
-		self.nam = NetWorkManager()
-		self.nam.setCookieJar(self.cookie)
+	def Browse(self,url,quality):
 		
-		self.web.page().setNetworkAccessManager(self.nam)
-		self.web.load(QUrl(url))
-		cnt = 0
+		
+		
 		
 		if 'kissanime' in url:
 			cookie_file = '/tmp/AnimeWatch/kcookie.txt'
@@ -219,16 +263,94 @@ class BrowseUrl(QtGui.QWidget):
 			cookie_file = '/tmp/AnimeWatch/moetube.txt'
 			if os.path.exists(cookie_file):
 				os.remove(cookie_file)
-		while(not os.path.exists(cookie_file) and cnt < 60):
-			print('wait '+str(cnt))
+		
+		if not os.path.exists(cookie_file):
+			
+			self.cookie = QtNetwork.QNetworkCookieJar()
+			self.nam = NetWorkManager()
+			self.nam.setCookieJar(self.cookie)
+		else:
+			cookie_arr = QtNetwork.QNetworkCookieJar()
+			c = []
+			f = open(cookie_file,'r')
+			lines = f.readlines()
+			f.close()
+			for i in lines:
+				k = re.sub('\n','',i)
+				l = k.split('	')
+				d = QtNetwork.QNetworkCookie()
+				d.setDomain(l[0])
+				if l[1]== 'TRUE':
+					l1= True
+				else:
+					l1= False
+				d.setHttpOnly(l1)
+				d.setPath(l[2])
+				if l[3]== 'TRUE':
+					l3= True
+				else:
+					l3= False
+				d.setSecure(l3)
+				l4 = int(l[4])
+				print(l4)
+				d.setExpirationDate(QtCore.QDateTime.fromTime_t(l4))
+				d.setName(l[5])
+				d.setValue(l[6])
+				c.append(d)
+				#cookie_arr.append(d)
+			cookie_arr.setAllCookies(c)
+			self.nam = NetWorkManager()
+			self.nam.setCookieJar(cookie_arr)
+		
+		self.web = Browser(url,quality)
+		self.tab_2 = QtGui.QWidget()
+		self.tab_2.setMaximumSize(300,50)
+		self.tab_2.setWindowTitle('Wait!')
+		self.horizontalLayout_5 = QtGui.QVBoxLayout(self.tab_2)
+		print('Browse: '+url)
+		
+		self.horizontalLayout_5.addWidget(self.web)
+		self.tab_2.show()
+		#self.tab_2.hide()
+		#self.web.show()
+		self.web.page().setNetworkAccessManager(self.nam)
+		self.web.load(QUrl(url))
+		cnt = 0
+		
+		
+		while(not os.path.exists(cookie_file) and cnt < 20):
+			#print()
+			print('wait Clouflare ')
 			time.sleep(1)
 			QtGui.QApplication.processEvents()
 			cnt = cnt+1
-		if cnt >= 60 and not os.path.exists(cookie_file):
+			self.tab_2.setWindowTitle('Wait! Cloudflare '+str(cnt)+'s')
+			
+		if cnt >= 20 and not os.path.exists(cookie_file):
 			f = open(cookie_file,'w')
 			f.close()
-		self.web.setHtml('<html>Cookie Obtained</html>')
-		progress.setValue(100)
-		progress.hide()
+		lnk_file = '/tmp/AnimeWatch/lnk.txt'
+		if os.path.exists(lnk_file):
+			os.remove(lnk_file)
+		cnt = 0
+		if ('kisscartoon' in url or 'kissasian' in url) and quality:
+			while(not os.path.exists(lnk_file) and cnt < 20):
+				print('wait Finding Link ')
+				time.sleep(1)
+				QtGui.QApplication.processEvents()
+				cnt = cnt+1
+				self.tab_2.setWindowTitle('Link Resolving '+str(cnt)+'s')
+			
+			if os.path.exists(lnk_file):
+				self.web.setHtml('<html>Link Obtained</html>')
+				link = open(lnk_file).read()
+				print(link)
+			else:
+				self.web.setHtml('<html>No Link Found</html>')
+				print('No Link Available or Clear The Cache')
+		else:
+			self.web.setHtml('<html>cookie Obtained</html>')
+		self.tab_2.hide()
+
 
 

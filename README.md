@@ -7,6 +7,14 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 (If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/)
 
+#Update AnimeWatch-2.1.1-1
+
+1. 'python-requests' no longer required.
+
+2. changes in the code of headless browser
+
+
+
 #Update AnimeWatch-2.0.0-1
 
 1. 'phantomjs' no longer required. The player has it's own version of headless browser with javascript support and it's own adblock.
@@ -72,7 +80,7 @@ python3 {Main Language}
 
 python-pyqt4 (Main GUI Builder)
 
-python-requests 
+python-requests { Not required for version >= 2.1.1-1}
 
 python-urllib3
 

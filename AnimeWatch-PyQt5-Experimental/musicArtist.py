@@ -20,7 +20,7 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import urllib
 import pycurl
-from io import StringIO
+from io import StringIO,BytesIO
 import re
 import subprocess
 import os.path
@@ -29,7 +29,116 @@ from bs4 import BeautifulSoup
 import random
 from os.path import expanduser
 import datetime
-import requests
+
+def getContentUnicode(content):
+	if isinstance(content,bytes):
+		print("I'm byte")
+		try:
+			content = str((content).decode('utf-8'))
+		except:
+			content = str(content)
+	else:
+		print(type(content))
+		content = str(content)
+		print("I'm unicode")
+	return content
+
+def ccurl(url):
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	print(url)
+	c = pycurl.Curl()
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	postfield = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		elif curl_opt == '-Ie' or curl_opt == '-e':
+			rfr = nUrl.split('#')[2]
+		elif curl_opt == '-Icb' or curl_opt == '-bc':
+			cookie_file = nUrl.split('#')[2]
+		if curl_opt == '-d':
+			post = nUrl.split('#')[2]
+			post = re.sub('"','',post)
+			post = re.sub("'","",post)
+			post1 = post.split('=')[0]
+			post2 = post.split('=')[1]
+			post_data = {post1:post2}
+			postfield = urllib.parse.urlencode(post_data)
+	url = str(url)
+	#c.setopt(c.URL, url)
+	try:
+		c.setopt(c.URL, url)
+	except UnicodeEncodeError:
+		c.setopt(c.URL, url.encode('utf-8'))
+	storage = BytesIO()
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Ie':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-e':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-IA':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Icb':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			if os.path.exists(cookie_file):
+				os.remove(cookie_file)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-bc':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-L':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		elif curl_opt == '-d':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.POSTFIELDS,postfield)
+		else:
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
 
 def naturallysorted(l): 
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -53,16 +162,17 @@ class musicArtist():
 			content = str(content)
 			print("I'm unicode")
 		return content
-	def ccurl(self,url,rfr):
+	def ccurlT(self,url,rfr):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
 		#if rfr:
 		#	content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
 		#else:
 		#	content = subprocess.check_output(['curl','-L','-A',hdr,url])
-		hdrs = {'user-agent':self.hdr}
-		req = requests.get(url,headers=hdrs)
-		content = req.text
-		content = self.getContentUnicode(content)
+		#hdrs = {'user-agent':self.hdr}
+		#req = requests.get(url,headers=hdrs)
+		#content = req.text
+		#content = self.getContentUnicode(content)
+		content = ccurl(url)
 		return content
 	def search(self,name,name_url):
 		if not name_url:
@@ -73,8 +183,9 @@ class musicArtist():
 		print (url)
 		wiki = ""
 		if not name_url:
-			content = self.ccurl(url,'')
+			#content = self.ccurl(url,'')
 			#print content
+			content = ccurl(url)
 			soup = BeautifulSoup(content,'lxml')
 
 			link = soup.findAll('div',{'class':'row clearfix'})
@@ -106,8 +217,8 @@ class musicArtist():
 		img_url = url+'/+images'
 		wiki_url = url + '/+wiki'
 		print (wiki_url)
-		content = self.ccurl(wiki_url,'')
-
+		#content = self.ccurl(wiki_url,'')
+		content = ccurl(wiki_url)
 		soup = BeautifulSoup(content)
 		link = soup.find('div',{'class':'wiki-content'})
 		print (link)
@@ -117,7 +228,8 @@ class musicArtist():
 			wiki = link.text
 			#print wiki
 
-		content = self.ccurl(img_url,'')
+		#content = self.ccurl(img_url,'')
+		content = ccurl(img_url)
 		soup = BeautifulSoup(content,'lxml')
 		link = soup.findAll('ul',{'class':'image-list'})
 		img = []
