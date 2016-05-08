@@ -11,7 +11,9 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 1. 'python-requests' no longer required.
 
-2. changes in the code of headless browser
+2. 'jsbeautifier' no longer required.
+
+3. changes in the code of headless browser.
 
 
 
@@ -108,7 +110,7 @@ libnotify(required for Desktop Notification)
 
 pytaglib(required for mp3 Tagging)
 
-jsbeautifier(required for resolving certain links)
+jsbeautifier(required for resolving certain links) {Not required for version >= 2.1.1-1}
 
 sqlite3 (for managing local music and video database, Addons are not managed by it. Addons are managed using files.)
 
