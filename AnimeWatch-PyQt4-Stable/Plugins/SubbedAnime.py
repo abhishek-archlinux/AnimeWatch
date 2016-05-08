@@ -510,7 +510,309 @@ def replace_all(text, di):
 	for i, j in di.iteritems():
 		text = text.replace(i, j)
 	return text
+
+def mp4starUrl(content,site):
 	
+	global qualityVideo
+	soup = BeautifulSoup(content,'lxml')
+	#m = soup.findAll('script,{"type":"text/javascript"}')
+	#if not m:
+	m = soup.findAll('script')
+	for i in m:
+		if site == 'videowing':
+			if 'eval(' in i.text and 'videofun' in i.text and ('https' in i.text or 'http' in i.text) :
+				print(i.text)
+				content = i.text
+				break
+		elif site == 'easyvideo':
+			if 'eval(' in i.text and ('Easyvideo' in i.text or 'videozoo' in i.text or 'easyvideo' in i.text) and ('https' in i.text or 'http' in i.text) :
+				print(i.text)
+				content = i.text
+				break
+		elif site == 'tusfiles':
+			if 'eval(function' in i.text and ('https' in i.text or 'http' in i.text):
+				print(i.text)
+				content = i.text
+				break
+		elif site == 'myvidstream':
+			if 'eval(' in i.text and 'myvidstream' in i.text and ('https' in i.text or 'http' in i.text):
+				print(i.text)
+				content = i.text
+				break
+		else:
+			if 'eval(' in i.text and ('https' in i.text or 'http' in i.text):
+				print(i.text)
+				content = i.text
+				break
+	print("-------------------------------------------")
+	#print(content)
+	print("-------------------------------------------")
+	m = re.findall("'[^']*",content)
+	#print(m)
+
+	for i in m:
+		if '|' in i and ('https' in i or 'http' in i):
+			i = i.replace("'",'')
+			print(i)
+			t = i
+			print('\n****')
+	m = t.split('|')
+	#print(m)
+	j = 0
+	k = 'a'
+	l = 'A'
+	print(chr(ord(k)+1))
+	arr = ['0','1','2','3','4','5','6','7','8','9']
+
+	for i in range(26):
+		arr.append(chr(ord(k)))
+		k = chr(ord(k)+1)
+	if site != 'tusfiles':
+		for i in range(26):
+			arr.append(chr(ord(l)))
+			l = chr(ord(l)+1)
+	print(arr)
+
+	length = len(arr)
+	k = arr[0]
+	l = arr[0]
+	j = 0
+	n = 0
+	p = 0
+	d = []
+	k = 100
+	d1 = []
+	for i in range(len(m)):
+		if not(m[i]):
+			k = k+1
+		if i%length == 0 and i:
+			p = p+1
+			n = 0
+			j = p
+		if p == 0:
+			if not m[i]:
+				r = (k,arr[j])
+				r1 = (arr[j],k)
+			else:
+				r = (m[i],arr[j])
+				r1 = (arr[j],m[i])
+			j = j+1
+		else:
+			if not m[i]:
+				r = (k,arr[j])
+				r1 = (arr[j],k)
+			else:
+				r = (m[i],arr[j]+arr[n])
+				r1 = (arr[j]+arr[n],m[i])
+			n = n+1
+		d.append(r)
+		d1.append(r1)
+	m = dict(d)
+	di = dict(d1)
+	print(di)
+	#print(di)
+	
+	if site == 'mp4star':
+		try:
+			n = m['https']
+		except:
+			n = 'nothong'
+		v = m['file']
+		try:
+			n1 = m['http']
+		except:
+			n1 = 'nothing'
+		o = re.findall(v+"[^:]*:[^']"+n1+"[^']*",content)
+		print(o)
+		if o:
+			if len(o) == 1:
+				u1 = o[0]
+			else:
+				if qualityVideo == 'sd':
+					u1 = o[0]
+				else:
+					u1 = o[-1]
+			print(o)
+			u = re.sub(v+'[^:]*:','',u1)
+			u = u.replace("'",'')
+			u = u.replace('"','')
+		else:
+			print(v,n)
+			o = re.findall(v+"[^:]*:[^']'"+n+"[^']*",content)
+			print(o)
+			if o:
+				if len(o) == 1:
+					u1 = o[0]
+				else:
+					if qualityVideo == 'sd':
+						u1 = o[0]
+					else:
+						u1 = o[-1]
+				u = re.sub(v+"[^']*",'',u1)
+				u = u.replace("'",'')
+				u = u.replace('"','')
+	
+	
+	elif site == 'myvidstream':
+		v = m['file']
+		n1 = m['http']
+		o = re.findall("'"+v+'[^)]*',content)
+		print(o)
+		if o:
+			print(o)
+			u = re.sub("'"+v+'[^,]*','',o[0])
+			u = u.replace("'",'')
+			u = u.replace(",",'')
+			u = u.replace('"','')
+	elif site == 'tusfiles':
+		v = '"'+m['src']+'"'
+		v1 = m['value']
+		v2 = m['https']
+		n = v+v1+'="'+v2
+		print(n)
+		o = re.findall(n+'[^"]*',content)
+		print(o)
+		if o:
+			print(o)
+			if len(o) > 1:
+				o1 = o[-1]
+			else:
+				o1 = o[0]
+			u = re.sub(v+v1+'="','',o1)
+			u = u.replace("'",'')
+			u = u.replace(",",'')
+			u = u.replace('"','')
+	elif site == 'videowing':
+		try:
+			n = m['https']
+		except:
+			n = 'nothing'
+		v = m['url']
+		try:
+			n1 = m['http']
+		except:
+			n1 = 'nothing'
+		
+		o = re.findall('"'+v+'[^:]*:'+'"'+n+'[^"]*',content)
+		if o:
+			print(o)
+			if len(o) == 1:
+				u1 = o[0]
+			else:
+				if qualityVideo == 'sd':
+					u1 = o[0]
+				else:
+					u1 = o[-1]
+			print(o)
+			u = re.sub('"'+v+'[^:]*:','',u1)
+			u = u.replace("'",'')
+			u = u.replace('"','')
+		else:
+			o = re.findall('"'+v+'[^:]*:'+'"'+n1+'[^"]*',content)
+			if o:
+				print(o)
+				if len(o) == 1:
+					u1 = o[0]
+				else:
+					if qualityVideo == 'sd':
+						u1 = o[0]
+					else:
+						u1 = o[-1]
+				print(o)
+				u = re.sub('"'+v+'[^:]*:','',u1)
+				u = u.replace("'",'')
+				u = u.replace('"','')
+	elif site == 'easyvideo':
+		try:
+			n = m['https']
+		except:
+			n = 'nothing'
+		v = m['url']
+		try:
+			n1 = m['http']
+		except:
+			n1 = 'nothing'
+		try:
+			w = m['src']
+			print(w,'----m[src]---')
+		except:
+			w = 'nothing'
+		o = re.findall(v+'[:]'+'"'+n+'[^"]*',content)
+		if o:
+			print(o)
+			if len(o) == 1:
+				u1 = o[0]
+			else:
+				if qualityVideo == 'sd':
+					u1 = o[0]
+				else:
+					u1 = o[-1]
+			print(o)
+			u = re.sub(v+'[:]','',u1)
+			u = u.replace("'",'')
+			u = u.replace('"','')
+		else:
+			o = re.findall(v+'[:]'+'"'+n1+'[^"]*',content)
+			if o:
+				print(o)
+				u = re.sub(v+'[:]','',o[0])
+				u = u.replace("'",'')
+				u = u.replace('"','')
+	
+	
+	
+	
+	
+	u = u.replace('\\','')
+	#u = re.sub('["?"]|"','',u)
+	print(u)
+	r = re.findall('[0-9a-zA-Z][^\.|\%|\/|\-|\=|\:|\?|\&]*',u)
+	print(r)
+	url = ""
+	token = ''
+	found = False
+	special_arr = ['.','%','-','=','/','?',':','&']
+	i = 0
+	token_index = 0
+	l = 0
+	print(di['c'])
+	while (i < len(u)):
+		#print(i)
+		token = ""
+		found = False
+		#print(url)
+		if u[i] in special_arr:
+			url = url+u[i]
+		else:
+			j = i
+			while(j < len(u)):
+				token = token + u[j]
+				if token in r:
+					#print(token)
+					found = True
+					try:
+						url = url+di[token]
+					except:
+						url = url+token
+					token_index = j+1
+					break
+				j = j+1
+		
+		if found:
+			i = token_index
+		else:
+			i = i+1
+		l = l+1
+		if l > 200:
+			break
+		print(l)
+	print(url)
+	url = re.sub('"','',url)
+	url = re.sub("'",'',url)
+	u = urllib.parse.unquote(url)
+	print(u)
+	return(u)
+
 def findurl(i):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
 	found = ""
@@ -563,6 +865,8 @@ def findurl(i):
 			"""
 			found = ''
 			content = ccurl(i)
+			found = mp4starUrl(content,'tusfiles')
+			"""
 			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('textarea')
 			print(link)
@@ -594,6 +898,7 @@ def findurl(i):
 						found = link
 					else:
 						found = ''
+			"""
 			return found
 	elif "embedupload" in i:
 			content = ccurl(i)
@@ -632,6 +937,20 @@ def findurl(i):
 		return found
 	elif "videowing" in i or "easyvideo" in i:
 		content = ccurl(i)
+		if 'videowing' in i:
+			found = mp4starUrl(content,'videowing')
+		else:
+			found = mp4starUrl(content,'easyvideo')
+			if found.startswith('https:'):
+				pass
+			elif found.startswith('http:'):
+				content = ccurl(found+'#'+'-I')
+				if "Location:" in content:
+					m = re.findall('Location: [^\n]*',content)
+					found = re.sub('Location: |\r','',m[-1])
+				else:
+					found = url
+		"""
 		soup = BeautifulSoup(content)
 		link = soup.findAll('script')
 		print(link)
@@ -677,11 +996,14 @@ def findurl(i):
 				found = url
 		else:
 			found = ""
+		"""
 		return found
 	elif "myvidstream" in i:
 			packed = ''
 			final = ""
 			content = ccurl(i)
+			final = mp4starUrl(content,'myvidstream')
+			"""
 			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('script',{'type':'text/javascript'})
 			for i in link:
@@ -705,6 +1027,7 @@ def findurl(i):
 						fi = final.split('\\')
 						if fi:
 							final = fi[0]
+			"""
 			"""
 			link = re.findall('eval[(][^"]*.split',content)
 			print(len(link))
@@ -839,7 +1162,14 @@ def findurl(i):
 					m = re.findall('Location: [^\n]*',content)
 					found = re.sub('Location: |\r','',m[-1])
 					print(found)
-				
+			else:
+				url1 = mp4starUrl(content,'mp4star')
+				print(url1,'**********')
+				content = ccurl(url1+'#'+'-I')
+				if "Location:" in content:
+					m = re.findall('Location: [^\n]*',content)
+					found = re.sub('Location: |\r','',m[-1])
+					print(found)
 			url = str(urllib.parse.unquote(found))
 			return url
 	elif "vidkai" in i:
@@ -1019,7 +1349,7 @@ class SubbedAnime():
 			url = "http://www.watch-anime.net/anime-list-all/"
 			urlM = "http://www.watch-anime.net/anime-movies/"
 		elif siteName == "AnimeMax":
-			url = "http://gogocartoon.net/anime-list.html"
+			url = "http://gogocartoon.us/anime-list.html"
 		elif siteName == "AnimeStream":
 			url = "http://www.ryuanime.com/animelist.php"
 		elif siteName == "AnimeMix":
@@ -1379,8 +1709,8 @@ class SubbedAnime():
 			url = "http://www.watch-anime.net/" + name + "/"
 			base = "http://www.watch-anime.net/"
 		elif siteName == "AnimeMax":
-			url = "http://gogocartoon.net/category-anime/" + name 
-			base = "http://gogocartoon.net/"
+			url = "http://gogocartoon.us/category-anime/" + name 
+			base = "http://gogocartoon.us/"
 		elif siteName == "AnimeStream":
 			url = "http://www.ryuanime.com/watch-anime/" + name + '/' 
 			base = "http://www.ryuanime.com/"
@@ -2356,7 +2686,7 @@ class SubbedAnime():
 		elif siteName == "AnimeNet":
 			url = "http://www.watch-anime.net/" +name+'/'+ epn +'/'
 		elif siteName == "AnimeMax":
-			url = "http://gogocartoon.net/" + epn
+			url = "http://gogocartoon.us/" + epn
 		elif siteName == "AnimeStream":
 			if "Subbed" in epn:
 				epn = re.sub('Subbed-',"",epn)
@@ -2645,7 +2975,8 @@ class SubbedAnime():
 			final = ''
 			content = ccurl(url)
 			soup = BeautifulSoup(content,'lxml')
-			link = soup.find('div',{'class':'anime_video_body_watch'})
+			#link = soup.find('div',{'class':'anime_video_body_watch'})
+			link = soup.find('div',{'class':'anime_video_body_watch_items_2'})
 			sd = ''
 			hd = ''
 			sd480 = ''

@@ -175,6 +175,8 @@ def findurl(url):
 		#print("myvidstream="+url
 		packed = ''
 		content = ccurl(url,"")
+		final = mp4starUrl(content,'myvidstream')
+		"""
 		soup = BeautifulSoup(content,'lxml')
 		link = soup.findAll('script',{'type':'text/javascript'})
 		for i in link:
@@ -198,8 +200,9 @@ def findurl(url):
 					fi = final.split('\\')
 					if fi:
 						final = fi[0]
-			
-		
+		"""
+	elif 'mp4star' in str(url) or 'justmp4' in str(url):
+		final = mp4star(url) 
 	elif "vidup" in str(url):
 		m = re.findall('http://[^"]*&bg',url)
 		m1 = re.sub('&bg*','',m[0])
@@ -344,11 +347,211 @@ def mp4star(url):
 			m = re.findall('Location: [^\n]*',content)
 			found = re.sub('Location: |\r','',m[-1])
 			print(found)
-		
+	else:
+		url1 = mp4starUrl(content,'mp4star')
+		print(url1,'**********')
+		content = ccurlNew(url1+'#'+'-I')
+		if "Location:" in content:
+			m = re.findall('Location: [^\n]*',content)
+			found = re.sub('Location: |\r','',m[-1])
+			print(found)
 	url = str(urllib.parse.unquote(found))
 	return url
 
+
+def mp4starUrl(content,site):
 	
+	global qualityVideo
+	soup = BeautifulSoup(content,'lxml')
+	m = soup.findAll('script,{"type":"text/javascript"}')
+	if not m:
+		m = soup.findAll('script')
+	for i in m:
+		if site == 'myvidstream':
+			if 'eval(' in i.text and 'myvidstream' in i.text and ('https' in i.text or 'http' in i.text):
+				print(i.text)
+				content = i.text
+				break
+		else:
+			if 'eval(' in i.text and ('https' in i.text or 'http' in i.text):
+				print(i.text)
+				content = i.text
+				break
+				
+	print("-------------------------------------------")
+	#print(content)
+	print("-------------------------------------------")
+	m = re.findall("'[^']*",content)
+	#print(m)
+
+	for i in m:
+		if '|' in i and ('https' in i or 'http' in i):
+			i = i.replace("'",'')
+			print(i)
+			t = i
+			print('\n****')
+	m = t.split('|')
+	#print(m)
+	j = 0
+	k = 'a'
+	l = 'A'
+	print(chr(ord(k)+1))
+	arr = ['0','1','2','3','4','5','6','7','8','9']
+
+	for i in range(26):
+		arr.append(chr(ord(k)))
+		k = chr(ord(k)+1)
+		
+	for i in range(26):
+		arr.append(chr(ord(l)))
+		l = chr(ord(l)+1)
+	print(arr)
+
+	length = len(arr)
+	k = arr[0]
+	l = arr[0]
+	j = 0
+	n = 0
+	p = 0
+	d = []
+	k = 100
+	d1 = []
+	for i in range(len(m)):
+		if not(m[i]):
+			k = k+1
+		if i%length == 0 and i:
+			p = p+1
+			n = 0
+			j = p
+		if p == 0:
+			if not m[i]:
+				r = (k,arr[j])
+				r1 = (arr[j],k)
+			else:
+				r = (m[i],arr[j])
+				r1 = (arr[j],m[i])
+			j = j+1
+		else:
+			if not m[i]:
+				r = (k,arr[j])
+				r1 = (arr[j],k)
+			else:
+				r = (m[i],arr[j]+arr[n])
+				r1 = (arr[j]+arr[n],m[i])
+			n = n+1
+		d.append(r)
+		d1.append(r1)
+	m = dict(d)
+	di = dict(d1)
+	print(di)
+	#print(di)
+	if site == 'mp4star':
+		n = m['https']
+		v = m['file']
+		n1 = m['http']
+		o = re.findall(v+"[^:]*:[^']"+n1+"[^']*",content)
+		print(o)
+		if o:
+			if len(o) == 1:
+				u1 = o[0]
+			else:
+				if qualityVideo == 'sd':
+					u1 = o[0]
+				else:
+					u1 = o[-1]
+			print(o)
+			u = re.sub(v+'[^:]*:','',o[0])
+		else:
+			print(v,n)
+			o = re.findall(v+"[^:]*:[^']'"+n+"[^']*",content)
+			print(o)
+			if o:
+				if len(o) == 1:
+					u1 = o[0]
+				else:
+					if qualityVideo == 'sd':
+						u1 = o[0]
+					else:
+						u1 = o[-1]
+				u = re.sub(v+"[^']*",'',u1)
+				u = u.replace("'",'')
+	
+	
+	elif site == 'myvidstream':
+		v = m['file']
+		n1 = m['http']
+		o = re.findall("'"+v+'[^)]*',content)
+		print(o)
+		if o:
+			print(o)
+			u = re.sub("'"+v+'[^,]*','',o[0])
+			u = u.replace("'",'')
+			u = u.replace(",",'')
+	else:
+		n = m['https']
+		v = m['url']
+		n1 = m['http']
+		o = re.findall('"'+v+'[^:]*:'+'"'+n1+'[^"]*',content)
+		if o:
+			print(o)
+			u = re.sub('"'+v+'[^:]*:','',o[0])
+		else:
+			o = re.findall('"'+v+'[^:]*:'+'"'+n+'[^"]*',content)
+			if o:
+				print(o)
+				u = re.sub('"'+v+'[^:]*:','',o[0])
+	
+	u = u.replace('\\','')
+	
+	#u = re.sub('["?"]|"','',u)
+	print(u)
+	r = re.findall('[0-9a-zA-Z][^\.|\%|\/|\-|\=|\:|\?|\&]*',u)
+	print(r)
+	url = ""
+	token = ''
+	found = False
+	special_arr = ['.','%','-','=','/','?',':','&']
+	i = 0
+	token_index = 0
+	l = 0
+	#print(di['c'])
+	while (i < len(u)):
+		#print(i)
+		token = ""
+		found = False
+		#print(url)
+		if u[i] in special_arr:
+			url = url+u[i]
+		else:
+			j = i
+			while(j <= len(u)):
+				token = token + u[j]
+				if token in r:
+					#print(token)
+					found = True
+					try:
+						url = url+di[token]
+					except:
+						url = url+token
+					token_index = j+1
+					break
+				j = j+1
+		
+		if found:
+			i = token_index
+		else:
+			i = i+1
+		l = l+1
+		if l > 200:
+			break
+		print(l)
+	print(url)
+	url = re.sub('"','',url)
+	url = re.sub("'",'',url)
+	u = urllib.parse.unquote(url)
+	print(u)
+	return(u)
+
 def uploadcrazy(url):
 	content = ccurl(url,"")
 	m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
@@ -421,7 +624,7 @@ class DubbedAnime():
 				content = ccurl(url,"")
 				print(url)
 				final = ""
-				m = re.findall('http://[^"]*uploadcrazy[^"]*|http://[^"]*vidkai[^"]*',content)
+				m = re.findall('http://[^"]*uploadcrazy[^"]*|http://[^"]*vidkai[^"]*|http://[^"]*justmp4[^"]*|http://[^"]*mp4star[^"]*',content)
 				print(m)
 				if len(m) == 1:
 					final = findurl(m[0])
@@ -436,7 +639,7 @@ class DubbedAnime():
 			
 				
 		elif siteName == "Dubcrazy":
-				url = "http://www.dubbedanimeonline.ch/" + epn + "/"
+				url = "http://www.dubbedanimeonline.pw/" + epn + "/"
 				content = ccurl(url,"")
 				print(url)
 				m = []
@@ -456,12 +659,11 @@ class DubbedAnime():
 						if len(n) == 1:
 							src = n[0]
 						else:
-							hd = n[0]
-							sd = n[1]
-							if mirrorNo == 1:
-								src = sd
+							
+							if qualityVideo == 'hd':
+								src = n[0]
 							else:
-								src = hd
+								src = n[-1]
 						#content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,src]) )
 						#content = self.getContent(content)
 						content = ccurlNew(src+'#'+'-I')
@@ -539,11 +741,13 @@ class DubbedAnime():
 					mirrorNo = mirrorNo + 1
 		elif siteName == "CartoonMax":
 			final = ''
-			url = "http://gogocartoon.net/" + epn
+			url = "http://gogocartoon.us/" + epn
 			print(url,'----------')
 			content = ccurl(url,"")
 			soup = BeautifulSoup(content,'lxml')
-			link = soup.find('div',{'class':'anime_video_body_watch'})
+			#link = soup.find('div',{'class':'anime_video_body_watch'})
+			#if not link:
+			link = soup.find('div',{'class':'anime_video_body_watch_items_2'})
 			sd = ''
 			hd = ''
 			sd480 = ''
@@ -643,9 +847,9 @@ class DubbedAnime():
 				url = "http://www.cartoon-world.tv/cartoon-list/"
 		elif siteName == "Dubcrazy":
 			if category == "Movies":
-				url = "http://www.dubbedanimeonline.ch/dubbed-movies-list/"
+				url = "http://www.dubbedanimeonline.pw/dubbed-movies-list/"
 			else:
-				url = "http://www.dubbedanimeonline.ch/dubbed-anime-list/"
+				url = "http://www.dubbedanimeonline.pw/dubbed-anime-list/"
 		elif siteName == "Animetycoon":
 			url = "http://www.animetycoon.net/full-index/"
 		elif siteName == "AniDub":
@@ -660,7 +864,7 @@ class DubbedAnime():
 			else:
 				url = "http://www.animestatic.co/anime-list/"
 		elif siteName == "CartoonMax":
-			url = "http://gogocartoon.net/cartoon-list.html"
+			url = "http://gogocartoon.us/cartoon-list.html"
 		print(url)
 		if siteName == "Animetycoon" or siteName == "AnimeStatic":
 			#hdrs = {'user-agent':self.hdr}
@@ -737,7 +941,7 @@ class DubbedAnime():
 			base = "http://www.cartoon-world.tv/"
 			url = base+ "watch/" + name+"/"
 		elif siteName == "Dubcrazy":
-			base = "http://www.dubbedanimeonline.ch/"
+			base = "http://www.dubbedanimeonline.pw/"
 			url = base+ "view/" + name+"/" 
 		elif siteName == "Animetycoon":
 			base = "http://www.animetycoon.net/"
@@ -755,8 +959,8 @@ class DubbedAnime():
 			else:
 				url = "http://www.animestatic.co/anime/" + name + '/'
 		elif siteName == "CartoonMax":
-			url = "http://gogocartoon.net/category/" + name 
-			base = "http://gogocartoon.net/"
+			url = "http://gogocartoon.us/category/" + name 
+			base = "http://gogocartoon.us/"
 			
 		
 		print(url)
@@ -935,7 +1139,7 @@ class DubbedAnime():
 					for k in j:
 						summary = k.text
 				
-				img = "http://www.dubbedanimeonline.ch/images/" + name+".jpg"
+				img = "http://www.dubbedanimeonline.pw/images/" + name+".jpg"
 				print(img)
 				picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				if not os.path.isfile(picn):
