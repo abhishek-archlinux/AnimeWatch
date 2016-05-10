@@ -78,7 +78,7 @@ def unshorten_url(url):
 		return shrink_link
 
 def cloudfare(url):
-			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 			home1 = os.path.expanduser("~")
 			#home1 = "/usr/local/share"
 			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
@@ -157,7 +157,7 @@ def cloudfare(url):
 def cloudfareUrl(url,quality):
 	web = BrowseUrl(url,quality)
 def cloudfareUrlOld(url):
-			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 			home1 = os.path.expanduser("~")
 			#home1 = "/usr/local/share"
 			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
@@ -192,7 +192,7 @@ def cloudfareUrlOld(url):
 			
 	
 def shrink_url(url):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	if "linkshrink" in url:
 		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-I','-L',url])
 		#content = getContentUnicode(content)
@@ -275,7 +275,7 @@ def progressBar(cmd):
 
 def ccurl(url):
 	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
 	
@@ -364,7 +364,7 @@ def ccurl(url):
 		content = getContentUnicode(content)
 		return content
 def ccurlPhantom(url):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	
 	home1 = os.path.expanduser("~")
 	pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
@@ -378,7 +378,7 @@ def ccurlPhantom(url):
 
 def ccurl_setcookie(url):
 	
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
@@ -396,7 +396,7 @@ def ccurl_setcookie(url):
 
 def ccurl_cookie(url):
 	
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
@@ -414,7 +414,7 @@ def ccurl_cookie(url):
 	
 def ccurlM(url):
 	
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
@@ -437,7 +437,7 @@ def ccurlM(url):
 
 def ccurlGet(url):
 	
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	
 	if os.path.exists('/tmp/AnimeWatch/animeget.txt'):
@@ -480,7 +480,7 @@ def ccurlGet(url):
 		return (content)
 
 def ccurlPost(url,value):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	
 	c = pycurl.Curl()
 	if value == "no_redir":
@@ -814,7 +814,7 @@ def mp4starUrl(content,site):
 	return(u)
 
 def findurl(i):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	found = ""
 	print(i)
 	global qualityVideo
@@ -1297,7 +1297,7 @@ def findurl(i):
 	
 class SubbedAnime():
 	def __init__(self):
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		
 	def getOptions(self):
 			criteria = ['Anime1','Anime44','AnimePlus','AnimeWow','Animehere','GoodAnime','AnimeNet','AnimeMax','AnimeStream','Animefun','Animegalaxy','Animebox','Anime-Freak','AnimeBaka','AnimeHQ','AnimeSquare','Animeget','AnimeAll','AnimeMix']
@@ -2374,7 +2374,7 @@ class SubbedAnime():
 					if not final1:
 						final1 = forward_link
 					#content = open('1.txt','r').read()
-					hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+					hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 					
 					#content = (subprocess.check_output(['curl','-L','-A',self.hdr,final1]))
 					#content = getContentUnicode(content)

@@ -45,7 +45,7 @@ def getContentUnicode(content):
 
 def ccurl(url):
 	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
 	curl_opt = ''
@@ -149,7 +149,7 @@ def naturallysorted(l):
  
 class musicArtist():
 	def __init__(self):
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	def getContentUnicode(self,content):
 		if isinstance(content,bytes):
 			print("I'm byte")
@@ -163,7 +163,7 @@ class musicArtist():
 			print("I'm unicode")
 		return content
 	def ccurlT(self,url,rfr):
-		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		#if rfr:
 		#	content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
 		#else:

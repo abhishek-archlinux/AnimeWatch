@@ -36,7 +36,7 @@ def getContentUnicode(content):
 	return content
 def ccurlNew(url):
 	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
 	curl_opt = ''
@@ -122,7 +122,7 @@ def ccurlNew(url):
 		return content
 		
 def ccurl(url,value):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	
 	c = pycurl.Curl()
 	if value == "no_redir":
@@ -169,7 +169,7 @@ def simplyfind(i):
 
 def findurl(url):
 	final = ""
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print('--------findurl-----',url)
 	if "myvidstream" in str(url):
 		#print("myvidstream="+url
@@ -564,7 +564,7 @@ def uploadcrazy(url):
 	
 class DubbedAnime():
 	def __init__(self):
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		
 	def getOptions(self):
 			criteria = ['Cartoon','CartoonMax','Movies','Dubcrazy','Animetycoon','Cartoon-World','AnimeStatic','AniDub']

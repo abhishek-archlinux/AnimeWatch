@@ -76,7 +76,7 @@ def getContentUnicode(content):
 	return content
 def ccurl(url):
 	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
@@ -150,7 +150,7 @@ def replace_all(text, di):
 
 class KissCartoon():
 	def __init__(self):
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']

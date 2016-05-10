@@ -67,7 +67,7 @@ class NetWorkManager(QNetworkAccessManager):
 class BrowserPage(QWebPage):  
 	def __init__(self,url,quality):
 		super(BrowserPage, self).__init__()
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		#self.loadFinished.connect(self._loadFinished)
 		self.loadProgress.connect(self._loadProgress)
 		self.url = url

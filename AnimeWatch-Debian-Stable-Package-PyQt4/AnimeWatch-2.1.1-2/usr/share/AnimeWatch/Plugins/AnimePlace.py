@@ -32,7 +32,7 @@ def getContentUnicode(content):
 	return content
 def ccurl(url):
 	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
 	curl_opt = ''
@@ -121,7 +121,7 @@ def ccurl(url):
 
 class AnimePlace():
 	def __init__(self):
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	def getOptions(self):
 			criteria = ['Random','History','Subbed','Dubbed',"Movies"]
 			return criteria

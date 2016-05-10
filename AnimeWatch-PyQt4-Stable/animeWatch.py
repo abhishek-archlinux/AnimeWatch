@@ -115,7 +115,7 @@ def progressBar(cmd):
 
 def ccurl(url):
 	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
 	curl_opt = ''
@@ -428,9 +428,9 @@ class Browser(QtWebKit.QWebView):
 		super(Browser, self).__init__()
 		#self.action_arr = []
 		#self.threadPool = []
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	def userAgentForUrl(self, url):
-		return 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		return 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	def keyPressEvent(self, event):
 		
 		if event.modifiers() == QtCore.Qt.AltModifier and event.key() == QtCore.Qt.Key_Left:
@@ -472,7 +472,7 @@ class Browser(QtWebKit.QWebView):
 			print("I'm unicode")
 		return content
 	def ccurlT(self,url,rfr):
-		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	#	if rfr:
 	#		content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
 	#	else:
@@ -487,7 +487,7 @@ class Browser(QtWebKit.QWebView):
 	def download(self, url,option):
 		global site,epnArrList
 		print ("Hello")
-		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		url1 = str(url.toString())
 		print (url1)
 		found = ""
@@ -576,7 +576,7 @@ class ThreadingExample(QtCore.QThread):
 	def __del__(self):
 		self.wait()                        
 	def ccurlT(self,url,rfr):
-		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	#	if rfr:
 	#		content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
 	#	else:
@@ -5103,7 +5103,7 @@ class tab5(QtGui.QWidget):
 	def ccurlHead(self,url):
 		global rfr_url
 		print ("------------ccurlHead------------")
-		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0'
+		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		
 		if rfr_url:
 			content = ccurl(url+'#'+'-Ie'+'#'+rfr_url)
@@ -15442,7 +15442,7 @@ if __name__ == "__main__":
 	genre_num = 0
 	opt = ""
 	pgn = 1
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:37.0) Gecko/20100101 Firefox/37.0"
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	app = QtGui.QApplication(sys.argv)
 	#MainWindow = QtGui.QWidget()
 	screen_resolution = app.desktop().screenGeometry()
