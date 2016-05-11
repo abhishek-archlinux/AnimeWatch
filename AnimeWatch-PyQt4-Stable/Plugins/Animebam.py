@@ -1,4 +1,5 @@
 import urllib 
+import urllib3
 import sys
 import pycurl
 from io import StringIO,BytesIO

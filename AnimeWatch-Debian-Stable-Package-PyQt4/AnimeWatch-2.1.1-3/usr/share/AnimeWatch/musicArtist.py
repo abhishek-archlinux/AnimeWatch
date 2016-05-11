@@ -19,6 +19,7 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 """
 import sys
 import urllib
+import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re

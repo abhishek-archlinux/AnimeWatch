@@ -1,41 +1,22 @@
-import urllib 
 import sys
+import urllib
+import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re
+import random
 import subprocess
 from subprocess import check_output
-import random
 from bs4 import BeautifulSoup
 import os.path
-#from PyQt5 import QtCore, QtGui,QtWidgets
-#from PyQt5.QtWidgets import QInputDialog
-"""
-class DlgBox(QtWidgets.QWidget):
-	
-	def __init__(self,i,j):
-		super(DlgBox, self).__init__()
-		self.itemR=j
-		self.items=i
-		self.setItem()
-	def setItem(self):    
-		
-		item, ok = QtWidgets.QInputDialog.getItem(self, "QInputDialog.getItem()","Both Subbed And Dubbed Available", self.items, 0, False)
-		if ok and item:
-		    self.itemR=item
-	def returnItem(self):
-		return self.itemR
-"""
-def replace_all(text, di):
-	for i, j in di.iteritems():
-		text = text.replace(i, j)
-	return text
-	
+from subprocess import check_output
+#from hurry.filesize import size
+
 def naturallysorted(l): 
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
 	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
 	return sorted(l, key = alphanum_key)
-	
+
 def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -48,6 +29,7 @@ def getContentUnicode(content):
 		content = str(content)
 		print("I'm unicode")
 	return content
+	
 def ccurl(url):
 	global hdr
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -64,7 +46,7 @@ def ccurl(url):
 		url = nUrl.split('#')[0]
 		if curl_opt == '-o':
 			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie' or curl_opt == '-e':
+		elif curl_opt == '-Ie':
 			rfr = nUrl.split('#')[2]
 		elif curl_opt == '-Icb' or curl_opt == '-bc':
 			cookie_file = nUrl.split('#')[2]
@@ -99,12 +81,6 @@ def ccurl(url):
 			c.setopt(pycurl.REFERER, rfr)
 			c.setopt(c.NOBODY, 1)
 			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-e':
-			#c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
 		elif curl_opt == '-IA':
 			c.setopt(c.FOLLOWLOCATION, True)
 			c.setopt(c.NOBODY, 1)
@@ -132,7 +108,7 @@ def ccurl(url):
 			c.setopt(c.WRITEDATA, storage)
 			c.setopt(c.POSTFIELDS,postfield)
 		else:
-			#c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.FOLLOWLOCATION, True)
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
 		c.perform()
@@ -141,140 +117,128 @@ def ccurl(url):
 		content = getContentUnicode(content)
 		return content
 
+def replace_all(text, di):
+	for i, j in di.iteritems():
+		text = text.replace(i, j)
+	return text
 
 
-class Animebam():
+
+
+
+class Animejoy():
 	def __init__(self):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	def getOptions(self):
-			criteria = ['List','Random','History']
+			criteria = ['Random','History','List']
 			return criteria
+		
 	def getFinalUrl(self,name,epn,mirror,quality):
-		epn1 = epn.rsplit('-',1)[0]
-		optcode = epn.rsplit('-',1)[1]
-		url = "http://www.animebam.net/" + epn1
+		url = "http://anime-joy.tv/watch/"+name+"/"+epn
 		print(url)
 		content = ccurl(url)
-		m = re.findall('/embed/[^"]*',content)
-		print(m)
-
-		referer = []
-		j = 0
-		for i in m:
-			referer.append('http://www.animebam.net' + i)
-
-		print(referer)
-
-		length = len(m)
-
-		rfr = referer[0]
-		
-		if optcode == "dubbed": 
-			rfr = referer[-1]
-		elif optcode == "subbed":
-			rfr = referer[0]
-		url = rfr
-		content = ccurl(url)
-		m = re.findall('http://[^"]*.mp4',content)
-		print(m)
-		if m:
+		try:
+			m = re.findall('http:[^"]*.mp4',content)
 			url = m[0]
-			rfr = referer[0]
-			content = ccurl(url+'#'+'-e'+'#'+rfr)
-		m = re.findall('http://[^"]*',content)
-		print(m)
+			#print("in try url:" + url 
+		except:
+			m = re.findall('http://anime-joy.tv/embed[^"]*',content)
+			#m = list(set(m))
 		
-		if m:
-			return m[0]
-		#subprocess.Popen(["smplayer","-add-to-playlist",m[0]]) 
+			content = ccurl(m[0])
+			
+			m = re.findall('http[^"]*.mp4',content)
+			#m = list(set(m))
+			#print(m
+			url = m[0]
+		print(url)
+		"""
+		content = subprocess.check_output(["curl","-I","-A",hdr,url])
+		sizeArr = re.findall("Content-Length:[^\n]*",content)
+		if sizeArr:
+			size1 = re.sub("Content-Length:","",sizeArr[0])
+			size1 = re.sub("\r| ","",size1)
+			size2 = int(size1)/(1024*1024)
+			print("Size = "+str(size2) + "M"
+		"""
+		return url
+		#subprocess.Popen(["smplayer","-add-to-playlist",url]) 
+	
 	def search(self,name):
-		url = "http://www.animebam.net/search?search=" + name
+		strname = str(name)
+		print(strname)
+		url = "http://anime-joy.tv/animelist"
 		content = ccurl(url)
-		m = re.findall('/series/[^"]*',content)
-		#print m
+		m = re.findall('watch/[^"]*',content)
 		j=0
+		search = []
 		for i in m:
-			m[j]=re.sub("/series/","",i)
-			j = j+1
-		return m
+			i = re.sub('watch/',"",i)
+			m[j] = i
+			j = j + 1
+		m = list(set(m))
+		m.sort()
+		s = []
+		for i in m:
+			m = re.search('[^"]*'+strname+'[^"]*',i)
+			if m:
+				found = m.group(0)
+				s.append(found)
+			
+		return s
+		
 	def getCompleteList(self,opt,genre_num):
-		url = "http://www.animebam.net/series"
+		url = "http://anime-joy.tv/animelist"
 		content = ccurl(url)
-		#print(content)
-		m = re.findall('/series/[^"]*',(content))
-		#print m
+		m = re.findall('watch/[^"]*',content)
 		j=0
+		search = []
 		for i in m:
-			m[j]=re.sub("/series/","",i)
-			j = j+1
+			i = re.sub('watch/',"",i)
+			m[j] = i
+			j = j + 1
+		m = list(set(m))
+		m.sort()
 		if opt == "Random":
 			m = random.sample(m, len(m))
 		return m
-	def urlResolve(self,txt):
-		m =[]
-		
-		if isinstance(txt,bytes):
-			print("I'm byte")
-			content = str((txt).decode('utf-8'))
-		else:
-			print (type(txt))
-			content = str(txt)
-		n = content.split('\n')
-		for i in n:
-			j = i.split(':')
-			if len(j) > 2:
-				if 'Location' in j[0]:
-					k = j[1].replace(' ','')
-					k = k +':'+j[2]
-					k = k.replace('\r','')
-					print (k)
-					m.append(k)
-		return m
+	
 	def getEpnList(self,name,opt):
-		url = "http://www.animebam.net/series/" + name
-		img = []
+		url = "http://anime-joy.tv/watch/" + name
+		print(url)
 		summary = ""
 		content = ccurl(url)
 		soup = BeautifulSoup(content)
-		link = soup.find('p',{'class':'ptext'})
-		if link:
-			summary = link.text
-		link = soup.findAll('img')
+		link = soup.findAll('div', { "class" : 'ozet' })
+		link1 = soup.findAll('img')
+		img=""
 		for i in link:
+			summary = i.text
+			#summary = re.sub("\n","",summary)
+		if not summary:
+			summary = "No Summary"
+		for i in link1:
 			if 'src' in str(i):
 				j = i['src']
-				if 'jpg' in j or 'jpeg' in j:
-					img_src = j
-					if 'http' not in img_src:
-						img_src = 'http:'+img_src
-					img.append(img_src)
-		"""
-		m = re.findall('ptext">[^"]*',content)
-		img = re.findall('http[^"]*.jpg|http[^"]*.jpeg',content)
-		"""
-		print(img)
-		
-		picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				if j and '.jpg' in j:
+					img = j
+					img = img.replace('animejoy.tv','anime-joy.tv')
+					print(img)
+		picn = "/tmp/" + name + ".jpg"
 		try:
-			if not os.path.isfile(picn):
-				#subprocess.call(["curl",'-L','-A',self.hdr,'-o',picn,img[0]])
-				ccurl(img[0]+'#'+'-o'+'#'+picn)
+			if not os.path.isfile(picn) and img:
+				#subprocess.call(["curl","-o",picn,img])
+				ccurl(img+'#'+'-o'+'#'+picn)
 		except:
 			print("No Cover")
-		
-		if not summary:
-			summary = "No Summary Available"
-		n = re.findall(name+'-[^"]*',content)
-		n=naturallysorted(n)  
-		m = []
-		sub = soup.findAll('i',{'class':'btn-xs btn-subbed'})
-		if sub:
-			for i in n:
-				m.append(i+'-subbed')
-		dub = soup.findAll('i',{'class':'btn-xs btn-dubbed'})
-		if dub:
-			for i in n:
-				m.append(i+'-dubbed')
+		m = re.findall('http://anime-joy.tv/watch/'+name+'/[^"]*',content)
+		j=0
+		for i in m:
+			i = re.sub('http://anime-joy.tv/watch/'+name+'/',"",i)
+			m[j] = i
+			j = j + 1
+		m=naturallysorted(m)  
 		m.append(picn)
 		m.append(summary)
 		return m
+

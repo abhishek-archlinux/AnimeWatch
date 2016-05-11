@@ -21,6 +21,7 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 from PyQt4 import QtCore, QtGui,QtNetwork,QtWebKit
 import sys
 import urllib
+import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re
