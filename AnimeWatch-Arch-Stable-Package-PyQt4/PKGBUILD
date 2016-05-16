@@ -6,21 +6,15 @@ pkgdesc="An Audio/Video Manager and Front End for mpv/mplayer with special empha
 arch=(any)
 license=('GPL3')
 depends=('python' 'python-pyqt4' 'python-pycurl' 'python-urllib3' 'curl' 'libnotify'
-        'python-beautifulsoup4' 'python-psutil' 'python-pillow' 'python-lxml' 'mpv' 'mplayer' 'ffmpegthumbnailer' 'sqlite3' 'python-pip')
+        'python-beautifulsoup4' 'python-psutil' 'python-pillow' 'python-lxml' 'mpv' 'mplayer' 'ffmpegthumbnailer' 'sqlite3' 'python-pytaglib')
 
 #source=("git+https://github.com/abhishek-archlinux/AnimeWatch.git")
 source=("https://github.com/abhishek-archlinux/"${pkgname}"/archive/v"${pkgver}-${pkgrel}".zip")
 md5sums=('SKIP')
 _gitname=AnimeWatch-PyQt4-Stable
 
-prepare() {
-  echo 'Installing pytaglib using python-pip'
-  sudo pip install pytaglib 
-}
-
 
 package() {
-  cd "${srcdir}"
 
   _bpath="${srcdir}/${pkgname}-${pkgver}-${pkgrel}/${_gitname}"
 
@@ -28,12 +22,12 @@ package() {
   install -d "${pkgdir}/usr/share/${_pkgname}/Plugins/"
   install -d "${pkgdir}/usr/share/applications/"
   install -d "${pkgdir}/usr/bin/"
-  # Program
+  
   install -Dm755 "${_bpath}"/{animeWatch.py,musicArtist.py,adb.py,1.png,input.conf,default.jpg,default.html} "${pkgdir}/usr/share/${_pkgname}/"
   cat "${_bpath}/AnimeWatch.desktop" | sed 's/Exec=/Exec=python -B \/usr\/share\/AnimeWatch\/animeWatch.py \%u/g' > "${pkgdir}/usr/share/applications/AnimeWatch.desktop"
-  echo 'if [ -z "$1" ]; then python -B /usr/share/AnimeWatch/animeWatch.py; else python -B /usr/share/AnimeWatch/animeWatch.py "$(pwd)/$1"; fi' > "${pkgdir}/usr/bin/anime-watch"
+  echo '#!/bin/bash' > "${pkgdir}/usr/bin/anime-watch"
+  echo 'if [ -z "$1" ]; then python -B /usr/share/AnimeWatch/animeWatch.py; else python -B /usr/share/AnimeWatch/animeWatch.py "$(pwd)/$1"; fi' >> "${pkgdir}/usr/bin/anime-watch"
   chmod +x "${pkgdir}/usr/bin/anime-watch"
-  #install -Dm644 "${_bpath}/AnimeWatch.desktop" "${pkgdir}/usr/share/applications/${_pkgname}/"
   
   for file in "${_bpath}/Plugins/"*;do
   	nm=$(echo $file | rev | cut -d'/' -f1 | rev)
@@ -42,6 +36,4 @@ package() {
 		install -Dm755 "$file" "${pkgdir}/usr/share/${_pkgname}/Plugins/"
 	fi
   done	
-  
-
 }
