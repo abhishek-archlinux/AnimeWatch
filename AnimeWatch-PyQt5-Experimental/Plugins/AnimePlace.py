@@ -8,7 +8,12 @@ import subprocess
 from subprocess import check_output
 import random
 from bs4 import BeautifulSoup  
+from headlessBrowser import BrowseUrl
 import os.path
+
+def cloudfareUrl(url,quality):
+	web = BrowseUrl(url,quality)
+	
 def replace_all(text, di):
 	for i, j in di.iteritems():
 		text = text.replace(i, j)
@@ -36,6 +41,9 @@ def ccurl(url):
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
+	if os.path.exists('/tmp/AnimeWatch/animeplace.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeplace.txt')
+	
 	curl_opt = ''
 	picn_op = ''
 	rfr = ''
@@ -132,6 +140,10 @@ class AnimePlace():
 	
 			url = "http://theanimeplace.co/" + epn + '/'
 			content = ccurl(url)
+			if 'checking_browser' in content:
+				cloudfareUrl('http://theanimeplace.co/','')
+				content = ccurl(url)
+			
 			soup = BeautifulSoup(content)
 			link = soup.findAll('iframe')
 			url = link[0]['src']
@@ -242,6 +254,10 @@ class AnimePlace():
 		url = "http://theanimeplace.co/watch/" + name + "/"
 		print(url)
 		content = ccurl(url)
+		if 'checking_browser' in content:
+			cloudfareUrl('http://theanimeplace.co/','')
+			content = ccurl(url)
+			
 		img = re.findall('http[^"]*.jpg|http[^"]*.jpeg',content)
 		picn = "/tmp/AnimeWatch/" + name + ".jpg"
 		try:
@@ -290,17 +306,27 @@ class AnimePlace():
 			url1="http://theanimeplace.co/anime-series-list/?type=subbed"
 			url2="http://theanimeplace.co/anime-series-list/?type=dubbed"
 			content1 = ccurl(url1)
+			if 'checking_browser' in content1:
+				cloudfareUrl('http://theanimeplace.co/','')
+				content1 = ccurl(url1)
+			
 			content2 = ccurl(url2)
 			content = content1 + content2
 		elif opt == "movies":
 			url1 = "http://theanimeplace.co/watch/movies-dubbed/"
 			url2 = "http://theanimeplace.co/watch/movies-subbed/"
 			content1 = ccurl(url1)
+			if 'checking_browser' in content1:
+				cloudfareUrl('http://theanimeplace.co/','')
+				content1 = ccurl(url1)
 			content2 = ccurl(url2)
 			content = content1 + content2
 		else:
 			url = "http://theanimeplace.co/anime-series-list/?type="+opt
 			content = ccurl(url)
+			if 'checking_browser' in content:
+				cloudfareUrl('http://theanimeplace.co/','')
+				content = ccurl(url)
 		if opt != "movies":	
 			m = re.findall('watch/[^"]*', content)
 			j=0

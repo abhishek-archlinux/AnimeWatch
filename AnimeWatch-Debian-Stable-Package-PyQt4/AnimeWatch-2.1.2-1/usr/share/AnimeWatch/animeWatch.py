@@ -13275,20 +13275,23 @@ class Ui_MainWindow(object):
 			#if "EndOfFile:" in a:
 			#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 			if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-				if curR == self.list2.count() - 1:
-					curR = 0
-					if site == "Music" and not self.playerPlaylist_setLoop_var:
-						r1 = self.list1.currentRow()
-						it1 = self.list1.item(r1)
-						if it1:
-							if r1 < self.list1.count():
-								r2 = r1+1
-							else:
-								r2 = 0
-							self.list1.setCurrentRow(r2)
-							self.listfound()
+				if self.player_setLoop_var:
+					curR = self.list2.currentRow()
 				else:
-					curR = curR + 1
+					if curR == self.list2.count() - 1:
+						curR = 0
+						if site == "Music" and not self.playerPlaylist_setLoop_var:
+							r1 = self.list1.currentRow()
+							it1 = self.list1.item(r1)
+							if it1:
+								if r1 < self.list1.count():
+									r2 = r1+1
+								else:
+									r2 = 0
+								self.list1.setCurrentRow(r2)
+								self.listfound()
+					else:
+						curR = curR + 1
 				mplayerLength = 0
 				self.total_file_size = 0
 				if mpv_start:

@@ -293,7 +293,17 @@ def mp4star(url):
 		#content = ccurl(found,'')
 		#content = (subprocess.check_output(["curl","-A",hdr,found]))
 		content = ccurlNew(found)
-		
+		print(content)
+		url1 = mp4starUrl(content,'mp4star')
+		print(url1,'**********')
+		content = ccurlNew(url1+'#'+'-I')
+		if "Location:" in content:
+			m = re.findall('Location: [^\n]*',content)
+			found = re.sub('Location: |\r','',m[-1])
+			print(found)
+		else:
+			found = url1
+		"""
 		m = re.findall('value="[^"]*',content)
 	
 		value = re.sub('value="',"",m[0])
@@ -312,6 +322,9 @@ def mp4star(url):
 			content = str(content)
 			print("I'm unicode")
 		#content = ccurl(found,value)
+		
+		"""
+	"""
 	else:
 		content = ccurl(url,'')
 
@@ -356,6 +369,7 @@ def mp4star(url):
 			m = re.findall('Location: [^\n]*',content)
 			found = re.sub('Location: |\r','',m[-1])
 			print(found)
+	"""
 	url = str(urllib.parse.unquote(found))
 	return url
 
@@ -568,7 +582,7 @@ class DubbedAnime():
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		
 	def getOptions(self):
-			criteria = ['Cartoon','CartoonMax','Movies','Dubcrazy','Animetycoon','Cartoon-World','AnimeStatic','AniDub']
+			criteria = ['Cartoon','Movies','Dubcrazy','Animetycoon','Cartoon-World','AnimeStatic','AniDub','CartoonMax']
 			return criteria
 	def getContent(self,content):
 		if isinstance(content,bytes):
@@ -748,17 +762,23 @@ class DubbedAnime():
 			soup = BeautifulSoup(content,'lxml')
 			#link = soup.find('div',{'class':'anime_video_body_watch'})
 			#if not link:
-			link = soup.find('div',{'class':'anime_video_body_watch_items_2'})
+			#link = soup.find('div',{'class':'anime_video_body_watch_items_2'})
+			link = soup.find('div',{'class':'main-video'})
+			#print(link)
 			sd = ''
 			hd = ''
 			sd480 = ''
 			if link:
-				link2 = link.find('iframe')['src']
+				link2 = link.find('iframe')
+				print(link2)
 				if link2:
 					if 'src' in str(link2):
 						link1 = link2['src']
 						print(link1,'---')
 						if link1:
+							if ' ' in str(link1):
+								link1 = re.sub(' ','%20',str(link1))
+							print(link1)
 							content1 = ccurl(link1,'')
 							soup = BeautifulSoup(content1,'lxml')
 							links = soup.findAll('source')
@@ -924,7 +944,8 @@ class DubbedAnime():
 		elif siteName == "CartoonMax":
 			m = []
 			soup = BeautifulSoup(content)
-			link = soup.findAll('div',{'class':'anime_list_body'})
+			#link = soup.findAll('div',{'class':'anime_list_body'})
+			link = soup.findAll('div',{'class':'box-content list'})
 			#print(link
 			for i in link:
 				j = i.findAll('a')
@@ -1093,19 +1114,13 @@ class DubbedAnime():
 				picn = "No"
 		elif siteName == "CartoonMax":
 				m = []
-				link = soup.find('ul',{'id':'episode_page'})
+				link = soup.find('div',{'class':'list-chapter mCustomScrollbar'})
 				if link:
-					epstart = int(link.find('a')['ep_start'])
-					epend = int(link.find('a')['ep_end'])
-					if not epstart:
-						epstart = 0
-					if not epend:
-						epend = 0
-					i = epstart
-					while(i<=epend):
-						ep_n = name+"-episode-"+str(i)
-						m.append(ep_n)
-						i = i+1	
+					j = link.findAll('a')
+					for k in j:
+						tmp = k['href'].split('/')[-1]
+						m.append(tmp)
+					
 				else:
 					link = soup.find('div',{'class':'anime_info_episodes'})
 				
@@ -1114,20 +1129,28 @@ class DubbedAnime():
 						k = i['href'].split('/')[-1]
 						m.append(k)
 				summary = ""
-				link = soup.find('div',{ 'class':'anime_info_body_bg'})
+				link = soup.find('div',{ 'class':'description'})
 				img = []
 				summary = link.text
-			
-				img_src = link.find('img')['src']
+					
+				link = soup.find('div',{ 'class':'box-content'})
+				img1_src = link.find('div',{ 'class':'img'})
+				img_src = link.find('img')['src'] 
 				if ' ' in img_src:
 					img_src = re.sub(" ","%20",img_src)
 				print(img_src)
 				if img_src:
 					img.append(img_src)
+					
+				print(img)
+				
 				picn = "/tmp/AnimeWatch/" + name + ".jpg"
-				if not os.path.isfile(picn):
-					#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
-					ccurlNew(img[0]+'#'+'-o'+'#'+picn)
+				
+				try:
+					if not os.path.isfile(picn):
+						ccurlNew(img[0]+'#'+'-o'+'#'+picn)
+				except:
+					pass
 		elif siteName == "Dubcrazy":
 			
 					

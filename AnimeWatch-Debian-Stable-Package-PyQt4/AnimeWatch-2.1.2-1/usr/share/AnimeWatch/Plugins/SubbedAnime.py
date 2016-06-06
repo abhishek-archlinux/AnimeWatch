@@ -1069,16 +1069,18 @@ def findurl(i):
 			return final
 	elif "mp4upload" in i:
 			content = ccurl(i)
-			if 'mp4upload' in i:
-				m = re.findall("'file': 'http://[^']*mp4upload.com[^']*video.mp4",content)
-			else:
-				m = re.findall("'file': 'http://[^']*video.mp4",content)
+			m = re.findall("'file': 'http://[^']*mp4upload.com[^']*video.mp4",content)
+				
 			print(m)
 			if m:
 				url = re.sub("'file': '","",m[0])
 			else:
-				url = ""
-				print("File Does Not exist")
+				m = re.findall('"file": "http://[^"]*mp4upload.com[^"]*video.mp4',content)
+				if m:
+					url = re.sub('"file": "',"",m[0])
+				else:
+					url = ""
+					print("File Does Not exist")
 			print(url)
 			return url
 	elif "uploadcrazy" in i or "vidcrazy" in i:
@@ -1119,6 +1121,19 @@ def findurl(i):
 				m = re.findall('Location: [^\n]*',content)
 				found = re.sub('Location: |\r','',m[-1])
 				print(found)
+			if found:
+				content = ccurl(found)
+				print(content)
+				url1 = mp4starUrl(content,'mp4star')
+				print(url1,'**********')
+				content = ccurl(url1+'#'+'-I')
+				if "Location:" in content:
+					m = re.findall('Location: [^\n]*',content)
+					found = re.sub('Location: |\r','',m[-1])
+					print(found)
+				else:
+					found = url1
+			"""
 			if found:
 				content = ccurl(found)
 				m = re.findall('value="[^"]*',content)
@@ -1171,6 +1186,7 @@ def findurl(i):
 					m = re.findall('Location: [^\n]*',content)
 					found = re.sub('Location: |\r','',m[-1])
 					print(found)
+			"""
 			url = str(urllib.parse.unquote(found))
 			return url
 	elif "vidkai" in i:
@@ -1249,6 +1265,13 @@ def findurl(i):
 							found = re.sub('Location: |\r','',m[-1])
 							print(found)
 							return found
+	elif 'googleusercontent' in i:
+		content1 = ccurl(i+'#'+'-I')
+		if "Location:" in content1:
+			m = re.findall('Location: [^\n]*',content1)
+			found = re.sub('Location: |\r','',m[0])
+			print(found)
+			return found
 	else:
 			content = ccurl(i)
 			m = re.findall('["]http://[^"]*.mp4[^"]*|["]http://[^"]*.flv[^"]*|["]https://redirector[^"]*|["]https://[^"]*.mp4', content)
@@ -1301,7 +1324,7 @@ class SubbedAnime():
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		
 	def getOptions(self):
-			criteria = ['Anime1','Anime44','AnimePlus','AnimeWow','Animehere','GoodAnime','AnimeNet','AnimeMax','AnimeStream','Animefun','Animegalaxy','Animebox','Anime-Freak','AnimeBaka','AnimeHQ','AnimeSquare','Animeget','AnimeAll','AnimeMix']
+			criteria = ['Anime1','Anime44','AnimePlus','AnimeWow','Animehere','GoodAnime','AnimeNet','AnimeStream','Animefun','Animegalaxy','Animebox','Anime-Freak','AnimeBaka','AnimeHQ','AnimeSquare','Animeget','AnimeMax','AnimeAll','AnimeMix']
 			return criteria
 			
 	def getCompleteList(self,siteName,category,opt):
@@ -1363,9 +1386,9 @@ class SubbedAnime():
 			url = "http://www.anime1.com/content/list/"
 		elif siteName == "AnimeAll":
 			if category == "Movies":
-				url = "http://www.watchanimeshows.net/movies-list/"
+				url = "http://www.watchanimeshows.tv/movies-list/"
 			else:
-				url = "http://www.watchanimeshows.net/anime-shows/"
+				url = "http://www.watchanimeshows.tv/anime-shows/"
 			
 		print(url)
 		if siteName != "AnimePlus":
@@ -1570,7 +1593,7 @@ class SubbedAnime():
 		elif siteName == "AnimeMax":
 			m = []
 			soup = BeautifulSoup(content)
-			link = soup.findAll('div',{'class':'anime_list_body'})
+			link = soup.findAll('div',{'class':'box-content list'})
 			#print(link
 			for i in link:
 				j = i.findAll('a')
@@ -1732,11 +1755,11 @@ class SubbedAnime():
 			base = "http://www.anime1.com/watch/"
 		elif siteName == "AnimeAll":
 			if category == "Movies":
-				url = "http://www.watchanimeshows.net/watch-movie/" + name+'/' 
-				base = "http://www.watchanimeshows.net/watch-movie/"
+				url = "http://www.watchanimeshows.tv/watch-movie/" + name+'/' 
+				base = "http://www.watchanimeshows.tv/watch-movie/"
 			else:
-				url = "http://www.watchanimeshows.net/watch-anime/" + name+'/' 
-				base = "http://www.watchanimeshows.net/watch-anime/"
+				url = "http://www.watchanimeshows.tv/watch-anime/" + name+'/' 
+				base = "http://www.watchanimeshows.tv/watch-anime/"
 		if siteName != "AnimePlus":
 			if siteName == "AnimeMix" and embed == 2:
 				content = "<html>Hello World</html>"
@@ -1975,7 +1998,7 @@ class SubbedAnime():
 					j = j+1
 		elif siteName == "AnimeMax":
 			summary = ""
-			link = soup.find('div',{ 'class':'anime_info_body_bg'})
+			link = soup.find('div',{ 'class':'description'})
 			img = []
 			summary = link.text
 		
@@ -2110,8 +2133,9 @@ class SubbedAnime():
 				
 			elif siteName == "AnimeMax":
 				img = []
-				link = soup.find('div',{ 'class':'anime_info_body_bg'})
-				img_src = link.find('img')['src']
+				link = soup.find('div',{ 'class':'box-content'})
+				img1_src = link.find('div',{ 'class':'img'})
+				img_src = link.find('img')['src'] 
 				if ' ' in img_src:
 					img_src = re.sub(" ","%20",img_src)
 				print(img_src)
@@ -2411,7 +2435,8 @@ class SubbedAnime():
 				m.insert(0,"LINK:FINAL")
 		elif (siteName == "AnimeMax"):
 			m = []
-			link = soup.find('ul',{'id':'episode_page'})
+			link = soup.find('ul',{'id':'episode_related'})
+			"""
 			epstart = int(link.find('a')['ep_start'])
 			epend = int(link.find('a')['ep_end'])
 			if not epstart:
@@ -2423,6 +2448,11 @@ class SubbedAnime():
 				ep_n = name+"-episode-"+str(i)+"-anime"
 				m.append(ep_n)
 				i = i+1	
+			"""
+			j = link.findAll('a')
+			for k in j:
+				tmp = k['href'].split('/')[-1]
+				m.append(tmp)
 		elif (siteName == "AnimeNet"):
 			m = []
 			link = soup.findAll('li')
@@ -2705,7 +2735,7 @@ class SubbedAnime():
 		elif siteName == "AnimeAll":
 			epn1=epn.rsplit('-',1)[0]
 			epn2=epn.rsplit('-',1)[1]
-			url = "http://www.watchanimeshows.net/"+epn2+'/'+epn1+'/'
+			url = "http://www.watchanimeshows.tv/"+epn2+'/'+epn1+'/'
 			print(url)
 		elif siteName == "AnimeMix":
 			url = epn.split(' ')[1]
@@ -2786,7 +2816,8 @@ class SubbedAnime():
 			mirrorNo = mirrorNo - 1
 			content = ccurl(url)
 			soup = BeautifulSoup(content,'lxml')
-			link = soup.findAll('iframe',{'id':'embed'})
+			#link = soup.findAll('iframe',{'id':'embed'})
+			link = soup.findAll('iframe',{'class':'iframe-embed'})
 			if not link:
 				url_v =''
 				n_v = ''
@@ -2797,23 +2828,28 @@ class SubbedAnime():
 					if 'var datas' in j:
 						var_datas = j
 						break
-				m_v = re.findall("n: '[^']*|id: '[^']*|url:[^,]*",var_datas)
+				m_v = re.findall("n:'[^']*|id:'[^']*|url:[^,]*",var_datas)
 				print(m_v)
 				for i in m_v:
 					if 'n:' in i:
-						n_v = re.sub("n: |'",'',i)
+						n_v = re.sub("n:|'",'',i)
 					elif 'id:' in i:
-						id_v = re.sub("id: |'",'',i)
+						id_v = re.sub("id:|'",'',i)
 					elif 'url: ' in i:
-						url_v = re.sub('url: |"','',i)
+						url_v = re.sub('url:|"','',i)
+				if not url_v:
+					url_v = "http://www.watchanimeshows.tv/vload.php"
 				url_n = url_v+'?n='+n_v+'&id='+id_v
 				print (url_n)
 				if url_n:
 					content = ccurl(url_n)
 					soup = BeautifulSoup(content,'lxml')
-					link = soup.findAll('iframe',{'id':'embed'})
+					link = soup.findAll('iframe',{'class':'iframe-embed'})
 			for i in link:
-				j = i['src']
+				try:
+					j = i['data-lazy-src']
+				except:
+					j = i['src']
 				if "vidcrazy" in j or "uploadcrazy" in j or "auengine" in j:
 					m.append(j)
 				elif "videoweed" in j:
@@ -2912,6 +2948,8 @@ class SubbedAnime():
 					url = final_sd_hd_arr[i]
 					if 'mp4upload' in url and not url.endswith('.html'):
 						url = url+'.html'
+					if url.startswith('null'):
+						url=url.replace('null','')
 					final = findurl(url)
 					if final:
 						break
@@ -2921,6 +2959,8 @@ class SubbedAnime():
 				url = final_sd_hd_arr[mirrorNo-1]
 				if 'mp4upload' in url and not url.endswith('.html'):
 					url = url+'.html'
+				if url.startswith('null'):
+					url=url.replace('null','')
 				final = findurl(url)
 			
 		elif siteName == "AnimeMix":
@@ -2977,7 +3017,7 @@ class SubbedAnime():
 			content = ccurl(url)
 			soup = BeautifulSoup(content,'lxml')
 			#link = soup.find('div',{'class':'anime_video_body_watch'})
-			link = soup.find('div',{'class':'anime_video_body_watch_items_2'})
+			link = soup.find('div',{'class':'main-video'})
 			sd = ''
 			hd = ''
 			sd480 = ''
