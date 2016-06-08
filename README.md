@@ -1,9 +1,9 @@
 ﻿# AnimeWatch
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
 
-(Arch users can directly go to Release section or Package directory,download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. After that they have to install only 'jsbeautifier' and 'pytaglib' using 'sudo pip install jsbeautifier pytaglib')
+(Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'.)
 
-(Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. After that they have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier' )
+(Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi')
 
 (If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/)
 
