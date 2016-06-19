@@ -1,7 +1,7 @@
 Package: AnimeWatch
 Version: 2.1.2-1
-Architecture: i386
-Maintainer: gnu-archlinux
+Architecture: all
+Maintainer: gnulinux-fan
 Depends: python3, python3-pyqt4, python3-pycurl, python3-urllib3, python3-pil, python3-bs4, python3-lxml, python3-psutil, python3-taglib, python3-pip, curl, libnotify-bin, mpv, mplayer, ffmpegthumbnailer, sqlite3
 Section: sound,video,audio,multimedia
 Description: A Audio/Video manager and Front End for mpv/mplayer with special emphasis on Watching Anime
