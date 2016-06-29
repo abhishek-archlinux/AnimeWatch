@@ -1,4 +1,4 @@
-dependencies=('python' 'qt5-webengine' 'python-pyqt4' 'python-pycurl' 'python-urllib3' 'curl' 'libnotify'
+dependencies=('python' 'qt5-webengine' 'python-pyqt5' 'python-pycurl' 'python-urllib3' 'curl' 'libnotify'
         'python-beautifulsoup4' 'python-psutil' 'python-pillow' 'python-lxml' 'mpv' 'mplayer' 'ffmpegthumbnailer' 'sqlite3' 'python-pytaglib')
 
 First Remove or uninstall PyQt4 or PyQt5-WebKit version of the AnimeWatch. After uninstall either backup or remove '~/.config/AnimeWatch/src' directory, since it might contain incompatible Addons or plugins, because of which programme might not work.
