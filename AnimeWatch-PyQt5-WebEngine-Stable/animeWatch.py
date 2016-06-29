@@ -18,7 +18,7 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebKitWidgets,QtWebEngineWidgets,QtWebEngineCore
+from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 import sys
 import urllib
 import urllib3
@@ -29,7 +29,6 @@ import subprocess
 import os.path
 from subprocess import check_output
 from bs4 import BeautifulSoup
-from PyQt5.QtWebKitWidgets import QWebView
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl
@@ -11091,8 +11090,8 @@ class Ui_MainWindow(object):
 	def reviewsWeb(self):
 		global name,nam,old_manager,new_manager
 		review_site = str(self.btnWebReviews.currentText())
-		if review_site == "Reviews":
-			review_site = "MyAnimeList"
+		#if review_site == "Reviews":
+		#	review_site = "MyAnimeList"
 		
 		#self.tabWidget1.setCurrentIndex(1)
 		self.list1.hide()

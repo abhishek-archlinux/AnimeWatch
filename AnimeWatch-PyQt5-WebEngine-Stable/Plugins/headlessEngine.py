@@ -20,7 +20,6 @@ from io import StringIO,BytesIO
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 
 from PyQt5.QtNetwork import QNetworkAccessManager
-#from PyQt5.QtWebKitWidgets import QWebView
 from headlessBrowser import ccurl
 
 
