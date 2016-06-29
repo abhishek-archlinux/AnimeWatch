@@ -1265,7 +1265,7 @@ def findurl(i):
 							found = re.sub('Location: |\r','',m[-1])
 							print(found)
 							return found
-	elif 'googleusercontent' in i:
+	elif 'googleusercontent' in i or 'bp.blogspot' in i or 'google' in i:
 		content1 = ccurl(i+'#'+'-I')
 		if "Location:" in content1:
 			m = re.findall('Location: [^\n]*',content1)
