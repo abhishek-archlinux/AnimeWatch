@@ -187,7 +187,7 @@ class BrowseUrl(QWebEngineView):
 
 			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kisscartoon' in url or 'kissasian' in url):
 				cnt = 0
-				while(not os.path.exists(lnk_file) and cnt < 180):
+				while(not os.path.exists(lnk_file) and cnt < 60):
 					if os.path.exists('/tmp/AnimeWatch/tmp_cookie'):
 						os.remove('/tmp/AnimeWatch/tmp_cookie')
 						p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file])
