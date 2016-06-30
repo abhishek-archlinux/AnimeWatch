@@ -430,6 +430,12 @@ class Browser(QtWebKit.QWebView):
 		#self.action_arr = []
 		#self.threadPool = []
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+	#	self.page().linkClicked.connect(self.custom_action_click)
+	#	self.clicked = ''
+	#def custom_action_click(self,url):
+	#	self.clicked = url.toString()
+	#	print(self.clicked)
+		self.img_url = ''
 	def userAgentForUrl(self, url):
 		return 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	def keyPressEvent(self, event):
@@ -440,13 +446,17 @@ class Browser(QtWebKit.QWebView):
 			self.forward()
 		super(Browser, self).keyPressEvent(event)
 	def contextMenuEvent(self, event):
+		self.img_url = ''
 		menu = self.page().createStandardContextMenu()
 		hit = self.page().currentFrame().hitTestContent(event.pos())
 		url = hit.linkUrl()
 		arr = ['Download As Fanart','Download As Cover','Artist/Series Link','Season Episode Link']
-		
+		#found = False
 		action = []
-		if not url.isEmpty():
+		self.img_url = hit.imageUrl()
+		if url.isEmpty() and self.img_url:
+			url = self.img_url
+		if not url.isEmpty() or self.img_url:
 			menu.addSeparator()
 			j = 0
 			for i in range(len(arr)):
@@ -493,6 +503,20 @@ class Browser(QtWebKit.QWebView):
 		print (url1)
 		found = ""
 		url1Code = url1.split('/')[-1]
+		
+		final_found = False
+		
+		t_content = ccurl(url1+'#'+'-I')
+		if 'image/jpeg' in t_content and not 'Location:' in t_content:
+			final_found = True
+		elif 'image/jpeg' in t_content and 'Location:' in t_content:
+			m = re.findall('Location: [^\n]*',t_content)
+			found = re.sub('Location: |\r','',m[0])
+			url1 = found
+			final_found = True
+		elif self.img_url:
+			url1 = self.img_url.toString()
+			final_found = True
 		if site == "Music":
 			if (ui.list3.currentItem().text())=="Artist":
 				name = str(ui.list1.currentItem().text())
@@ -501,7 +525,7 @@ class Browser(QtWebKit.QWebView):
 				name = epnArrList[r].split('	')[2]
 		else:
 			name = str(ui.list1.currentItem().text())
-		if url1.endswith('.jpg'):
+		if (url1.endswith('.jpg') or final_found) and (site!='Music'):
 			final = url1
 			if site == "Local":
 				if name.startswith('@'):
@@ -515,24 +539,29 @@ class Browser(QtWebKit.QWebView):
 			ccurl(final+'#'+'-o'+'#'+thumb)
 		else:
 			if site == "Music" and (option == "Download As Fanart" or option == "Download As Cover"):
-				print(url1,'--artist-link---')
-				#content = self.ccurl(url1,'')
-				content = ccurl(url1)
-				soup = BeautifulSoup(content,'lxml')
-				link = soup.findAll('img')
-				
-				for i in link:
-					if 'src' in str(i):
-						j = i['src']
-						k = j.split('/')[-1]
-						if url1Code == k:
-							found = j
-							break
-				print (str(found))
-				u1 = found.rsplit('/',2)[0]
-				u2 = found.split('/')[-1]
-				final = u1 + '/770x0/'+u2
-				print (final)
+				if 'last.fm' in url1:
+					print(url1,'--artist-link---')
+					#content = self.ccurl(url1,'')
+					content = ccurl(url1)
+					soup = BeautifulSoup(content,'lxml')
+					link = soup.findAll('img')
+					
+					for i in link:
+						if 'src' in str(i):
+							j = i['src']
+							k = j.split('/')[-1]
+							if url1Code == k:
+								found = j
+								break
+					print (str(found))
+					u1 = found.rsplit('/',2)[0]
+					u2 = found.split('/')[-1]
+					final = u1 + '/770x0/'+u2
+					print (final)
+				elif final_found:
+					final = url1
+				else:
+					final = ''
 				thumb = '/tmp/AnimeWatch/'+name+'.jpg'
 				try:
 					if final.startswith('http'):
@@ -2869,7 +2898,7 @@ class List1(QtGui.QListWidget):
 				review4 = submenuR.addAction("TVDB")
 				review5 = submenuR.addAction("ANN")
 				review6 = submenuR.addAction("AniDB")
-				
+				review7 = submenuR.addAction("Google")
 				addBookmark = submenu.addAction("Add Bookmark")
 				#watching = submenu.addAction("Watching")
 				#completed = submenu.addAction("Completed")
@@ -2969,7 +2998,9 @@ class List1(QtGui.QListWidget):
 				elif action == review6:	
 					ui.btnWebReviews.setCurrentIndex(6)
 					ui.reviewsWeb()
-				
+				elif action == review7:	
+					ui.btnWebReviews.setCurrentIndex(7)
+					ui.reviewsWeb()
 				elif action == tvdb:
 					ui.posterfound("")
 					r = self.currentRow()
@@ -6363,6 +6394,7 @@ class Ui_MainWindow(object):
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
+		self.btn2.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
@@ -6370,7 +6402,7 @@ class Ui_MainWindow(object):
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
-		
+		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.chk.addItem(_fromUtf8(""))
 		self.chk.addItem(_fromUtf8(""))
 		self.chk.addItem(_fromUtf8(""))
@@ -6532,6 +6564,7 @@ class Ui_MainWindow(object):
 		self.btn2.setItemText(4, _translate("MainWindow", "TVDB", None))
 		self.btn2.setItemText(5, _translate("MainWindow", "ANN", None))
 		self.btn2.setItemText(6, _translate("MainWindow", "AniDB", None))
+		self.btn2.setItemText(7, _translate("MainWindow", "Google", None))
 		self.btnWebReviews.setItemText(0, _translate("MainWindow", "Reviews", None))
 		self.btnWebReviews.setItemText(1, _translate("MainWindow", "MyAnimeList", None))
 		self.btnWebReviews.setItemText(2, _translate("MainWindow", "Anime-Planet", None))
@@ -6539,6 +6572,7 @@ class Ui_MainWindow(object):
 		self.btnWebReviews.setItemText(4, _translate("MainWindow", "TVDB", None))
 		self.btnWebReviews.setItemText(5, _translate("MainWindow", "ANN", None))
 		self.btnWebReviews.setItemText(6, _translate("MainWindow", "AniDB", None))
+		self.btnWebReviews.setItemText(7, _translate("MainWindow", "Google", None))
 		self.chk.setItemText(0, _translate("MainWindow", "mpv", None))
 		#self.chk.setItemText(1, _translate("MainWindow", "Default", None))
 		self.chk.setItemText(1, _translate("MainWindow", "mplayer", None))
@@ -10934,16 +10968,18 @@ class Ui_MainWindow(object):
 			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
 		elif review_site == "ANN":
 			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
+		elif review_site == "Google":
+			self.web.load(QUrl("https://www.google.com/search?q="+name1))
 		elif review_site == "Reviews":
-			self.web.load(QUrl("default.html"))
+			self.web.setHtml('<html>Reviews:</html>')
 		#new_manager = NetWorkManager(old_manager)
 		#self.web.page().setNetworkAccessManager(old_manager)
 		
 	def reviewsWeb(self):
 		global name,nam,old_manager,new_manager
 		review_site = str(self.btnWebReviews.currentText())
-		if review_site == "Reviews":
-			review_site = "MyAnimeList"
+		#if review_site == "Reviews":
+		#	review_site = "MyAnimeList"
 		
 		#self.tabWidget1.setCurrentIndex(1)
 		self.list1.hide()
@@ -10978,15 +11014,18 @@ class Ui_MainWindow(object):
 			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
 		elif review_site == "ANN":
 			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
+		
+		elif review_site == "Google":
+			self.web.load(QUrl("https://www.google.com/search?q="+name1))
 		elif review_site == "Reviews":
-			self.web.load(QUrl("default.html"))
+			self.web.setHtml('<html>Reviews:</html>')
 		#new_manager = NetWorkManager(old_manager)
 		#self.web.page().setNetworkAccessManager(old_manager)
 	def reviews(self):
 		global name,nam,old_manager,new_manager
 		review_site = str(self.btnWebReviews.currentText())
-		if review_site == "Reviews":
-			review_site = "MyAnimeList"
+		#if review_site == "Reviews":
+		#	review_site = "MyAnimeList"
 		
 		#self.tabWidget1.setCurrentIndex(1)
 		self.list1.hide()
@@ -11021,8 +11060,11 @@ class Ui_MainWindow(object):
 			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
 		elif review_site == "ANN":
 			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
+		
+		elif review_site == "Google":
+			self.web.load(QUrl("https://www.google.com/search?q="+name1))
 		elif review_site == "Reviews":
-			self.web.load(QUrl("default.html"))
+			self.web.setHtml('<html>Reviews:</html>')
 		#new_manager = NetWorkManager(old_manager)
 		#self.web.page().setNetworkAccessManager(old_manager)
 	def rawlist_highlight(self):
