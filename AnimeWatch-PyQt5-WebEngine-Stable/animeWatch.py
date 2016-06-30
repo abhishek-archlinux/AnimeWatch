@@ -492,6 +492,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		menu = self.page().createStandardContextMenu()
 		#hit = self.page().currentFrame().hitTestContent(event.pos())
 		#url = hit.linkUrl()
+		#data = self.page().contextMenuData()
+		#print(data,'--media-url--')
 		url = self.hoveredLink
 		print(url)
 		arr = ['Download As Fanart','Download As Cover','Artist/Series Link','Season Episode Link']
@@ -509,6 +511,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					self.download(url,arr[i])
 			#j = j+1
 		#menu.exec_(event.globalPos())
+		
 		super(Browser, self).contextMenuEvent(event)
 	def getContentUnicode(self,content):
 		if isinstance(content,bytes):
@@ -599,6 +602,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					print (final)
 				elif final_found:
 					final = url1
+				else:
+					final = ''
 				thumb = '/tmp/AnimeWatch/'+name+'.jpg'
 				try:
 					if final.startswith('http'):
@@ -11135,8 +11140,8 @@ class Ui_MainWindow(object):
 	def reviews(self):
 		global name,nam,old_manager,new_manager
 		review_site = str(self.btnWebReviews.currentText())
-		if review_site == "Reviews":
-			review_site = "MyAnimeList"
+		#if review_site == "Reviews":
+		#	review_site = "MyAnimeList"
 		
 		#self.tabWidget1.setCurrentIndex(1)
 		self.list1.hide()
