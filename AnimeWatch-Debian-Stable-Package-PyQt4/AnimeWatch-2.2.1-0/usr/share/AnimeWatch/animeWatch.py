@@ -2162,6 +2162,8 @@ class MySlider(QtGui.QSlider):
 			l=str((datetime.timedelta(milliseconds=t)))
 		elif Player == "mpv":
 			l=str((datetime.timedelta(seconds=t)))
+		else:
+			l = str(0)
 		if '.' in l:
 			l = l.split('.')[0]
 		self.setToolTip(l)
@@ -15488,6 +15490,10 @@ if __name__ == "__main__":
 	genre_num = 0
 	opt = ""
 	pgn = 1
+	site_index = 0
+	option_index = -1
+	name_index = -1
+	option_val = ''
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	app = QtGui.QApplication(sys.argv)
 	#MainWindow = QtGui.QWidget()
@@ -15565,10 +15571,42 @@ if __name__ == "__main__":
 			if "DefaultPlayer" in i:
 				j = i.split('=')[-1]
 				Player = re.sub('\n','',j)
-				if Player == "mpv":
-					ui.chk.setCurrentIndex(0)
-				elif Player == "mplayer":
-					ui.chk.setCurrentIndex(1)
+				cnt = ui.chk.findText(Player)
+				if cnt >=0 and cnt < ui.chk.count():
+					ui.chk.setCurrentIndex(cnt)
+			elif "Site_Index" in i:
+				j = i.split('=')[-1]
+				site_i = re.sub('\n','',j)
+				if site_i.isdigit():
+					site_index = int(site_i)
+				
+				print(site_index,'--site-index--')
+			elif "Option_Index" in i:
+				j = i.split('=')[-1]
+				opt_i = re.sub('\n','',j)
+				if opt_i.isdigit():
+					option_index = int(opt_i)
+				
+				print(option_index,'--option-index--')
+			elif "Name_Index" in i:
+				j = i.split('=')[-1]
+				name_i = re.sub('\n','',j)
+				if name_i.isdigit():
+					name_index = int(name_i)
+				
+				print(name_index,'--name-index--')
+			elif "Option_Val" in i:
+				j = i.split('=')[-1]
+				opt_v = re.sub('\n','',j)
+				option_val = opt_v
+				print(option_val,'--option--')
+			elif "Quality" in i:
+				j = i.split('=')[-1]
+				quality = re.sub('\n','',j)
+				if quality == "hd":
+					ui.sd_hd.setText("HD")
+				else:
+					ui.sd_hd.setText("SD")
 			elif "Thumbnail_Size" in i:
 				j = i.split('=')[-1]
 				j = j.replace('\n','')
@@ -15623,7 +15661,7 @@ if __name__ == "__main__":
 		for i in m:
 			if '.py' in i and '.pyc' not in i:
 				i = i.replace('.py','')
-				if i != 'headlessBrowser': 
+				if i != 'headlessBrowser' and i != 'headlessEngine': 
 					default_option_arr.append(i)
 	
 	"""
@@ -15645,6 +15683,21 @@ if __name__ == "__main__":
 	
 	for i in default_option_arr:
 		ui.btn1.addItem(i)
+	
+	if site_index >=0 and site_index < ui.btn1.count():
+		ui.btn1.setCurrentIndex(site_index)
+	
+	if option_index >=0 and option_index < ui.list3.count():
+		ui.list3.setCurrentRow(option_index)
+		ui.list3.setFocus()
+		if option_val and option_val == 'History':
+			print('--setting-history-option--')
+			opt = 'History'
+			ui.setPreOpt()
+	print(name_index,ui.list1.count())
+	if name_index >=0 and name_index < ui.list1.count():
+		ui.list1.setCurrentRow(name_index)
+		ui.list1.setFocus()
 	
 	if len(sys.argv) == 2:
 		
@@ -15718,6 +15771,11 @@ if __name__ == "__main__":
 			iconv_r = iconv_r_indicator[0]
 		f.write("\nThumbnail_Size="+str(iconv_r))
 		f.write("\nView="+str(viewMode))
+		f.write("\nQuality="+str(quality))
+		f.write("\nSite_Index="+str(ui.btn1.currentIndex()))
+		f.write("\nOption_Index="+str(ui.list3.currentRow()))
+		f.write("\nOption_Val="+str(opt))
+		f.write("\nName_Index="+str(ui.list1.currentRow()))
 		f.close()
 	sys.exit(ret)
 	#if os.path.isfile('cookie.txt'):
