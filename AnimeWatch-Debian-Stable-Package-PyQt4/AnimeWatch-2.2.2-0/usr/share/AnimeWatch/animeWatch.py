@@ -15808,6 +15808,7 @@ if __name__ == "__main__":
 			ui.watchDirectly(urllib.parse.unquote(t))
 			ui.dockWidget_3.hide()
 			site = "None"
+			ui.btn1.setCurrentIndex(0)
 			p = t.split('/')
 			length = len(p)-2
 			j = 1
