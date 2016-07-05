@@ -2342,7 +2342,7 @@ class List1(QtWidgets.QListWidget):
 	def hello(self):
 		print ("world")
 	def keyPressEvent(self, event):
-		global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,siteName,finalUrlFound,refererNeeded,nameListArr,original_path_name,curR,original_path_name
+		global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,siteName,finalUrlFound,refererNeeded,nameListArr,original_path_name,curR,original_path_name,show_hide_titlelist,show_hide_playlist
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Right:
 			ui.posterfound("")
 		elif event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_C:
@@ -2633,7 +2633,7 @@ class List1(QtWidgets.QListWidget):
 			
 		elif event.key() == QtCore.Qt.Key_H:
 			ui.setPreOpt()
-			
+		
 		elif event.key() == QtCore.Qt.Key_D:
 			ui.deleteArtwork()
 		elif event.key() == QtCore.Qt.Key_M:
@@ -2664,7 +2664,7 @@ class List1(QtWidgets.QListWidget):
 		
 		elif event.key() == QtCore.Qt.Key_Return:
 			ui.listfound()
-			if site == "Music":
+			if site == "Music" and not ui.list2.isHidden():
 				ui.list2.setFocus()
 				ui.list2.setCurrentRow(0)
 				curR = 0
@@ -2673,6 +2673,15 @@ class List1(QtWidgets.QListWidget):
 				ui.frame.show()
 				
 				self.setFocus()
+			else:
+				if ui.list2.isHidden():
+					ui.list1.hide()
+					ui.frame.hide()
+					ui.list2.show()
+					ui.goto_epn.show()
+					ui.list2.setFocus()
+					show_hide_titlelist = 0
+					show_hide_playlist = 1
 		elif event.key() == QtCore.Qt.Key_Right:
 			#ui.list_highlight()
 			ui.list2.setFocus()
@@ -3167,7 +3176,7 @@ class List2(QtWidgets.QListWidget):
 		else:
 			QListWidget.dropEvent(event)
 	def keyPressEvent(self, event):
-		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList
+		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
 		global site,opt,pre_opt,name,siteName
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Left:
 			ui.tab_5.setFocus()
@@ -3184,7 +3193,16 @@ class List2(QtWidgets.QListWidget):
 					mpvAlive = 0
 					ui.epnfound()
 				else:
-					ui.watchDirectly("/tmp/AnimeWatch/"+new_epn)	
+					ui.watchDirectly("/tmp/AnimeWatch/"+new_epn)
+		elif event.key() == QtCore.Qt.Key_Backspace:
+			if ui.list1.isHidden():
+				ui.list2.hide()
+				ui.goto_epn.hide()
+				ui.list1.show()
+				ui.frame.show()
+				ui.list1.setFocus()
+				show_hide_playlist = 0
+				show_hide_titlelist = 1
 		elif event.key() == QtCore.Qt.Key_Down:
 			nextr = self.currentRow() + 1
 			if nextr == self.count():
@@ -5252,7 +5270,7 @@ class tab5(QtWidgets.QWidget):
 		
 	def keyPressEvent(self, event):
 		global mpvplayer,Player,wget,cycle_pause,cache_empty,buffering_mplayer,curR,pause_indicator,thumbnail_indicator,iconv_r_indicator
-		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,total_seek,site,iconv_r,browse_cnt,total_till,browse_cnt,sub_id,audio_id,rfr_url
+		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,total_seek,site,iconv_r,browse_cnt,total_till,browse_cnt,sub_id,audio_id,rfr_url,show_hide_cover,show_hide_playlist,show_hide_titlelist
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Right:
 			ui.list2.setFocus()
 		elif event.key() == QtCore.Qt.Key_Right:
@@ -5646,12 +5664,16 @@ class tab5(QtWidgets.QWidget):
 			if ui.tab_6.isHidden():
 				ui.tab_5.showNormal()
 				ui.tab_5.hide()
-				ui.list1.show()
-				ui.label.show()
-				ui.text.show()
-				ui.frame.show()
-				ui.list2.show()
-				ui.goto_epn.show()
+				if show_hide_titlelist == 1:
+					ui.list1.show()
+					ui.frame.show()
+				if show_hide_cover == 1:
+					ui.label.show()
+					ui.text.show()
+				if show_hide_titlelist == 1:
+					ui.list2.show()
+					ui.goto_epn.show()
+				
 				ui.list2.setFocus()
 			else:
 				#ui.tab_5.setMinimumSize(0,0)
@@ -6090,7 +6112,7 @@ class Ui_MainWindow(object):
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
 		self.horizontalLayout_player_opt.insertWidget(8,self.player_playlist,0)
-		self.player_playlist.setText("Playlist")
+		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
 		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)']
 		self.action_player_menu =[]
@@ -6893,7 +6915,7 @@ class Ui_MainWindow(object):
 						mpvplayer.write(b'\n show-text "${sid}" \n')
 			self.subtitle_track.setText('Sub:'+str(sub_id))
 	def playerStop(self):
-			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt,iconv_r_indicator,iconv_r,curR,wget,Player
+			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt,iconv_r_indicator,iconv_r,curR,wget,Player,show_hide_cover,show_hide_playlist,show_hide_titlelist
 			if mpvplayer:
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
@@ -6901,12 +6923,17 @@ class Ui_MainWindow(object):
 					if ui.tab_6.isHidden():
 						ui.tab_5.showNormal()
 						ui.tab_5.hide()
-						ui.list1.show()
-						ui.label.show()
-						ui.text.show()
-						ui.frame.show()
-						ui.list2.show()
-						ui.goto_epn.show()
+						
+						if show_hide_titlelist == 1:
+							ui.list1.show()
+							ui.frame.show()
+						if show_hide_cover == 1:
+							ui.label.show()
+							ui.text.show()
+						if show_hide_titlelist == 1:
+							ui.list2.show()
+							ui.goto_epn.show()
+						
 						ui.list2.setFocus()
 					else:
 						#ui.tab_5.setMinimumSize(0,0)
@@ -6978,7 +7005,7 @@ class Ui_MainWindow(object):
 		else:
 			self.sortList()
 	def playerPlaylist(self,val):
-		global quitReally,playlist_show,mpvplayer,epnArrList,site
+		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist
 		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)']
 		#txt = str(self.player_playlist.text())
 		#playlist_show = 1-playlist_show
@@ -6990,16 +7017,19 @@ class Ui_MainWindow(object):
 			if self.text.isHidden() and self.label.isHidden():
 				self.text.show()
 				self.label.show()
+				show_hide_cover = 1
 			elif self.text.isHidden() and not self.label.isHidden():
 				self.text.show()
 				self.label.show()
+				show_hide_cover = 1
 			elif not self.text.isHidden() and self.label.isHidden():
 				self.text.show()
 				self.label.show()
+				show_hide_cover = 1
 			else:
 				self.text.hide()
 				self.label.hide()
-			
+				show_hide_cover = 0
 		
 		elif val == "Show/Hide Playlist":
 			v = str(self.action_player_menu[3].text())
@@ -7007,10 +7037,11 @@ class Ui_MainWindow(object):
 				if not self.list2.isHidden():
 					self.list2.hide()
 					self.goto_epn.hide()
-					
+					show_hide_playlist = 0
 				else:
 					self.list2.show()
 					self.goto_epn.show()
+					show_hide_playlist = 1
 					if MainWindow.isFullScreen():
 						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 			else:
@@ -7020,9 +7051,11 @@ class Ui_MainWindow(object):
 			if not self.list1.isHidden():
 				self.list1.hide()
 				self.frame.hide()
+				show_hide_titlelist = 0
 			else:
 				self.list1.show()
 				self.frame.show()
+				show_hide_titlelist = 1
 				if MainWindow.isFullScreen():
 					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 		elif val == "Lock File":
@@ -14810,7 +14843,8 @@ class Ui_MainWindow(object):
 				video_opt = str(self.list3.currentItem().text())
 			else:
 				video_opt = "History"
-			if val == 'history':
+			print('----video-----opt',video_opt)
+			if val == 'history' and video_opt == 'History':
 				video_opt = "History"
 			if not os.path.exists(video_db):
 				self.creatUpdateVideoDB(video_db,video_file,video_file_bak)
@@ -14821,8 +14855,10 @@ class Ui_MainWindow(object):
 				self.updateOnStartVideoDB(video_db,video_file,video_file_bak,video_opt)
 				video_opt = "Directory"
 			print (video_opt)
-			
+			if video_opt == 'Directory' or video_opt == 'History' or video_opt == 'Available':
+				opt = video_opt
 			artist = []
+			print('----video-----opt',video_opt)
 			if video_opt == "Available":
 				m = self.getVideoDB(video_db,"Directory","")
 			elif video_opt == "History":
@@ -15651,6 +15687,10 @@ if __name__ == "__main__":
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist
+	show_hide_cover = 1
+	show_hide_playlist = 1
+	show_hide_titlelist = 1
 	mpv_start = []
 	total_till_epn = 0
 	idw = ""
@@ -15747,7 +15787,9 @@ if __name__ == "__main__":
 	site_index = 0
 	option_index = -1
 	name_index = -1
+	episode_index = -1
 	option_val = ''
+	dock_opt = 1
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	app = QtWidgets.QApplication(sys.argv)
 	#MainWindow = QtGui.QWidget()
@@ -15822,57 +15864,85 @@ if __name__ == "__main__":
 		lines = f.readlines()
 		f.close()
 		for i in lines:
+			j = i.split('=')[-1]
 			if "DefaultPlayer" in i:
-				j = i.split('=')[-1]
+				
 				Player = re.sub('\n','',j)
-				#if Player == "mpv":
-				#	ui.chk.setCurrentIndex(0)
-				#elif Player == "mplayer":
-				#	ui.chk.setCurrentIndex(1)
 				cnt = ui.chk.findText(Player)
 				if cnt >=0 and cnt < ui.chk.count():
 					ui.chk.setCurrentIndex(cnt)
 			elif "Site_Index" in i:
-				j = i.split('=')[-1]
 				site_i = re.sub('\n','',j)
 				if site_i.isdigit():
 					site_index = int(site_i)
 				
 				print(site_index,'--site-index--')
 			elif "Option_Index" in i:
-				j = i.split('=')[-1]
 				opt_i = re.sub('\n','',j)
 				if opt_i.isdigit():
 					option_index = int(opt_i)
 				
 				print(option_index,'--option-index--')
 			elif "Name_Index" in i:
-				j = i.split('=')[-1]
 				name_i = re.sub('\n','',j)
 				if name_i.isdigit():
 					name_index = int(name_i)
 				
 				print(name_index,'--name-index--')
+			elif "Episode_Index" in i:
+				epi_i = re.sub('\n','',j)
+				if epi_i.isdigit():
+					episode_index = int(epi_i)
+				
+				print(episode_index,'--episode-index--')
 			elif "Option_Val" in i:
-				j = i.split('=')[-1]
 				opt_v = re.sub('\n','',j)
 				option_val = opt_v
 				print(option_val,'--option--')
 			elif "Quality" in i:
-				j = i.split('=')[-1]
 				quality = re.sub('\n','',j)
 				if quality == "hd":
 					ui.sd_hd.setText("HD")
 				else:
 					ui.sd_hd.setText("SD")
+			elif "Dock_Option" in i:
+				dock_o = re.sub('\n','',j)
+				if dock_o.isdigit():
+					dock_opt = int(dock_o)
+					
+			elif "Show_Hide_Cover" in i:
+				try:
+					show_hide_cover = int(j)
+					if show_hide_cover == 0:
+						ui.text.hide()
+						ui.label.hide()
+					
+				except:
+					show_hide_cover = 0
+			elif "Show_Hide_Playlist" in i:
+				try:
+					show_hide_playlist = int(j)
+					if show_hide_playlist == 0:
+						ui.list2.hide()
+						ui.goto_epn.hide()
+						
+				except:
+					show_hide_playlist = 0
+			elif "Show_Hide_Titlelist" in i:
+				try:
+					show_hide_titlelist = int(j)
+					if show_hide_titlelist == 0:
+						ui.list1.hide()
+						ui.frame.hide()
+				except:
+					show_hide_titlelist = 0
+			
 			elif "Thumbnail_Size" in i:
-				j = i.split('=')[-1]
 				j = j.replace('\n','')
 				if j:
 					iconv_r = int(j)
 					iconv_r_indicator.append(iconv_r)
 			elif "View" in i:
-				j = i.split('=')[-1]
 				viewMode = j.replace('\n','')
 				if viewMode=="Thumbnail":
 					ui.comboView.setCurrentIndex(2)
@@ -15939,17 +16009,25 @@ if __name__ == "__main__":
 	if option_index >=0 and option_index < ui.list3.count():
 		ui.list3.setCurrentRow(option_index)
 		ui.list3.setFocus()
-		if option_val and option_val == 'History':
-			#txt = ui.btn1.currentText()
-			#if txt != 'Bookmark' or txt != 'PlayLists':
-			#	site = txt
-			print('--setting-history-option--')
-			opt = 'History'
+		if option_val and (option_val == 'History' or option_val == 'Available' or option_val == 'Directory'):
+			if option_val == 'History':
+				print('--setting-history-option--')
+				opt = 'History'
+			else:
+				opt = option_val
 			ui.setPreOpt()
 	print(name_index,ui.list1.count())
 	if name_index >=0 and name_index < ui.list1.count():
 		ui.list1.setCurrentRow(name_index)
 		ui.list1.setFocus()
+	if episode_index >=0 and episode_index < ui.list2.count():
+		ui.list2.setCurrentRow(episode_index)
+		ui.list2.setFocus()
+	print(dock_opt,'--dock-option---')
+	if dock_opt == 0:
+		ui.dockWidget_3.hide()
+	else:
+		ui.dockWidget_3.show()
 	if len(sys.argv) == 2:
 		
 		
@@ -16016,7 +16094,11 @@ if __name__ == "__main__":
 	#app.installEventFilter(myFilter)
 	#gc.disable()
 	ret = app.exec_()
-	
+	if ui.dockWidget_3.isHidden():
+		dock_opt = 0
+		
+	else:
+		dock_opt = 1
 	#app.deleteLater()
 	if os.path.exists(home+"/config.txt"):
 		print(Player)
@@ -16031,6 +16113,11 @@ if __name__ == "__main__":
 		f.write("\nOption_Index="+str(ui.list3.currentRow()))
 		f.write("\nOption_Val="+str(opt))
 		f.write("\nName_Index="+str(ui.list1.currentRow()))
+		f.write("\nEpisode_Index="+str(ui.list2.currentRow()))
+		f.write("\nShow_Hide_Cover="+str(show_hide_cover))
+		f.write("\nShow_Hide_Playlist="+str(show_hide_playlist))
+		f.write("\nShow_Hide_Titlelist="+str(show_hide_titlelist))
+		f.write("\nDock_Option="+str(dock_opt))
 		f.close()
 	
 	print(ret,'--Return--')
