@@ -13593,7 +13593,7 @@ class Ui_MainWindow(object):
 		global mpvplayer,epn,new_epn,epn_name_in_list,fullscr,mpv_start,Player,cur_label_num,epn_name_in_list,site
 		if self.tab_5.isHidden() and thumbnail_indicator:
 			length_1 = self.list2.count()
-			q3="self.label_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
+			q3="self.label_epn_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
 			exec (q3)
 			QtGui.QApplication.processEvents()
 		print ("Process Started")
