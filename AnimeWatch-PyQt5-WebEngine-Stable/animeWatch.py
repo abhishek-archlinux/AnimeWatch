@@ -10716,9 +10716,12 @@ class Ui_MainWindow(object):
 	
 	
 	def preview(self):
-		global embed, playMpv,Player
+		global embed, playMpv,Player,mpvplayer
 		Player = str(self.chk.currentText())
-		
+		if mpvplayer:
+			if mpvplayer.pid()>0:
+				mpvplayer.kill()
+				self.epnfound()
 		
 	
 	
