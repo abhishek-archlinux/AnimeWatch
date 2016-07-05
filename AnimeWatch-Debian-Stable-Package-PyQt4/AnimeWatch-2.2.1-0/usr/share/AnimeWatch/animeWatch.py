@@ -13358,7 +13358,7 @@ class Ui_MainWindow(object):
 						#exec p1
 						#idw = str(mn)
 						length_1 = self.list2.count()
-						q3="self.label_"+str(length_1+cur_label_num)+".setText(epn_name_in_list)"
+						q3="self.label_epn_"+str(length_1+cur_label_num)+".setText(epn_name_in_list)"
 						exec (q3)
 						QtGui.QApplication.processEvents()
 					if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
@@ -13579,7 +13579,7 @@ class Ui_MainWindow(object):
 						#exec p1
 						#idw = str(mn)
 						length_1 = self.list2.count()
-						q3="self.label_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
+						q3="self.label_epn_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
 						exec (q3)
 						QtGui.QApplication.processEvents()
 					
