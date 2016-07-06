@@ -14501,7 +14501,7 @@ class Ui_MainWindow(object):
 					t_opt = str(self.list3.currentItem().text())
 			elif val == "history":
 				t_opt = "History"
-				opt = "History"
+			opt = t_opt
 			self.line.clear()
 			self.list1.clear()
 			self.list2.clear()
@@ -16006,6 +16006,10 @@ if __name__ == "__main__":
 	#print(site,index_site)
 	if site_index >=0 and site_index < ui.btn1.count():
 		ui.btn1.setCurrentIndex(site_index)
+	
+	if option_index < 0 and ui.list3.count() > 0:
+		option_index = 0
+		print(option_index,ui.list3.count(),'--list3--cnt--')
 	
 	if option_index >=0 and option_index < ui.list3.count():
 		ui.list3.setCurrentRow(option_index)
