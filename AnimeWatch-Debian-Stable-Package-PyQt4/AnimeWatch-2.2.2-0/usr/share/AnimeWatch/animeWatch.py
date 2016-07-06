@@ -10935,6 +10935,7 @@ class Ui_MainWindow(object):
 			self.list2.clear()
 			self.label.clear()
 			self.text.clear()
+			site = 'None'
 	
 	def ka1(self):
 		global site,home
