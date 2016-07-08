@@ -13672,8 +13672,9 @@ class Ui_MainWindow(object):
 			#aaa = 1
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
 		except:
-			a = p.readAllStandardOutput()
-			print(a)
+			#a = p.readAllStandardOutput()
+			#print(a)
+			a = ""
 		#a = (str(p.readAllStandardOutput())).replace('\n','')
 		#print(a)
 		#a = str((p.readAllStandardOutput())).strip()
