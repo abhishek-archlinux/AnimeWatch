@@ -61,7 +61,21 @@ from PyQt5 import QtDBus
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,
                           pyqtProperty)
 from PyQt5.QtDBus import QDBusConnection, QDBusAbstractAdaptor
-#import gc
+try:
+	import dbus
+	import dbus.service
+	import dbus.mainloop.pyqt5
+except:
+	pass
+
+import dbus
+import dbus.service
+import dbus.mainloop.pyqt5
+
+AW_MPRIS_BUS_NAME = 'org.mpris.MediaPlayer2.animewatch'
+MPRIS_OBJECT_PATH = '/org/mpris/MediaPlayer2'
+MPRIS_MEDIAPLAYER_INTERFACE = 'org.mpris.MediaPlayer2'
+MPRIS_MEDIAPLAYER_PLAYER_INTERFACE = 'org.mpris.MediaPlayer2.Player'
 
 def getContentUnicode(content):
 	if isinstance(content,bytes):
@@ -213,6 +227,249 @@ def ccurl(url):
 		content = getContentUnicode(content)
 		return content
 
+
+
+
+
+
+class MprisServer(dbus.service.Object):
+	def __init__(self):
+		bus = dbus.service.BusName(
+		    AW_MPRIS_BUS_NAME,
+		    bus=dbus.SessionBus())
+		super().__init__(bus, MPRIS_OBJECT_PATH)
+		
+		self._properties = dbus.Dictionary({
+            'DesktopEntry': 'AnimeWatch',
+            'Identity': 'animewatch',
+            
+}, signature='sv')
+		
+		
+		self._player_properties = dbus.Dictionary({
+            'Metadata': dbus.Dictionary({
+                
+                'mpris:artUrl': '',
+                'xesam:artist': ['None'],
+                'xesam:title': 'None',
+                
+                'xesam:album': 'None'
+            }, signature='sv', variant_level=1),
+            
+            'CanGoNext': True,
+            'CanGoPrevious': True,
+            'CanPause': True,
+	    'CanPlay': True,
+             'CanControl': True,
+}, signature='sv', variant_level=2)
+
+		
+
+	@dbus.service.method(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
+				 in_signature='', out_signature='')
+	def Play(self):
+		print ("Play Song")
+		global mpvplayer,Player
+		
+		if mpvplayer:
+			if mpvplayer.pid() > 0:
+				if Player == "mpv":
+					mpvplayer.write(b'\n cycle pause \n')
+				else:
+					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
+			else:
+				ui.epnfound()
+			
+			
+	@dbus.service.method(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
+				 in_signature='', out_signature='')
+	def Pause(self):
+		print ("PlayPause Song")
+		#return self.next_song
+		global mpvplayer,Player
+		if mpvplayer:
+			if mpvplayer.pid() > 0:
+				if Player == "mpv":
+					mpvplayer.write(b'\n cycle pause \n')
+				else:
+					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
+			else:
+				ui.epnfound()
+
+	@dbus.service.method(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
+				 in_signature='', out_signature='')
+	def Next(self):
+		global mpvplayer,Player
+		#ui.epnfound()
+		
+		if mpvplayer:
+			if mpvplayer.pid() > 0:
+				print ("Next Song")
+				
+				ui.mpvNextEpnList()
+				
+
+	@dbus.service.method(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
+				 in_signature='', out_signature='')
+	def Previous(self):
+		global mpvplayer,Player
+		
+		
+		if mpvplayer:
+			if mpvplayer.pid() > 0:
+				print ("Previous Song")
+				ui.mpvPrevEpnList()
+				
+
+	@dbus.service.method(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
+                         in_signature='', out_signature='')
+	def PlayPause(self):
+		print ("PlayPause Song")
+		
+		global mpvplayer,Player
+		if mpvplayer:
+			if mpvplayer.pid() > 0:
+				if Player == "mpv":
+					mpvplayer.write(b'\n cycle pause \n')
+				else:
+					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
+			else:
+				ui.epnfound()
+
+
+	@dbus.service.method(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
+				 in_signature='', out_signature='')
+	def Stop(self):
+		global mpvplayer,Player
+		
+		if mpvplayer:
+			if mpvplayer.pid() > 0:
+				print ("Stop")
+				
+				ui.playerStop()
+	   
+
+	@dbus.service.signal(dbus.PROPERTIES_IFACE,
+				 signature='sa{sv}as')
+	def PropertiesChanged(self, interface, changed_properties,
+				  invalidated_properties=[]):
+		pass
+
+	   
+
+	@pyqtSlot(str)
+	def _emitMeta(self,info):
+		
+		global site,epnArrList,home
+		if epnArrList and (site == "Music" or site == "PlayLists"):
+			
+			try:
+				if ui.queue_url_list:
+					t2 = info.split('#')[1]
+					t1 = t2.split('	')
+				else:
+					r = ui.list2.currentRow()
+					print(epnArrList[r])
+					t1 = epnArrList[r].split('	')
+				if len(t1) > 2:
+					t = t1[0]
+					art = t1[2]
+				else:
+					t = t1[0]
+					art = t
+				
+				
+				title = t
+				artist = art
+				title = title.replace('#','')
+				artist = artist.replace('#','')
+				art_u = home+'/Music/Artist/'+artist+'/poster.jpg'
+				if os.path.exists(art_u):
+					art_url = art_u
+				else:
+					print(t1,'---==--------')
+					artist = t1[1].split('/')[-2]
+					print(artist,'---==--------')
+					art_u = home+'/thumbnails/'+artist+'/'+title+'.jpg'
+					print(artist,art_u,'---==--------')
+					if os.path.exists(art_u):
+						art_url = art_u
+					else:
+						art_u = home+'/thumbnails/'+title+'.jpg'
+						print(artist,art_u,'---==--------')
+						if os.path.exists(art_u):
+							art_url = art_u
+				
+			except:
+				title = "AnimeWatch"
+				artist = "AnimeWatch"
+		else:
+		
+			try:
+				r = ui.list2.currentRow()
+				print(epnArrList[r])
+				t1 = epnArrList[r].split('	')
+				title = t1[0]
+				title = title.replace('#','')
+				artist = ui.list1.currentItem().text()
+				art_u = home+'/thumbnails/'+artist+'/'+title+'.jpg'
+				if os.path.exists(art_u):
+					art_url = art_u
+			except:
+				title = "AnimeWatch"
+				artist = "AnimeWatch"
+		
+		
+		props = dbus.Dictionary({'Metadata': dbus.Dictionary({
+		    'xesam:artist': artist,
+		'mpris:artUrl': art_url,
+		    
+		    'xesam:title': title,
+		}, signature='sv')}, signature='sv')
+		self._player_properties.update(props)
+
+		self.PropertiesChanged(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
+				       props, [])
+
+	
+
+
+	@dbus.service.method(dbus.INTROSPECTABLE_IFACE,
+				 in_signature='', out_signature='s')
+	def Introspect(self):
+		
+		global home
+		path = home+'/src/introspect.xml'
+		print(path,'---path---')
+		if os.path.exists(path):
+			content = open(path,'r').read()
+		else:
+			content = ''
+		return content
+		
+	@dbus.service.method(dbus.PROPERTIES_IFACE,
+                         in_signature='ss', out_signature='v')
+	def Get(self, interface, prop):
+		return self.GetAll(interface)[prop]
+
+	@dbus.service.method(dbus.PROPERTIES_IFACE, in_signature='ssv')
+	def Set(self, interface, prop, value):
+		self._player_properties[prop] = value
+
+	@dbus.service.method(dbus.PROPERTIES_IFACE,
+				 in_signature='s', out_signature='a{sv}')
+	def GetAll(self, interface):
+		if interface == MPRIS_MEDIAPLAYER_PLAYER_INTERFACE:
+		    return self._player_properties
+		elif interface == MPRIS_MEDIAPLAYER_INTERFACE:
+		    return self._properties
+		else:
+		    raise dbus.exceptions.DBusException(
+			'com.example.UnknownInterface',
+			'The Foo object does not implement the %s interface'
+			% interface
+	)
+
 class MPRIS2Helper(object):
 	def __init__(self):
 		self.signal = QtDBus.QDBusMessage.createSignal(
@@ -265,21 +522,20 @@ class MyServer(QObject):
 		self.__name = 'AnimeWatch'
 		self.signal_send = MPRIS2Helper()
 		#
-		#self.pl_signal.connect(self.Metadata)
+		self.pl_signal.connect(self._emitMeta)
 		#ui.trigger_play.connect(self.Metadata)
 		#self.pl_signal.connect(self.Metadata)
 		
-	def _emitted(self):
-		self.pl_signal.connect(self._emitMeta)
-		self.pl_signal.emit()
+	#def _emitted(self):
+	#	self.pl_signal.connect(self._emitMeta)
+	#	self.pl_signal.emit()
 	def _emitMeta(self):
 		global site,epnArrList
-		#
-		
 		if epnArrList and (site == "Music" or site == "PlayLists"):
-			r = ui.list2.currentRow()
-			print(epnArrList[r])
+			
 			try:
+				r = ui.list2.currentRow()
+				print(epnArrList[r])
 				t1 = epnArrList[r].split('	')
 				if len(t1) > 2:
 					t = t1[0]
@@ -287,24 +543,16 @@ class MyServer(QObject):
 				else:
 					t = t1[0]
 					art = t
+			
+				d = {'xesam:title': str(t),'xesam:artist': ([art]), 'xesam:album': str("None")}
 			except:
-				pass
-				t = ""
-				art = ""
-			try:
-				d = {'xesam:title': str(t),
-		    'xesam:artist': ([art]), 'xesam:album': str("How r u World")}
-			except:
-				d = {'xesam:title': str(t),
-		    'xesam:artist': ([art]), 'xesam:album': str("How r u World")}
-			#print d
+				d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
 		else:
 		
 			d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
-			#d1 = {}
-			#print d
+			
 		self.signal_send.PropertiesChanged("org.mpris.MediaPlayer2.Player", "Metadata", d)
-		#self.pl_signal.emit()
+		
 	def Previous(self):
 		global mpvplayer,Player
 		#ui.epnfound()
@@ -313,7 +561,8 @@ class MyServer(QObject):
 			if mpvplayer.pid() > 0:
 				print ("Previous Song")
 				ui.mpvPrevEpnList()
-				self._emitMeta()
+				#self._emitMeta()
+				self.pl_signal.emit()
 		#return self.next_song
 	def Next(self):
 		global mpvplayer,Player
@@ -324,7 +573,8 @@ class MyServer(QObject):
 				print ("Next Song")
 				#return self.next_song
 				ui.mpvNextEpnList()
-				self._emitMeta()
+				#self._emitMeta()
+				self.pl_signal.emit()
 	def Stop(self):
 		global mpvplayer,Player
 		#ui.epnfound()
@@ -371,20 +621,19 @@ class MyServer(QObject):
 		#
 		print("Inside Meta")
 		if epnArrList and (site == "Music" or site == "PlayLists"):
-			r = ui.list2.currentRow()
-			t = epnArrList[r].split('	')[0]
-			art = epnArrList[r].split('	')[2]
-			d = {'xesam:title': str(t),
-		    'xesam:artist': (str(art)), 'xesam:album': str("How r u World")}
-			#print d
+			try:
+				r = ui.list2.currentRow()
+				t = epnArrList[r].split('	')[0]
+				art = epnArrList[r].split('	')[2]
+				d = {'xesam:title': str(t),'xesam:artist': (str(art)), 'xesam:album': str("None")}
+			except:
+				d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
+			
 		else:
 		
 			d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
-			#d={'xesam:title':'AnimeWatch'}
-			#d1 = {}
-			#print(d)
-		self.signal_send.PropertiesChanged("org.mpris.MediaPlayer2.Player", "Metadata", d)
-		#return d
+			
+		return d
 
 class ServerAdaptor(QDBusAbstractAdaptor):
 	""" This provides the DBus adaptor to the outside world"""
@@ -1492,7 +1741,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				ui.gridLayout.setSpacing(10)
 	def mouseReleaseEvent(self, ev):
 		#def mouseDoubleClickEvent(self,ev):
-		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval,iconv_r,total_till,browse_cnt,site,epn_name_in_list,memory_num_arr,thumbnail_indicator,mpvplayer,iconv_r_indicator,tab_6_size_indicator,tab_6_player,site,finalUrlFound,artist_name_mplayer
+		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval,iconv_r,total_till,browse_cnt,site,epn_name_in_list,memory_num_arr,thumbnail_indicator,mpvplayer,iconv_r_indicator,tab_6_size_indicator,tab_6_player,site,finalUrlFound,artist_name_mplayer,server
 	
 		
 		
@@ -1684,7 +1933,10 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				r = ui.list2.currentRow()
 				ui.musicBackground(r,'Search')
 				
-			
+			try:
+				server._emitMeta("Play")
+			except:
+				pass
 			
 	def triggerPlaylist(self,val):
 		global epn,epn_name_in_list,path_final_Url,home,site,pre_opt,base_url,embed,name,epnArrList,opt,curR,refererNeeded
@@ -12627,21 +12879,16 @@ class Ui_MainWindow(object):
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server
 		buffering_mplayer="no"
 		self.list4.hide()
-		#self.queue_url_list[:]=[]
-		#print epnArrList
 		
-		#self.trigger_play.emit(QtCore.SIGNAL('update(QString)'),'Hello')
-		#server = MyServer()
 		try:
-			server._emitted()
+			
+			server._emitMeta("Play")
 		except:
 			pass
-		#ui.trigger_play.emit()
-		#server.pl.emit(server.pl,QtCore.SIGNAL('update(QString)'),'Hello')
-		#server.pl.emit()
+		
 		if downloadVideo == 0:
 			if site == "Music":
 				#self.list1.show()
@@ -13418,9 +13665,12 @@ class Ui_MainWindow(object):
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id
 		#tt = time.process_time()
 		#print (p.readAllStandardOutput())
-		#a = str(bytes(p.readAllStandardOutput()).decode('utf-8')).strip()
+		#a = str(p.readAllStandardOutput(),'utf-8').strip()
+		#print(a)
 		try:
-			a = str(bytes(p.readAllStandardOutput()).decode('utf-8')).strip()
+			#a = str(bytes(p.readAllStandardOutput()).decode('utf-8')).strip()
+			#aaa = 1
+			a = str(p.readAllStandardOutput(),'utf-8').strip()
 		except:
 			a = p.readAllStandardOutput()
 			print(a)
@@ -13881,14 +14131,14 @@ class Ui_MainWindow(object):
 		
 	def localGetInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,artist_name_mplayer
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server
 		print (self.player_setLoop_var)
 		row = self.list2.currentRow()
 		if row > len(epnArrList) or row < 0:
 			row = len(epnArrList)-1
 		
 		try:
-			server._emitted()
+			server._emitMeta("Next")
 		except:
 			pass
 		mplayerLength = 0
@@ -14077,7 +14327,12 @@ class Ui_MainWindow(object):
 				self.updateVideoCount('mark',finalUrl)
 				
 	def getQueueInList(self):
-		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player
+		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server
+		try:
+			t1 = self.queue_url_list[0]
+			server._emitMeta("queue"+'#'+t1)
+		except:
+			pass
 		
 		if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
 			t = self.queue_url_list[0]
@@ -14132,12 +14387,18 @@ class Ui_MainWindow(object):
 		
 	def getNextInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,rfr_url
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server
 		row = self.list2.currentRow()
 		self.total_file_size = 0
 		mplayerLength = 0
 		buffering_mplayer = "no"
 		#self.queue_url_list[:]=[]
+		
+		try:
+			server._emitMeta("Next")
+		except:
+			pass
+		
 		if site != "PlayLists":
 			if '	' in epnArrList[row]:
 				epn = epnArrList[row].split('	')[1]
@@ -15688,7 +15949,7 @@ if __name__ == "__main__":
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
-	global show_hide_cover,show_hide_playlist,show_hide_titlelist
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server
 	show_hide_cover = 1
 	show_hide_playlist = 1
 	show_hide_titlelist = 1
@@ -15792,6 +16053,12 @@ if __name__ == "__main__":
 	option_val = ''
 	dock_opt = 1
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
+	try:
+		dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)
+		
+	except:
+		pass
+	
 	app = QtWidgets.QApplication(sys.argv)
 	#MainWindow = QtGui.QWidget()
 	screen_resolution = app.desktop().screenGeometry()
@@ -15817,17 +16084,11 @@ if __name__ == "__main__":
 	
 	
 	try:
-		bus = QDBusConnection.sessionBus()
-	
-		server = MyServer()
+		server = MprisServer()
 		
-		bus.registerObject('/', server)
-		bus.registerObject('/org/mpris/MediaPlayer2', server)
-		bus.registerObject('/org/mpris/MediaPlayer2/Player', server)
-		bus.registerService('org.mpris.MediaPlayer2.animewatch')
-		#server.pl_signal.connect(server.Metadata)
 	except:
 		pass
+		
 	if not os.path.exists(home):
 		os.makedirs(home)
 	if not os.path.exists(home+'/src'):
@@ -15838,6 +16099,8 @@ if __name__ == "__main__":
 			shutil.copy('/usr/share/AnimeWatch/1.png',home+'/src/1.png')
 		if os.path.exists('/usr/share/AnimeWatch/default.html'):
 			shutil.copy('/usr/share/AnimeWatch/default.html',home+'/src/default.html')
+		if os.path.exists('/usr/share/AnimeWatch/introspect.xml'):
+			shutil.copy('/usr/share/AnimeWatch/introspect.xml',home+'/src/introspect.xml')
 	picn = home+'/default.jpg'
 	if not os.path.exists(picn):
 		picn_1 = '/usr/share/AnimeWatch/default.jpg'
