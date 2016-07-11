@@ -7310,13 +7310,18 @@ class Ui_MainWindow(object):
 						else:
 							self.list2.addItem((i))			
 	def playerLoopFile(self):
+		global Player
 		txt = self.player_loop_file.text()
 		if txt == "Lock":
 			self.player_setLoop_var = 1
 			self.player_loop_file.setText("unLock")
+			#if Player == "mpv":
+			#	mpvplayer.write(b'\n set loop inf \n')
 		else:
 			self.player_setLoop_var = 0
 			self.player_loop_file.setText("Lock")
+			#if Player == "mpv":
+			#	mpvplayer.write(b'\n set loop 1 \n')
 			
 	def playerPlayPause(self):
 		global mpvplayer
@@ -7347,7 +7352,7 @@ class Ui_MainWindow(object):
 		else:
 			self.sortList()
 	def playerPlaylist(self,val):
-		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player
+		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player,Player
 		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)']
 		#txt = str(self.player_playlist.text())
 		#playlist_show = 1-playlist_show
@@ -7415,14 +7420,19 @@ class Ui_MainWindow(object):
 			if v == "Lock File":
 				self.player_setLoop_var = 1
 				self.action_player_menu[5].setText("UnLock File")
+				self.player_loop_file.setText("unLock")
+				
 			elif v == "UnLock File":
 					self.player_setLoop_var = 0
 					self.action_player_menu[5].setText("Lock File")
+					self.player_loop_file.setText("Lock")
+				
 		elif val == "Lock Playlist":
 			v = str(self.action_player_menu[4].text())
 			if v == "Lock Playlist":
 				self.playerPlaylist_setLoop_var = 1
 				self.action_player_menu[4].setText("UnLock Playlist")
+				
 			elif v == "UnLock Playlist":
 					self.playerPlaylist_setLoop_var = 0
 					self.action_player_menu[4].setText("Lock Playlist")
@@ -12954,7 +12964,7 @@ class Ui_MainWindow(object):
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path
 		buffering_mplayer="no"
 		self.list4.hide()
 		self.player_play_pause.setText("Pause")
@@ -13257,6 +13267,7 @@ class Ui_MainWindow(object):
 				finalUrl = str(finalUrl)
 			except:
 				finalUrl = finalUrl
+			
 			if Player == "mpv":
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 				print (command)
@@ -13428,6 +13439,7 @@ class Ui_MainWindow(object):
 		epn_goto = 0
 		if type(finalUrl) is not list:
 			self.final_playing_url = finalUrl.replace('"','')
+			current_playing_file_path = '"'+self.final_playing_url+'"'
 		else:
 			self.final_playing_url = finalUrl[0].replace('"','')
 			if refererNeeded == True:
@@ -13698,7 +13710,7 @@ class Ui_MainWindow(object):
 		
 	def dataReady(self,p):
 		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode
-		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id
+		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path
 		#tt = time.process_time()
 		#print (p.readAllStandardOutput())
 		#a = str(bytes(p.readAllStandardOutput()).decode('utf-8')).strip()
@@ -13845,7 +13857,10 @@ class Ui_MainWindow(object):
 			#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 			if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 				if self.player_setLoop_var:
-					curR = self.list2.currentRow()
+					t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
+					mpvplayer.write(t2)
+					return 0
+					#curR = self.list2.currentRow()
 				else:
 					if curR == self.list2.count() - 1:
 						curR = 0
@@ -14060,7 +14075,10 @@ class Ui_MainWindow(object):
 				#else:
 					#quitReally == "no"
 				if self.player_setLoop_var:
-					curR = self.list2.currentRow()
+					t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
+					mpvplayer.write(t2)
+					return 0
+					#curR = self.list2.currentRow()
 					
 				else:
 					if curR == self.list2.count() - 1:
@@ -14166,7 +14184,7 @@ class Ui_MainWindow(object):
 		
 	def localGetInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,artist_name_mplayer
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path
 		print (self.player_setLoop_var)
 		row = self.list2.currentRow()
 		if row > len(epnArrList) or row < 0:
@@ -14362,9 +14380,10 @@ class Ui_MainWindow(object):
 				self.musicBackground(r,'Search')
 			elif site == "Video":
 				self.updateVideoCount('mark',finalUrl)
+			current_playing_file_path = finalUrl
 				
 	def getQueueInList(self):
-		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server
+		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server,current_playing_file_path
 		
 		try:
 			t1 = self.queue_url_list[0]
@@ -14422,10 +14441,12 @@ class Ui_MainWindow(object):
 		elif site == "Video":
 			self.updateVideoCount('mark',epnShowN)
 			
+		current_playing_file_path = epnShow
 		
 	def getNextInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,rfr_url
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path
+		
 		row = self.list2.currentRow()
 		self.total_file_size = 0
 		mplayerLength = 0
@@ -14726,6 +14747,7 @@ class Ui_MainWindow(object):
 	
 		if type(finalUrl) is not list:
 			self.final_playing_url = finalUrl.replace('"','')
+			current_playing_file_path = '"'+self.final_playing_url+'"'
 		else:
 			self.final_playing_url = finalUrl[0].replace('"','')
 			if refererNeeded == True:
@@ -16092,7 +16114,8 @@ if __name__ == "__main__":
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
-	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path
+	
 	layout_mode = "Default"
 	show_hide_player = 0
 	show_hide_cover = 1
