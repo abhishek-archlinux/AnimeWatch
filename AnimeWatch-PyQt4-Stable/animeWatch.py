@@ -11911,7 +11911,8 @@ class Ui_MainWindow(object):
 		#sub_id = "auto"
 		fanart = "/tmp/AnimeWatch/"+name+"-fanart.jpg"
 		thumbnail = "/tmp/AnimeWatch/"+name+"-thumbnail.jpg"
-		
+		summary = "Not Available"
+		picn = "No.jpg"
 		m = []
 		if bookmark == "True" and os.path.exists(home+'/Bookmark/'+status+'.txt'):
 			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+finalUrlFound+':'+refererNeeded
@@ -16645,6 +16646,14 @@ if __name__ == "__main__":
 		
 	else:
 		dock_opt = 1
+	if ui.list1.isHidden():
+		show_hide_titlelist = 0
+	else:
+		show_hide_titlelist = 1
+	if ui.list2.isHidden():
+		show_hide_playlist = 0
+	else:
+		show_hide_playlist = 1
 	if os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","w")
 		f.write("DefaultPlayer="+Player)
