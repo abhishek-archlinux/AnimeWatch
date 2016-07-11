@@ -23,7 +23,7 @@ package() {
   install -d "${pkgdir}/usr/share/applications/"
   install -d "${pkgdir}/usr/bin/"
   
-  install -Dm755 "${_bpath}"/{animeWatch.py,musicArtist.py,adb.py,1.png,input.conf,default.jpg,default.html,introspect.xml} "${pkgdir}/usr/share/${_pkgname}/"
+  install -Dm755 "${_bpath}"/{animeWatch.py,musicArtist.py,adb.py,1.png,input.conf,default.jpg,default.html,introspect.xml,stream.png} "${pkgdir}/usr/share/${_pkgname}/"
   cat "${_bpath}/AnimeWatch.desktop" | sed 's/Exec=/Exec=python -B \/usr\/share\/AnimeWatch\/animeWatch.py \%u/g' > "${pkgdir}/usr/share/applications/AnimeWatch.desktop"
   echo '#!/bin/bash' > "${pkgdir}/usr/bin/anime-watch"
   echo 'if [ -z "$1" ]; then python -B /usr/share/AnimeWatch/animeWatch.py; else python -B /usr/share/AnimeWatch/animeWatch.py "$(pwd)/$1"; fi' >> "${pkgdir}/usr/bin/anime-watch"
