@@ -7231,6 +7231,7 @@ class Ui_MainWindow(object):
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
 					mpvplayer.write('\n'+'quit'+'\n')
+					self.player_play_pause.setText("Play")
 					if ui.tab_6.isHidden():
 						ui.tab_5.showNormal()
 						ui.tab_5.hide()
@@ -11627,7 +11628,10 @@ class Ui_MainWindow(object):
 			summary_file = home+'/History/'+site+'/'+siteName+'/'+name+'/summary.txt'
 		elif site == "Local":
 			r = self.list1.currentRow()
-			name = original_path_name[r]
+			try:
+				name = original_path_name[r]
+			except:
+				return 0
 			file_name = home+'/Local/'+name+'/Ep.txt'
 			picn1 = home+'/Local/'+name+'/'+'poster.jpg'
 			fanart1 = home+'/Local/'+name+'/'+'fanart.jpg'
@@ -12965,7 +12969,8 @@ class Ui_MainWindow(object):
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting
+		
 		buffering_mplayer="no"
 		self.list4.hide()
 		self.player_play_pause.setText("Pause")
@@ -13026,7 +13031,24 @@ class Ui_MainWindow(object):
 				
 		#self.goto_epn.clear()
 		#self.goto_epn.setText(epn)
-		
+		if site == "Music":
+			if self.list3.currentRow() >= 0:
+				music_arr_setting[0]=self.list3.currentRow()
+				if self.list1.currentRow() >= 0:
+					music_arr_setting[1]=self.list1.currentRow()
+					if self.list2.currentRow() >= 0:
+						music_arr_setting[2]=self.list2.currentRow()
+		else:
+			if ui.btn1.currentIndex() > 0:
+				default_arr_setting[0]=ui.btn1.currentIndex()
+				if self.list3.currentRow() >= 0:
+					default_arr_setting[1]=self.list3.currentRow()
+					if self.list1.currentRow() >= 0:
+						default_arr_setting[2]=self.list1.currentRow()
+						if self.list2.currentRow() >= 0:
+							default_arr_setting[3]=self.list2.currentRow()
+			
+		print(music_arr_setting,default_arr_setting)
 		if(site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" and finalUrlFound == False and site !="None" and site!= "Music" and site != "Video" and site!= "Local") :
 			hist_path = home+'/History/'+site+'/'+name+'/Ep.txt'
 			if (os.path.exists(hist_path) and (epn_goto == 0)) or (os.path.exists(hist_path) and bookmark == "True"):
@@ -14185,7 +14207,7 @@ class Ui_MainWindow(object):
 		
 	def localGetInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,artist_name_mplayer
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path,music_arr_setting,default_arr_setting
 		print (self.player_setLoop_var)
 		row = self.list2.currentRow()
 		if row > len(epnArrList) or row < 0:
@@ -14197,8 +14219,28 @@ class Ui_MainWindow(object):
 		except:
 			pass
 			
+			
 		mplayerLength = 0
 		buffering_mplayer = "no"
+		
+		if site == "Music":
+			if self.list3.currentRow() >= 0:
+				music_arr_setting[0]=self.list3.currentRow()
+				if self.list1.currentRow() >= 0:
+					music_arr_setting[1]=self.list1.currentRow()
+					if self.list2.currentRow() >= 0:
+						music_arr_setting[2]=self.list2.currentRow()
+			
+		else:
+			if ui.btn1.currentIndex() > 0:
+				default_arr_setting[0]=ui.btn1.currentIndex()
+				if self.list3.currentRow() >= 0:
+					default_arr_setting[1]=self.list3.currentRow()
+					if self.list1.currentRow() >= 0:
+						default_arr_setting[2]=self.list1.currentRow()
+						if self.list2.currentRow() >= 0:
+							default_arr_setting[3]=self.list2.currentRow()
+			
 		if site != "PlayLists":
 			if '	' in epnArrList[row]:
 				epn = epnArrList[row].split('	')[1]
@@ -14446,7 +14488,7 @@ class Ui_MainWindow(object):
 		
 	def getNextInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,rfr_url
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path,default_arr_setting,music_arr_setting
 		
 		row = self.list2.currentRow()
 		self.total_file_size = 0
@@ -14513,6 +14555,24 @@ class Ui_MainWindow(object):
 			ht=eval(p1)
 			ui.scrollArea1.verticalScrollBar().setValue(ht)
 			ui.labelFrame2.setText(epn_name_in_list[:20])
+		
+		if site == "Music":
+			if self.list3.currentRow() >= 0:
+				music_arr_setting[0]=self.list3.currentRow()
+				if self.list1.currentRow() >= 0:
+					music_arr_setting[1]=self.list1.currentRow()
+					if self.list2.currentRow() >= 0:
+						music_arr_setting[2]=self.list2.currentRow()
+			
+		else:
+			if ui.btn1.currentIndex() > 0:
+				default_arr_setting[0]=ui.btn1.currentIndex()
+				if self.list3.currentRow() >= 0:
+					default_arr_setting[1]=self.list3.currentRow()
+					if self.list1.currentRow() >= 0:
+						default_arr_setting[2]=self.list1.currentRow()
+						if self.list2.currentRow() >= 0:
+							default_arr_setting[3]=self.list2.currentRow()
 		
 		if (site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" and finalUrlFound == False and site!="None" and site!="Music" and site!= "Video" and site!="Local"):
 			if opt == "History":
@@ -16020,7 +16080,7 @@ class RightClickMenu(QtGui.QMenu):
 		self.addAction(exitAction)
 		
 	def music(self):
-		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist
+		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt
 		MainWindow.hide()
 		print('Music Mode')
 		layout_mode = "Music"
@@ -16041,16 +16101,25 @@ class RightClickMenu(QtGui.QMenu):
 		ui.audio_track.hide()
 		ui.subtitle_track.hide()
 		ui.player_loop_file.show()
-		ui.list1.hide()
-		ui.frame.hide()
-		show_hide_titlelist = 0
-		ui.list2.show()
-		ui.goto_epn.show()
-		show_hide_playlist = 1
-		#MainWindow.show()
 		
+		#MainWindow.show()
+		cnt = ui.btn1.findText("Music")
+		print(music_arr_setting,'--music-setting--')
+		if cnt >=0 and cnt < ui.btn1.count():
+			ui.btn1.setCurrentIndex(cnt)
+			ui.list3.setCurrentRow(music_arr_setting[0])
+			ui.list1.setCurrentRow(music_arr_setting[1])
+			ui.list1.hide()
+			ui.frame.hide()
+			show_hide_titlelist = 0
+			ui.list2.setCurrentRow(music_arr_setting[2])
+			ui.list2.show()
+			ui.goto_epn.show()
+			show_hide_playlist = 1
+			ui.list2.setFocus()
+					
 	def video(self):
-		global layout_mode
+		global layout_mode,default_arr_setting,opt
 		print('default Mode')
 		layout_mode = "Default"
 		ui.sd_hd.show()
@@ -16061,6 +16130,25 @@ class RightClickMenu(QtGui.QMenu):
 		ui.frame.show()
 		ui.list2.show()
 		ui.goto_epn.show()
+		
+		print(default_arr_setting,'--default-setting--')
+		if default_arr_setting[0] > 0 and default_arr_setting[0] < ui.btn1.count():
+			ui.btn1.setCurrentIndex(default_arr_setting[0])
+			ui.list3.setCurrentRow(default_arr_setting[1])
+			try:
+				option_val = ui.list3.currentItem().text()
+			except:
+				option_val = "History"
+			if option_val and (option_val == 'History' or option_val == 'Available' or option_val == 'Directory'):
+				if option_val == 'History':
+					print('--setting-history-option--')
+					opt = 'History'
+				else:
+					opt = option_val
+				ui.setPreOpt()
+			ui.list1.setCurrentRow(default_arr_setting[2])
+			ui.list2.setCurrentRow(default_arr_setting[3])
+			ui.list2.setFocus()
 		
 		MainWindow.showMaximized()
 
@@ -16115,8 +16203,9 @@ if __name__ == "__main__":
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
-	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path
-	
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting
+	default_arr_setting = [0,0,0,0]
+	music_arr_setting = [0,0,0]
 	layout_mode = "Default"
 	show_hide_player = 0
 	show_hide_cover = 1
@@ -16413,6 +16502,21 @@ if __name__ == "__main__":
 				wd2 = re.sub('\n','',j)
 				if wd2.isdigit():
 					w_wdt = int(wd2)
+			elif "Default_Mode" in i:
+				def_m = re.sub('\n','',j)
+				t_v = def_m.split(',')
+				n = 0
+				for l in range(len(t_v)):
+					default_arr_setting[n] = int(t_v[l])
+					n = n+1
+			elif 'Music_Mode' in i:
+				def_m = re.sub('\n','',j)
+				t_v = def_m.split(',')
+				n = 0
+				for l in range(len(t_v)):
+					music_arr_setting[n] = int(t_v[l])
+					n = n+1
+					
 	
 	arr_setting = []
 	
@@ -16646,6 +16750,20 @@ if __name__ == "__main__":
 		
 	else:
 		dock_opt = 1
+		
+	def_val = ''
+	for i in default_arr_setting:
+		
+		def_val = def_val + str(i) + ','
+		#print(def_val)
+	def_val = def_val[:-1]
+	
+	music_val = ''
+	for i in music_arr_setting:
+		music_val = music_val + str(i)+','
+		#print(music_val)
+	music_val = music_val[:-1]
+	
 	if ui.list1.isHidden():
 		show_hide_titlelist = 0
 	else:
@@ -16676,6 +16794,8 @@ if __name__ == "__main__":
 		f.write("\nWHeight="+str(MainWindow.height()))
 		f.write("\nWWidth="+str(MainWindow.width()))
 		f.write("\nLayout="+str(layout_mode))
+		f.write("\nDefault_Mode="+str(def_val))
+		f.write("\nMusic_Mode="+str(music_val))
 		f.close()
 	if mpvplayer.pid()>0:
 		mpvplayer.kill()
