@@ -780,6 +780,10 @@ class Browser(QtWebKit.QWebView):
 				name = epnArrList[r].split('	')[2]
 		else:
 			name = str(ui.list1.currentItem().text())
+			
+		if '/' in name:
+				name = name.replace('/','-')
+				
 		if (url1.endswith('.jpg') or final_found) and (site!='Music'):
 			final = url1
 			if site == "Local":
@@ -817,6 +821,10 @@ class Browser(QtWebKit.QWebView):
 					final = url1
 				else:
 					final = ''
+					
+				if '/' in name:
+					name = name.replace('/','-')
+					
 				thumb = '/tmp/AnimeWatch/'+name+'.jpg'
 				try:
 					if final.startswith('http'):
@@ -977,6 +985,26 @@ class downloadThread(QtCore.QThread):
 	def run(self):
 		ccurl(self.url)
 
+class ThreadingThumbnail(QtCore.QThread):
+    
+	def __init__(self,path,picn,inter):
+		QtCore.QThread.__init__(self)
+	
+		self.path = path
+		self.picn = picn
+		self.inter = inter
+		self.interval = 1
+
+	def __del__(self):
+		self.wait()                        
+	
+	def run(self):
+		if not os.path.exists(self.picn):
+			try:
+				subprocess.call(["ffmpegthumbnailer","-i",self.path,"-o",self.picn,"-t",str(self.inter),'-q','10','-s','350'])
+			except:
+				pass
+
 class MainWindowWidget(QtGui.QWidget):
 	def __init__(self):
 		super(MainWindowWidget,self).__init__()
@@ -986,6 +1014,7 @@ class MainWindowWidget(QtGui.QWidget):
 	def mouseMoveEvent(self,event):
 		global site
 		pos = event.pos()
+		#print(pos)
 		#if pos.x() >= 0 and pos.x()<=10:
 		#	ui.dockWidget_3.show()
 		#	ui.btn1.setFocus()
@@ -1012,6 +1041,9 @@ def naturallysorted(l):
 
 class MyEventFilter(QtCore.QObject):
 	def eventFilter(self, receiver, event):
+		pos = event.pos()
+		print(pos)
+		print("hello")
 		if(event.type() == QtCore.QEvent.MouseMove):
 			#MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
 				pos = event.pos()
@@ -1021,14 +1053,11 @@ class MyEventFilter(QtCore.QObject):
 				#if widget:
 				#	print widget.objectName()
 				#print str(widget.objectName())
-				if pos.x() == 0:
-					ui.dockWidget_3.show()
-				elif pos.x() > 300:
-					ui.dockWidget_3.hide()
-					ui.list1.setFocus()
+				print("hello")
+				print(pos)
 				return True
 		else:
-		#Call Base Class Method to Continue Normal Event Processing
+			#Call Base Class Method to Continue Normal Event Processing
 			return super(MyEventFilter,self).eventFilter(receiver, event)
 
 
@@ -2463,6 +2492,9 @@ class List1(QtGui.QListWidget):
 		#ui.dockWidget_3.hide()
 		#if ui.page_number.hasFocus():
 			#self.setFocus()
+	def mouseMoveEvent(self, event): 
+		self.setFocus()
+		
 	def dropEvent(self, event):
 		if event.source() == self and (event.dropAction() == QtCore.Qt.MoveAction or self.dragDropMode() == QtGui.QAbstractItemView.InternalMove):
 			global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,siteName
@@ -3296,6 +3328,9 @@ class List2(QtGui.QListWidget):
 	#ui.dockWidget_3.hide()
 	#if not self.hasFocus():
 	#	self.setFocus()
+	def mouseMoveEvent(self, event): 
+		self.setFocus()
+		
 	def dropEvent(self, event):
 		if event.source() == self and (event.dropAction() == QtCore.Qt.MoveAction or self.dragDropMode() == QtGui.QAbstractItemView.InternalMove):
 			global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,name,epnArrList,siteName
@@ -3393,7 +3428,7 @@ class List2(QtGui.QListWidget):
 				else:
 					ui.watchDirectly("/tmp/AnimeWatch/"+new_epn)
 		elif event.key() == QtCore.Qt.Key_Backspace:
-			if ui.list1.isHidden():
+			if ui.list1.isHidden() and ui.list1.count() > 0:
 				ui.list2.hide()
 				ui.goto_epn.hide()
 				ui.list1.show()
@@ -3744,7 +3779,67 @@ class List2(QtGui.QListWidget):
 			msg = "Video Quality Set to SD"
 			subprocess.Popen(["notify-send",msg]) 
 			quality = "sd"
-	
+		elif event.key() == QtCore.Qt.Key_F:
+			#mpvplayer.write('\n'+'add sub-pos +1'+'\n')
+		
+			#fullscr = 1 - fullscr
+			if not MainWindow.isFullScreen():
+				ui.gridLayout.setSpacing(0)
+				ui.superGridLayout.setSpacing(0)
+				ui.gridLayout.setContentsMargins(0,0,0,0)
+				ui.superGridLayout.setContentsMargins(0,0,0,0)
+				#ui.frame1.setMaximumHeight(20)
+				ui.text.hide()
+				ui.label.hide()
+				#if site != "Music":
+				ui.frame1.hide()
+				ui.tab_6.hide()
+				ui.goto_epn.hide()
+				ui.btn20.hide()
+				if wget:
+					if wget.pid() > 0:
+						ui.progress.hide()
+				ui.list2.hide()
+				ui.list6.hide()
+				#ui.text.hide()
+				#ui.label.hide()
+				#ui.tab_5.setParent(None)
+				
+				#ui.tab_5.showMaximized()
+				ui.tab_5.show()
+				ui.tab_5.setFocus()
+				#ui.tab_5.showFullScreen()
+				
+				#ui.gridLayout.showFullScreen()
+				if (Player == "mplayer" or Player=="mpv"):
+					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+				MainWindow.showFullScreen()
+				
+			else:
+				
+				ui.gridLayout.setSpacing(10)
+				ui.superGridLayout.setSpacing(10)
+				#ui.gridLayout.setContentsMargins(10,10,10,10)
+				ui.superGridLayout.setContentsMargins(10,10,10,10)
+				ui.list2.show()
+				ui.goto_epn.show()
+				ui.btn20.show()
+				#if Player == "mpv":
+				if wget:
+					if wget.pid() > 0:
+						ui.goto_epn.hide()
+						ui.progress.show()
+					
+				ui.frame1.show()
+				if Player == "mplayer" or Player=="mpv":
+					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+				MainWindow.showNormal()
+				MainWindow.showMaximized()
+				if total_till != 0:
+					ui.tab_6.show()
+					ui.list2.hide()
+					ui.goto_epn.hide()
+				#ui.tab_5.showNormal()
 	
 	def find_info(self,var):
 			global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,site,siteName,finalUrlFound
@@ -4557,7 +4652,7 @@ class List5(QtGui.QListWidget):
 		super(List5, self).__init__(parent)
 
 	def keyPressEvent(self, event):
-		global category,home,site,bookmark
+		global category,home,site,bookmark,epnArrList
 		
 		if event.key() == QtCore.Qt.Key_Down:
 			nextr = self.currentRow() + 1
@@ -4581,6 +4676,33 @@ class List5(QtGui.QListWidget):
 				#ui.epn_highlight()
 		elif event.key() == QtCore.Qt.Key_Return:
 			ui.search_list5_options()
+		elif event.key() == QtCore.Qt.Key_Q:
+			if site == "Music" or site == "Video" or site == "Local" or site == "PlayLists" or site == "None":
+				file_path = home+'/Playlists/Queue'
+				if not os.path.exists(file_path):
+					f = open(file_path,'w')
+					f.close()
+					
+				if not ui.queue_url_list:
+					ui.list6.clear()
+				
+				
+				indx = self.currentRow()
+				item = self.item(indx)
+				if item:
+					tmp = str(self.currentItem().text())
+					tmp1 = tmp.split(':')[0]
+					r = int(tmp1)
+					ui.queue_url_list.append(epnArrList[r])
+					ui.list6.addItem(epnArrList[r].split('	')[0])
+					print (ui.queue_url_list)
+					if os.stat(file_path).st_size == 0:
+						f = open(file_path,'w')
+						f.write(epnArrList[r])
+					else:
+						f = open(file_path,'a')
+						f.write('\n'+epnArrList[r])
+				f.close()
 		#elif event.key() == QtCore.Qt.Key_Left:
 		#	ui.btn1.setFocus()
 			
@@ -4677,12 +4799,15 @@ class QtGuiQWidgetScroll(QtGui.QScrollArea):
 		global icon_size_arr,iconv_r,site
 		ui.list1.setCurrentRow(nextR)
 		p1 = "ui.label_"+str(nextR)+".y()"
-		yy=eval(p1)
-		
-		p1 = "ui.label_"+str(nextR)+".x()"
-		xy=eval(p1)
-		p1 = "ui.label_"+str(nextR)+".setFocus()"
-		exec (p1)
+		try:
+			yy=eval(p1)
+			
+			p1 = "ui.label_"+str(nextR)+".x()"
+			xy=eval(p1)
+			p1 = "ui.label_"+str(nextR)+".setFocus()"
+			exec (p1)
+		except:
+			return 0
 		if icon_size_arr:
 			hi = icon_size_arr[1]
 			wi = icon_size_arr[0]
@@ -4861,13 +4986,16 @@ class QtGuiQWidgetScroll1(QtGui.QScrollArea):
 	def sizeAdjust(self,nextR,direction):
 		global icon_size_arr,iconv_r
 		ui.list2.setCurrentRow(nextR)
-		p1 = "ui.label_epn_"+str(nextR)+".y()"
-		yy=eval(p1)
-		
-		p1 = "ui.label_epn_"+str(nextR)+".x()"
-		xy=eval(p1)
-		p1 = "ui.label_epn_"+str(nextR)+".setFocus()"
-		exec (p1)
+		try:
+			p1 = "ui.label_epn_"+str(nextR)+".y()"
+			yy=eval(p1)
+			
+			p1 = "ui.label_epn_"+str(nextR)+".x()"
+			xy=eval(p1)
+			p1 = "ui.label_epn_"+str(nextR)+".setFocus()"
+			exec (p1)
+		except:
+			return 0
 		if ui.list2.count() > 1:
 			if icon_size_arr:
 				hi = icon_size_arr[1]
@@ -5545,6 +5673,12 @@ class tab5(QtGui.QWidget):
 		elif event.key() == QtCore.Qt.Key_Space:
 			#cycle_pause = 1 - cycle_pause
 			
+			txt = ui.player_play_pause.text()
+			if txt == 'Play':
+				ui.player_play_pause.setText("Pause")
+			elif txt == "Pause":
+				ui.player_play_pause.setText("Play")
+			
 			buffering_mplayer = "no"
 			
 			if ui.frame_timer.isActive:
@@ -5841,6 +5975,7 @@ class tab5(QtGui.QWidget):
 			
 			quitReally = "yes"
 			mpvplayer.write('\n'+'quit'+'\n')
+			ui.player_play_pause.setText("Play")
 			if ui.tab_6.isHidden():
 				ui.tab_5.showNormal()
 				ui.tab_5.hide()
@@ -6035,6 +6170,7 @@ class Ui_MainWindow(object):
 		#self.text.setMinimumSize(QtCore.QSize(450, 250))
 		#self.text.setMaximumWidth(300)
 		self.text.setMaximumHeight(250)
+		self.text.setMaximumWidth(280)
 		self.VerticalLayoutLabel.insertWidget(0,self.label,0)
 		self.VerticalLayoutLabel.insertWidget(1,self.text,0)
 		#self.text.hide()
@@ -6271,24 +6407,37 @@ class Ui_MainWindow(object):
 		
 		
 		
-		self.player_prev = QtGui.QPushButton(self.player_opt)
-		self.player_prev.setObjectName(_fromUtf8("player_prev"))
-		self.horizontalLayout_player_opt.insertWidget(5,self.player_prev,0)
-		self.player_prev.setText("Prev")
+		
+		self.player_loop_file = QtGui.QPushButton(self.player_opt)
+		self.player_loop_file.setObjectName(_fromUtf8("player_loop_file"))
+		self.horizontalLayout_player_opt.insertWidget(4,self.player_loop_file,0)
+		self.player_loop_file.setText("Lock")
+		self.player_loop_file.hide()
+		#self.player_loop_file.setToolTip("Lock File")
 		
 		self.player_stop = QtGui.QPushButton(self.player_opt)
 		self.player_stop.setObjectName(_fromUtf8("player_stop"))
-		self.horizontalLayout_player_opt.insertWidget(6,self.player_stop,0)
+		self.horizontalLayout_player_opt.insertWidget(5,self.player_stop,0)
 		self.player_stop.setText("Stop")
+		
+		self.player_play_pause = QtGui.QPushButton(self.player_opt)
+		self.player_play_pause.setObjectName(_fromUtf8("player_play_pause"))
+		self.horizontalLayout_player_opt.insertWidget(6,self.player_play_pause,0)
+		self.player_play_pause.setText("Play")
+		
+		self.player_prev = QtGui.QPushButton(self.player_opt)
+		self.player_prev.setObjectName(_fromUtf8("player_prev"))
+		self.horizontalLayout_player_opt.insertWidget(7,self.player_prev,0)
+		self.player_prev.setText("Prev")
 		
 		self.player_next = QtGui.QPushButton(self.player_opt)
 		self.player_next.setObjectName(_fromUtf8("player_next"))
-		self.horizontalLayout_player_opt.insertWidget(7,self.player_next,0)
+		self.horizontalLayout_player_opt.insertWidget(8,self.player_next,0)
 		self.player_next.setText("Next")
 		
 		self.player_playlist = QtGui.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
-		self.horizontalLayout_player_opt.insertWidget(8,self.player_playlist,0)
+		self.horizontalLayout_player_opt.insertWidget(9,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtGui.QMenu()
 		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)']
@@ -6659,9 +6808,17 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.connect(self.mplayer_timer,QtCore.SIGNAL("timeout()"),self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.threadPool = []
-		self.player_setLoop_var = 0
-		self.playerPlaylist_setLoop_var = 0
+		
+		self.thumb_timer = QtCore.QTimer()
+		self.mplayer_OsdTimer = QtCore.QTimer()
+		self.mplayer_OsdTimer.connect(self.mplayer_OsdTimer,QtCore.SIGNAL("timeout()"),self.osd_hide)
+		self.mplayer_OsdTimer.setSingleShot(True)
+		
+		self.mplayer_SubTimer = QtCore.QTimer()
+		self.mplayer_SubTimer.connect(self.mplayer_SubTimer,QtCore.SIGNAL("timeout()"),self.subMplayer)
+		self.mplayer_SubTimer.setSingleShot(True)
+		
+		
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -6744,6 +6901,8 @@ class Ui_MainWindow(object):
 		QtCore.QObject.connect(self.subtitle_track, QtCore.SIGNAL(_fromUtf8("clicked()")),self.toggleSubtitle)
 		QtCore.QObject.connect(self.player_stop, QtCore.SIGNAL(_fromUtf8("clicked()")),self.playerStop)
 		QtCore.QObject.connect(self.player_prev, QtCore.SIGNAL(_fromUtf8("clicked()")),self.mpvPrevEpnList)
+		QtCore.QObject.connect(self.player_play_pause, QtCore.SIGNAL(_fromUtf8("clicked()")),self.playerPlayPause)
+		QtCore.QObject.connect(self.player_loop_file, QtCore.SIGNAL(_fromUtf8("clicked()")),self.playerLoopFile)
 		QtCore.QObject.connect(self.player_next, QtCore.SIGNAL(_fromUtf8("clicked()")),self.mpvNextEpnList)
 		#QtCore.QObject.connect(self.player_playlist, QtCore.SIGNAL(_fromUtf8("clicked()")),self.playerPlaylist)
 		QtCore.QObject.connect(self.mirror_change, QtCore.SIGNAL(_fromUtf8("clicked()")),self.mirrorChange)
@@ -6812,6 +6971,21 @@ class Ui_MainWindow(object):
 		self.go_page.setPlaceholderText("Filter")
 		#self.gridLayout.addLayout(self.VerticalLayoutLabel,1, 1, 1, 1)
 		#self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
+		
+		self.threadPool = []
+		self.threadPoolthumb = []
+		self.player_setLoop_var = 0
+		self.playerPlaylist_setLoop_var = 0
+		
+		self.total_file_size = 0
+		self.id_audio_bitrate = 0
+		self.id_video_bitrate = 0
+		self.final_playing_url = ""
+		self.queue_url_list = []
+		self.downloadWget = []
+		self.downloadWget_cnt = 0
+		self.thumbnail_cnt = 0
+		self.lock_process = False
 		
 	def retranslateUi(self, MainWindow):
 		MainWindow.setWindowTitle(_translate("MainWindow", "Anime Watch", None))
@@ -6896,23 +7070,9 @@ class Ui_MainWindow(object):
 		#self.RemoveLibraryFolder.setText(_translate("Dialog", "Remove", None))
 		#self.LibraryClose.setText(_translate("Dialog", "Close", None))
 		
-		self.thumb_timer = QtCore.QTimer()
-		self.mplayer_OsdTimer = QtCore.QTimer()
-		self.mplayer_OsdTimer.connect(self.mplayer_OsdTimer,QtCore.SIGNAL("timeout()"),self.osd_hide)
-		self.mplayer_OsdTimer.setSingleShot(True)
 		
-		self.mplayer_SubTimer = QtCore.QTimer()
-		self.mplayer_SubTimer.connect(self.mplayer_SubTimer,QtCore.SIGNAL("timeout()"),self.subMplayer)
-		self.mplayer_SubTimer.setSingleShot(True)
 		
-		self.total_file_size = 0
-		self.id_audio_bitrate = 0
-		self.id_video_bitrate = 0
-		self.final_playing_url = ""
-		self.queue_url_list = []
-		self.downloadWget = []
-		self.downloadWget_cnt = 0
-		self.lock_process = False
+		
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
 	def queueList_return_pressed(self,r):
 		t = self.queue_url_list[r]
@@ -7149,14 +7309,50 @@ class Ui_MainWindow(object):
 							self.list2.item(i).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 						else:
 							self.list2.addItem((i))			
+	def playerLoopFile(self):
+		global Player
+		txt = self.player_loop_file.text()
+		if txt == "Lock":
+			self.player_setLoop_var = 1
+			self.player_loop_file.setText("unLock")
+			#if Player == "mpv":
+			#	mpvplayer.write(b'\n set loop inf \n')
+		else:
+			self.player_setLoop_var = 0
+			self.player_loop_file.setText("Lock")
+			#if Player == "mpv":
+			#	mpvplayer.write(b'\n set loop 1 \n')
 			
+	def playerPlayPause(self):
+		global mpvplayer
+		txt = self.player_play_pause.text() 
+		if txt == "Play":
+			if mpvplayer.pid() > 0:
+				if Player == "mpv":
+					mpvplayer.write(b'\n set pause no \n')
+				else:
+					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
+				self.player_play_pause.setText("Pause")
+			else:
+				self.epnfound()
+			
+		elif txt == "Pause":
+			if mpvplayer.pid() > 0:
+				if Player == "mpv":
+					mpvplayer.write(b'\n set pause yes \n')
+				else:
+					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
+				self.player_play_pause.setText("Play")
+			else:
+				self.epnfound()
+				
 	def playerPlaylist1(self,val):
 		if val == "Shuffle":
 			self.shuffleList()
 		else:
 			self.sortList()
 	def playerPlaylist(self,val):
-		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist
+		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player,Player
 		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)']
 		#txt = str(self.player_playlist.text())
 		#playlist_show = 1-playlist_show
@@ -7169,18 +7365,26 @@ class Ui_MainWindow(object):
 				self.text.show()
 				self.label.show()
 				show_hide_cover = 1
+				self.tab_5.hide()
+				show_hide_player = 0
 			elif self.text.isHidden() and not self.label.isHidden():
 				self.text.show()
 				self.label.show()
 				show_hide_cover = 1
+				self.tab_5.hide()
+				show_hide_player = 0
 			elif not self.text.isHidden() and self.label.isHidden():
 				self.text.show()
 				self.label.show()
 				show_hide_cover = 1
+				self.tab_5.hide()
+				show_hide_player = 0
 			else:
 				self.text.hide()
 				self.label.hide()
 				show_hide_cover = 0
+				self.tab_5.show()
+				show_hide_player = 1
 			
 		
 		elif val == "Show/Hide Playlist":
@@ -7216,14 +7420,19 @@ class Ui_MainWindow(object):
 			if v == "Lock File":
 				self.player_setLoop_var = 1
 				self.action_player_menu[5].setText("UnLock File")
+				self.player_loop_file.setText("unLock")
+				
 			elif v == "UnLock File":
 					self.player_setLoop_var = 0
 					self.action_player_menu[5].setText("Lock File")
+					self.player_loop_file.setText("Lock")
+				
 		elif val == "Lock Playlist":
 			v = str(self.action_player_menu[4].text())
 			if v == "Lock Playlist":
 				self.playerPlaylist_setLoop_var = 1
 				self.action_player_menu[4].setText("UnLock Playlist")
+				
 			elif v == "UnLock Playlist":
 					self.playerPlaylist_setLoop_var = 0
 					self.action_player_menu[4].setText("Lock Playlist")
@@ -7238,8 +7447,14 @@ class Ui_MainWindow(object):
 		elif val == "Show/Hide Player":
 			if self.tab_5.isHidden():
 				self.tab_5.show()
+				show_hide_player = 1
+				if not self.label.isHidden():
+					self.label.hide()
+					self.text.hide()
+					show_hide_cover = 0
 			else:
 				self.tab_5.hide()
+				show_hide_player = 0
 		elif site == "Music" or site == "Local" or site == "Video" or site == "PlayLists":
 			if val == "Order by Name(Descending)":
 				try:
@@ -9054,12 +9269,15 @@ class Ui_MainWindow(object):
 				curR = curR + 1
 
 			self.list2.setCurrentRow(curR)
-			if site != "PlayLists":
-				if '	' in epnArrList[curR]:
-					epn = epnArrList[curR].split('	')[1]
-				else:
-					epn = self.list2.currentItem().text()
-				epn = epn.replace('#','')
+			if site != "PlayLists" and not self.queue_url_list:
+				try:
+					if '	' in epnArrList[curR]:
+						epn = epnArrList[curR].split('	')[1]
+					else:
+						epn = self.list2.currentItem().text()
+					epn = epn.replace('#','')
+				except:
+					pass
 			
 			if site == "Local" or site == "Music" or site == "Video" or site == "None" or site == "PlayLists":
 				if len(self.queue_url_list)>0:
@@ -9104,13 +9322,15 @@ class Ui_MainWindow(object):
 			else:
 				curR = curR - 1
 			self.list2.setCurrentRow(curR)
-			if site != "PlayLists":
-				self.list2.setCurrentRow(curR)
-				if '	' in epnArrList[curR]:
-					epn = epnArrList[curR].split('	')[1]
-				else:
-					epn = self.list2.currentItem().text()
-				epn = epn.replace('#','')
+			if site != "PlayLists" and not self.queue_url_list:
+				try:
+					if '	' in epnArrList[curR]:
+						epn = epnArrList[curR].split('	')[1]
+					else:
+						epn = self.list2.currentItem().text()
+					epn = epn.replace('#','')
+				except:
+					pass
 			
 			if site == "Local" or site == "Music" or site == "Video" or site == "None" or site == "PlayLists":
 				if len(self.queue_url_list)>0:
@@ -9479,9 +9699,9 @@ class Ui_MainWindow(object):
 			self.dockWidget_4.close()
 			self.dockWidget_3.hide()
 			MainWindow.showFullScreen()
-			self.tab_5.setFocus()
+			#self.tab_5.setFocus()
 			#self.label.setMinimumSize(QtCore.QSize(350, 400))
-			self.chk.hide()
+			#self.chk.hide()
 			#self.btn9.hide()
 			
 			#self.tab_5.setParent(0)
@@ -9492,9 +9712,9 @@ class Ui_MainWindow(object):
 			self.dockWidget_3.show()
 			MainWindow.showNormal()
 			MainWindow.showMaximized()
-			self.tab_5.setFocus()
+			#self.tab_5.setFocus()
 			#self.label.setMinimumSize(QtCore.QSize(350, 400))
-			self.chk.show()
+			#self.chk.show()
 			#self.btn9.hide()
 			
 			
@@ -9633,6 +9853,9 @@ class Ui_MainWindow(object):
 		print (site)
 		print (opt)
 		print (pre_opt)
+		if '/' in name:
+			name = name.replace('/','-')
+			
 		picn = '/tmp/AnimeWatch/'+name+'.jpg'
 		print (picn,'--copyimg--')
 		#if not os.path.isfile(thumbnail):
@@ -9702,6 +9925,9 @@ class Ui_MainWindow(object):
 		print (site)
 		print (opt)
 		print (pre_opt)
+		if '/' in name:
+			name = name.replace('/','-')
+			
 		picn = '/tmp/AnimeWatch/'+name+'.jpg'
 		if site == "Local":
 			r = self.list1.currentRow()
@@ -10865,19 +11091,35 @@ class Ui_MainWindow(object):
 					picn = picnD+'/'+a1+'.jpg'
 				except:
 					picn = picnD+'/'+str(a1)+'.jpg'
+				
 				if site == "PlayLists" or site == "Local" or site == "Video" or site == "Music":
 					if not os.path.exists(picn) and 'http' not in path:
 						#subprocess.call(["mpv","--ytdl=no","--quiet","--no-audio","--vo=image:outdir=/tmp","--start="+str(inter_val)+"%","--frames=1",path])
-						subprocess.Popen(["ffmpegthumbnailer","-i",path,"-o",picn,"-t",str(inter),'-q','10','-s','350'])
-						
-					
+						#subprocess.Popen(["ffmpegthumbnailer","-i",path,"-o",picn,"-t",str(inter),'-q','10','-s','350'])
+						self.threadPoolthumb.append(ThreadingThumbnail(path,picn,inter))
+						self.threadPoolthumb[len(self.threadPoolthumb)-1].finished.connect(self.thumbnail_generated)
+						length = len(self.threadPoolthumb)
+						if length == 1:
+							if not self.threadPoolthumb[0].isRunning():
+								self.threadPoolthumb[0].start()
+				
+				
+	
+				
 				if os.path.exists(picn):
 					img = QtGui.QPixmap(picn, "1")			
 					self.label.setPixmap(img)
 				else:
-					self.label.clear()
+					#self.label.clear()
+					pass
 				
-				
+	def thumbnail_generated(self):
+		print ("Process Ended")
+		self.threadPoolthumb = self.threadPoolthumb[1:]
+		length = len(self.threadPoolthumb)
+		if length > 0:
+			if not self.threadPoolthumb[0].isRunning():
+				self.threadPoolthumb[0].start()
 	def directepn(self):
 		global epn,epn_goto
 		epn_goto = 1
@@ -11669,7 +11911,8 @@ class Ui_MainWindow(object):
 		#sub_id = "auto"
 		fanart = "/tmp/AnimeWatch/"+name+"-fanart.jpg"
 		thumbnail = "/tmp/AnimeWatch/"+name+"-thumbnail.jpg"
-		
+		summary = "Not Available"
+		picn = "No.jpg"
 		m = []
 		if bookmark == "True" and os.path.exists(home+'/Bookmark/'+status+'.txt'):
 			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+finalUrlFound+':'+refererNeeded
@@ -12651,7 +12894,7 @@ class Ui_MainWindow(object):
 							self.videoImage(poster,thumb,fan,summary)
 	def videoImage(self,picn,thumbnail,fanart,summary):
 		global screen_height,screen_width
-		self.label.clear()
+		#self.label.clear()
 		if os.path.isfile(str(picn)):
 			if not os.path.isfile(fanart):
 				basewidth = screen_width
@@ -12722,30 +12965,17 @@ class Ui_MainWindow(object):
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path
 		buffering_mplayer="no"
 		self.list4.hide()
-		
+		self.player_play_pause.setText("Pause")
 		try:
 			
 			server._emitMeta("Play")
 		except:
 			pass
 			
-		if downloadVideo == 0:
-			if site == "Music":
-				#self.list1.show()
-				#self.frame.show()
-				#self.frame1.show()
-				pass
-			else:
-				
-				self.list1.hide()
-				self.frame.hide()
-			self.text.hide()
-			self.label.hide()
-			#print "hello"
-		#self.gridLayout.addWidget(self.tab_5,0,0,1,1)
+		
 		if mpvplayer:
 			if mpvplayer.pid() > 0:
 				#mpvplayer.write('\n'+'quit'+'\n')
@@ -13038,6 +13268,7 @@ class Ui_MainWindow(object):
 				finalUrl = str(finalUrl)
 			except:
 				finalUrl = finalUrl
+			
 			if Player == "mpv":
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 				print (command)
@@ -13209,10 +13440,22 @@ class Ui_MainWindow(object):
 		epn_goto = 0
 		if type(finalUrl) is not list:
 			self.final_playing_url = finalUrl.replace('"','')
+			current_playing_file_path = '"'+self.final_playing_url+'"'
 		else:
 			self.final_playing_url = finalUrl[0].replace('"','')
 			if refererNeeded == True:
 				rfr_url = finalUrl[1].replace('"','')
+				
+		if downloadVideo == 0:
+			if site == "Music" and show_hide_player == 0:
+				self.tab_5.hide()
+				#self.label.show()
+			else:
+				
+				self.list1.hide()
+				self.frame.hide()
+				self.text.hide()
+				self.label.hide()
 	
 	def epnfound_return(self):
 		global site,base_url,embed,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list
@@ -13467,8 +13710,8 @@ class Ui_MainWindow(object):
 		QtCore.QTimer.singleShot(1000, partial(wget.start, command))
 		
 	def dataReady(self,p):
-		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer
-		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id
+		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode
+		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path
 		#tt = time.process_time()
 		#print (p.readAllStandardOutput())
 		#a = str(bytes(p.readAllStandardOutput()).decode('utf-8')).strip()
@@ -13544,7 +13787,7 @@ class Ui_MainWindow(object):
 						mpvplayer.write('\n'+'show-text '+npn+' 4000'+'\n')
 					except:
 						pass
-					if MainWindow.isFullScreen():
+					if MainWindow.isFullScreen() and layout_mode != "Music":
 						self.gridLayout.setSpacing(0)
 						if not self.frame1.isHidden():
 							self.frame1.hide()
@@ -13560,7 +13803,7 @@ class Ui_MainWindow(object):
 					if self.mplayer_timer.isActive():
 						self.mplayer_timer.stop()
 					self.mplayer_timer.start(5000)
-					if MainWindow.isFullScreen():
+					if MainWindow.isFullScreen() and layout_mode != "Music":
 						self.gridLayout.setSpacing(0)
 						self.frame1.show()
 						if self.frame_timer.isActive():
@@ -13605,7 +13848,7 @@ class Ui_MainWindow(object):
 			#if "AV:" not in a:
 				t = "Loading: "+epn_name_in_list+" (Please Wait)"
 				self.progressEpn.setFormat((t))
-				if MainWindow.isFullScreen():
+				if MainWindow.isFullScreen() and layout_mode != "Music":
 					self.gridLayout.setSpacing(0)
 					self.frame1.show()
 					if self.frame_timer.isActive():
@@ -13615,7 +13858,10 @@ class Ui_MainWindow(object):
 			#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 			if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 				if self.player_setLoop_var:
-					curR = self.list2.currentRow()
+					t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
+					mpvplayer.write(t2)
+					return 0
+					#curR = self.list2.currentRow()
 				else:
 					if curR == self.list2.count() - 1:
 						curR = 0
@@ -13668,7 +13914,9 @@ class Ui_MainWindow(object):
 		elif Player == "mplayer":
 			#print(a)
 			if "PAUSE" in a:
-				if MainWindow.isFullScreen():
+				if buffering_mplayer != 'yes':
+					self.player_play_pause.setText("Play")
+				if MainWindow.isFullScreen() and layout_mode != "Music":
 					self.gridLayout.setSpacing(0)
 					self.frame1.show()
 					if buffering_mplayer == "yes":
@@ -13729,7 +13977,7 @@ class Ui_MainWindow(object):
 						mpvplayer.write('\n'+'osd_show_text '+str(npn)+' 4000'+'\n')
 					except:
 						pass
-					if MainWindow.isFullScreen():
+					if MainWindow.isFullScreen() and layout_mode != "Music":
 						self.gridLayout.setSpacing(0)
 						if not self.frame1.isHidden():
 							self.frame1.hide()
@@ -13808,7 +14056,7 @@ class Ui_MainWindow(object):
 			#if "AV:" not in a:
 				t = "Loading: "+epn_name_in_list+" (Please Wait)"
 				self.progressEpn.setFormat((t))
-				if MainWindow.isFullScreen():
+				if MainWindow.isFullScreen() and layout_mode != "Music":
 					self.gridLayout.setSpacing(0)
 					self.frame1.show()
 					if self.frame_timer.isActive():
@@ -13828,7 +14076,10 @@ class Ui_MainWindow(object):
 				#else:
 					#quitReally == "no"
 				if self.player_setLoop_var:
-					curR = self.list2.currentRow()
+					t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
+					mpvplayer.write(t2)
+					return 0
+					#curR = self.list2.currentRow()
 					
 				else:
 					if curR == self.list2.count() - 1:
@@ -13934,7 +14185,7 @@ class Ui_MainWindow(object):
 		
 	def localGetInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,artist_name_mplayer
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path
 		print (self.player_setLoop_var)
 		row = self.list2.currentRow()
 		if row > len(epnArrList) or row < 0:
@@ -14072,7 +14323,7 @@ class Ui_MainWindow(object):
 				command1 = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
 				try:
 					command = str(command1)
-					command = command.encode('utf-8')
+					#command = command.encode('utf-8')
 				except:
 					command = command1
 				if mpvplayer.pid()>0:
@@ -14096,7 +14347,7 @@ class Ui_MainWindow(object):
 				command1 = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
 				try:
 					command = str(command1)
-					command = command.encode('utf-8')
+					#command = command.encode('utf-8')
 				except:
 					command = command1
 			
@@ -14130,9 +14381,10 @@ class Ui_MainWindow(object):
 				self.musicBackground(r,'Search')
 			elif site == "Video":
 				self.updateVideoCount('mark',finalUrl)
+			current_playing_file_path = finalUrl
 				
 	def getQueueInList(self):
-		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server
+		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server,current_playing_file_path
 		
 		try:
 			t1 = self.queue_url_list[0]
@@ -14190,10 +14442,12 @@ class Ui_MainWindow(object):
 		elif site == "Video":
 			self.updateVideoCount('mark',epnShowN)
 			
+		current_playing_file_path = epnShow
 		
 	def getNextInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,rfr_url
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path
+		
 		row = self.list2.currentRow()
 		self.total_file_size = 0
 		mplayerLength = 0
@@ -14494,6 +14748,7 @@ class Ui_MainWindow(object):
 	
 		if type(finalUrl) is not list:
 			self.final_playing_url = finalUrl.replace('"','')
+			current_playing_file_path = '"'+self.final_playing_url+'"'
 		else:
 			self.final_playing_url = finalUrl[0].replace('"','')
 			if refererNeeded == True:
@@ -14514,7 +14769,7 @@ class Ui_MainWindow(object):
 	
 	def options(self,val):
 	
-		global opt,pgn,genre_num,site,name,base_url,name1,embed,list1_items,pre_opt,mirrorNo,insidePreopt,quality,home,siteName,finalUrlFound,nameListArr,original_path_name,original_path_name
+		global opt,pgn,genre_num,site,name,base_url,name1,embed,list1_items,pre_opt,mirrorNo,insidePreopt,quality,home,siteName,finalUrlFound,nameListArr,original_path_name,original_path_name,show_hide_playlist,show_hide_titlelist
 		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,hist_arr,list2_items,bookmark,status,viewMode
 	
 		hist_arr[:]=[]
@@ -14528,6 +14783,9 @@ class Ui_MainWindow(object):
 		list2_items=[]
 		list1_items[:]=[]
 		
+		
+			
+				
 		if bookmark == "True":
 			r = self.list3.currentRow()
 			item = self.list3.item(r)
@@ -15003,7 +15261,25 @@ class Ui_MainWindow(object):
 			nameListArr[:]=[]
 			for i in range(self.list1.count()):
 				nameListArr.append(str(self.list1.item(i).text()))
-	
+		
+		if self.list1.isHidden() and not self.list2.isHidden():
+			if self.list1.count() > 0:
+				self.list1.show()
+				self.frame.show()
+				show_hide_titlelist = 1
+				self.list2.hide()
+				self.goto_epn.hide()
+				show_hide_playlist = 0
+		elif not self.list1.isHidden() and self.list2.isHidden():
+			if self.list1.count() == 0 and self.list2.count() > 0:
+				self.list1.hide()
+				self.frame.hide()
+				show_hide_titlelist = 0
+				self.list2.show()
+				self.goto_epn.show()
+				show_hide_playlist = 1
+		
+				
 	
 	def importVideoDir(self):
 		global home
@@ -15080,11 +15356,15 @@ class Ui_MainWindow(object):
 			if not qVal:
 				cur.execute('SELECT distinct Title,Directory FROM Video order by Title')
 			else:
-				cur.execute('SELECT distinct EP_NAME,Path FROM Video Where Directory="'+qVal+'" order by EPN')
+				#cur.execute('SELECT distinct EP_NAME,Path FROM Video Where Directory="'+qVal+'" order by EPN')
+				qr = 'SELECT distinct EP_NAME,Path FROM Video Where Directory=? order by EPN'
+				cur.execute(qr,(qVal,))
 		elif q == "Bookmark":
 			print (q)
 			
-			cur.execute('SELECT EP_NAME,Path FROM Video Where Title="'+qVal+'"')
+			#cur.execute('SELECT EP_NAME,Path FROM Video Where Title="'+qVal+'"')
+			qr = 'SELECT EP_NAME,Path FROM Video Where Title=?'
+			cur.execute(qr,(qVal,))
 		elif q == "History":
 			print (q)
 			qr = 'SELECT distinct Title,Directory FROM Video Where FileName like ? order by Title'
@@ -15353,47 +15633,63 @@ class Ui_MainWindow(object):
 			if not qVal:
 				cur.execute('SELECT Distinct Artist FROM Music order by Artist')
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Artist="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Artist="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Artist=?'
+				cur.execute(qr,(qVal,))
 		elif q == "Album":
 			if not qVal:
 				cur.execute('SELECT Distinct Album FROM Music order by Album')
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Album="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Album="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Album=?'
+				cur.execute(qr,(qVal,))
 		elif q == "Title":
 			if not qVal:
 				cur.execute('SELECT Distinct Title FROM Music order by Title')
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Title="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Title="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Title=?'
+				cur.execute(qr,(qVal,))
 		elif q == "Directory":
 			print (q)
 			if not qVal:
 				cur.execute('SELECT Distinct Directory FROM Music order by Directory')
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Directory="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Directory="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Directory=?'
+				cur.execute(qr,(qVal,))
 		elif q == "Playlist":
 			print (q)
 			if not qVal:
 				cur.execute('SELECT Playlist FROM Music')
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Playlist="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Playlist="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Playlist=?'
+				cur.execute(qr,(qVal,))
 		elif q == "Fav-Artist":
 			print (q)
 			if not qVal:
 				cur.execute("SELECT Distinct Artist FROM Music Where Favourite='yes'")
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Artist="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Artist="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Artist=?'
+				cur.execute(qr,(qVal,))
 		elif q == "Fav-Album":
 			print (q)
 			if not qVal:
 				cur.execute("SELECT Distinct Album FROM Music Where Favourite='yes'")
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Album="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Album="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Album=?'
+				cur.execute(qr,(qVal,))
 		elif q == "Fav-Directory":
 			print (q)
 			if not qVal:
 				cur.execute("SELECT Distinct Directory FROM Music Where Favourite='yes'")
 			else:
-				cur.execute('SELECT Artist,Title,Path FROM Music Where Directory="'+qVal+'"')
+				#cur.execute('SELECT Artist,Title,Path FROM Music Where Directory="'+qVal+'"')
+				qr = 'SELECT Artist,Title,Path FROM Music Where Directory=?'
+				cur.execute(qr,(qVal,))
 			
 		
 		elif q == "Last 50 Most Played":
@@ -15701,7 +15997,116 @@ class Ui_MainWindow(object):
 		return list(set(m_files))
 		#fi.close()
 	
+class RightClickMenu(QtGui.QMenu):
+	def __init__(self, pos_x,pos_y,w_wdt,w_ht,parent=None):
+		QtGui.QMenu.__init__(self, "File", parent)
+		self.pos_x = pos_x
+		self.pos_y = pos_y
+		self.w_wdt = w_wdt
+		self.w_ht = w_ht
+		
+		musicMode = QtGui.QAction("&Music Mode", self)
+		musicMode.triggered.connect(self.music)
+		self.addAction(musicMode)
+		
+		videoMode = QtGui.QAction("&Default Mode", self)
+		videoMode.triggered.connect(self.video)
+		self.addAction(videoMode)
+		
+		icon = QtGui.QIcon.fromTheme("Quit")
+		exitAction = QtGui.QAction(icon, "&Exit", self)
+		exitAction.triggered.connect(QtGui.qApp.quit)
+		#exitAction.triggered.connect(MainWindow.close())
+		self.addAction(exitAction)
+		
+	def music(self):
+		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist
+		MainWindow.hide()
+		print('Music Mode')
+		layout_mode = "Music"
+		#if self.w_wdt == screen_width:
+		self.w_wdt = 900
+		self.w_ht = 350
+		#MainWindow.setGeometry(self.pos_x,self.pos_y,self.w_wdt,self.w_ht)
+		MainWindow.showNormal()
+		MainWindow.resize(900,350)
+		#MainWindow.updateGeometry()
+		#QtGui.QApplication.processEvents()
+		ui.text.show()
+		ui.label.show()
+		show_hide_cover = 1
+		ui.tab_5.hide()
+		show_hide_player = 0
+		ui.sd_hd.hide()
+		ui.audio_track.hide()
+		ui.subtitle_track.hide()
+		ui.player_loop_file.show()
+		ui.list1.hide()
+		ui.frame.hide()
+		show_hide_titlelist = 0
+		ui.list2.show()
+		ui.goto_epn.show()
+		show_hide_playlist = 1
+		#MainWindow.show()
+		
+	def video(self):
+		global layout_mode
+		print('default Mode')
+		layout_mode = "Default"
+		ui.sd_hd.show()
+		ui.audio_track.show()
+		ui.subtitle_track.show()
+		ui.player_loop_file.hide()
+		ui.list1.show()
+		ui.frame.show()
+		ui.list2.show()
+		ui.goto_epn.show()
+		
+		MainWindow.showMaximized()
 
+class SystemTrayIcon(QtGui.QSystemTrayIcon):
+	def __init__(self, pos_x,pos_y,w_wdt,w_ht,parent=None):
+		global name,home
+		QtGui.QSystemTrayIcon.__init__(self, parent)
+		#self.icon = QtGui.QLabel()
+		icon_img = home+'/src/stream.png'
+		self.right_menu = RightClickMenu(pos_x,pos_y,w_wdt,w_ht)
+		self.setContextMenu(self.right_menu)
+
+		self.activated.connect(self.onTrayIconActivated)
+		self.p = QtGui.QPixmap(24,24)
+		self.p.fill(QtGui.QColor("transparent"))
+		painter	= QtGui.QPainter(self.p)
+		if os.path.exists(icon_img):
+			self.setIcon(QtGui.QIcon(icon_img))
+		else:
+			self.setIcon(QtGui.QIcon(""))
+		self.full_scr = 1
+		del painter
+	
+	def mouseMoveEvent(self,event):
+		global site
+		pos = event.pos()
+		print(pos)
+	
+	def onTrayIconActivated(self, reason):
+		global fullscreen
+		if reason == QtGui.QSystemTrayIcon.Trigger:
+			"""
+			#print(self.full_scr)
+			if self.full_scr == 1:
+				MainWindow.hide()
+				self.full_scr = 0
+			else:
+				MainWindow.show()
+				#MainWindow.showMaximized()
+				self.full_scr = 1
+			#self.full_scr = self.full_scr - 1
+			"""
+			if MainWindow.isHidden():
+				MainWindow.show()
+			else:
+				MainWindow.hide()
 
 if __name__ == "__main__":
 	import sys
@@ -15710,7 +16115,10 @@ if __name__ == "__main__":
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
-	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path
+	
+	layout_mode = "Default"
+	show_hide_player = 0
 	show_hide_cover = 1
 	show_hide_playlist = 1
 	show_hide_titlelist = 1
@@ -15813,6 +16221,10 @@ if __name__ == "__main__":
 	episode_index = -1
 	option_val = ''
 	dock_opt = 1
+	pos_x = 0
+	pos_y = 0
+	w_ht = 0
+	w_wdt = 50
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	
 	try:
@@ -15831,12 +16243,13 @@ if __name__ == "__main__":
 	#MainWindow = mouseoverEvent()
 	#ui = Ui_Form()
 	#MainWindow.showNormal()
-	MainWindow.showMaximized()
+	#MainWindow.showMaximized()
 	#Frame = QtGui.QFrame()
 	#MainWindow = QMWin()
 	ui = Ui_MainWindow()
 	ui.setupUi(MainWindow)
-	MainWindow.show()
+	#MainWindow.show()
+	#MainWindow.showMaximized()
 	
 	ui.btn1.setFocus()
 	ui.dockWidget_4.hide()
@@ -15869,6 +16282,8 @@ if __name__ == "__main__":
 			shutil.copy('/usr/share/AnimeWatch/default.html',home+'/src/default.html')
 		if os.path.exists('/usr/share/AnimeWatch/introspect.xml'):
 			shutil.copy('/usr/share/AnimeWatch/introspect.xml',home+'/src/introspect.xml')
+		if os.path.exists('/usr/share/AnimeWatch/stream.png'):
+			shutil.copy('/usr/share/AnimeWatch/stream.png',home+'/src/stream.png')
 	picn = home+'/default.jpg'
 	if not os.path.exists(picn):
 		picn_1 = '/usr/share/AnimeWatch/default.jpg'
@@ -15980,8 +16395,30 @@ if __name__ == "__main__":
 					ui.comboView.setCurrentIndex(2)
 				elif viewMode=="List":
 					ui.comboView.setCurrentIndex(1)
-				
-					
+			elif "Layout" in i:
+				layout_mode = j.replace('\n','')
+			elif "POSX" in i:
+				posx = re.sub('\n','',j)
+				if posx.isdigit():
+					pos_x = int(posx)
+			elif "POSY" in i:
+				pos_yy = re.sub('\n','',j)
+				if pos_yy.isdigit():
+					pos_y = int(pos_yy)
+			elif "WHeight" in i:
+				ht1 = re.sub('\n','',j)
+				if ht1.isdigit():
+					w_ht = int(ht1)
+			elif "WWidth" in i:
+				wd2 = re.sub('\n','',j)
+				if wd2.isdigit():
+					w_wdt = int(wd2)
+	
+	arr_setting = []
+	
+	arr_setting.append(show_hide_titlelist)
+	arr_setting.append(show_hide_playlist)
+	
 	if not os.path.exists('/tmp/AnimeWatch'):
 		os.makedirs('/tmp/AnimeWatch')
 	if not os.path.exists(home):
@@ -16070,6 +16507,7 @@ if __name__ == "__main__":
 	if episode_index >=0 and episode_index < ui.list2.count():
 		ui.list2.setCurrentRow(episode_index)
 		ui.list2.setFocus()
+		
 	print(dock_opt,'--dock-option---')
 	if dock_opt == 0:
 		ui.dockWidget_3.hide()
@@ -16138,15 +16576,84 @@ if __name__ == "__main__":
 			ui.watchDirectly(urllib.parse.unquote(t))
 			ui.dockWidget_3.hide()
 	
-	
 	#myFilter	 = MyEventFilter()
 	#app.installEventFilter(myFilter)
+	#MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+	
+	try:
+		tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
+		tray.show()
+		
+	except:
+		pass
+	#tray.setMouseTracking(True)
+	#tray.installEventFilter(myFilter)
+	
+	if layout_mode == "Music":
+		t1 = tray.geometry().height()
+		
+		print(t1,'tray--geometry\n')
+		if t1 > 64:
+			pos_y = 22
+		else:
+			t2 = QtGui.QApplication.style().pixelMetric(QtGui.QStyle.PM_TitleBarHeight)
+			t = t1+t2
+			print(t,'--title-bar-ht--')
+			pos_y = t1
+		if w_wdt == screen_width:
+			w_wdt = 900
+			w_ht = 350
+		ui.sd_hd.hide()
+		ui.audio_track.hide()
+		ui.subtitle_track.hide()
+		ui.player_loop_file.show()
+		
+		
+		
+		#ui.options('layout_mode_music_startup')
+		MainWindow.setGeometry(pos_x,pos_y,w_wdt,w_ht)
+	else:
+		ui.sd_hd.show()
+		ui.audio_track.show()
+		ui.subtitle_track.show()
+		ui.player_loop_file.hide()
+		MainWindow.showMaximized()
+	
+	print(arr_setting)
+	show_hide_titlelist = arr_setting[0]
+	show_hide_playlist = arr_setting[1]
+	
+	if show_hide_playlist == 1:
+		ui.list2.show()
+		ui.goto_epn.show()
+	elif show_hide_playlist == 0:
+		ui.list2.hide()
+		ui.goto_epn.hide()
+		
+	if show_hide_titlelist == 1:
+		ui.list1.show()
+		ui.frame.show()
+	elif show_hide_titlelist == 0:
+		ui.list1.hide()
+		ui.frame.hide()
+	
+	MainWindow.show()
+	
+	print(tray.geometry(),'tray--geometry')
 	ret = app.exec_()
 	if ui.dockWidget_3.isHidden():
 		dock_opt = 0
 		
 	else:
 		dock_opt = 1
+	if ui.list1.isHidden():
+		show_hide_titlelist = 0
+	else:
+		show_hide_titlelist = 1
+	if ui.list2.isHidden():
+		show_hide_playlist = 0
+	else:
+		show_hide_playlist = 1
 	if os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","w")
 		f.write("DefaultPlayer="+Player)
@@ -16164,7 +16671,16 @@ if __name__ == "__main__":
 		f.write("\nShow_Hide_Playlist="+str(show_hide_playlist))
 		f.write("\nShow_Hide_Titlelist="+str(show_hide_titlelist))
 		f.write("\nDock_Option="+str(dock_opt))
+		f.write("\nPOSX="+str(MainWindow.pos().x()))
+		f.write("\nPOSY="+str(MainWindow.pos().y()))
+		f.write("\nWHeight="+str(MainWindow.height()))
+		f.write("\nWWidth="+str(MainWindow.width()))
+		f.write("\nLayout="+str(layout_mode))
 		f.close()
+	if mpvplayer.pid()>0:
+		mpvplayer.kill()
+	print(ret,'--Return--')
+	del app
 	sys.exit(ret)
 	#if os.path.isfile('cookie.txt'):
 		#os.remove('cookie.txt')
