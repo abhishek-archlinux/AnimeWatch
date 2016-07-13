@@ -790,7 +790,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		url1 = str(url)
 		print (url1)
-		
+		url_artist = url1
 		found = ""
 		final_found = False
 		url1Code = url1.split('/')[-1]
@@ -869,7 +869,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif str(option) == "Download As Cover":
 			ui.copyImg()
 		elif str(option) == "Artist/Series Link":
-			ui.posterfound(url1)
+			ui.posterfound(url_artist)
 			ui.copyImg()
 			ui.copySummary()
 		elif str(option) == "Season Episode Link":
