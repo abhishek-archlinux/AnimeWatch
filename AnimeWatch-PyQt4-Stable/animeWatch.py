@@ -770,7 +770,7 @@ class Browser(QtWebKit.QWebView):
 			found = re.sub('Location: |\r','',m[0])
 			url1 = found
 			final_found = True
-		elif self.img_url:
+		elif not self.img_url.isEmpty():
 			url1 = self.img_url.toString()
 			final_found = True
 		if site == "Music":
