@@ -3534,8 +3534,14 @@ class List2(QtGui.QListWidget):
 		elif event.key() == QtCore.Qt.Key_PageUp:
 			row = self.currentRow()
 			nRow = self.currentRow()-1
+			if site == 'Music':
+				if ui.list3.currentItem():
+					if ui.list3.currentItem().text() == 'Playlist':
+						opt = 'History'
+						#print('playlist-update',ui.list3.currentItem().text())
+			print(opt,row,site)
 			if (opt == "History" or site =="PlayLists") and row > 0 and site!="Video":
-				
+				print('Music-up')
 				file_path = ""
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					if os.path.exists(home+'/History/'+site+"/"+siteName+'/'+name+'/Ep.txt'):
@@ -3544,7 +3550,7 @@ class List2(QtGui.QListWidget):
 						if site == "PlayLists":
 							pls = ui.list3.currentItem().text()
 						else:
-							pls = ui.list2.currentItem().text()
+							pls = ui.list1.currentItem().text()
 						file_path = home+'/Playlists/'+pls
 				else:
 					if os.path.exists(home+'/History/'+site+'/'+name+'/Ep.txt'):
@@ -3624,6 +3630,12 @@ class List2(QtGui.QListWidget):
 		elif event.key() == QtCore.Qt.Key_PageDown:
 			row = self.currentRow()
 			nRow = self.currentRow()+1
+			if site == 'Music':
+				if ui.list3.currentItem():
+					if ui.list3.currentItem().text() == 'Playlist':
+						opt = 'History'
+						#print('playlist-update',ui.list3.currentItem().text())
+			print(opt,row,site)
 			if (opt == "History" or site == "PlayLists") and row < self.count()-1 and site!="Video":
 				
 				file_path = ""
@@ -3634,7 +3646,7 @@ class List2(QtGui.QListWidget):
 						if site == "PlayLists":
 							pls = ui.list3.currentItem().text()
 						else:
-							pls = ui.list2.currentItem().text()
+							pls = ui.list1.currentItem().text()
 						file_path = home+'/Playlists/'+pls
 				else:
 					if os.path.exists(home+'/History/'+site+'/'+name+'/Ep.txt'):
