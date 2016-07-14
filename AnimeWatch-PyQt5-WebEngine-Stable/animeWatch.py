@@ -2731,7 +2731,7 @@ class List1(QtWidgets.QListWidget):
 								self.addItem(j[5])
 								
 						self.setCurrentRow(p)
-			elif opt == "History":
+			elif opt == "History" and site!= "Music":
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					if os.path.exists(home+'/History/'+site+"/"+siteName+'/history.txt'):
 						file_path = home+'/History/'+site+"/"+siteName+'/history.txt'
@@ -2818,7 +2818,7 @@ class List1(QtWidgets.QListWidget):
 							else:
 								self.addItem(j[5])
 						self.setCurrentRow(p)
-			elif opt =="History":
+			elif opt =="History" and site!= "Music":
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					if os.path.exists(home+'/History/'+site+"/"+siteName+'/history.txt'):
 						file_path = home+'/History/'+site+"/"+siteName+'/history.txt'

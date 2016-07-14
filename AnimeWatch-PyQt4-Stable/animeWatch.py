@@ -2657,6 +2657,7 @@ class List1(QtGui.QListWidget):
 				subprocess.Popen(['notify-send',note])
 		
 		elif event.key() == QtCore.Qt.Key_PageUp:
+			
 			if bookmark == "True":
 				file_path = home+'/Bookmark/'+status+'.txt'
 				if os.path.exists(file_path):
@@ -2696,7 +2697,7 @@ class List1(QtGui.QListWidget):
 								self.addItem(j[5])
 								
 						self.setCurrentRow(p)
-			elif opt == "History":
+			elif opt == "History" and site!= "Music":
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					if os.path.exists(home+'/History/'+site+"/"+siteName+'/history.txt'):
 						file_path = home+'/History/'+site+"/"+siteName+'/history.txt'
@@ -2783,7 +2784,7 @@ class List1(QtGui.QListWidget):
 							else:
 								self.addItem(j[5])
 						self.setCurrentRow(p)
-			elif opt =="History":
+			elif opt =="History" and site!= "Music":
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					if os.path.exists(home+'/History/'+site+"/"+siteName+'/history.txt'):
 						file_path = home+'/History/'+site+"/"+siteName+'/history.txt'
