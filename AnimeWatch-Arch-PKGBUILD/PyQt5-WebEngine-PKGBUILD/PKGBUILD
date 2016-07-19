@@ -1,6 +1,6 @@
 pkgname=AnimeWatch
 _pkgname=AnimeWatch
-pkgver=3.0.0.r11.eed49b5
+pkgver=3.0.0.r12.0840967
 pkgrel=1
 pkgdesc="An Audio/Video Manager and Front End for mpv/mplayer with special emphasis on Anime Collection"
 arch=(any)
