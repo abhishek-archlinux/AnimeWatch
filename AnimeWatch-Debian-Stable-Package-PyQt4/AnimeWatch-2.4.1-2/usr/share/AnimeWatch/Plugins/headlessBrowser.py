@@ -5,6 +5,7 @@ import sys
 import re
 import urllib
 import urllib3
+import pycurl
 import time
 import os
 import os.path
@@ -13,11 +14,118 @@ import calendar
 import weakref
 from bs4 import BeautifulSoup
 from datetime import datetime
+from io import StringIO,BytesIO
 from PyQt4 import QtCore, QtGui,QtNetwork,QtWebKit
 from PyQt4.QtWebKit import QWebPage,QWebView
 from PyQt4.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty,QUrl)
 from PyQt4.QtNetwork import QNetworkAccessManager
+
+
+def getContentUnicode(content):
+		if isinstance(content,bytes):
+			print("I'm byte")
+			try:
+				content = str((content).decode('utf-8'))
+			except:
+				content = str(content)
+		else:
+			print(type(content))
+			content = str(content)
+			print("I'm unicode")
+		return content
+
+def ccurl(url):
+	global hdr
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+	print(url)
+	c = pycurl.Curl()
+	
+	
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		elif curl_opt == '-Ie':
+			rfr = nUrl.split('#')[2]
+		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
+			cookie_file = nUrl.split('#')[2]
+	url = str(url)
+	print(url,'----------url------')
+	try:
+		c.setopt(c.URL, url)
+	except UnicodeEncodeError:
+		c.setopt(c.URL, url.encode('utf-8'))
+	storage = BytesIO()
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		f = open(picn_op,'wb')
+		c.setopt(c.WRITEDATA, f)
+		c.perform()
+		c.close()
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Ie':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-IA':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Icb':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			if os.path.exists(cookie_file):
+				os.remove(cookie_file)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-Ib':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-bc':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-b':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-L':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		else:
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		c.perform()
+		c.close()
+		content = storage.getvalue()
+		content = getContentUnicode(content)
+		return content
+
 
 class NetWorkManager(QNetworkAccessManager):
 	def __init__(self):
@@ -99,16 +207,18 @@ class BrowserPage(QWebPage):
 			cookie_file = '/tmp/AnimeWatch/animeget.txt'
 		elif 'animeplace' in self.url:
 			cookie_file = '/tmp/AnimeWatch/animeplace.txt'
+		elif 'moetube' in self.url:
+			cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
 		if 'moetube' in self.url:
-			cookie_file = '/tmp/AnimeWatch/moetube.txt'
+			txt_file = '/tmp/AnimeWatch/moetube.txt'
 			frame = self.mainFrame()  
 			html = frame.toHtml()
 			#print(html)
 			if 'var glink = ' in html:
-				if os.path.exists(cookie_file):
-					f = open(cookie_file,'a')
+				if os.path.exists(txt_file):
+					f = open(txt_file,'a')
 				else:
-					f = open(cookie_file,'w')
+					f = open(txt_file,'w')
 				f.write(html)
 				f.close()
 		
@@ -168,7 +278,7 @@ class BrowserPage(QWebPage):
 			j = re.findall("'[^']*",k)
 			for i in j:
 				i = re.sub("'",'',i)
-				if 'kissanime.to' in i or 'kissasian.com' in i or 'kisscartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i:
+				if 'kissanime.to' in i or 'kissasian.com' in i or 'kisscartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i:
 					j = re.findall('expires=[^;]*',i)
 					if j:
 						l = re.sub('expires=','',j[0])
@@ -265,97 +375,106 @@ class BrowseUrl(QtGui.QWidget):
 		elif 'animeplace' in url:
 			cookie_file = '/tmp/AnimeWatch/animeplace.txt'
 		elif 'moetube' in url:
-			cookie_file = '/tmp/AnimeWatch/moetube.txt'
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
+			cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
+			#if os.path.exists(cookie_file):
+			#	os.remove(cookie_file)
 		
-		if not os.path.exists(cookie_file):
-			
-			self.cookie = QtNetwork.QNetworkCookieJar()
-			self.nam = NetWorkManager()
-			self.nam.setCookieJar(self.cookie)
+		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url:
+			content = ccurl(url)
 		else:
-			cookie_arr = QtNetwork.QNetworkCookieJar()
-			c = []
-			f = open(cookie_file,'r')
-			lines = f.readlines()
-			f.close()
-			for i in lines:
-				k = re.sub('\n','',i)
-				l = k.split('	')
-				d = QtNetwork.QNetworkCookie()
-				d.setDomain(l[0])
-				if l[1]== 'TRUE':
-					l1= True
-				else:
-					l1= False
-				d.setHttpOnly(l1)
-				d.setPath(l[2])
-				if l[3]== 'TRUE':
-					l3= True
-				else:
-					l3= False
-				d.setSecure(l3)
-				l4 = int(l[4])
-				print(l4)
-				d.setExpirationDate(QtCore.QDateTime.fromTime_t(l4))
-				d.setName(l[5])
-				d.setValue(l[6])
-				c.append(d)
-				#cookie_arr.append(d)
-			cookie_arr.setAllCookies(c)
-			self.nam = NetWorkManager()
-			self.nam.setCookieJar(cookie_arr)
+			content = 'checking_browser'
 		
-		self.web = Browser(url,quality)
-		self.tab_2 = QtGui.QWidget()
-		self.tab_2.setMaximumSize(300,50)
-		self.tab_2.setWindowTitle('Wait!')
-		self.horizontalLayout_5 = QtGui.QVBoxLayout(self.tab_2)
-		print('Browse: '+url)
-		
-		self.horizontalLayout_5.addWidget(self.web)
-		self.tab_2.show()
-		#self.tab_2.hide()
-		#self.web.show()
-		self.web.page().setNetworkAccessManager(self.nam)
-		self.web.load(QUrl(url))
-		cnt = 0
-		
-		
-		while(not os.path.exists(cookie_file) and cnt < 20):
-			#print()
-			print('wait Clouflare ')
-			time.sleep(1)
-			QtGui.QApplication.processEvents()
-			cnt = cnt+1
-			self.tab_2.setWindowTitle('Wait! Cloudflare '+str(cnt)+'s')
+		if 'checking_browser' in content:
+			if not os.path.exists(cookie_file):
+				
+				self.cookie = QtNetwork.QNetworkCookieJar()
+				self.nam = NetWorkManager()
+				self.nam.setCookieJar(self.cookie)
+			else:
+				cookie_arr = QtNetwork.QNetworkCookieJar()
+				c = []
+				f = open(cookie_file,'r')
+				lines = f.readlines()
+				f.close()
+				for i in lines:
+					k = re.sub('\n','',i)
+					l = k.split('	')
+					d = QtNetwork.QNetworkCookie()
+					d.setDomain(l[0])
+					if l[1]== 'TRUE':
+						l1= True
+					else:
+						l1= False
+					d.setHttpOnly(l1)
+					d.setPath(l[2])
+					if l[3]== 'TRUE':
+						l3= True
+					else:
+						l3= False
+					d.setSecure(l3)
+					l4 = int(l[4])
+					print(l4)
+					d.setExpirationDate(QtCore.QDateTime.fromTime_t(l4))
+					d.setName(l[5])
+					d.setValue(l[6])
+					c.append(d)
+					#cookie_arr.append(d)
+				cookie_arr.setAllCookies(c)
+				self.nam = NetWorkManager()
+				self.nam.setCookieJar(cookie_arr)
 			
-		if cnt >= 20 and not os.path.exists(cookie_file):
-			f = open(cookie_file,'w')
-			f.close()
-		lnk_file = '/tmp/AnimeWatch/lnk.txt'
-		if os.path.exists(lnk_file):
-			os.remove(lnk_file)
-		cnt = 0
-		if ('kisscartoon' in url or 'kissasian' in url) and quality:
-			while(not os.path.exists(lnk_file) and cnt < 20):
-				print('wait Finding Link ')
+			self.web = Browser(url,quality)
+			self.tab_2 = QtGui.QWidget()
+			self.tab_2.setMaximumSize(300,50)
+			self.tab_2.setWindowTitle('Wait!')
+			self.horizontalLayout_5 = QtGui.QVBoxLayout(self.tab_2)
+			print('Browse: '+url)
+			
+			self.horizontalLayout_5.addWidget(self.web)
+			self.tab_2.show()
+			#self.tab_2.hide()
+			#self.web.show()
+			self.web.page().setNetworkAccessManager(self.nam)
+			self.web.load(QUrl(url))
+			cnt = 0
+			
+			
+			while(not os.path.exists(cookie_file) and cnt < 20):
+				#print()
+				print('wait Clouflare ')
 				time.sleep(1)
 				QtGui.QApplication.processEvents()
 				cnt = cnt+1
-				self.tab_2.setWindowTitle('Link Resolving '+str(cnt)+'s')
-			
+				self.tab_2.setWindowTitle('Wait! Cloudflare '+str(cnt)+'s')
+				
+			if cnt >= 20 and not os.path.exists(cookie_file):
+				f = open(cookie_file,'w')
+				f.close()
+			lnk_file = '/tmp/AnimeWatch/lnk.txt'
 			if os.path.exists(lnk_file):
-				self.web.setHtml('<html>Link Obtained</html>')
-				link = open(lnk_file).read()
-				print(link)
+				os.remove(lnk_file)
+			cnt = 0
+			if ('kisscartoon' in url or 'kissasian' in url) and quality:
+				while(not os.path.exists(lnk_file) and cnt < 20):
+					print('wait Finding Link ')
+					time.sleep(1)
+					QtGui.QApplication.processEvents()
+					cnt = cnt+1
+					self.tab_2.setWindowTitle('Link Resolving '+str(cnt)+'s')
+				
+				if os.path.exists(lnk_file):
+					self.web.setHtml('<html>Link Obtained</html>')
+					link = open(lnk_file).read()
+					print(link)
+				else:
+					self.web.setHtml('<html>No Link Found</html>')
+					print('No Link Available or Clear The Cache')
 			else:
-				self.web.setHtml('<html>No Link Found</html>')
-				print('No Link Available or Clear The Cache')
+				self.web.setHtml('<html>cookie Obtained</html>')
+			self.tab_2.hide()
 		else:
-			self.web.setHtml('<html>cookie Obtained</html>')
-		self.tab_2.hide()
+			f = open(cookie_file,'w')
+			f.close()
 
 
 

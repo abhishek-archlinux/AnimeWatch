@@ -159,12 +159,12 @@ class BrowseUrl(QWebEngineView):
 		elif 'animeplace' in url:
 			self.cookie_file = '/tmp/AnimeWatch/animeplace.txt'
 		elif 'moetube' in url:
-			self.cookie_file = '/tmp/AnimeWatch/moetube.txt'
-			if os.path.exists(self.cookie_file):
-				os.remove(self.cookie_file)
+			self.cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
+			#if os.path.exists(self.cookie_file):
+			#	os.remove(self.cookie_file)
 		
 		
-		if 'animeget' in url or 'masterani' in url or 'animeplace' in url:
+		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url:
 			content = ccurl(url)
 		else:
 			content = 'checking_browser'
@@ -187,7 +187,7 @@ class BrowseUrl(QWebEngineView):
 
 			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kisscartoon' in url or 'kissasian' in url):
 				cnt = 0
-				while(not os.path.exists(lnk_file) and cnt < 60):
+				while(not os.path.exists(lnk_file) and cnt < 30):
 					if os.path.exists('/tmp/AnimeWatch/tmp_cookie'):
 						os.remove('/tmp/AnimeWatch/tmp_cookie')
 						p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file])

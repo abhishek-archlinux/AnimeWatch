@@ -376,8 +376,8 @@ class BrowserPage(QWebEnginePage):
 				
 				#self.runJavaScript("$('#selectQuality').change();",self.val_scr)
 				#self.runJavaScript('document.location.reload(true)')
-		elif 'moetube' in url:
-			x = self.toHtml(self.htm_src)
+		#elif 'moetube' in url:
+		#	x = self.toHtml(self.htm_src)
 			
 		self.cnt = self.cnt+1
 		
@@ -441,8 +441,8 @@ class BrowseUrlT(QWebEngineView):
 		self.horizontalLayout_5.addWidget(self)
 		
 		if self.add_cookie:
-			if 'moetube' not in url:
-				self.tab_web.setWindowTitle('Wait! Cloudflare')
+			#if 'moetube' not in url:
+			#self.tab_web.setWindowTitle('Wait! Cloudflare')
 			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val)
 			
 			self.web.cookie_signal.connect(self.cookie_found)
@@ -481,8 +481,8 @@ class BrowseUrlT(QWebEngineView):
 			f.write('Cookie Obtained, now link finding')
 			f.close()
 			
-		elif 'moetube' in url:
-			self.setHtml('<html>Link Resolved</html>')
+			#elif 'moetube' in url:
+			#self.setHtml('<html>Link Resolved</html>')
 		else:
 			self.setHtml('<html>cookie Obtained</html>')
 		c_f = '/tmp/AnimeWatch/cloud_cookie.txt'

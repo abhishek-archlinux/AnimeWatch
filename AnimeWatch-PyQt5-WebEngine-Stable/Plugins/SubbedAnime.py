@@ -435,6 +435,34 @@ def ccurlM(url):
 	content = getContentUnicode(content)
 	
 	return (content)
+	
+def ccurlHQ(url,post):
+	
+	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
+	c = pycurl.Curl()
+	c.setopt(c.FOLLOWLOCATION, True)
+	c.setopt(c.USERAGENT, hdr)
+	if os.path.exists('/tmp/AnimeWatch/animeHQ.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeHQ.txt')
+	else:
+		print('inside ccurlM')
+		cloudfareUrl('http://moetube.net/explore','')
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeHQ.txt')
+	if post:
+		post_data = post
+		post_d = urllib.parse.urlencode(post_data)
+		c.setopt(c.POSTFIELDS,post_d)
+		
+	url = str(url)
+	c.setopt(c.URL, url)
+	storage = BytesIO()
+	c.setopt(c.WRITEDATA, storage)
+	c.perform()
+	c.close()
+	content = storage.getvalue()
+	content = getContentUnicode(content)
+	
+	return (content)
 
 def ccurlGet(url):
 	
@@ -1265,7 +1293,7 @@ def findurl(i):
 							found = re.sub('Location: |\r','',m[-1])
 							print(found)
 							return found
-	elif 'googleusercontent' in i:
+	elif 'googleusercontent' in i or 'bp.blogspot' in i or 'google' in i:
 		content1 = ccurl(i+'#'+'-I')
 		if "Location:" in content1:
 			m = re.findall('Location: [^\n]*',content1)
@@ -1409,6 +1437,11 @@ class SubbedAnime():
 				#	req = requests.get(url,headers=hdrs)
 				#	content = req.text
 				content = ccurl(url)
+				if 'checking_browser' in content:
+					content = ccurlHQ(url,'')
+				else:
+					f = open('/tmp/AnimeWatch/animeHQ.txt','w')
+					f.close()
 			elif siteName == "Animeget":
 				content = ccurlGet(url)
 				
@@ -1766,7 +1799,7 @@ class SubbedAnime():
 			elif siteName == "AnimeSquare":
 				content = ccurlM(url)
 			elif siteName == "AnimeHQ":
-				content = ccurl(url)
+				content = ccurlHQ(url,'')
 			elif siteName == "Animeget":
 				content = ccurlGet(url)
 			else:
@@ -3256,11 +3289,18 @@ class SubbedAnime():
 			#content = ccurl(url)
 			#soup = BeautifulSoup(content)
 			
-			#content = ccurl(url)
-			cloudfareUrl(url,'')
-			content = open('/tmp/AnimeWatch/moetube.txt').read()
+			##content = ccurl(url)
+			#cloudfareUrl(url,'')
+			#content = open('/tmp/AnimeWatch/moetube.txt').read()
+			#print(content)
+			#soup = BeautifulSoup(content)
+			
+			post = {'id':new_c,'ep':epn,'chk':'2'}
+			content = ccurlHQ('http://www.moetube.net/rui.php',post)
 			print(content)
-			soup = BeautifulSoup(content)
+			#final = content
+			glink = content.split('/')[-1]
+			
 			"""
 			#link = soup.find('div',{'id':'vidholder'})
 			link = soup.find('div',{'id':'moaroptions'})
@@ -3274,9 +3314,9 @@ class SubbedAnime():
 						break
 			print(link1)
 			"""
-			glink1 = re.findall("var glink = '[^']*",content)
-			print(glink1)
-			glink = re.sub("var glink = '",'',glink1[0])
+			#glink1 = re.findall("var glink = '[^']*",content)
+			#print(glink1)
+			#glink = re.sub("var glink = '",'',glink1[0])
 			print(glink)
 			url1 = urllib.parse.quote(url)
 			link1 = "https://docs.google.com/get_video_info?eurl="+url1+"&authuser=&docid="+glink
