@@ -1,7 +1,7 @@
 import sys  
-from PyQt4.QtGui import *  
-from PyQt4.QtCore import *  
-from PyQt4.QtWebKit import *  
+#from PyQt4.QtGui import *  
+#from PyQt4.QtCore import *  
+#from PyQt4.QtWebKit import *  
 import re
 import urllib
 import urllib3
@@ -14,8 +14,9 @@ import weakref
 from bs4 import BeautifulSoup
 from datetime import datetime
 from PyQt4 import QtCore, QtGui,QtNetwork,QtWebKit
+from PyQt4.QtWebKit import QWebPage,QWebView
 from PyQt4.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
-                          pyqtProperty)
+                          pyqtProperty,QUrl)
 from PyQt4.QtNetwork import QNetworkAccessManager
 
 class NetWorkManager(QNetworkAccessManager):
