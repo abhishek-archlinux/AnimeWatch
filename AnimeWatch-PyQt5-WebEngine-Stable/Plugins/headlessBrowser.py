@@ -1,8 +1,8 @@
 import sys  
-from PyQt5.QtGui import *  
-from PyQt5.QtCore import *  
-from PyQt5.QtWebEngineWidgets import *  
-from PyQt5.QtWebEngineCore import *  
+#from PyQt5.QtGui import *  
+#from PyQt5.QtCore import *  
+#from PyQt5.QtWebEngineWidgets import *  
+#from PyQt5.QtWebEngineCore import *  
 import re
 import urllib
 import urllib3
@@ -19,7 +19,7 @@ import pycurl
 import subprocess
 from io import StringIO,BytesIO
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
-
+from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkAccessManager
 
 def getContentUnicode(content):
