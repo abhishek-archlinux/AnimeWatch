@@ -1,7 +1,9 @@
 ﻿# AnimeWatch
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
 
-1. Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) and [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) (thanks to Arch linux forum member **sesese9**). 
+1. Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
+
+Note : AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) and [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt'.
 
 2. Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. Ubuntu 14.04 users also have to install 'python3-dbus.mainloop.qt' for MPRIS2 support.
 
