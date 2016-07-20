@@ -84,8 +84,6 @@ python3 {Main Language}
 
 python-pyqt4 (Main GUI Builder)
 
-python-requests { Not required for version >= 2.1.1-1}
-
 python-urllib3
 
 python-pillow {For Image Processing}
@@ -94,45 +92,43 @@ python-beautifulsoup4 {For parsing webpage}
 
 python-lxml
 
-python-pip {for installing jsbeautifier and pytaglib}
-
 python-pycurl {Main library for fetching pages}
 
 python-psutil
 
 curl
 
-wget { Not required for version >= 2.0.0-1}
-
 ffmpegthumbnailer(Thumbnail Generator for Local Files)
-
-phantomjs(Headless Browser) { Not required for version >= 2.0.0-1}
 
 libnotify(required for Desktop Notification)
 
 pytaglib(required for mp3 Tagging)
 
-jsbeautifier(required for resolving certain links) {Not required for version >= 2.1.1-1}
-
 sqlite3 (for managing local music and video database, Addons are not managed by it. Addons are managed using files.)
 
 mpv or mplayer (having both is good option, for streaming video mpv is the best because it's seeking capability within live stream is very efficient and it's buffer management is also very good, and for listening music mplayer is very cost-effective. Cpu usage is just 1 to 2 % when playing music with mplayer. When playing local video files mplayer cpu utilization always remains 4-5 % point less than that of mpv atleast on my system)
 
+~~python-requests { Not required for version >= 2.1.1-1}~~
+
+~~wget { Not required for version >= 2.0.0-1}~~
+
+~~phantomjs(Headless Browser) { Not required for version >= 2.0.0-1}~~
+
+~~python-pip {for installing jsbeautifier and pytaglib}~~
+
+~~jsbeautifier(required for resolving certain links) {Not required for version >= 2.1.1-1}~~
+
 #Dependencies installation in Arch.
 
-sudo pacman -S python python-pyqt4 python-pycurl python-requests python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil python-pip curl wget libnotify mpv mplayer phantomjs ffmpegthumbnailer sqlite3
-
-sudo pip install pytaglib jsbeautifier
+sudo pacman -S python python-pyqt4 python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3
 
 If you want to try PyQt5 Experimental Version then install 'python-pyqt5' package also.
 
 
-
 #In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
 
-sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-requests python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib python3-pip curl wget libnotify-bin mpv mplayer phantomjs ffmpegthumbnailer sqlite3
+sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3
 
-sudo pip3 install jsbeautifier
 
 PyQt5 Experimental version can't work on Ubuntu 14.04
 
