@@ -1,37 +1,6 @@
 ﻿# AnimeWatch
+
 AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
-
-1. Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
-
-   Note : AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) and [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt'. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/scr/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
-
-2. Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. Ubuntu 14.04 users also have to install 'python3-dbus.mainloop.qt' for MPRIS2 support. Pyqt5 version is not available for Ubuntu, since qt5-webengine is not availbale on it. Currently there are no significant featurewise differences between pyqt5 and pyqt4 version, there are only structural differences. Users won't notice any significant variation between the two while using.
-
-3. If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/
-
-#Update AnimeWatch-2.1.1-1
-
-1. 'python-requests' no longer required.
-
-2. 'jsbeautifier' no longer required.
-
-3. changes in the code of headless browser.
-
-
-
-#Update AnimeWatch-2.0.0-1
-
-1. 'phantomjs' no longer required. The player has it's own version of headless browser with javascript support and it's own adblock.
-
-2. 'wget' no longer required, all the webpages are fetched using 'pycurl'.
-
-3. Less number of dependencies required as phantomjs and wget are no longer required.
-
-4. Proper implementation of multithreading.
-
-5. Addons of previous version might not work with this version so update addons also.
-
-6. If you've already old version of the application installed on your system and now want to upgrade it then before upgrading remove config directory '~/.config/AnimeWatch/src/' and if AnimeWatch.desktop file is located in '~/.local/share/applications/' then remove that .desktop file also. 
 
 ## Index
 
@@ -43,7 +12,15 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Minimal Music Player](#minimal-music-player)
 
-[Addons] (#addon-(plugins)-structure)
+[Addons (Plugins) Structure] (#addon-structure)
+
+[Dependencies and Installation](#dependencies-and-installation)
+
+[Troubleshooting][#troubleshooting]
+
+[Brief Documentation][#documentation]
+
+[Recent Updates][#recent-updates]
 
 ## Normal Mode
 ![AnimeWatch](/Images/Video.png)
@@ -71,7 +48,7 @@ It is not very powerful music organizer, but provide certain decent functionalit
 ## Minimal Music Player
 ![AnimeWatch](/Images/Music.png)
 
-## Addon (Plugins) Structure
+## Addon Structure
 
 In this player, a weak addon structure has been created, so that one can write addon for viewing video contents of various sites directly on this player,similar to Kodi or Plex, so that you don't have to deal with horrible flash player of the web. Currently it supports certain anime sites. By default it shows SD video, if you select HD then whenever available it tries to pick up HD video. If multiple mirrors are available you will be notified about it and then you can select different mirror if default mirror fails.These extra addons are in the directory 'Plugins', which will be loaded once the application is started. These addons are optional and before using them please check copyright and licencing laws of your country. If viewing contents of these anime sites is not allowed in your country, then use it at your own risk. Author of the AnimeWatch player is not at all related to any of these anime sites or their content provider. And these addons are also not core part of the player, they are completely optional,it's decision of the user of this application to download and keep these addons or not. These addons will only feed videos of the website directly to desktop player without downloading. There is no warrantee or guarantee on these addons. They can become dead if the site on which they are depending becomes dead or changes it's source. After install, these addons will be in the directory '~/.config/AnimeWatch/src/Plugins'. If your country does not allow viewing contents of these anime sites, then you can simply delete contents of the 'Plugins' folder.
 
@@ -81,13 +58,16 @@ This player is made mainly for GNU/Linux systems. But probably it may work on BS
 
 It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
-#Dependencies and Installation:
+## Dependencies and Installation
 
-(This player is mainly written in pyqt4 and python3)
+1. Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
 
-(Arch users can directly go to Release section or Package directory ,download appropriate package. The package can be installed using 'sudo pacman -U pkg_name'. Then they have to install only 'jsbeautifier' and 'pytaglib' using 'sudo pip install jsbeautifier pytaglib'. Then they can skip all other steps. Package can be uninstalled using 'sudo pacman -R AnimeWatch')
+   Note : AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) and [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt' or any other convetional method. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/scr/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
 
-(Ubuntu or Debian based distro users can directly go to Release section or Package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Users have to install only 'jsbeautifier' using 'sudo pip3 install jsbeautifier'. For removing the package use 'sudo apt-get remove AnimeWatch' )
+2. Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Ubuntu 14.04 users also have to install 'python3-dbus.mainloop.qt' for MPRIS2 support. Pyqt5 version is not available for Ubuntu, since qt5-webengine is not availbale on it. Currently there are no significant featurewise differences between pyqt5 and pyqt4 version, there are only structural differences. Users won't notice any significant variation between the two while using. For removing the package use 'sudo apt-get remove AnimeWatch'
+
+3. If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/
+
 
 #Dependencies
 
@@ -95,19 +75,11 @@ python3 {Main Language}
 
 python-pyqt4 (Main GUI Builder)
 
-python-urllib3
-
 python-pillow {For Image Processing}
 
 python-beautifulsoup4 {For parsing webpage}
 
-python-lxml
-
 python-pycurl {Main library for fetching pages}
-
-python-psutil
-
-curl
 
 ffmpegthumbnailer(Thumbnail Generator for Local Files)
 
@@ -118,6 +90,14 @@ pytaglib(required for mp3 Tagging)
 sqlite3 (for managing local music and video database, Addons are not managed by it. Addons are managed using files.)
 
 mpv or mplayer (having both is good option, for streaming video mpv is the best because it's seeking capability within live stream is very efficient and it's buffer management is also very good, and for listening music mplayer is very cost-effective. Cpu usage is just 1 to 2 % when playing music with mplayer. When playing local video files mplayer cpu utilization always remains 4-5 % point less than that of mpv atleast on my system)
+
+python-urllib3
+
+python-lxml
+
+python-psutil
+
+curl
 
 ~~python-requests { Not required for version >= 2.1.1-1}~~
 
@@ -141,7 +121,7 @@ If you want to try PyQt5 Experimental Version then install 'python-pyqt5' packag
 sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3
 
 
-PyQt5 Experimental version can't work on Ubuntu 14.04
+PyQt5 version can't work on Ubuntu since qt5-webengine is not available on it as dependency.
 
 #Once Dependencies are installed Download the Appropriate Stable or Experimental folder containing 'install.py' file. Open Terminal in the directory and use following command:
 
@@ -164,7 +144,7 @@ All other configuration files will be created in "~/.config/AnimeWatch/"
 Simply remove the application launcher '~/.local/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
 
 
-#Troubleshooting
+##Troubleshooting
 
 1. If Application Launcher in the menu is not working or programme is crashing then directly go to "~/.config/AnimeWatch/src/", open terminal there and run "python3 animeWatch.py" or "python animeWatch.py" as per your default python setup. If there is some problem in installation, then you will get idea about it, whether it is missing dependency or something else, or you can report the error as per the message in terminal.
 
@@ -180,7 +160,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 6. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
 
-#Brief Documentation:
+##Documentation
 
 If everything goes well and if you are able to open the player, then you will come across Three Columns.
 
@@ -364,3 +344,30 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 3. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause'
 
 It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
+
+
+##Recent Updates
+
+#Update AnimeWatch-2.1.1-1
+
+1. 'python-requests' no longer required.
+
+2. 'jsbeautifier' no longer required.
+
+3. changes in the code of headless browser.
+
+
+
+#Update AnimeWatch-2.0.0-1
+
+1. 'phantomjs' no longer required. The player has it's own version of headless browser with javascript support and it's own adblock.
+
+2. 'wget' no longer required, all the webpages are fetched using 'pycurl'.
+
+3. Less number of dependencies required as phantomjs and wget are no longer required.
+
+4. Proper implementation of multithreading.
+
+5. Addons of previous version might not work with this version so update addons also.
+
+6. If you've already old version of the application installed on your system and now want to upgrade it then before upgrading remove config directory '~/.config/AnimeWatch/src/' and if AnimeWatch.desktop file is located in '~/.local/share/applications/' then remove that .desktop file also.
