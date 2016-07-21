@@ -37,7 +37,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Playing Mode](#Playing Mode)
 
-[Thumbnail Mode](#Thumbnail Mode)
+[Thumbnail Mode](#thumbnail-Mode)
 
 #Normal Mode
 ![AnimeWatch](/Images/Video.png)
