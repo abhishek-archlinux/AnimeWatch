@@ -170,6 +170,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 3. In LXDE, XFCE or Cinnamon ,any new entry of launcher in '~/.local/share/applications/' is instantly shown in Start Menu (In the case of this player, entry will be shown either in Multimedia or Sound & Video). In Ubuntu Unity you will have to either logout and login again or reboot to see the entry in Unity dash Menu.
 
 ## Documentation
+######[Index](#index)
 
 If everything goes well and if you are able to open the player, then you will come across Three Columns.
 
