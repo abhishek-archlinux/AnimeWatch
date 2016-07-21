@@ -16,11 +16,11 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Dependencies and Installation](#dependencies-and-installation)
 
-[Troubleshooting][#troubleshooting]
+[Troubleshooting](#troubleshooting)
 
-[Brief Documentation][#documentation]
+[Brief Documentation](#documentation)
 
-[Recent Updates][#recent-updates]
+[Recent Updates](#recent-updates)
 
 ## Normal Mode
 ![AnimeWatch](/Images/Video.png)
