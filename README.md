@@ -34,7 +34,10 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 6. If you've already old version of the application installed on your system and now want to upgrade it then before upgrading remove config directory '~/.config/AnimeWatch/src/' and if AnimeWatch.desktop file is located in '~/.local/share/applications/' then remove that .desktop file also. 
 
 [Normal Mode](#Normal Mode)
+
 [Playing Mode](#Playing Mode)
+
+[Thumbnail Mode](#Thumbnail Mode)
 
 #Normal Mode
 ![AnimeWatch](/Images/Video.png)
