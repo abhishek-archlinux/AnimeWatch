@@ -348,6 +348,17 @@ It is possible also to change default background image by simply replacing '~/.c
 
 ## Recent Updates
 
+#Latest Release
+
+1. Tray Icon support.
+
+2. QtWebengine support in pyqt5 version.
+
+3. Remembers most of the default settings.
+
+4. Minimal music mode added.
+
+
 #Update AnimeWatch-2.1.1-1
 
 1. 'python-requests' no longer required.
