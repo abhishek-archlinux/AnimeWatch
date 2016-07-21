@@ -37,7 +37,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Playing Mode](#Playing Mode)
 
-[Thumbnail Mode](#thumbnail-Mode)
+[Thumbnail Mode](#thumbnail-mode)
 
 #Normal Mode
 ![AnimeWatch](/Images/Video.png)
@@ -55,7 +55,7 @@ Users can see their entire collection in Thumbnail mode in Grid Layout, once you
 
 In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail mode itself by right clicking and selecting appropriate option. If you don't like generated thumbnail then right click it and select another.
 
-#Thumbnail Mode
+## Thumbnail Mode
 ![AnimeWatch](/Images/Thumbnail.png)
 
 It supports certain D-bus functionalities. Therefore if you have created global keyboard shortcuts for play/pause,Next,Previous or Stop then they can work with this player also. 
