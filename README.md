@@ -33,16 +33,22 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 6. If you've already old version of the application installed on your system and now want to upgrade it then before upgrading remove config directory '~/.config/AnimeWatch/src/' and if AnimeWatch.desktop file is located in '~/.local/share/applications/' then remove that .desktop file also. 
 
-[Normal Mode](#Normal Mode)
+## Index
 
-[Playing Mode](#Playing Mode)
+[Normal Mode](#normal-mode)
+
+[Playing Mode](#playing-mode)
 
 [Thumbnail Mode](#thumbnail-mode)
 
-#Normal Mode
+[Minimal Music Player](#minimal-music-player)
+
+[Addons] (#addon-(plugins)-structure)
+
+## Normal Mode
 ![AnimeWatch](/Images/Video.png)
 
-#Playing Mode
+## Playing Mode
 ![AnimeWatch](/Images/Watch.png)
 
 It tries to be a simple media manager for your audio and video collection with special emphasis on your anime collection, along with powerful playing capabilities of mpv and mplayer. You can organise your anime collection properly into various groups and categories such as watching,incomplete etc.. You can create your own group also for any special category in the bookmark section.  It will also keep track of number of episodes that you have watched in a series. It will also manage history ,and you will have complete control over it.
@@ -62,10 +68,10 @@ It supports certain D-bus functionalities. Therefore if you have created global 
 
 It is not very powerful music organizer, but provide certain decent functionalities. When using with mplayer, it's cpu usage is just 1-2 % which makes it very ideal for low end machines.
 
-#Minimal Music Player
+## Minimal Music Player
 ![AnimeWatch](/Images/Music.png)
 
-#Addon (Plugins) Structure
+## Addon (Plugins) Structure
 
 In this player, a weak addon structure has been created, so that one can write addon for viewing video contents of various sites directly on this player,similar to Kodi or Plex, so that you don't have to deal with horrible flash player of the web. Currently it supports certain anime sites. By default it shows SD video, if you select HD then whenever available it tries to pick up HD video. If multiple mirrors are available you will be notified about it and then you can select different mirror if default mirror fails.These extra addons are in the directory 'Plugins', which will be loaded once the application is started. These addons are optional and before using them please check copyright and licencing laws of your country. If viewing contents of these anime sites is not allowed in your country, then use it at your own risk. Author of the AnimeWatch player is not at all related to any of these anime sites or their content provider. And these addons are also not core part of the player, they are completely optional,it's decision of the user of this application to download and keep these addons or not. These addons will only feed videos of the website directly to desktop player without downloading. There is no warrantee or guarantee on these addons. They can become dead if the site on which they are depending becomes dead or changes it's source. After install, these addons will be in the directory '~/.config/AnimeWatch/src/Plugins'. If your country does not allow viewing contents of these anime sites, then you can simply delete contents of the 'Plugins' folder.
 
