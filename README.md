@@ -22,7 +22,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Recent Updates](#recent-updates)
 
-## Normal Mode [Top](#index)
+## Normal Mode [######Top](#index)
 ![AnimeWatch](/Images/Video.png)
 
 ## Playing Mode
