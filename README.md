@@ -164,7 +164,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 5. If you've installed the Application using .deb or .pkg.tar.xz package, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
 
-6. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
+*6*. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
 
 ## Documentation
 
