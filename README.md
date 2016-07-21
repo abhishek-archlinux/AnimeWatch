@@ -144,7 +144,7 @@ All other configuration files will be created in "~/.config/AnimeWatch/"
 Simply remove the application launcher '~/.local/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
 
 
-##Troubleshooting
+## Troubleshooting
 
 1. If Application Launcher in the menu is not working or programme is crashing then directly go to "~/.config/AnimeWatch/src/", open terminal there and run "python3 animeWatch.py" or "python animeWatch.py" as per your default python setup. If there is some problem in installation, then you will get idea about it, whether it is missing dependency or something else, or you can report the error as per the message in terminal.
 
@@ -160,7 +160,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 6. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
 
-##Documentation
+## Documentation
 
 If everything goes well and if you are able to open the player, then you will come across Three Columns.
 
@@ -346,7 +346,7 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
 
 
-##Recent Updates
+## Recent Updates
 
 #Update AnimeWatch-2.1.1-1
 
