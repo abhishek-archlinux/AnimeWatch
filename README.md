@@ -187,7 +187,7 @@ Last Column to the extreme right, is the “Playlist column”, which will conta
 
 Once video is opened, if it not focussed then take mouse pointer over the video. It will set focus on the video. Once the video is focussed, most of the mpv and mplayer shortcuts will work. There is no volume slider, it's volume will be in sync with global volume. So global volume key will work. If you've setup d-bus shortcut keys for play/pause/next/previous then they will also work.
 
-There is no fullscreen button and play/pause button. People have to use keyboard shortcuts(f:fullscreen; spacebar:play/pause). It is not full fledge front end, the player has been written with different aim in mind. Therefore, i've tried to reduce buttons as much as possible so as not to clutter the interface, especially with respect to player. But if you still feel the need for more buttons then you can select smplayer or vlc or kodi from settings menu, or you can request the feature. If it does not clutters the interface more, then I'll think about adding it.
+There is no fullscreen button. People have to use keyboard shortcut(f:fullscreen). It is not full fledge front end, the player has been written with different aim in mind. Therefore, i've tried to reduce buttons as much as possible so as not to clutter the interface, especially with respect to player. But if you still feel the need for more buttons or full fledged UI then you can select smplayer or vlc or kodi from settings menu instead of mpv or mplayer. 
 
 ###Player Shortcuts(once video is focussed, if it's not focussed take mouse pointer over the playing video):
 
