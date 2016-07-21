@@ -152,19 +152,22 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 ## Troubleshooting
 ######[Index](#index)
+
+1. If you've installed the Application using .deb or .pkg.tar.xz package, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
+
+2. If addons are not working or fanart/poster are not fetched properly, then try clearing the cache directory '/tmp/AnimeWatch/'
+
+3. If Addons are not working after some time then clear contents of the local directory '~/.config/AnimeWatch/src/Plugins'. Then download or clone the github AnimeWatch directory, then go to github 'AnimeWatch/Plugins' directory, you will find 'installPlugins.py' file there, open terminal in the directory, run the command 'python installPlugins.py' or 'python3 installPlugins.py' . It will update the addons. 
+
+4. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
+
+####Troubleshooting for common method
+
 1. If Application Launcher in the menu is not working or programme is crashing then directly go to "~/.config/AnimeWatch/src/", open terminal there and run "python3 animeWatch.py" or "python animeWatch.py" as per your default python setup. If there is some problem in installation, then you will get idea about it, whether it is missing dependency or something else, or you can report the error as per the message in terminal.
 
 2. If you do not find application launcher in the menu then try copying manually "~/.config/AnimeWatch/AnimeWatch.desktop" to either "~/.local/share/applications/" or "/usr/share/applications/"
 
 3. In LXDE, XFCE or Cinnamon ,any new entry of launcher in '~/.local/share/applications/' is instantly shown in Start Menu (In the case of this player, entry will be shown either in Multimedia or Sound & Video). In Ubuntu Unity you will have to either logout and login again or reboot to see the entry in Unity dash Menu.
-
-4. If addons are not working or fanart/poster are not fetched properly, then try clearing the cache directory '/tmp/AnimeWatch/'
-
-5. If Addons are not working after some time then clear contents of the local directory '~/.config/AnimeWatch/src/Plugins'. Then download or clone the github AnimeWatch directory, then go to github 'AnimeWatch/Plugins' directory, you will find 'installPlugins.py' file there, open terminal in the directory, run the command 'python installPlugins.py' or 'python3 installPlugins.py' . It will update the addons. 
-
-6. If you've installed the Application using .deb or .pkg.tar.xz package, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
-
-7. If you've already installed the Application using .deb or .pkg.tar.xz package, then for every upgrade or re-install, it is better to remove local 'Plugins' directory from the config directory having path '~/.config/AnimeWatch/src/Plugins' manually, before relaunch of the application, if you want latest updated addons.
 
 ## Documentation
 
