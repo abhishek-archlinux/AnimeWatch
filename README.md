@@ -23,10 +23,11 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 [Recent Updates](#recent-updates)
 
 ## Normal Mode 
-######[Top](#index)
+######[Index](#index)
 ![AnimeWatch](/Images/Video.png)
 
 ## Playing Mode
+######[Index](#index)
 ![AnimeWatch](/Images/Watch.png)
 
 It tries to be a simple media manager for your audio and video collection with special emphasis on your anime collection, along with powerful playing capabilities of mpv and mplayer. You can organise your anime collection properly into various groups and categories such as watching,incomplete etc.. You can create your own group also for any special category in the bookmark section.  It will also keep track of number of episodes that you have watched in a series. It will also manage history ,and you will have complete control over it.
@@ -40,6 +41,7 @@ Users can see their entire collection in Thumbnail mode in Grid Layout, once you
 In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail mode itself by right clicking and selecting appropriate option. If you don't like generated thumbnail then right click it and select another.
 
 ## Thumbnail Mode
+######[Index](#index)
 ![AnimeWatch](/Images/Thumbnail.png)
 
 It supports certain D-bus functionalities. Therefore if you have created global keyboard shortcuts for play/pause,Next,Previous or Stop then they can work with this player also. 
@@ -47,10 +49,11 @@ It supports certain D-bus functionalities. Therefore if you have created global 
 It is not very powerful music organizer, but provide certain decent functionalities. When using with mplayer, it's cpu usage is just 1-2 % which makes it very ideal for low end machines.
 
 ## Minimal Music Player
+######[Index](#index)
 ![AnimeWatch](/Images/Music.png)
 
 ## Addon Structure
-
+######[Index](#index)
 In this player, a weak addon structure has been created, so that one can write addon for viewing video contents of various sites directly on this player,similar to Kodi or Plex, so that you don't have to deal with horrible flash player of the web. Currently it supports certain anime sites. By default it shows SD video, if you select HD then whenever available it tries to pick up HD video. If multiple mirrors are available you will be notified about it and then you can select different mirror if default mirror fails.These extra addons are in the directory 'Plugins', which will be loaded once the application is started. These addons are optional and before using them please check copyright and licencing laws of your country. If viewing contents of these anime sites is not allowed in your country, then use it at your own risk. Author of the AnimeWatch player is not at all related to any of these anime sites or their content provider. And these addons are also not core part of the player, they are completely optional,it's decision of the user of this application to download and keep these addons or not. These addons will only feed videos of the website directly to desktop player without downloading. There is no warrantee or guarantee on these addons. They can become dead if the site on which they are depending becomes dead or changes it's source. After install, these addons will be in the directory '~/.config/AnimeWatch/src/Plugins'. If your country does not allow viewing contents of these anime sites, then you can simply delete contents of the 'Plugins' folder.
 
 Most of the above things are possible in KODI or Plex . But I wanted some simple player with either mpv or mplayer as backend with decent media management functionality and addon structure. Therefore, I decided to create the application.
@@ -73,7 +76,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 
 #Dependencies
-
+######[Index](#index)
 python3 {Main Language}
 
 python-pyqt4 (Main GUI Builder)
@@ -112,27 +115,27 @@ curl
 
 ~~jsbeautifier(required for resolving certain links) {Not required for version >= 2.1.1-1}~~
 
-#Dependencies installation in Arch.
+###Dependencies installation in Arch.
 
 sudo pacman -S python python-pyqt4 python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3
 
 If you want to try PyQt5 Experimental Version then install 'python-pyqt5' package also.
 
 
-#In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
+###In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
 
 sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3
 
 
 PyQt5 version can't work on Ubuntu since qt5-webengine is not available on it as dependency.
 
-#Once Dependencies are installed Download the Appropriate Stable or Experimental folder containing 'install.py' file. Open Terminal in the directory and use following command:
+###Once Dependencies are installed Download the Appropriate Stable or Experimental folder containing 'install.py' file. Open Terminal in the directory and use following command:
 
-#In Arch:
+###In Arch:
 
 python install.py
 
-#In Ubuntu 14.04:
+###In Ubuntu 14.04:
 
 python3 install.py
 
@@ -142,13 +145,13 @@ All other configuration files will be created in "~/.config/AnimeWatch/"
 
 
 
-#Uninstall
+###Uninstall
 
 Simply remove the application launcher '~/.local/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
 
 
 ## Troubleshooting
-
+######[Index](#index)
 1. If Application Launcher in the menu is not working or programme is crashing then directly go to "~/.config/AnimeWatch/src/", open terminal there and run "python3 animeWatch.py" or "python animeWatch.py" as per your default python setup. If there is some problem in installation, then you will get idea about it, whether it is missing dependency or something else, or you can report the error as per the message in terminal.
 
 2. If you do not find application launcher in the menu then try copying manually "~/.config/AnimeWatch/AnimeWatch.desktop" to either "~/.local/share/applications/" or "/usr/share/applications/"
@@ -177,13 +180,13 @@ If you are still not satisfied with mpv or mplayer, then you can also launch any
 Middle column, is the “Title Column”, It will consists of name of the series.
 Last Column to the extreme right, is the “Playlist column”, which will contain playlist items which will be played sequentially in the default mode, you will just have to select entry and press enter or double click.
 
-#KeyBoard Shortcuts:
+###KeyBoard Shortcuts:
 
 Once video is opened, if it not focussed then take mouse pointer over the video. It will set focus on the video. Once the video is focussed, most of the mpv and mplayer shortcuts will work. There is no volume slider, it's volume will be in sync with global volume. So global volume key will work. If you've setup d-bus shortcut keys for play/pause/next/previous then they will also work.
 
 There is no fullscreen button and play/pause button. People have to use keyboard shortcuts(f:fullscreen; spacebar:play/pause). It is not full fledge front end, the player has been written with different aim in mind. Therefore, i've tried to reduce buttons as much as possible so as not to clutter the interface, especially with respect to player. But if you still feel the need for more buttons then you can select smplayer or vlc or kodi from settings menu, or you can request the feature. If it does not clutters the interface more, then I'll think about adding it.
 
-#Player Shortcuts(once video is focussed, if it's not focussed take mouse pointer over the playing video):
+###Player Shortcuts(once video is focussed, if it's not focussed take mouse pointer over the playing video):
 
 q : quit
 
@@ -262,7 +265,7 @@ ao=pulse
 
 vo=opengl {or anything that works on your system}
 
-#Some global Shortcuts:
+###Some global Shortcuts:
 L : show/hide Player
 
 g : show/hide Settings column
@@ -277,7 +280,7 @@ Escape : Hide/Show Everything
 
 Right,Left: set focus alternate between Option column, Title column and Playlist column (If Player is not Playing Anything)
 
-#Title Column:(if Title list is focussed)
+###Title Column:(if Title list is focussed)
 
 h : show history (history of watched series)
 
@@ -299,7 +302,7 @@ shift+c : copy summary
 
 ctrl+c : copy poster
 
-#Playlist Column:(If playlist column is focussed)
+###Playlist Column:(If playlist column is focussed)
 
 q : queue the item
 
@@ -319,18 +322,18 @@ PgUp: Move Entry UP
 
 PgDown: Move Entry Down
 
-#Thumbnail Mode:
+###Thumbnail Mode:
 
 '=' (Remember '+' key) : increase size of Thumbnails
 
 '-' : decrease size of Thumbnails
 
-#Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in the mode.
+###Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in the mode.
 
-#Apart from shortcuts:
+###Apart from shortcuts:
 You can explore Right click menu of both Playlist Column and Title List Column for getting TVDB, Last.fm profiles for your collection either manually or automatically. If you are getting some problem while setting profiles from TVDB or Last.fm , or having problems accessing addons,then empty the cache directory '/tmp/AnimeWatch/', This option is available with right click menu of Title List and Playlist column also.
 
-#Other Things for convenience:
+###Other Things for convenience:
 
 Please Enable Vertical Scrolling of Touchpad, because there are no scrollbars in this app, because they were looking very ugly in the total setup.
 
@@ -350,8 +353,8 @@ It is possible also to change default background image by simply replacing '~/.c
 
 
 ## Recent Updates
-
-#Latest Release
+######[Index](#index)
+###Latest Release
 
 1. Tray Icon support.
 
@@ -362,7 +365,7 @@ It is possible also to change default background image by simply replacing '~/.c
 4. Minimal music mode added.
 
 
-#Update AnimeWatch-2.1.1-1
+###Update AnimeWatch-2.1.1-1
 
 1. 'python-requests' no longer required.
 
@@ -372,7 +375,7 @@ It is possible also to change default background image by simply replacing '~/.c
 
 
 
-#Update AnimeWatch-2.0.0-1
+###Update AnimeWatch-2.0.0-1
 
 1. 'phantomjs' no longer required. The player has it's own version of headless browser with javascript support and it's own adblock.
 
