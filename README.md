@@ -153,7 +153,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 ## Troubleshooting
 ######[Index](#index)
 
-1. If you've installed the Application using .deb or .pkg.tar.xz package, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
+1. If you've installed the Application using .deb or .pkg.tar.xz package or using PKGBUILD, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
 
 2. If addons are not working or fanart/poster are not fetched properly, then try clearing the cache directory '/tmp/AnimeWatch/'
 
