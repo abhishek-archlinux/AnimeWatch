@@ -360,7 +360,7 @@ It is possible also to change default background image by simply replacing '~/.c
 ######[Index](#index)
 ###Latest Release
 
-1. Tray Icon support.
+1. System Tray support added. (Currently temporary tray icon is provided which will change in future)
 
 2. QtWebengine support in pyqt5 version.
 
