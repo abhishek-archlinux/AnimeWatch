@@ -368,6 +368,7 @@ It is possible also to change default background image by simply replacing '~/.c
 
 4. Minimal music mode added.
 
+5. Proper MPRIS2 support and integration with sound menu.
 
 ###Update AnimeWatch-2.1.1-1
 
