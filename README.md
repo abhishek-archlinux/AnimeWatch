@@ -48,7 +48,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 11. Remembers most of the last settings, and can opens up directly last watched series.
 
-12. Minimal Mode Music Player.
+12. Special Minimal Mode Music Player for listening only music (Available in System Tray context menu).
 
 13. Proper History Manager for both addons and local content.
 
