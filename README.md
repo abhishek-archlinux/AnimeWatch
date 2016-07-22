@@ -56,7 +56,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 15. Better buffer management for mplayer on low bandwidth network.
 
-16. Support for opening video in external players like vlc,smplayer and kodi.
+16. Support for opening video in external players like vlc, smplayer or kodi.
 
 ## Normal Mode 
 ######[Index](#index)
