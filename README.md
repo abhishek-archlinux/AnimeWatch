@@ -4,6 +4,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 ## Index
 
+[Features](#features)
+
 [Normal Mode](#normal-mode)
 
 [Playing Mode](#playing-mode)
@@ -21,6 +23,38 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 [Brief Documentation](#documentation)
 
 [Recent Updates](#recent-updates)
+
+## Features
+
+1.  Combine Audio-Video Player and Manager with special emphasis on Anime collection.
+
+2.  Bookmark and categorize series in the library (like Watching,Incomplete,Interesting etc..).
+
+3.  Good audio-video management functionalities using sqlite3.
+
+4.  Custom Addons Support for viewing content of various sites directly on the player.
+
+5.  Support for downloading fanart/posters and other metadata such as summary or biography from internet sites such as TVDB and last.fm.
+
+6.  Thumbnail Mode Support.
+
+7.  Internal browser with custom right click menu for manually downloading desired fanart and poster for library collection.
+
+8.  System Tray Support (Currently only temporary tray icon is provided which may change in future).
+
+9.  Proper MPRIS2 support and integration with sound menu applet.
+
+10. Custom Playlist and queueing support.
+
+11. Remembers most of the last settings, and can opens up directly last watched series.
+
+12. Minimal Mode Music Player.
+
+13. Proper History Manager for both addons and local content.
+
+14. mplayer/mpv internal player.
+
+15. Support for opening video in external player like vlc,smplayer and kodi.
 
 ## Normal Mode 
 ######[Index](#index)
