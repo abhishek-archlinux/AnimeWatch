@@ -34,7 +34,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 4.  Custom Addons Support for viewing content of various sites directly on the player.
 
-5.  Support for downloading fanart/posters and other metadata such as summary or biography from internet sites such as TVDB and last.fm.
+5.  Support for downloading fanart/posters and other information such as summary or biography from internet sites such as TVDB and last.fm.
 
 6.  Thumbnail Mode Support.
 
