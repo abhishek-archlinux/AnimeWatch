@@ -28,7 +28,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 1.  Combine Audio-Video Player and Manager with special emphasis on Anime collection.
 
-2.  Bookmark and categorize series in the library (like Watching,Incomplete,Interesting etc..).
+2.  Bookmark and categorize series in the library (like Watching, Incomplete, Interesting etc..).
 
 3.  Good audio-video management functionalities using sqlite3.
 
