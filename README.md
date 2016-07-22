@@ -40,7 +40,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 7.  Internal browser with custom right click menu for manually downloading desired fanart and poster for library collection.
 
-8.  System Tray Support (Currently only temporary tray icon is provided which may change in future).
+8.  System Tray Support (Current tray icon is temporary which may change in future).
 
 9.  Proper MPRIS2 support and integration with sound menu applet.
 
