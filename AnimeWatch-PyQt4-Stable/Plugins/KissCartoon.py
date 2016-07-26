@@ -99,7 +99,10 @@ def ccurl(url):
 		cloudfare(url,'')
 		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieC.txt')
 	url = str(url)
-	c.setopt(c.URL, url)
+	try:
+		c.setopt(c.URL, url)
+	except UnicodeEncodeError:
+		c.setopt(c.URL, url.encode('utf-8'))
 	storage = BytesIO()
 	if curl_opt == '-o':
 		f = open(picn_op,'wb')
