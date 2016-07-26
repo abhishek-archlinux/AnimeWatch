@@ -16554,6 +16554,12 @@ if __name__ == "__main__":
 		os.makedirs(home+"/Local")
 	if not os.path.exists(home+"/Bookmark"):
 		os.makedirs(home+"/Bookmark")
+		bookmark_array = ['bookmark','Watching','Completed','Incomplete','Later','Interesting','Music-Videos']
+		for i in bookmark_array:
+			bookmark_path = home+'/Bookmark/'+i+'.txt'
+			if not os.path.exists(bookmark_path):
+				f = open(bookmark_path,'w')
+				f.close()
 	if not os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","w")
 		f.write("DefaultPlayer=mpv")

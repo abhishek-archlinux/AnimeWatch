@@ -3258,6 +3258,7 @@ class List1(QtWidgets.QListWidget):
 				for i in pls:
 					i = i.replace('.txt','')
 					if i not in bookmark_array:
+						#print(i)
 						item_m.append(submenu.addAction(i))
 						#receiver = lambda taskType=i: self.triggerBookmark(taskType)
 						#item.triggered.connect(receiver)
@@ -3289,7 +3290,8 @@ class List1(QtWidgets.QListWidget):
 				
 				for i in range(len(item_m)):
 					if action == item_m[i]:
-						self.triggerBookmark(pls[i].replace('.txt',''))
+						item_name = item_m[i].text()
+						self.triggerBookmark(item_name)
 				
 				if action == new_pls:
 					print ("creating new bookmark category")
@@ -12067,6 +12069,8 @@ class Ui_MainWindow(object):
 			line_a = f.readlines()
 			f.close()
 			r = self.list1.currentRow()
+			if r < 0:
+				return 0
 			tmp = line_a[r]
 			tmp = re.sub('\n','',tmp)
 			tmp1 = tmp.split(':')
@@ -16774,6 +16778,12 @@ if __name__ == "__main__":
 		os.makedirs(home+"/Local")
 	if not os.path.exists(home+"/Bookmark"):
 		os.makedirs(home+"/Bookmark")
+		bookmark_array = ['bookmark','Watching','Completed','Incomplete','Later','Interesting','Music-Videos']
+		for i in bookmark_array:
+			bookmark_path = home+'/Bookmark/'+i+'.txt'
+			if not os.path.exists(bookmark_path):
+				f = open(bookmark_path,'w')
+				f.close()
 	if not os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","w")
 		f.write("DefaultPlayer=mpv")
