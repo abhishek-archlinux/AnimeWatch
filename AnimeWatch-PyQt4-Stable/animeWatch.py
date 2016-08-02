@@ -11495,7 +11495,7 @@ class Ui_MainWindow(object):
 		elif site == "Addons":
 			site == 'None'
 			self.btnAddon.show()
-			site = self.btnAddon.currentText()
+			site = str(self.btnAddon.currentText())
 			bookmark = "False"
 			if not os.path.exists(home+"/History" + "/" + site):
 				os.makedirs(home+"/History" + "/" + site)
@@ -11544,7 +11544,7 @@ class Ui_MainWindow(object):
 		rfr_url = ""
 		finalUrlFound = False
 		refererNeeded = False
-		site = (self.btnAddon.currentText())
+		site = str(self.btnAddon.currentText())
 		if site == 'SubbedAnime' or site == 'DubbedAnime':
 			self.btnHistory.show()
 		else:
@@ -16242,7 +16242,7 @@ class RightClickMenu(QtGui.QMenu):
 			ui.btn1.setCurrentIndex(default_arr_setting[0])
 			if ui.btn1.currentText() == 'Addons':
 				ui.btnAddon.setCurrentIndex(default_arr_setting[4])
-				if ui.btnAddon.currentText() == 'SubbedAnime' or ui.btnAddon.currentText() == 'DubbedAnime':
+				if str(ui.btnAddon.currentText()) == 'SubbedAnime' or str(ui.btnAddon.currentText()) == 'DubbedAnime':
 					ui.btnHistory.show()
 				else:
 					if not ui.btnHistory.isHidden():
@@ -16716,7 +16716,7 @@ if __name__ == "__main__":
 		
 	if site_index >=0 and site_index < ui.btn1.count():
 		ui.btn1.setCurrentIndex(site_index)
-		if ui.btn1.currentText() == 'Addons' and addon_index >=0 and addon_index < ui.btnAddon.count():
+		if str(ui.btn1.currentText()) == 'Addons' and addon_index >=0 and addon_index < ui.btnAddon.count():
 			ui.btnAddon.setCurrentIndex(addon_index)
 			
 	if option_index < 0 and ui.list3.count() > 0:
