@@ -1048,10 +1048,10 @@ class MainWindowWidget(QtWidgets.QWidget):
 		global site
 		pos = event.pos()
 		#print(pos)
-		#if pos.x() >= 0 and pos.x()<=10:
-		#	ui.dockWidget_3.show()
-		#	ui.btn1.setFocus()
-		if MainWindow.isFullScreen() and not ui.tab_5.isHidden():
+		if pos.x() >= 0 and pos.x()<=10:
+			ui.dockWidget_3.show()
+			ui.btn1.setFocus()
+		elif MainWindow.isFullScreen() and not ui.tab_5.isHidden():
 			ht = self.height()
 			#print "height="+str(ht)
 			#print "y="+str(pos.y())
@@ -4474,14 +4474,18 @@ class List2(QtWidgets.QListWidget):
 						os.remove(dest)
 					r = r+1
 			elif action == editN:
-				scode = subprocess.check_output(["zenity","--entry","--text","Enter Episode Name Manually"])
-				nm = re.sub("\n|[ ]","",scode)
-				row = self.currentRow()
-				t = epnArrList[row]
-				if '	' in t and '	' not in nm and site!= "Video" and site!="PlayLists" and site!="None":
-					r = t.split('	')[1]
-					epnArrList[row]=nm + '	'+r
-					ui.mark_History()
+				item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Episode Name Manually')
+				if ok and item:
+					#scode = subprocess.check_output(["zenity","--entry","--text","Enter Episode Name Manually"])
+					#nm = re.sub("\n|[ ]","",scode)
+					nm = item
+					row = self.currentRow()
+					t = epnArrList[row]
+					print(nm,row,t)
+					if '	' in t and '	' not in nm and site!= "Video" and site!="PlayLists" and site!="None":
+						r = t.split('	')[1]
+						epnArrList[row]=nm + '	'+r
+						ui.mark_History()
 					
 			elif action == default_name:
 					row = self.currentRow()
@@ -5377,13 +5381,19 @@ class Btn1(QtWidgets.QComboBox):
 				ui.scrollArea.setFocus()
 			elif not ui.scrollArea1.isHidden():
 				ui.scrollArea1.setFocus()
-			ui.dockWidget_3.hide()
+			#ui.dockWidget_3.hide()
 			#ui.label.setMinimumSize(700,500)
 			#ui.label.setMaximumSize(300,350)
 		elif event.key() == QtCore.Qt.Key_Left:
-			ui.list3.setFocus()
+			if self.currentText() == 'Addons':
+				ui.btnAddon.setFocus()
+			else:
+				ui.list3.setFocus()
+			
 		
 		super(Btn1, self).keyPressEvent(event)
+		
+
 class tab6(QtWidgets.QWidget):
 	def __init__(self, parent):
 		super(tab6, self).__init__(parent)
@@ -6654,6 +6664,10 @@ class Ui_MainWindow(object):
 		#self.btn1.setGeometry(QtCore.QRect(20, 55, 130, 31))
 		#self.btn1.setGeometry(QtCore.QRect(20, 20, 130, 26))
 		self.btn1.setObjectName(_fromUtf8("btn1"))
+		
+		self.btnAddon = Btn1(self.dockWidgetContents_3)
+		self.btnAddon.setObjectName(_fromUtf8("btnAddon"))
+		self.btnAddon.hide()
 		#self.btn1.setEditable(True)
 		#self.btn1.lineEdit().setAlignment(QtCore.Qt.AlignCenter)
 		
@@ -6865,16 +6879,17 @@ class Ui_MainWindow(object):
 		
 		self.btnHistory = QtWidgets.QPushButton(self.dockWidgetContents_3)
 		self.btnHistory.setObjectName(_fromUtf8("btnHistory"))
-		
+		self.btnHistory.hide()
 		
 		self.VerticalLayoutLabel_Dock3.insertWidget(0,self.line,0)
 		self.VerticalLayoutLabel_Dock3.insertWidget(1,self.btn1,0)
-		self.VerticalLayoutLabel_Dock3.insertWidget(2,self.list3,0)
-		self.VerticalLayoutLabel_Dock3.insertWidget(3,self.btnHistory,0)
-		self.VerticalLayoutLabel_Dock3.insertWidget(4,self.btn3,0)
-		self.VerticalLayoutLabel_Dock3.insertWidget(5,self.chk,0)
-		self.VerticalLayoutLabel_Dock3.insertWidget(6,self.comboView,0)
-		self.VerticalLayoutLabel_Dock3.insertWidget(7,self.btn4,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(2,self.btnAddon,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(3,self.list3,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(4,self.btnHistory,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(5,self.btn3,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(6,self.chk,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(7,self.comboView,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(8,self.btn4,0)
 		self.btn3.setMinimumHeight(30)
 		self.line.setMinimumHeight(30)
 		self.btn1.setMinimumHeight(30)
@@ -7016,6 +7031,7 @@ class Ui_MainWindow(object):
 		self.page_number.returnPressed.connect(self.gotopage)
 		#QtCore.QObject.connect(self.btn1, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.ka)
 		self.btn1.currentIndexChanged['int'].connect(self.ka)
+		self.btnAddon.currentIndexChanged['int'].connect(self.ka2)
 		#QtCore.QObject.connect(self.btn30, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.ka1)
 		self.btn30.currentIndexChanged['int'].connect(self.ka1)
 		#QtCore.QObject.connect(self.comboBox20, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.browserView_view)
@@ -7339,6 +7355,7 @@ class Ui_MainWindow(object):
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
 					mpvplayer.write(b'\n quit \n')
+					self.player_play_pause.setText("Play")
 					if ui.tab_6.isHidden():
 						ui.tab_5.showNormal()
 						ui.tab_5.hide()
@@ -7868,6 +7885,38 @@ class Ui_MainWindow(object):
 	font-size:10px;
 	padding: 1px 1px 1px 1px;
 	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+	selection-color:yellow;
+	}
+	QComboBox::drop-down {
+	width: 47px;
+	border: 0px;
+	color:black;
+	
+	
+	}
+
+	QComboBox::focus {
+	
+	color:yellow;
+	
+	
+	}
+
+
+	QComboBox::down-arrow {
+	
+	width: 2px;
+	height: 2px;
+	}""")
+	
+		ui.btnAddon.setStyleSheet("""QComboBox {
+	min-height:20px;
+	max-height:63px;
+	border-radius: 3px;
+	font-size:10px;
+	padding: 1px 1px 1px 1px;
+	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+	selection-color:yellow;
 	}
 	QComboBox::drop-down {
 	width: 47px;
@@ -7878,13 +7927,17 @@ class Ui_MainWindow(object):
 	}
 
 	
-
+	QComboBox::focus {
+	
+	color:yellow;
+	
+	
+	}
 	QComboBox::down-arrow {
 	
 	width: 2px;
 	height: 2px;
 	}""")
-	
 		
 		
 		ui.comboView.setStyleSheet("""QComboBox {
@@ -11185,6 +11238,8 @@ class Ui_MainWindow(object):
 		#self.text.hide()
 		self.list4.hide()
 		num = self.list2.currentRow()
+		if num < 0:
+			return 0
 		if self.list2.currentItem() and num < len(epnArrList):
 				epn_h = self.list2.currentItem().text()
 				#self.goto_epn.setText(epn_h)
@@ -11523,6 +11578,10 @@ class Ui_MainWindow(object):
 		finalUrlFound = False
 		refererNeeded = False
 		site = str(self.btn1.currentText())
+		if not self.btnAddon.isHidden():
+			self.btnAddon.hide()
+		if not self.btnHistory.isHidden():
+			self.btnHistory.hide()
 		if site == "PlayLists":
 			bookmark = "False"
 			criteria = os.listdir(home+'/Playlists')
@@ -11549,11 +11608,6 @@ class Ui_MainWindow(object):
 				self.list3.addItem(i)
 			for i in bookmark_extra:
 				self.list3.addItem(i)
-		elif site != "Select":
-			bookmark = "False"
-			if not os.path.exists(home+"/History" + "/" + site):
-				os.makedirs(home+"/History" + "/" + site)
-			self.search()
 		elif site == "Select":
 			self.list3.clear()
 			self.list1.clear()
@@ -11561,6 +11615,41 @@ class Ui_MainWindow(object):
 			self.label.clear()
 			self.text.clear()
 			site = 'None'
+		elif site == "Addons":
+			site == 'None'
+			self.btnAddon.show()
+			site = self.btnAddon.currentText()
+			bookmark = "False"
+			if not os.path.exists(home+"/History" + "/" + site):
+				os.makedirs(home+"/History" + "/" + site)
+			self.search()
+		else:
+			bookmark = "False"
+			if not os.path.exists(home+"/History" + "/" + site):
+				os.makedirs(home+"/History" + "/" + site)
+			self.search()
+		
+	def ka2(self):
+		global site,home
+		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,list1_items,bookmark,total_till,thumbnail_indicator,genre_num,original_path_name,rfr_url,finalUrlFound,refererNeeded
+		genre_num = 0
+		#total_till = 0
+		self.label.clear()
+		self.text.clear()
+		original_path_name[:]=[]
+		rfr_url = ""
+		finalUrlFound = False
+		refererNeeded = False
+		site = (self.btnAddon.currentText())
+		if site == 'SubbedAnime' or site == 'DubbedAnime':
+			self.btnHistory.show()
+		else:
+			if not self.btnHistory.isHidden():
+				self.btnHistory.hide()
+		bookmark = "False"
+		if not os.path.exists(home+"/History" + "/" + site):
+			os.makedirs(home+"/History" + "/" + site)
+		self.search()
 	
 	def ka1(self):
 		global site,home
@@ -11875,7 +11964,7 @@ class Ui_MainWindow(object):
 					palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
 					MainWindow.setPalette(palette)
 		
-				self.dockWidget_3.hide()
+				#self.dockWidget_3.hide()
 			
 				img = QtGui.QPixmap(picn, "1")
 				#.scaled(self.label.size(), QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
@@ -12259,7 +12348,7 @@ class Ui_MainWindow(object):
 						palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
 						MainWindow.setPalette(palette)
 			
-					self.dockWidget_3.hide()
+					#self.dockWidget_3.hide()
 			
 					img = QtGui.QPixmap(picn, "1")
 					#.scaled(self.label.size(), QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
@@ -12528,7 +12617,7 @@ class Ui_MainWindow(object):
 	
 	
 					#self.gridLayout.setAlignment(QtCore.Qt.AlignRight)
-					self.dockWidget_3.hide()
+					#self.dockWidget_3.hide()
 	
 					img = QtGui.QPixmap(picn, "1")
 					self.label.setPixmap(img)
@@ -12706,7 +12795,7 @@ class Ui_MainWindow(object):
 			
 			
 			
-					self.dockWidget_3.hide()
+					#self.dockWidget_3.hide()
 					img = QtGui.QPixmap(picn, "1")
 					self.label.setPixmap(img)
 					#self.label.setToolTip(_translate("MainWindow", "<html><h1>"+name+"</h1><head/><body><p>"+summary+"</p>"+"</body></html>" , None))
@@ -12943,7 +13032,10 @@ class Ui_MainWindow(object):
 				
 				artist =[]
 				if bookmark == "False":
-					video_opt = str(self.list3.currentItem().text())
+					if self.list3.currentItem():
+						video_opt = str(self.list3.currentItem().text())
+					else:
+						video_opt = 'History'
 					if video_opt == "Update" or video_opt == "UpdateAll":
 						video_opt = "Available"
 					if video_opt == "Available" or video_opt == "History":
@@ -13100,7 +13192,7 @@ class Ui_MainWindow(object):
 				palette	= QtGui.QPalette()
 				palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
 				MainWindow.setPalette(palette)
-			self.dockWidget_3.hide()
+			#self.dockWidget_3.hide()
 
 			img = QtGui.QPixmap(picn, "1")
 			self.label.setPixmap(img)
@@ -13214,7 +13306,9 @@ class Ui_MainWindow(object):
 						default_arr_setting[2]=self.list1.currentRow()
 						if self.list2.currentRow() >= 0:
 							default_arr_setting[3]=self.list2.currentRow()
-							
+				if ui.btnAddon.currentIndex() >= 0:
+					default_arr_setting[4]=ui.btnAddon.currentIndex()
+					
 		if(site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" and finalUrlFound == False and site !="None" and site!= "Music" and site != "Video" and site!= "Local") :
 			hist_path = home+'/History/'+site+'/'+name+'/Ep.txt'
 			if (os.path.exists(hist_path) and (epn_goto == 0)) or (os.path.exists(hist_path) and bookmark == "True"):
@@ -14452,7 +14546,8 @@ class Ui_MainWindow(object):
 						default_arr_setting[2]=self.list1.currentRow()
 						if self.list2.currentRow() >= 0:
 							default_arr_setting[3]=self.list2.currentRow()
-							
+				if ui.btnAddon.currentIndex() >= 0:
+					default_arr_setting[4]=ui.btnAddon.currentIndex()
 		if site != "PlayLists":
 			if '	' in epnArrList[row]:
 				epn = epnArrList[row].split('	')[1]
@@ -14784,7 +14879,8 @@ class Ui_MainWindow(object):
 						default_arr_setting[2]=self.list1.currentRow()
 						if self.list2.currentRow() >= 0:
 							default_arr_setting[3]=self.list2.currentRow()
-		
+				if ui.btnAddon.currentIndex() >= 0:
+					default_arr_setting[4]=ui.btnAddon.currentIndex()
 		
 		if (site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" and finalUrlFound == False and site!="None" and site!="Music" and site!= "Video" and site!="Local"):
 			if opt == "History":
@@ -16386,6 +16482,13 @@ class RightClickMenu(QtWidgets.QMenu):
 		print(default_arr_setting,'--default-setting--')
 		if default_arr_setting[0] > 0 and default_arr_setting[0] < ui.btn1.count():
 			ui.btn1.setCurrentIndex(default_arr_setting[0])
+			if ui.btn1.currentText() == 'Addons':
+				ui.btnAddon.setCurrentIndex(default_arr_setting[4])
+				if ui.btnAddon.currentText() == 'SubbedAnime' or ui.btnAddon.currentText() == 'DubbedAnime':
+					ui.btnHistory.show()
+				else:
+					if not ui.btnHistory.isHidden():
+						ui.btnHistory.hide()
 			ui.list3.setCurrentRow(default_arr_setting[1])
 			try:
 				option_val = ui.list3.currentItem().text()
@@ -16446,7 +16549,7 @@ if __name__ == "__main__":
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
 	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting
-	default_arr_setting = [0,0,0,0]
+	default_arr_setting = [0,0,0,0,0]
 	music_arr_setting = [0,0,0]
 	layout_mode = "Default"
 	show_hide_player = 0
@@ -16469,7 +16572,8 @@ if __name__ == "__main__":
 	base_url_summary = ""
 	type_arr = ['.mkv','.mp4','.avi','.mp3','.flv','.flac']
 	site_arr = ["SubbedAnime","DubbedAnime","Local","PlayLists","Bookmark","Music",'Video']
-	default_option_arr = ["Select","Video","Music","Local","Bookmark","PlayLists"]
+	default_option_arr = ["Select","Video","Music","Local","Bookmark","PlayLists","Addons"]
+	addons_option_arr = []
 	audio_id = "auto"
 	sub_id = "auto"
 	tab_6_player = "False"
@@ -16547,6 +16651,7 @@ if __name__ == "__main__":
 	opt = ""
 	pgn = 1
 	site_index = 0
+	addon_index = 0
 	option_index = -1
 	name_index = -1
 	episode_index = -1
@@ -16652,6 +16757,12 @@ if __name__ == "__main__":
 					site_index = int(site_i)
 				
 				print(site_index,'--site-index--')
+			elif "Addon_Index" in i:
+				addon_i = re.sub('\n','',j)
+				if addon_i.isdigit():
+					addon_index = int(addon_i)
+				
+				print(addon_index,'--addon-index--')
 			elif "Option_Index" in i:
 				opt_i = re.sub('\n','',j)
 				if opt_i.isdigit():
@@ -16807,7 +16918,7 @@ if __name__ == "__main__":
 			if '.py' in i and '.pyc' not in i:
 				i = i.replace('.py','')
 				if i != 'headlessBrowser' and i != 'headlessEngine':
-					default_option_arr.append(i)
+					addons_option_arr.append(i)
 	
 	
 	f = open(home+"/History/queue.m3u","w")
@@ -16816,12 +16927,16 @@ if __name__ == "__main__":
 	
 	for i in default_option_arr:
 		ui.btn1.addItem(i)
+	for i in addons_option_arr:
+		ui.btnAddon.addItem(i)
 	#QtWidgets.QApplication.processEvents()
 	#index_site = ui.btn1.findText(site)
 	
 	#print(site,index_site)
 	if site_index >=0 and site_index < ui.btn1.count():
 		ui.btn1.setCurrentIndex(site_index)
+		if ui.btn1.currentText() == 'Addons' and addon_index >=0 and addon_index < ui.btnAddon.count():
+			ui.btnAddon.setCurrentIndex(addon_index)
 	
 	if option_index < 0 and ui.list3.count() > 0:
 		option_index = 0
@@ -17019,6 +17134,7 @@ if __name__ == "__main__":
 		f.write("\nView="+str(viewMode))
 		f.write("\nQuality="+str(quality))
 		f.write("\nSite_Index="+str(ui.btn1.currentIndex()))
+		f.write("\nAddon_Index="+str(ui.btnAddon.currentIndex()))
 		f.write("\nOption_Index="+str(ui.list3.currentRow()))
 		f.write("\nOption_Val="+str(opt))
 		f.write("\nName_Index="+str(ui.list1.currentRow()))
