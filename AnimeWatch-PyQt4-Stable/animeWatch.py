@@ -12125,7 +12125,7 @@ class Ui_MainWindow(object):
 				refererNeeded = False
 				finalUrlFound = False
 			print (site + ":"+opt)
-		if (site != "SubbedAnime" and site!= "DubbedAnime" and site != "PlayLists" and site != "Music" and site != "Video" and site!="Local") :
+		if (site != "SubbedAnime" and site!= "DubbedAnime" and site != "PlayLists" and site != "Music" and site != "Video" and site!="Local" and site!="None") :
 			self.list2.clear()
 			if self.list1.currentItem():
 				name = self.list1.currentItem().text()
@@ -13705,8 +13705,8 @@ class Ui_MainWindow(object):
 					file_path = f.path
 					if '/' in f.path:
 						file_path = file_path.split('/')[-1]
-						epnArrList.append(file_path+'	'+t)
-						ui.list2.addItem((file_path))
+					epnArrList.append(file_path+'	'+path)
+					ui.list2.addItem((file_path))
 				self.torrent_handle.pause()
 			else:
 				index = int(self.list2.currentRow())
@@ -16942,92 +16942,7 @@ if __name__ == "__main__":
 	else:
 		ui.dockWidget_3.show()
 		
-	if len(sys.argv) == 2:
-		
-		
-		t = sys.argv[1]
-		print (t)
-		if ("file:///" in t or t,startswith('/')) and not t.endswith('.torrent') and not 'magnet:' in t:
-			quitReally="no"
-			print (t)
-			new_epn = t.split('/')[-1]
-			t = '"'+t+'"'
-			epn_name_in_list = urllib.parse.unquote(new_epn)
-			t = t.replace('file:///','/')
-			ui.watchDirectly(urllib.parse.unquote(t))
-			ui.dockWidget_3.hide()
-			site = "None"
-			ui.btn1.setCurrentIndex(0)
-			p = t.split('/')
-			length = len(p)-2
-			j = 1
-			path_Local_Dir = ""
-			m=[]
-			while j <= length:
-				path_Local_Dir = path_Local_Dir + '/' + p[j]
-				j = j+1
-			print (path_Local_Dir)
-			path_Local_Dir=urllib.parse.unquote(path_Local_Dir)
-			name =path_Local_Dir.split('/')[-1]
-			for r,d,f in os.walk(path_Local_Dir):
-				for z in f:
-					if '.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z or '.flv' in z or '.flac' in z:
-						m.append(r+'/'+z)
-			m=naturallysorted(m)
-			#print m
-			epnArrList[:]=[]
-			j = 0
-			row = 0
-			t = t.replace('"','')
-			t=urllib.parse.unquote(t)
-			try:
-				e = t.split('/')[-1]
-			except:
-				e = t.split('/')[-1]
-			for i in m:
-				i1 = i
-				i = i.split('/')[-1]
-				epnArrList.append(i+'	'+i1)
-				ui.list2.addItem((i))
-				i = i
-				if i == e:
-					row = j
-				j =j+1
-			ui.list2.setCurrentRow(row)
-			curR = row
-		elif t.endswith('.torrent'):
-			ui.torrent_type = 'file'
-			video_local_stream = True
-			site = 'None'
-			t = t.replace('file:///','/')
-			t=urllib.parse.unquote(t)
-			#print(t)
-			#t = os.getcwd()+'/'+t
-			print(t)
-			local_torrent_file_path = t
-			info = lt.torrent_info(t)
-			file_arr = []
-			ui.list2.clear()
-			epnArrList[:]=[]
-			for f in info.files():
-				file_path = f.path
-				if '/' in f.path:
-					file_path = file_path.split('/')[-1]
-					epnArrList.append(file_path+'	'+t)
-					ui.list2.addItem((file_path))
-		elif 'magnet:' in t:
-			t = re.search('magnet:[^"]*',t).group()
-			site = 'None'
-			ui.torrent_type = 'magnet'
-			ui.local_torrent_open(t)
-		else:
-			quitReally="yes"
-			new_epn = t.split('/')[-1]
-			t = '"'+t+'"'
-			epn_name_in_list = urllib.parse.unquote(new_epn)
-			#t = t.replace('file:///','/')
-			ui.watchDirectly(urllib.parse.unquote(t))
-			ui.dockWidget_3.hide()
+	
 	
 	#myFilter	 = MyEventFilter()
 	#app.installEventFilter(myFilter)
@@ -17093,6 +17008,97 @@ if __name__ == "__main__":
 	MainWindow.show()
 	#http_Server = subprocess.Popen(['python','-m','http.server'])
 	print(tray.geometry(),'tray--geometry')
+	
+	
+	if len(sys.argv) == 2:
+		t = sys.argv[1]
+		print (t)
+		if ("file:///" in t or t.startswith('/')) and not t.endswith('.torrent') and not 'magnet:' in t:
+			quitReally="no"
+			print (t)
+			new_epn = t.split('/')[-1]
+			t = '"'+t+'"'
+			epn_name_in_list = urllib.parse.unquote(new_epn)
+			t = t.replace('file:///','/')
+			ui.watchDirectly(urllib.parse.unquote(t))
+			ui.dockWidget_3.hide()
+			site = "None"
+			ui.btn1.setCurrentIndex(0)
+			p = t.split('/')
+			length = len(p)-2
+			j = 1
+			path_Local_Dir = ""
+			m=[]
+			while j <= length:
+				path_Local_Dir = path_Local_Dir + '/' + p[j]
+				j = j+1
+			print (path_Local_Dir)
+			path_Local_Dir=urllib.parse.unquote(path_Local_Dir)
+			name =path_Local_Dir.split('/')[-1]
+			for r,d,f in os.walk(path_Local_Dir):
+				for z in f:
+					if '.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z or '.flv' in z or '.flac' in z:
+						m.append(r+'/'+z)
+			m=naturallysorted(m)
+			#print m
+			epnArrList[:]=[]
+			j = 0
+			row = 0
+			t = t.replace('"','')
+			t=urllib.parse.unquote(t)
+			try:
+				e = t.split('/')[-1]
+			except:
+				e = t.split('/')[-1]
+			for i in m:
+				i1 = i
+				i = i.split('/')[-1]
+				epnArrList.append(i+'	'+i1)
+				ui.list2.addItem((i))
+				i = i
+				if i == e:
+					row = j
+				j =j+1
+			ui.list2.setCurrentRow(row)
+			curR = row
+		elif t.endswith('.torrent'):
+			ui.torrent_type = 'file'
+			video_local_stream = True
+			site = 'None'
+			t = t.replace('file:///','/')
+			t=urllib.parse.unquote(t)
+			#print(t)
+			#t = os.getcwd()+'/'+t
+			print(t)
+			local_torrent_file_path = t
+			info = lt.torrent_info(t)
+			file_arr = []
+			ui.list2.clear()
+			epnArrList[:]=[]
+			QtGui.QApplication.processEvents()
+			for f in info.files():
+				file_path = f.path
+				print(file_path)
+				if '/' in f.path:
+					file_path = file_path.split('/')[-1]
+				epnArrList.append(file_path+'	'+t)
+				ui.list2.addItem((file_path))
+		elif 'magnet:' in t:
+			t = re.search('magnet:[^"]*',t).group()
+			site = 'None'
+			ui.torrent_type = 'magnet'
+			video_local_stream = True
+			ui.local_torrent_open(t)
+		else:
+			quitReally="yes"
+			new_epn = t.split('/')[-1]
+			t = '"'+t+'"'
+			epn_name_in_list = urllib.parse.unquote(new_epn)
+			#t = t.replace('file:///','/')
+			ui.watchDirectly(urllib.parse.unquote(t))
+			ui.dockWidget_3.hide()
+	
+	
 	ret = app.exec_()
 	if ui.dockWidget_3.isHidden():
 		dock_opt = 0
