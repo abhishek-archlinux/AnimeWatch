@@ -5,7 +5,7 @@ pkgrel=2
 pkgdesc="An Audio/Video Manager and Front End for mpv/mplayer with special emphasis on Anime Collection"
 arch=(any)
 license=('GPL3')
-depends=('python' 'python-pyqt4' 'python-pycurl' 'python-urllib3' 'curl' 'libnotify' 'python-dbus'
+depends=('python' 'python-pyqt4' 'python-pycurl' 'python-urllib3' 'curl' 'libnotify' 'python-dbus' 'libtorrent-rasterbar'
         'python-beautifulsoup4' 'python-psutil' 'python-pillow' 'python-lxml' 'mpv' 'mplayer' 'ffmpegthumbnailer' 'sqlite3' 'python-pytaglib')
 
 #source=("git+https://github.com/kanishka-linux/AnimeWatch.git")
@@ -23,7 +23,7 @@ package() {
   install -d "${pkgdir}/usr/share/applications/"
   install -d "${pkgdir}/usr/bin/"
   
-  install -Dm755 "${_bpath}"/{animeWatch.py,musicArtist.py,adb.py,1.png,input.conf,default.jpg,default.html,introspect.xml,stream.png} "${pkgdir}/usr/share/${_pkgname}/"
+  install -Dm755 "${_bpath}"/{animeWatch.py,musicArtist.py,adb.py,1.png,input.conf,default.jpg,introspect.xml,stream.py,tray.png} "${pkgdir}/usr/share/${_pkgname}/"
   cat "${_bpath}/AnimeWatch.desktop" | sed 's/Exec=/Exec=python -B \/usr\/share\/AnimeWatch\/animeWatch.py \%u/g' > "${pkgdir}/usr/share/applications/AnimeWatch.desktop"
   echo '#!/bin/bash' > "${pkgdir}/usr/bin/anime-watch"
   echo 'if [ -z "$1" ]; then python -B /usr/share/AnimeWatch/animeWatch.py; else python -B /usr/share/AnimeWatch/animeWatch.py "$(pwd)/$1"; fi' >> "${pkgdir}/usr/bin/anime-watch"
