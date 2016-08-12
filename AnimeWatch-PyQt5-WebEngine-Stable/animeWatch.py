@@ -121,7 +121,7 @@ def get_lan_ip():
 			try:
 				ip = get_interface_ip(ifname)
 				break
-			except IOError:
+			except:
 				pass
 	return ip
 
@@ -17122,7 +17122,9 @@ if __name__ == "__main__":
 		f.write("\nTORRENT_UPLOAD_RATE=0")
 		f.write("\nTORRENT_DOWNLOAD_RATE=0")
 		f.close()
-	
+		ui.local_ip = '127.0.0.1'
+		ui.local_port = 8001
+		
 	print(ui.torrent_download_limit,ui.torrent_upload_limit)
 	
 	arr_setting = []
