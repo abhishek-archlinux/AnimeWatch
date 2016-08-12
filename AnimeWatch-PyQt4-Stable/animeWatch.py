@@ -7300,9 +7300,9 @@ class Ui_MainWindow(object):
 			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt,iconv_r_indicator,iconv_r,curR,wget,Player,video_local_stream
 			if mpvplayer:
 				if video_local_stream:
-						if self.do_get_thread.isRunning():
-							print('----------stream-----pausing-----')
-							self.stream_session.pause()
+					if self.do_get_thread.isRunning():
+						print('----------stream-----pausing-----')
+						self.stream_session.pause()
 							
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
@@ -13152,7 +13152,7 @@ class Ui_MainWindow(object):
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path
 		
 		buffering_mplayer="no"
 		self.list4.hide()
@@ -13680,6 +13680,11 @@ class Ui_MainWindow(object):
 	def local_torrent_open(self,tmp):
 		global local_torrent_file_path
 		
+		if not self.local_ip:
+			self.local_ip = get_lan_ip()
+		if not self.local_port:
+			self.local_port = 8001
+		
 		ip = self.local_ip
 		port = int(self.local_port)
 		if not self.thread_server.isRunning():
@@ -13744,7 +13749,7 @@ class Ui_MainWindow(object):
 			return url
 			
 	def epnfound_return(self):
-		global site,base_url,embed,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list
+		global site,base_url,embed,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,video_local_stream
 		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,path_final_Url,siteName,finalUrlFound,refererNeeded,category
 	
 		epn = str(self.list2.currentItem().text())
