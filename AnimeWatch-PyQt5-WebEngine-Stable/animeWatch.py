@@ -6947,6 +6947,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
+		self.version_number = (2,5,0,0)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -6960,7 +6961,9 @@ class Ui_MainWindow(object):
 		self.search_term = ''
 		self.torrent_type = 'file'
 		self.torrent_handle = ''
-		self.download_folder = '/tmp/AnimeWatch'
+		self.torrent_upload_limit = 0
+		self.torrent_download_limit = 0
+		self.torrent_download_folder = '/tmp/AnimeWatch'
 		
 		
 		
@@ -13462,9 +13465,11 @@ class Ui_MainWindow(object):
 							if self.do_get_thread.isRunning():
 								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
 							else:
-								finalUrl,self.do_get_thread,self.stream_session = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.download_folder,self.stream_session)
+								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session)
 						else:
-							finalUrl,self.thread_server,self.do_get_thread,self.stream_session = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.download_folder,self.stream_session)
+							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session)
+						self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+						self.torrent_handle.set_download_limit(self.torrent_download_limit)
 
 					else:
 						finalUrl = site_var.getFinalUrl(name,epn,mirrorNo,quality)
@@ -13881,7 +13886,7 @@ class Ui_MainWindow(object):
 			if tmp.startswith('magnet:'):
 				from stream import get_torrent_info_magnet
 				print('------------magnet-----------')
-				path = self.download_folder
+				path = self.torrent_download_folder
 				torrent_dest = local_torrent_file_path
 				print(torrent_dest,path)
 				
@@ -13897,10 +13902,12 @@ class Ui_MainWindow(object):
 					epnArrList.append(file_path+'	'+path)
 					ui.list2.addItem((file_path))
 				self.torrent_handle.pause()
+				self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+				self.torrent_handle.set_download_limit(self.torrent_download_limit)
 			else:
 				index = int(self.list2.currentRow())
 				
-				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.download_folder,self.stream_session)
+				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.torrent_download_folder,self.stream_session)
 				
 				self.do_get_thread = TorrentThread(self.torrent_handle,cnt,cnt_limit,self.stream_session)
 				self.do_get_thread.start()
@@ -13915,13 +13922,16 @@ class Ui_MainWindow(object):
 			index = int(self.list2.currentRow())
 			
 				
-			path = self.download_folder
+			path = self.torrent_download_folder
 			
 			
 			torrent_dest = local_torrent_file_path
 			print(torrent_dest,index,path)
 			
-			handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session)
+			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session)
+			
+			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+			self.torrent_handle.set_download_limit(self.torrent_download_limit)
 			
 			self.do_get_thread = TorrentThread(handle,cnt,cnt_limit,self.stream_session)
 			self.do_get_thread.start()
@@ -15082,9 +15092,11 @@ class Ui_MainWindow(object):
 							if self.do_get_thread.isRunning():
 								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
 							else:
-								finalUrl,self.do_get_thread,self.stream_session = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Already Running',self.download_folder,self.stream_session)
+								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Already Running',self.torrent_download_folder,self.stream_session)
 						else:
-							finalUrl,self.thread_server,self.do_get_thread,self.stream_session = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.download_folder,self.stream_session)
+							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session)
+						self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+						self.torrent_handle.set_download_limit(self.torrent_download_limit)
 					else:
 						finalUrl = site_var.getFinalUrl(name,epn,mirrorNo,quality)
 				except:
@@ -16844,6 +16856,8 @@ if __name__ == "__main__":
 	pos_y = 0
 	w_ht = 0
 	w_wdt = 50
+	old_version = (0,0,0,0)
+	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	try:
 		dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)
@@ -16913,14 +16927,7 @@ if __name__ == "__main__":
 	
 	if not os.path.exists(home+'/src/Plugins'):
 		os.makedirs(home+'/src/Plugins')
-		plugin_Dir = home+'/src/Plugins'
-		s_dir = '/usr/share/AnimeWatch/Plugins'
-		if os.path.exists(s_dir):
-			m_tmp = os.listdir(s_dir)
-			for i in m_tmp:
-				k = s_dir+'/'+i
-				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
-					shutil.copy(k,plugin_Dir)
+		
 						
 	if os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","r")
@@ -16929,7 +16936,21 @@ if __name__ == "__main__":
 		for i in lines:
 			if not i.startswith('#'):
 				j = i.split('=')[-1]
-				if "DefaultPlayer" in i:
+				if "VERSION_NUMBER" in i:
+					try:
+						j = j.replace('\n','')
+						j = j.replace('(','')
+						j = j.replace(')','')
+						j = j.replace(' ','')
+						k = j.split(',')
+						jr = []
+						for l in k:
+							jr.append(int(l))
+						old_version = tuple(jr)
+					except:
+						pass
+					print(old_version,'--version--')
+				elif "DefaultPlayer" in i:
 					
 					Player = re.sub('\n','',j)
 					cnt = ui.chk.findText(Player)
@@ -16941,26 +16962,6 @@ if __name__ == "__main__":
 						site_index = int(site_i)
 					
 					print(site_index,'--site-index--')
-				elif "TORRENT_STREAM_IP" in i:
-					j = re.sub('\n','',j)
-					j1 = j.split(':')
-					if len(j1) == 2:
-						if j1[0].lower()=='localhost':
-							ui.local_ip = '127.0.0.1'
-						else:
-							ui.local_ip = j1[0]
-						ui.local_port = int(j1[1])
-					else:
-						ui.local_ip = '127.0.0.1'
-						ui.local_port = 8001
-				elif "DOWNLOAD_FOLDER" in i:
-					j = re.sub('\n','',j)
-					if j.endswith('/'):
-						j = j[:-1]
-					if os.path.exists(j):
-						ui.download_folder = j
-					else:
-						ui.download_folder = '/tmp/AnimeWatch'
 				elif "Addon_Index" in i:
 					addon_i = re.sub('\n','',j)
 					if addon_i.isdigit():
@@ -17070,6 +17071,59 @@ if __name__ == "__main__":
 					for l in range(len(t_v)):
 						music_arr_setting[n] = int(t_v[l])
 						n = n+1
+	else:
+		f = open(home+"/config.txt","w")
+		f.write("DefaultPlayer=mpv")
+		f.close()
+	
+	if os.path.exists(home+'/torrent_config.txt'):
+		f = open(home+'/torrent_config.txt','r')
+		lines = f.readlines()
+		f.close()
+		for i in lines:
+			if not i.startswith('#'):
+				j = i.split('=')[-1]
+				if "TORRENT_STREAM_IP" in i:
+					j = re.sub('\n','',j)
+					j1 = j.split(':')
+					if len(j1) == 2:
+						if j1[0].lower()=='localhost':
+							ui.local_ip = '127.0.0.1'
+						else:
+							ui.local_ip = j1[0]
+						ui.local_port = int(j1[1])
+					else:
+						ui.local_ip = '127.0.0.1'
+						ui.local_port = 8001
+				elif "TORRENT_DOWNLOAD_FOLDER" in i:
+					j = re.sub('\n','',j)
+					if j.endswith('/'):
+						j = j[:-1]
+					if os.path.exists(j):
+						ui.torrent_download_folder = j
+					else:
+						ui.torrent_download_folder = '/tmp/AnimeWatch'
+				elif "TORRENT_UPLOAD_RATE" in i:
+					j = re.sub('\n','',j)
+					try:
+						ui.torrent_upload_limit = int(j)*1024
+					except:
+						ui.torrent_upload_limit = 0
+				elif "TORRENT_DOWNLOAD_RATE" in i:
+					j = re.sub('\n','',j)
+					try:
+						ui.torrent_download_limit = int(j)*1024
+					except:
+						ui.torrent_download_limit = 0
+	else:
+		f = open(home+'/torrent_config.txt','w')
+		f.write("TORRENT_STREAM_IP=127.0.0.1:8001")
+		f.write("\nTORRENT_DOWNLOAD_FOLDER=/tmp/AnimeWatch")
+		f.write("\nTORRENT_UPLOAD_RATE=0")
+		f.write("\nTORRENT_DOWNLOAD_RATE=0")
+		f.close()
+	
+	print(ui.torrent_download_limit,ui.torrent_upload_limit)
 	
 	arr_setting = []
 	
@@ -17116,10 +17170,22 @@ if __name__ == "__main__":
 	if os.path.exists(home+'/src/Plugins'):
 		sys.path.append(home+'/src/Plugins')
 		print ("plugins")
+		
+		if ui.version_number > old_version:
+			print(ui.version_number,'>',old_version)
+			plugin_Dir = home+'/src/Plugins'
+			s_dir = '/usr/share/AnimeWatch/Plugins'
+			if os.path.exists(s_dir):
+				m_tmp = os.listdir(s_dir)
+				for i in m_tmp:
+					k = s_dir+'/'+i
+					if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
+						shutil.copy(k,plugin_Dir)
+		
 		m = os.listdir(home+'/src/Plugins')
 		m.sort()
 		for i in m:
-			if '.py' in i and '.pyc' not in i:
+			if i.endswith('.py'):
 				i = i.replace('.py','')
 				if i != 'headlessBrowser' and i != 'headlessEngine' and i!='stream' and i!='local_ip':
 					addons_option_arr.append(i)
@@ -17359,19 +17425,11 @@ if __name__ == "__main__":
 	else:
 		show_hide_playlist = 1
 	if os.path.exists(home+"/config.txt"):
-		f = open(home+"/config.txt","r")
-		lines = f.readlines()
-		f.close()
-		torrent_stream_ip = 'TORRENT_STREAM_IP=localhost:8001'
-		for i in lines:
-			if 'torrent_stream_ip' in i.lower():
-				i = i.replace('\n','')
-				torrent_stream_ip = i
-				break
 				
 		print(Player)
 		f = open(home+"/config.txt","w")
-		f.write("DefaultPlayer="+Player)
+		f.write("VERSION_NUMBER="+str(ui.version_number))
+		f.write("\nDefaultPlayer="+Player)
 		if iconv_r_indicator:
 			iconv_r = iconv_r_indicator[0]
 		f.write("\nThumbnail_Size="+str(iconv_r))
@@ -17394,8 +17452,7 @@ if __name__ == "__main__":
 		f.write("\nLayout="+str(layout_mode))
 		f.write("\nDefault_Mode="+str(def_val))
 		f.write("\nMusic_Mode="+str(music_val))
-		f.write("\nDOWNLOAD_FOLDER="+str(ui.download_folder))
-		f.write("\n"+str(torrent_stream_ip))
+		
 		f.close()
 	if mpvplayer.pid()>0:
 		mpvplayer.kill()
