@@ -396,7 +396,7 @@ class KissAnime():
 				j = j + 1
 
 			return m
-	def getNextPage(self,opt,pgn,genre_num):
+	def getNextPage(self,opt,pgn,genre_num,name):
 		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
@@ -418,7 +418,7 @@ class KissAnime():
 
 			if m:
 				return m
-	def getPrevPage(self,opt,pgn,genre_num):
+	def getPrevPage(self,opt,pgn,genre_num,name):
 		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)

@@ -29,22 +29,23 @@ class NetWorkManager(QNetworkAccessManager):
 		super(NetWorkManager, self).__init__()
    
 	def createRequest(self, op, request, device = None ):
-		global lst
+		global block_list
 		try:
-			path = str(request.url().path())
+			path = str(request.url().toString())
 		except UnicodeEncodeError:
+			path = str(request.url().path())
 			pass
-		lower_case = path.lower()
+		lower_path = path.lower()
 		#lst = tuple(open("easylist.txt", 'r'))
-		lst = ["doubleclick.net" ,"ads", r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","google","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
+		block_list = ["doubleclick.net" ,"ads", r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
 		block = False
-		for l in lst:
-			if lower_case.find(l) != -1:
+		for l in block_list:
+			if l in lower_path:
 				block = True
 				break
 		if block:
 			print ("Skipping")
-			print (request.url().path())
+			print (path)
 			return QNetworkAccessManager.createRequest(self, QNetworkAccessManager.GetOperation, QtNetwork.QNetworkRequest(QtCore.QUrl()))
 		else:
 			return QNetworkAccessManager.createRequest(self, op, request, device)
