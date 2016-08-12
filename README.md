@@ -16,6 +16,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Addons (Plugins) Structure] (#addon-structure)
 
+[Torrent Streaming] (#torrent-streaming)
+
 [Dependencies and Installation](#dependencies-and-installation)
 
 [Troubleshooting](#troubleshooting)
@@ -98,6 +100,18 @@ This player is made mainly for GNU/Linux systems. But probably it may work on BS
 
 It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
+## Torrent Streaming
+######[Index](#index)
+Torrent Streaming feature has been included since version 2.5.0-0. Now it is possible to play audio/video torrent directly with this player similar to any streaming media. By default the torrent will stream at 'http://127.0.0.1:8001', which is address of your local machine. You can change this default streaming IP and port location by manually editing 'torrent_config.txt' file located in '~/.config/AnimeWatch'. If you set 'TORRENT_STREAM_IP' field to your local IP address which normally starts with something like '192.168.x.y' (You can check default ip using 'ifconfig' command), then it is possible to access the playing media from any device on your local network. For example, if the media is being played at computer A with TORRENT_STREAM_IP set to your default local ip address '192.168.1.1:9001', then you can access that media from computer B on the same network by simply connecting to 'http://192.168.2.1:9001'. If you have mplayer or mpv installed on computer B , then you can simply type the command 'mplayer http://192.168.2.1:9001' on that computer, to access the media which is being streamed on computer A. 
+
+In 'torrent_config.txt' you can set some other fields like upload , download rate in (KBps) and default download location.
+
+Now with inclusion of torrent streaming feature, it's possible to write addons based on torrenting capability.
+
+Torrent file can be directly played by opening it with AnimeWatch using right-click context menu. If you've installed AnimeWatch using .deb or AUR package, then you can use command 'anime-watch path_to.torrent' to open torrent file, or 'anime-watch magnet_link' for opening magnet links. Those who have installed the player using common method, have to use the command 'python -B ~/.config/AnimeWatch/animeWatch.py path_to.torrent_or_magnet_link'.
+
+This feature is based on libtorrent-rasterbar {which is being used by bittorrent clients like qBittorrent and deluge} and it's python3 bindings. If you've installed latest version of libtorrent-rasterbar then python3 bindings are included along with it. In systems where older version of libtorrent-rasterbar is installed (for example in Ubuntu 14.04) , users need to install python3-libtorrent to use this feature.  
+
 ## Dependencies and Installation
 ######[Index](#index)
 1. Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
@@ -141,6 +155,10 @@ python-psutil
 
 curl
 
+libtorrent-rasterbar {since version 2.5.0-0}
+
+python3-libtorrent (for Ubuntu 14.04, since version 2.5.0-0)
+
 ~~python-requests { Not required for version >= 2.1.1-1}~~
 
 ~~wget { Not required for version >= 2.0.0-1}~~
@@ -153,14 +171,14 @@ curl
 
 ###Dependencies installation in Arch.
 
-sudo pacman -S python python-pyqt4 python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3
+sudo pacman -S python python-pyqt4 python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3 libtorrent-rasterbar
 
 If you want to try PyQt5 Experimental Version then install 'python-pyqt5' package also.
 
 
 ###In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
 
-sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3
+sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent
 
 
 PyQt5 version can't work on Ubuntu since qt5-webengine is not available on it as dependency.
