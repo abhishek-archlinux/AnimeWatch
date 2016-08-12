@@ -13748,7 +13748,7 @@ class Ui_MainWindow(object):
 			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 			self.torrent_handle.set_download_limit(self.torrent_download_limit)
 			
-			self.do_get_thread = TorrentThread(handle,cnt,cnt_limit,self.stream_session)
+			self.do_get_thread = TorrentThread(self.torrent_handle,cnt,cnt_limit,self.stream_session)
 			self.do_get_thread.start()
 			
 			
