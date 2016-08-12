@@ -170,9 +170,9 @@ class Nyaa():
 		url = 'http://'+ip+':'+str(port)+'/'
 		print(url,'-local-ip-url')
 		if status.lower() == 'first run':
-			return url,thread_server,torrent_thread,ses
+			return url,thread_server,torrent_thread,ses,handle
 		else:
-			return url,torrent_thread,ses
+			return url,torrent_thread,ses,handle
 		
 	def process_page(self,url):
 		content = ccurl(url)
