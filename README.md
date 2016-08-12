@@ -14,9 +14,9 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Minimal Music Player](#minimal-music-player)
 
-[Addons (Plugins) Structure] (#addon-structure)
+[Torrent Streaming Player] (#torrent-streaming)
 
-[Torrent Streaming] (#torrent-streaming)
+[Addons (Plugins) Structure] (#addon-structure)
 
 [Dependencies and Installation](#dependencies-and-installation)
 
