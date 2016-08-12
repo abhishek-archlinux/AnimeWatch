@@ -16713,7 +16713,7 @@ if __name__ == "__main__":
 						old_version = tuple(jr)
 					except:
 						pass
-					print(old_version,'--old--version--')
+					print(old_version,'--version--')
 				elif "DefaultPlayer" in i:
 					Player = re.sub('\n','',j)
 					cnt = ui.chk.findText(Player)
@@ -16927,7 +16927,7 @@ if __name__ == "__main__":
 	if os.path.exists('/usr/share/AnimeWatch'):
 		sys.path.append('/usr/share/AnimeWatch')
 	
-	
+	"""
 	if not os.path.exists(home+'/src/Plugins'):
 		os.makedirs(home+'/src/Plugins')
 		
@@ -16939,6 +16939,7 @@ if __name__ == "__main__":
 				k = s_dir+'/'+i
 				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
 					shutil.copy(k,plugin_Dir)
+	"""
 	
 	if os.path.exists(home+'/src/Plugins'):
 		sys.path.append(home+'/src/Plugins')
