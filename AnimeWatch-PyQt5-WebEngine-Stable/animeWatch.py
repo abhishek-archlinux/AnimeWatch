@@ -6947,7 +6947,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (2,5,0,0)
+		self.version_number = (2,5,0,1)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -16927,7 +16927,16 @@ if __name__ == "__main__":
 	
 	if not os.path.exists(home+'/src/Plugins'):
 		os.makedirs(home+'/src/Plugins')
-		
+		sys.path.append(home+'/src/Plugins')
+		plugin_Dir = home+'/src/Plugins'
+		s_dir = '/usr/share/AnimeWatch/Plugins'
+		if os.path.exists(s_dir):
+			m_tmp = os.listdir(s_dir)
+			for i in m_tmp:
+				k = s_dir+'/'+i
+				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
+					shutil.copy(k,plugin_Dir)
+					print ("addons loading....")
 						
 	if os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","r")
@@ -16949,7 +16958,7 @@ if __name__ == "__main__":
 						old_version = tuple(jr)
 					except:
 						pass
-					print(old_version,'--version--')
+					#print(old_version)
 				elif "DefaultPlayer" in i:
 					
 					Player = re.sub('\n','',j)
@@ -17183,6 +17192,7 @@ if __name__ == "__main__":
 					k = s_dir+'/'+i
 					if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
 						shutil.copy(k,plugin_Dir)
+						print('Addons loading ....')
 		
 		m = os.listdir(home+'/src/Plugins')
 		m.sort()

@@ -7035,7 +7035,7 @@ class Ui_MainWindow(object):
 		#self.gridLayout.addLayout(self.VerticalLayoutLabel,1, 1, 1, 1)
 		#self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
 		
-		self.version_number = (2,5,0,0)
+		self.version_number = (2,5,0,1)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.player_setLoop_var = 0
@@ -16691,7 +16691,16 @@ if __name__ == "__main__":
 	
 	if not os.path.exists(home+'/src/Plugins'):
 		os.makedirs(home+'/src/Plugins')
-		
+		sys.path.append(home+'/src/Plugins')
+		plugin_Dir = home+'/src/Plugins'
+		s_dir = '/usr/share/AnimeWatch/Plugins'
+		if os.path.exists(s_dir):
+			m_tmp = os.listdir(s_dir)
+			for i in m_tmp:
+				k = s_dir+'/'+i
+				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
+					shutil.copy(k,plugin_Dir)
+					print('Addons loading ....')
 	
 	if os.path.exists(home+"/config.txt"):
 		f = open(home+"/config.txt","r")
@@ -16929,19 +16938,8 @@ if __name__ == "__main__":
 	if os.path.exists('/usr/share/AnimeWatch'):
 		sys.path.append('/usr/share/AnimeWatch')
 	
-	"""
-	if not os.path.exists(home+'/src/Plugins'):
-		os.makedirs(home+'/src/Plugins')
 		
-		plugin_Dir = home+'/src/Plugins'
-		s_dir = '/usr/share/AnimeWatch/Plugins'
-		if os.path.exists(s_dir):
-			m_tmp = os.listdir(s_dir)
-			for i in m_tmp:
-				k = s_dir+'/'+i
-				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
-					shutil.copy(k,plugin_Dir)
-	"""
+	
 	
 	if os.path.exists(home+'/src/Plugins'):
 		sys.path.append(home+'/src/Plugins')
@@ -16957,6 +16955,7 @@ if __name__ == "__main__":
 					k = s_dir+'/'+i
 					if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
 						shutil.copy(k,plugin_Dir)
+						print('Addons loading ....')
 		
 		m = os.listdir(home+'/src/Plugins')
 		m.sort()
