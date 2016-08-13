@@ -114,6 +114,8 @@ Torrent file can be directly played by opening it with AnimeWatch using right-cl
 
 This feature is based on libtorrent-rasterbar {which is being used by bittorrent clients like qBittorrent and deluge} and it's python3 bindings. If you've installed latest version of libtorrent-rasterbar then python3 bindings are included along with it. In systems where older version of libtorrent-rasterbar is installed (for example in Ubuntu 14.04) , users need to install python3-libtorrent to use this feature.  
 
+If you are using mpv as backend for watching streaming torrent then it might be possible that seeking within the stream won't work. Therefore, in order to enable seeking within torrent stream forcibly using mpv, open '~/.mpv/config' file and insert line 'force-seekable=yes' into it. Seeking within torrent is not perfect, and sometime playback stops. In such case, first focus the video by taking mouse pointer over the video and press key 'q' to quit the current playing instance, and then restart the video again. If you click 'Stop' button in the AnimeWatch player, then along with quitting current playing instance, it will stop Torrent also. Therefore, if you want torrent to continue, and only restart of the the internal player then use key 'q'.
+
 ## Dependencies and Installation
 ######[Index](#index)
 1. Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
