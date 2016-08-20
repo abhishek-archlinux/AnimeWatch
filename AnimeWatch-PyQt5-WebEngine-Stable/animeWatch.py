@@ -61,9 +61,6 @@ except:
 from musicArtist import musicArtist
 from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
-from socketserver import ThreadingMixIn,TCPServer
-
 from PyQt5 import QtDBus
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,
                           pyqtProperty)
@@ -254,118 +251,6 @@ def ccurl(url):
 
 
 
-class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
-	
-	def do_GET(self):
-		global current_playing_file_path
-		print(self.path)
-		path = self.path.replace('/','')
-		if path.lower() == 'play':
-			
-			self.row = ui.list2.currentRow()
-			if self.row < 0:
-				self.row = 0
-			nm = ui.epn_return(self.row)
-			if nm.startswith('http'):
-				self.send_response(303)
-				self.send_header('Location',nm)
-				self.end_headers()
-			else:
-				#ui.list2.setCurrentRow(self.row)
-				self.send_response(200)
-				self.send_header('Content-type','video/mp4')
-				self.end_headers()
-				#nm = current_playing_file_path
-				nm = nm.replace('"','')
-				#nm = nm.replace("'",'')
-				f = open(nm,'rb')
-				content = f.read()
-				self.wfile.write(content)
-				#time.sleep(1)
-				f.close()
-			
-		elif path.lower() == 'next':
-			self.row = ui.list2.currentRow()+1
-			if self.row < 0:
-				self.row = 0
-			nm = ui.epn_return(self.row)
-			ui.list2.setCurrentRow(self.row)
-			if nm.startswith('http'):
-				self.send_response(303)
-				self.send_header('Location',nm)
-				self.end_headers()
-			else:
-				self.send_response(200)
-				self.send_header('Content-type','video/mp4')
-				self.end_headers()
-				#nm = current_playing_file_path
-				nm = nm.replace('"','')
-				#nm = nm.replace("'",'')
-				f = open(nm,'rb')
-				content = f.read()
-				self.wfile.write(content)
-				#time.sleep(1)
-				f.close()
-		elif path.lower() == 'prev':
-			self.row = ui.list2.currentRow()-1
-			if self.row < 0:
-				self.row = 0
-			nm = ui.epn_return(self.row)
-			ui.list2.setCurrentRow(self.row)
-			if nm.startswith('http'):
-				self.send_response(303)
-				self.send_header('Location',nm)
-				self.end_headers()
-			else:
-				self.send_response(200)
-				self.send_header('Content-type','video/mp4')
-				self.end_headers()
-				#nm = current_playing_file_path
-				nm = nm.replace('"','')
-				#nm = nm.replace("'",'')
-				f = open(nm,'rb')
-				content = f.read()
-				self.wfile.write(content)
-				#time.sleep(1)
-				f.close()
-		else:
-			nm = 'index.html'
-			self.send_header('Content-type','text/html')
-		
-		
-		return 0
-
-class ThreadedHTTPServerLocal(ThreadingMixIn, HTTPServer):
-	pass
-
-class MyTCPServer(TCPServer):
-	def server_bind(self):
-		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		try:
-			self.socket.bind(self.server_address)
-		except:
-			pass
-
-class ThreadServerLocal(QtCore.QThread):
-	
-	def __init__(self,ip,port):
-		
-		QtCore.QThread.__init__(self)
-		self.ip = ip
-		self.port = int(port)
-	def __del__(self):
-		self.wait()                        
-	
-	def run(self):
-		global httpd
-		print('starting server...')
-		server_address = (self.ip,self.port)
-		#httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
-		httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
-		print('running server...at..'+self.ip+':'+str(self.port))
-		#httpd.allow_reuse_address = True
-		httpd.serve_forever()
-		print('quitting http server')
 
 
 class MprisServer(dbus.service.Object):
@@ -6689,7 +6574,7 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_player_opt.insertWidget(9,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server']
+		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)']
 		self.action_player_menu =[]
 		for i in self.player_menu_option:
 			self.action_player_menu.append(self.player_menu.addAction(i, lambda x=i:self.playerPlaylist(x)))
@@ -7062,7 +6947,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (2,6,0,0)
+		self.version_number = (2,5,0,1)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -7071,12 +6956,8 @@ class Ui_MainWindow(object):
 		self.thread_server = QtCore.QThread()
 		self.do_get_thread = QtCore.QThread()
 		self.stream_session = ''
-		self.start_streaming = False
-		self.local_http_server = QtCore.QThread()
 		self.local_ip = ''
 		self.local_port = ''
-		self.local_ip_stream = ''
-		self.local_port_stream = ''
 		self.search_term = ''
 		self.torrent_type = 'file'
 		self.torrent_handle = ''
@@ -7126,8 +7007,8 @@ class Ui_MainWindow(object):
 		self.comboView.addItem(_fromUtf8(""))
 		self.comboView.addItem(_fromUtf8(""))
 		QtWidgets.QShortcut(QtGui.QKeySequence("Shift+F"), MainWindow, self.fullscreenToggle)
-		QtWidgets.QShortcut(QtGui.QKeySequence("Shift+L"), MainWindow, self.setPlayerFocus)
-		QtWidgets.QShortcut(QtGui.QKeySequence("Shift+G"), MainWindow, self.dockShowHide)
+		QtWidgets.QShortcut(QtGui.QKeySequence("L"), MainWindow, self.setPlayerFocus)
+		QtWidgets.QShortcut(QtGui.QKeySequence("G"), MainWindow, self.dockShowHide)
 		#QtGui.QShortcut(QtGui.QKeySequence("Y"), MainWindow, self.textShowHide)
 		#QtGui.QShortcut(QtGui.QKeySequence("U"), MainWindow, self.epnShowHide)
 		#QtGui.QShortcut(QtGui.QKeySequence("Q"), MainWindow, self.mpvQuit)
@@ -7655,8 +7536,8 @@ class Ui_MainWindow(object):
 		
 					
 	def playerPlaylist(self,val):
-		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player,Player,httpd
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server']
+		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player,Player
+		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)']
 		#txt = str(self.player_playlist.text())
 		#playlist_show = 1-playlist_show
 		#self.action[]
@@ -7755,25 +7636,6 @@ class Ui_MainWindow(object):
 			else:
 				self.tab_5.hide()
 				show_hide_player = 0
-		elif val =="Start Media Server":
-			v= str(self.action_player_menu[9].text())
-			if v == 'Start Media Server':
-				self.start_streaming = True
-				self.action_player_menu[9].setText("Stop Media Server")
-				if not self.local_http_server.isRunning():
-					if not self.local_ip_stream:
-						self.local_ip_stream = '127.0.0.1'
-						self.local_port_stream = 9001
-					self.local_http_server = ThreadServerLocal(self.local_ip_stream,self.local_port_stream)
-					self.local_http_server.start()
-					msg = 'Media Server Started at \n http://'+self.local_ip_stream+':'+str(self.local_port_stream)
-					subprocess.Popen(["notify-send",msg])
-			elif v == 'Stop Media Server':
-				self.start_streaming = False
-				self.action_player_menu[9].setText("Start Media Server")
-				if self.local_http_server.isRunning():
-					httpd.shutdown()
-					self.local_http_server.quit()
 		elif site == "Music" or site == "Local" or site == "Video" or site == "PlayLists":
 			if val == "Order by Name(Descending)":
 				try:
@@ -14071,7 +13933,7 @@ class Ui_MainWindow(object):
 			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 			self.torrent_handle.set_download_limit(self.torrent_download_limit)
 			
-			self.do_get_thread = TorrentThread(self.torrent_handle,cnt,cnt_limit,self.stream_session)
+			self.do_get_thread = TorrentThread(handle,cnt,cnt_limit,self.stream_session)
 			self.do_get_thread.start()
 			
 			
@@ -14182,116 +14044,6 @@ class Ui_MainWindow(object):
 			
 			#finalUrl = finalUrl.decode('utf8')
 		path_final_Url = finalUrl
-		
-	def epn_return(self,row):
-		global site,base_url,embed,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,video_local_stream
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,path_final_Url,siteName,finalUrlFound,refererNeeded,category
-	
-		#epn = str(self.list2.currentItem().text())
-		#epn_name_in_list = epn
-		#epn = epn.replace('#','')
-		item = self.list2.item(row)
-		if item:
-			epn = item.text()
-			epn_name_in_list = epn
-			epn = epn.replace('#','')
-		else:
-			return 0
-		if '	' in epnArrList[row]:
-			epn = (epnArrList[row]).split('	')[1]
-	
-		
-		
-		if (site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" and finalUrlFound == False and site!= "None" and site != "Music" and site != "Video" and site !="Local"):
-		
-			
-			if site != "Local":
-				#cmd = site +"()"
-				#site_var=eval(cmd)
-				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
-				site_var = getattr(module,site)()
-				try:
-					if video_local_stream:
-						finalUrl = site_var.getFinalUrl(name,row,mirrorNo,quality)
-					else:
-						finalUrl = site_var.getFinalUrl(name,epn,mirrorNo,quality)
-				except:
-					return 0
-				del site_var
-			elif site == "Local":
-				#finalUrl = '"'+path_Local_Dir+'/'+epn+'"'
-				#finalUrl = re.sub(' ','\ ',finalUrl)
-				if '	' in epnArrList[row]:
-					finalUrl = '"'+(epnArrList[row]).split('	')[1]+'"'
-				
-				else:
-					finalUrl = '"'+(epnArrList[row]).replace('#','')+'"'
-				#finalUrl = finalUrl.decode('utf8')
-		elif finalUrlFound == True:
-				row_num = self.list2.currentRow()
-			
-				final = epnArrList[row_num]
-				print (final)
-			
-				finalUrl = []
-				if '	' in final:
-					final = final.replace('#','')
-					final = final.split('	')[1]
-				else:
-					final=re.sub('#','',final)
-				#final = final.decode('utf8')
-				finalUrl.append(final)
-				if refererNeeded == True:
-					if '	' in epnArrList[-1]:
-						rfr_url = epnArrList[-1].split('	')[1]
-					else:
-						rfr_url = epnArrList[-1]
-					print (rfr_url)
-					finalUrl.append(rfr_url)
-		elif site == "SubbedAnime" or site == "DubbedAnime":
-		
-			if site == "SubbedAnime":
-				code = 6
-			
-				if base_url == 16:
-				
-					epn_t = epn.split(' ')[1]
-					new_epn = epn.split(' ')[0]
-				else:
-				
-					epn_t = epn
-				#cmd = site +"()"
-				#site_var=eval(cmd)
-				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
-				site_var = getattr(module,site)()
-				if site_var:
-					try:
-						finalUrl = site_var.getFinalUrl(siteName,name,epn,mirrorNo,category,quality) 
-					except:
-						return 0
-			elif site == "DubbedAnime":
-				code = 5
-				#epn = self.list2.currentItem().text()
-				#cmd = site +"()"
-				#site_var=eval(cmd)
-				module = imp.load_source(site,home+'/src/Plugins/'+site+'.py')
-				site_var = getattr(module,site)()
-				if site_var:
-					try:
-						finalUrl = site_var.getFinalUrl(siteName,name,epn,mirrorNo,quality) 
-					except:
-						return 0
-	
-		elif site=="None" or site == "Music" or site == "Video" or site == "Local":
-			if '	' in epnArrList[row]:
-				finalUrl = '"'+(epnArrList[row]).split('	')[1]+'"'
-				
-			else:
-				finalUrl = '"'+(epnArrList[row]).replace('#','')+'"'
-			
-			#finalUrl = finalUrl.decode('utf8')
-		#path_final_Url = finalUrl
-		return finalUrl
 	
 	def watchDirectly(self,finalUrl):
 		global site,base_url,idw,quitReally,mpvplayer,Player
@@ -17381,31 +17133,6 @@ if __name__ == "__main__":
 		f.close()
 		ui.local_ip = '127.0.0.1'
 		ui.local_port = 8001
-		
-	if os.path.exists(home+'/other_options.txt'):
-		f = open(home+'/other_options.txt','r')
-		lines = f.readlines()
-		f.close()
-		for i in lines:
-			j = i.split('=')[-1]
-			if "LOCAL_STREAM_IP" in i:
-				j = re.sub('\n','',j)
-				j1 = j.split(':')
-				if len(j1) == 2:
-					if j1[0].lower()=='localhost':
-						ui.local_ip_stream = '127.0.0.1'
-					else:
-						ui.local_ip_stream = j1[0]
-					ui.local_port_stream = int(j1[1])
-				else:
-					ui.local_ip_stream = '127.0.0.1'
-					ui.local_port_stream = 9001
-	else:
-		f = open(home+'/other_options.txt','w')
-		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
-		f.close()
-		ui.local_ip_stream = '127.0.0.1'
-		ui.local_port_stream = 9001
 		
 	print(ui.torrent_download_limit,ui.torrent_upload_limit)
 	
