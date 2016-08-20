@@ -16,6 +16,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Torrent Streaming Player] (#torrent-streaming)
 
+[Media Server](#media-server)
+
 [Addons (Plugins) Structure] (#addon-structure)
 
 [Dependencies and Installation](#dependencies-and-installation)
@@ -94,7 +96,7 @@ It is not very powerful music organizer, but provide certain decent functionalit
 
 ## Torrent Streaming
 ######[Index](#index)
-Torrent Streaming feature has been included since version 2.5.0-0. Now it is possible to play audio/video torrent directly with this player similar to any streaming media. By default the torrent will stream at 'http://127.0.0.1:8001', which is address of your local machine. You can change this default streaming IP and port location by manually editing 'torrent_config.txt' file located in '~/.config/AnimeWatch'. If you set 'TORRENT_STREAM_IP' field to your local IP address which normally starts with something like '192.168.x.y' (You can check default ip using 'ifconfig' command), then it is possible to access the playing media from any device on your local network. For example, if the media is being played at computer A with TORRENT_STREAM_IP set to your default local ip address '192.168.1.1:9001', then you can access that media from computer B on the same network by simply connecting to 'http://192.168.2.1:9001'. If you have mplayer or mpv installed on computer B , then you can simply type the command 'mplayer http://192.168.2.1:9001' on that computer, to access the media which is being streamed on computer A. 
+Torrent Streaming feature has been included since version 2.5.0-0. Now it is possible to play audio/video torrent directly with this player similar to any streaming media. By default the torrent will stream at 'http://127.0.0.1:8001', which is loop-back address of your local machine. You can change this default streaming IP and port location by manually editing 'torrent_config.txt' file located in '~/.config/AnimeWatch'. If you set 'TORRENT_STREAM_IP' field to your local network IP address which normally starts with something like '192.168.x.y' (You can check default ip using 'ifconfig' command), then it is possible to access the playing media from any device on your local network. For example, if the media is being played at computer A with TORRENT_STREAM_IP set to your default local ip address '192.168.1.1:8001', then you can access that media from computer B on the same network by simply connecting to 'http://192.168.2.1:8001'. If you have mplayer or mpv installed on computer B , then you can simply type the command 'mplayer http://192.168.2.1:8001' on that computer, to access the media which is being streamed on computer A. 
 
 In 'torrent_config.txt' you can set some other fields like upload , download rate in (KBps) and default download location.
 
@@ -105,6 +107,14 @@ Torrent file can be directly played by opening it with AnimeWatch using right-cl
 This feature is based on libtorrent-rasterbar {which is being used by bittorrent clients like qBittorrent and deluge} and it's python3 bindings. If you've installed latest version of libtorrent-rasterbar then python3 bindings are included along with it. In systems where older version of libtorrent-rasterbar is installed (for example in Ubuntu 14.04) , users need to install python3-libtorrent to use this feature.  
 
 If you are using mpv as backend for watching streaming torrent then it might be possible that seeking within the stream won't work. Therefore, in order to enable seeking within torrent stream forcibly using mpv, open '~/.mpv/config' file and insert line 'force-seekable=yes' into it. Seeking within torrent is not perfect, and sometime playback stops. In such case, first focus the video by taking mouse pointer over the video and press key 'q' to quit the current playing instance, and then restart the video again. If you click 'Stop' button in the AnimeWatch player, then along with quitting current playing instance, it will stop Torrent also. Therefore, if you want torrent to continue, and only restart of the the internal player then use key 'q'.
+
+## Media Server
+######[Index](#index)
+From version 2.6.0-0, it's possible to use AnimeWatch player as media server. The media server functionality can be started by clicking 'More' button, and selecting 'Start Media Server' option. By default media server will start on 'http://127.0.0.1:9001' i.e. default loop-back address of your machine. In order to use it as media server which can be accessed from any device on the same local network, you have to change this loop-back address '127.0.0.1' to your local network address which normally starts with '192.168.x.y'. You can check, default local network address using cli tools like 'ifconfig' on any gnu/linux based systems. Once you know local network address of your server, then manually edit '~/.config/AnimeWatch/other_options.txt' file and change the field "LOCAL_STREAM_IP" appropriately with local network address. Once you've set up the 'LOCAL_STREAM_IP' field properly, then you should be able to access the current playlist on the AnimeWatch, from any device on the network. 
+
+For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current selected file in the playlist at the address 'http://192.168.1.1/play'. Next and previous files in the playlist can be accessed using url's 'http://192.168.1.1/next' and 'http://192.168.1.1/prev' respectively.
+
+Note: This feature won't work with streaming torrent content, since streaming torrent utilizes another http server process different than that of media server process mentioned in this section. But you can still access torrent streams from other machines or devices as per the instructions given in [Torrent Streaming](#torrent-streaming) section.
 
 ## Addon Structure
 ######[Index](#index)
@@ -329,9 +339,9 @@ ao=pulse
 vo=opengl {or anything that works on your system}
 
 ###Some global Shortcuts:
-L : show/hide Player
+L : show/hide Player ('shift+L' in pyqt5 version)
 
-g : show/hide Settings column
+g : show/hide Settings column ('shift+G' in pyqt5 version)
 
 shift+f: fullscreen Application not the player
 
