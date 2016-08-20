@@ -261,15 +261,6 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		print(self.path)
 		path = self.path.replace('/','')
 		if path.lower() == 'play':
-			"""
-			nm = '/home/abhishek/Videos/NewVideos/Anime OP and ED/Fate_Stay_Night_UBW(ED) .mkv'
-			#self.send_header('Content-type','video/mp4')
-			#self.wfile.write(bytes(nm))
-			self.send_response(303)
-			self.send_header('Location',nm)
-			self.end_headers()
-			"""
-			
 			
 			self.row = ui.list2.currentRow()
 			if self.row < 0:
