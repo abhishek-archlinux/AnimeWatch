@@ -114,7 +114,7 @@ From version 2.6.0-0, it's possible to use AnimeWatch player as media server. Th
 
 For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current selected file in the playlist at the address 'http://192.168.1.1/play'. Next and previous files in the playlist can be accessed using url's 'http://192.168.1.1/next' and 'http://192.168.1.1/prev' respectively.
 
-Note: This feature won't work with streaming torrent content, since streaming torrent utilizes another http server process different than that of media server process mentioned in this section. But you can still access torrent streams from other machines or devices as per the instructions given in [Torrent Streaming](#torrent-streaming) section.
+Note: This feature won't work with streaming torrent content, since streaming torrent starts another http server process different than that of media server process mentioned in this section. You can access torrent streams from other machines or devices as per the instructions given in [Torrent Streaming](#torrent-streaming) section.
 
 ## Addon Structure
 ######[Index](#index)
