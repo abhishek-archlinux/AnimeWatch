@@ -197,16 +197,19 @@ def shrink_url(url):
 	if "linkshrink" in url:
 		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-I','-L',url])
 		#content = getContentUnicode(content)
-		content = ccurl(url+'#'+'-Icb'+'#'+'/tmp/animeWatch/link.txt')
+		content = ccurl(url+'#'+'-Icb'+'#'+'/tmp/AnimeWatch/link.txt')
 		print(content,'----linkshrink---------')
 		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-L',url])
 		#content = getContentUnicode(content)
-		content = ccurl(url+'#'+'-bc'+'#'+'/tmp/animeWatch/link.txt')
+		content = ccurl(url+'#'+'-bc'+'#'+'/tmp/AnimeWatch/link.txt')
 		print(content,'----linkshrink---------')
 		soup = BeautifulSoup(content)
 		shrink = soup.find('a',{'class':'bt'})
 		shrink_link = shrink['href']
-		content = ccurl(shrink_link+'#'+'-Ie'+'#'+url)
+		f = open('/tmp/AnimeWatch/link.txt','a')
+		f.write('\nlinkshrink.net	FALSE	/	FALSE	0	s32	1')
+		f.close()
+		content = ccurl(shrink_link+'#'+'-Ieb'+'#'+'/tmp/AnimeWatch/link.txt'+'#'+url)
 		m = re.findall('Location: [^\n]*', content)
 		#print(m
 		if m:
@@ -295,6 +298,10 @@ def ccurl(url):
 			rfr = nUrl.split('#')[2]
 		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
 			cookie_file = nUrl.split('#')[2]
+		elif curl_opt == '-Ieb':
+			cookie_file = nUrl.split('#')[2]
+			rfr = nUrl.split('#')[3]
+			
 	url = str(url)
 	print(url,'----------url------')
 	try:
@@ -316,12 +323,14 @@ def ccurl(url):
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.NOBODY, 1)
 			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
+		elif curl_opt == '-Ie' or curl_opt == '-Ieb':
 			c.setopt(c.FOLLOWLOCATION, True)
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(pycurl.REFERER, rfr)
 			c.setopt(c.NOBODY, 1)
 			c.setopt(c.HEADERFUNCTION, storage.write)
+			if curl_opt == '-Ieb':
+				c.setopt(c.COOKIEFILE,cookie_file)
 		elif curl_opt == '-IA':
 			c.setopt(c.FOLLOWLOCATION, True)
 			c.setopt(c.NOBODY, 1)
