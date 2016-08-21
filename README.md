@@ -64,6 +64,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 17. Torrent streaming player.
 
+18. Media Server capability.
+
 ## Normal Mode 
 ######[Index](#index)
 ![AnimeWatch](/Images/Video.png)
