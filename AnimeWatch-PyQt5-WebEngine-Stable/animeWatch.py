@@ -4374,7 +4374,7 @@ class List2(QtWidgets.QListWidget):
 			#print (epnArrList)
 			if os.path.exists(file_path):
 				i = self.currentRow()
-				f = open(file_path,'a')
+				#f = open(file_path,'a')
 				
 				sumr=epnArrList[i].split('	')[0]
 				
@@ -4389,7 +4389,6 @@ class List2(QtWidgets.QListWidget):
 				t = sumr+'	'+sumry+'	'+rfr_url
 				if os.stat(file_path).st_size == 0:
 					f = open(file_path,'w')
-					
 				else:
 					f = open(file_path,'a')
 					t = '\n'+t
@@ -4404,7 +4403,6 @@ class List2(QtWidgets.QListWidget):
 			sumr=str(epn_name_in_list)
 			if os.path.exists(file_path):
 				#f = open(file_path,'a')
-				
 				if type(path_final_Url) is list:
 					if finalUrlFound == True and refererNeeded == True:
 						rfr_url = path_final_Url[1]
