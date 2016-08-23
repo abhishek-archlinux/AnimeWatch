@@ -834,6 +834,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.page().profile().setPersistentStoragePath('/tmp/AnimeWatch')
 		self.page().linkHovered.connect(self.custom_links)
 		self.hoveredLink = ''
+		self.media_url = ''
 	def custom_links(self,q_url):
 		url = q_url
 		self.hoveredLink = url
@@ -874,16 +875,22 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.forward()
 		super(Browser, self).keyPressEvent(event)
 	def contextMenuEvent(self, event):
+		self.media_url = ''
 		menu = self.page().createStandardContextMenu()
-		#hit = self.page().currentFrame().hitTestContent(event.pos())
-		#url = hit.linkUrl()
-		#data = self.page().contextMenuData()
-		#print(data,'--media-url--')
+		try:
+			data = self.page().contextMenuData()
+			if data.mediaType() == 1:
+				self.media_url = data.mediaUrl().url()
+				print(data.mediaUrl().url(),'--media-url--image--')
+		except:
+			pass
 		url = self.hoveredLink
 		print(url)
 		arr = ['Download As Fanart','Download As Cover','Artist/Series Link','Season Episode Link']
 		action = []
-		if url:
+		if url or self.media_url:
+			if not url:
+				url = self.media_url
 			menu.addSeparator()
 			j = 0
 			for i in range(len(arr)):
@@ -896,8 +903,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					self.download(url,arr[i])
 			#j = j+1
 		#menu.exec_(event.globalPos())
-		
-		super(Browser, self).contextMenuEvent(event)
+		else:
+			super(Browser, self).contextMenuEvent(event)
 	def getContentUnicode(self,content):
 		if isinstance(content,bytes):
 			print("I'm byte")
@@ -912,22 +919,16 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		return content
 	def ccurlT(self,url,rfr):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	#	if rfr:
-	#		content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
-	#	else:
-	#		content = subprocess.check_output(['curl','-L','-A',hdr,url])
-			
-		#hdrs = {'user-agent':hdr}
-		#req = requests.get(url,headers=hdrs)
-		#content = req.text
-		#content = self.getContentUnicode(content)
 		content = ccurl(url)
 		return content
 	def download(self, url,option):
 		global site,epnArrList
 		print ("Hello")
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		url1 = str(url)
+		if url:
+			url1 = str(url)
+		else:
+			url1 = self.media_url
 		print (url1)
 		url_artist = url1
 		found = ""
@@ -942,6 +943,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			m = re.findall('Location: [^\n]*',t_content)
 			found = re.sub('Location: |\r','',m[0])
 			url1 = found
+			final_found = True
+		elif self.media_url:
+			url1 = self.media_url
 			final_found = True
 		print(url1,'----------image-url----------')
 		if site == "Music":
