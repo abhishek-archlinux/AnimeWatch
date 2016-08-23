@@ -881,6 +881,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			data = self.page().contextMenuData()
 			if data.mediaType() == 1:
 				self.media_url = data.mediaUrl().url()
+				if not self.media_url.startswith('http'):
+					self.media_url = ''
+					print('--no--image-url--')
 				print(data.mediaUrl().url(),'--media-url--image--')
 		except:
 			pass
@@ -947,6 +950,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif self.media_url:
 			url1 = self.media_url
 			final_found = True
+		else:
+			return 0
 		print(url1,'----------image-url----------')
 		if site == "Music":
 			if (ui.list3.currentItem().text())=="Artist":
