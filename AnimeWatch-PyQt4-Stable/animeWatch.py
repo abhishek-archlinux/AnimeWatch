@@ -2089,7 +2089,7 @@ class ExtendedQLabelEpn(QtGui.QLabel):
 			#print epnArrList
 			if os.path.exists(file_path):
 				i = ui.list2.currentRow()
-				f = open(file_path,'a')
+				#f = open(file_path,'a')
 				
 				sumr=epnArrList[i].split('	')[0]
 				
@@ -2101,7 +2101,12 @@ class ExtendedQLabelEpn(QtGui.QLabel):
 				sumry = epnArrList[i].split('	')[1]
 				sumry = sumry.replace('"','')
 				sumry = '"'+sumry+'"'
-				t = sumr+'	'+sumry+'	'+rfr_url+'\n'
+				t = sumr+'	'+sumry+'	'+rfr_url
+				if os.stat(file_path).st_size == 0:
+					f = open(file_path,'w')
+				else:
+					f = open(file_path,'a')
+					t = '\n'+t
 				try:
 					f.write(str(t))
 				except:
@@ -2109,28 +2114,47 @@ class ExtendedQLabelEpn(QtGui.QLabel):
 				f.close()
 		else:
 			ui.epnfound_return()
+			t = ''
 			sumr=epn_name_in_list
 			if os.path.exists(file_path):
-				f = open(file_path,'a')
+				#f = open(file_path,'a')
 				
 				if type(path_final_Url) is list:
 					if refererNeeded == True:
 						rfr_url = path_final_Url[1]
 						sumry = path_final_Url[0]
-						f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+						#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+						t = sumr+'	'+sumry+'	'+rfr_url
 					else:
 						rfr_url = "NONE"
 						j = 1
+						t = ''
 						for i in path_final_Url:
 							p = "-Part-"+str(j)
 							sumry = i
-							f.write(sumr+p+'	'+sumry+'	'+rfr_url+'\n')
+							#f.write(sumr+p+'	'+sumry+'	'+rfr_url+'\n')
+							if j == 1:
+								t = sumr+p+'	'+sumry+'	'+rfr_url
+							else:
+								t = t + '\n' + sumr+p+'	'+sumry+'	'+rfr_url
 							j = j+1
 				else:
 					rfr_url = "NONE"
 					
 					sumry = path_final_Url
-					f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+					#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+					t = sumr+'	'+sumry+'	'+rfr_url
+					
+				if os.stat(file_path).st_size == 0:
+					f = open(file_path,'w')
+				else:
+					f = open(file_path,'a')
+					t = '\n'+t
+				try:
+					f.write(str(t))
+				except:
+					f.write(t)
+					
 				f.close()	
 		
 	def contextMenuEvent(self, event):
@@ -3175,7 +3199,7 @@ class List1(QtGui.QListWidget):
 			
 			
 			if os.path.exists(file_path):
-				f = open(file_path,'a')
+				#f = open(file_path,'a')
 				
 				sumr=str(epnArrList[i].split('	')[0])
 				
@@ -3187,7 +3211,17 @@ class List1(QtGui.QListWidget):
 				sumry = str(epnArrList[i].split('	')[1])
 				sumry = sumry.replace('"','')
 				sumry = '"'+sumry+'"'
-				f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+				#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+				t = sumr+'	'+sumry+'	'+rfr_url
+				if os.stat(file_path).st_size == 0:
+					f = open(file_path,'w')
+				else:
+					f = open(file_path,'a')
+					t = '\n'+t
+				try:
+					f.write(str(t))
+				except:
+					f.write(t)
 				f.close()
 			
 	def contextMenuEvent(self, event):
@@ -3666,9 +3700,14 @@ class List2(QtGui.QListWidget):
 					del item
 					del epnArrList[row]
 					f = open(file_path,'w')
+					j = 0
 					for i in range(self.count()):
 						fname = epnArrList[i]
-						f.write(fname+'\n')
+						if j == 0:
+							f.write(fname)
+						else:
+							f.write('\n'+fname)
+						j = j+1
 					f.close()
 		#elif event.key() == QtCore.Qt.Key_Q: 
 		#	startPlayer = "No"
@@ -4281,7 +4320,7 @@ class List2(QtGui.QListWidget):
 			#print epnArrList
 			if os.path.exists(file_path):
 				i = self.currentRow()
-				f = open(file_path,'a')
+				#f = open(file_path,'a')
 				
 				sumr=epnArrList[i].split('	')[0]
 				
@@ -4293,39 +4332,61 @@ class List2(QtGui.QListWidget):
 				sumry = epnArrList[i].split('	')[1]
 				sumry = sumry.replace('"','')
 				sumry = '"'+sumry+'"'
-				t = sumr+'	'+sumry+'	'+rfr_url+'\n'
+				t = sumr+'	'+sumry+'	'+rfr_url
+				if os.stat(file_path).st_size == 0:
+					f = open(file_path,'w')
+				else:
+					f = open(file_path,'a')
+					t = '\n'+t
 				try:
 					f.write(str(t))
 				except:
 					f.write(t)
+				
 				f.close()
 		else:
 			ui.epnfound_return()
-			
+			t = ''
 			sumr=str(epn_name_in_list)
 			if os.path.exists(file_path):
-				f = open(file_path,'a')
-				
+				#f = open(file_path,'a')
 				if type(path_final_Url) is list:
 					if finalUrlFound == True and refererNeeded == True:
 						rfr_url = path_final_Url[1]
 						sumry = str(path_final_Url[0])
 						#sumry = sumry.replace('"','')
-						f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+						#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+						t = sumr+'	'+sumry+'	'+rfr_url
 					else:
 						rfr_url = "NONE"
 						j = 1
+						t = ''
 						for i in path_final_Url:
 							p = "-Part-"+str(j)
 							sumry = str(i)
-							f.write(sumr+p+'	'+sumry+'	'+rfr_url+'\n')
+							#f.write(sumr+p+'	'+sumry+'	'+rfr_url+'\n')
+							if j == 1:
+								t = sumr+p+'	'+sumry+'	'+rfr_url
+							else:
+								t = t + '\n' + sumr+p+'	'+sumry+'	'+rfr_url
 							j = j+1
 				else:
 					rfr_url = "NONE"
 					
 					sumry = str(path_final_Url)
 					#sumry = sumry.replace('"','')
-					f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+					#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
+					t = sumr+'	'+sumry+'	'+rfr_url
+					
+				if os.stat(file_path).st_size == 0:
+					f = open(file_path,'w')
+				else:
+					f = open(file_path,'a')
+					t = '\n'+t
+				try:
+					f.write(str(t))
+				except:
+					f.write(t)
 				f.close()
 		
 		
@@ -11024,18 +11085,28 @@ class Ui_MainWindow(object):
 				del j
 				if not '#' in i:
 					self.list2.insertItem(row,'#'+i)
+					epnArrList[row] = '#'+epnArrList[row]
 				else:
 					i = i.replace('#','')
-					self.list2.insertItem(row,i)	
+					self.list2.insertItem(row,i)
+					epnArrList[row] = epnArrList[row].replace('#','')
 				#self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				self.list2.setCurrentRow(row)
 				file_path = home+'/Playlists/'+str(self.list3.currentItem().text())
 				if os.path.exists(file_path):
 					f = open(file_path,'w')
+					k = 0
 					for i in range(self.list2.count()):
-						it = str(self.list2.item(i).text())
-						it = str(it)
-						f.write(it+'\n')
+						#it = str(self.list2.item(i).text())
+						#it = str(it)
+						#f.write(it+'\n')
+						it = epnArrList[i]
+						
+						if k == 0:
+							f.write(it)
+						else:
+							f.write('\n'+it)
+						k = k+1
 					f.close()
 		elif site == "Video":
 			row = self.list2.currentRow()
@@ -13278,6 +13349,7 @@ class Ui_MainWindow(object):
 			del j
 			if not '#' in i:
 				self.list2.insertItem(row,'#'+i)
+				epnArrList[row] = '#'+epnArrList[row]
 			else:
 				self.list2.insertItem(row,i)	
 			#self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
@@ -13285,11 +13357,15 @@ class Ui_MainWindow(object):
 			file_path = home+'/Playlists/'+str(self.list3.currentItem().text())
 			if os.path.exists(file_path):
 				f = open(file_path,'w')
+				k = 0
 				for i in range(self.list2.count()):
 					#it = str(self.list2.item(i).text())
 					it = epnArrList[i]
-					#it = it.encode('utf8')
-					f.write(it+'\n')
+					if k == 0:
+						f.write(it)
+					else:
+						f.write('\n'+it)
+					k = k+1
 				f.close()
 			
 	def epnfound(self):
