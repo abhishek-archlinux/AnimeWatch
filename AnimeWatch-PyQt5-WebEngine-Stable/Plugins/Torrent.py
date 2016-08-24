@@ -14,7 +14,8 @@ try:
 	import libtorrent as lt
 except:
 	pass
-from stream import ThreadServer,TorrentThread,get_torrent_info
+from stream import ThreadServer,TorrentThread,get_torrent_info,get_torrent_info_magnet
+from PyQt5 import QtWidgets
 import shutil
 #from hurry.filesize import size
 
@@ -132,17 +133,15 @@ def replace_all(text, di):
 
 
 
-class Nyaa():
+class Torrent():
 	def __init__(self):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	def getOptions(self):
-			criteria = ['Date','Seeders','Leechers','Downloads','History','LocalStreaming']
+			criteria = ['Open','History','LocalStreaming']
 			return criteria
 		
 	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session):
-		#nm = name.rsplit('-',1)
-		#name = nm[0]
-		#name_id = nm[1]
+		
 		index = int(epn)
 		ip_n = local_ip.rsplit(':',1)
 		ip = ip_n[0]
@@ -153,20 +152,15 @@ class Nyaa():
 			#ses = set_torrent_session()
 		path = path_folder
 		
-		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
+		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'
 		torrent_dest = home+name+'.torrent'
-		#home1 = os.path.expanduser('~')+'/.config/AnimeWatch/src/Plugins/stream.py'
 		print(torrent_dest,index,path)
 		
-		#handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path)
-		#print(get_torrent_info(torrent_dest,index,path))
-		#print('---before--error---164---')
+		
 		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session)
-		#print('---line--error---166---')
 		torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
 		torrent_thread.start()
 		
-		#p = subprocess.Popen(['python',home1,ip,str(port),torrent_dest,str(index),path])
 		
 		url = 'http://'+ip+':'+str(port)+'/'
 		print(url,'-local-ip-url')
@@ -175,65 +169,53 @@ class Nyaa():
 		else:
 			return url,torrent_thread,ses,handle
 		
-	def process_page(self,url):
-		content = ccurl(url)
-		soup = BeautifulSoup(content,'lxml')
-		#print(soup.prettify())
-		unit_element = soup.findAll('tr',{'class':'trusted tlistrow'})
-		#print(unit_element[0])
-		s = []
-		for i in unit_element:
-			j = i.find('td', {'class':'tlistname'})
-			try:
-				k = i.find('td', {'class':'tlistdownload'}).find('a')['href']
-				k = k.split('=')[-1]
-			except:
-				k = 'Download Not Available'
-			l = i.find('td', {'class':'tlistsize'})
-			m = i.find('td', {'class':'tlistsn'})
-			n = i.find('td', {'class':'tlistln'})
-			o = i.find('td', {'class':'tlistdn'})
-			try:
-				tmp = j.text.replace('_',' ')+'\nid='+k+' sz='+l.text+' se='+m.text+' le='+n.text+' dl='+o.text+'\n'
-			except:
-				tmp = 'Not Available'
-			print(tmp)
-			s.append(tmp)
-			
-		return s
 		
 	def search(self,name):
-		strname = str(name)
-		print(strname)
-		url = "https://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+strname
-		m = self.process_page(url)
+		m = ['Not Available']
 		return m
 		
 	def getCompleteList(self,opt,genre_num):
-		if opt == 'Date':
-			url = 'https://www.nyaa.se/?cats=1_37'
-		elif opt == 'Seeders':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=2'
-		elif opt == 'Leechers':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=3'
-		elif opt == 'Downloads':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
-			
-		m = self.process_page(url)
+		m = ['Not Able To Open']
+		if opt == 'Open':
+			MainWindow = QtWidgets.QWidget()
+			item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Torrent Url or Magnet Link or local torrent file path')
+			if ok and item:
+				if (item.startswith('http') or item.startswith('/')) and item.endswith('.torrent'):
+					home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'
+					name1 = item.split('/')[-1].replace('.torrent','')
+					torrent_dest1 = '/tmp/AnimeWatch/'+name1+'.torrent'
+					if not os.path.exists(torrent_dest1):
+						if item.startswith('http'):
+							ccurl(item+'#'+'-o'+'#'+torrent_dest1)
+						else:
+							shutil.copy(item,torrent_dest1)
+					if os.path.exists(torrent_dest1):
+						info = lt.torrent_info(torrent_dest1)
+						name = info.name()
+						torrent_dest = home+name+'.torrent'
+						shutil.copy(torrent_dest1,torrent_dest)
+					m = [name]
+				elif item.startswith('magnet:'):
+					
+					torrent_handle,stream_session,info = get_torrent_info_magnet(item,'/tmp/AnimeWatch')
+					torrent_file = lt.create_torrent(info)
+					
+					home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'
+					name = info.name()
+					torrent_dest = home+name+'.torrent'
+					
+					with open(torrent_dest, "wb") as f:
+						f.write(lt.bencode(torrent_file.generate()))
+						
+					torrent_handle.pause()
+					stream_session.pause()
+					m = [name]
 		return m
 	
 	def getEpnList(self,name,opt):
-		nm = name.rsplit('-',1)
-		#name = nm[0]
-		name_id = nm[1]
-		url = "https://www.nyaa.se/?page=download&tid=" + name_id
-		print(url)
 		summary = ""
-		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
+		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'
 		torrent_dest = home+name+'.torrent'
-		if not os.path.exists(torrent_dest):
-			ccurl(url+'#'+'-o'+'#'+torrent_dest)
-		
 		info = lt.torrent_info(torrent_dest)
 		file_arr = []
 		for f in info.files():
@@ -248,17 +230,5 @@ class Nyaa():
 		return file_arr
 
 	def getNextPage(self,opt,pgn,genre_num,name):
-		if opt == 'Date':
-			url = 'https://www.nyaa.se/?cats=1_37'
-		elif opt == 'Seeders':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=2'
-		elif opt == 'Leechers':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=3'
-		elif opt == 'Downloads':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
-		elif opt == 'Search':
-			url = "https://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+str(name)
-		url = url + '&offset='+str(pgn)
-		print(url)
-		m = self.process_page(url)
+		m = ['Nothing']
 		return m

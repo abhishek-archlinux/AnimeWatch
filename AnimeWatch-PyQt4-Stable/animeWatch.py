@@ -852,7 +852,8 @@ class Browser(QtWebKit.QWebView):
 		#found = False
 		action = []
 		self.img_url = hit.imageUrl()
-		if url.isEmpty() and self.img_url:
+		print(self.img_url.toString(),url)
+		if (url.isEmpty() or not url.toString().startswith('http')) and self.img_url:
 			url = self.img_url
 		if not url.isEmpty() or self.img_url:
 			menu.addSeparator()
@@ -861,7 +862,7 @@ class Browser(QtWebKit.QWebView):
 				action.append(menu.addAction(arr[i]))
 				
 			act = menu.exec_(event.globalPos())
-			
+			#print
 			for i in range(len(action)):
 				if act == action[i]:
 					self.download(url,arr[i])
@@ -11278,7 +11279,7 @@ class Ui_MainWindow(object):
 			self.update_list2()
 		
 	def deleteHistory(self):
-		global opt,site,name,pre_opt,home,bookmark,base_url,embed,status,siteName,original_path_name
+		global opt,site,name,pre_opt,home,bookmark,base_url,embed,status,siteName,original_path_name,video_local_stream
 		epn = self.list1.currentItem().text()
 		row = self.list1.currentRow()
 		nepn = str(epn) + "\n"
@@ -11362,6 +11363,10 @@ class Ui_MainWindow(object):
 					print (dir_name)
 				if os.path.exists(dir_name):
 					shutil.rmtree(dir_name)
+					if video_local_stream:
+						torrent_file = dir_name+'.torrent'
+						if os.path.exists(torrent_file):
+							os.remove(torrent_file)
 				self.list1.takeItem(row)
 				
 				del item

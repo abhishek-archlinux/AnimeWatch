@@ -11405,7 +11405,7 @@ class Ui_MainWindow(object):
 			self.update_list2()
 		
 	def deleteHistory(self):
-		global opt,site,name,pre_opt,home,bookmark,base_url,embed,status,siteName,original_path_name
+		global opt,site,name,pre_opt,home,bookmark,base_url,embed,status,siteName,original_path_name,video_local_stream
 		epn = self.list1.currentItem().text()
 		row = self.list1.currentRow()
 		nepn = str(epn) + "\n"
@@ -11489,6 +11489,10 @@ class Ui_MainWindow(object):
 					print (dir_name)
 				if os.path.exists(dir_name):
 					shutil.rmtree(dir_name)
+					if video_local_stream:
+						torrent_file = dir_name+'.torrent'
+						if os.path.exists(torrent_file):
+							os.remove(torrent_file)
 				self.list1.takeItem(row)
 				
 				del item
