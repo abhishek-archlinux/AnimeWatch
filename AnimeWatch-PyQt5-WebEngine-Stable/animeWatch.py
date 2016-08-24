@@ -7132,7 +7132,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (2,6,0,0)
+		self.version_number = (2,7,0,0)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -17210,7 +17210,6 @@ if __name__ == "__main__":
 	w_ht = 0
 	w_wdt = 50
 	old_version = (0,0,0,0)
-	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	try:
 		dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)

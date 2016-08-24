@@ -7213,7 +7213,7 @@ class Ui_MainWindow(object):
 		#self.gridLayout.addLayout(self.VerticalLayoutLabel,1, 1, 1, 1)
 		#self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
 		
-		self.version_number = (2,6,0,0)
+		self.version_number = (2,7,0,0)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.player_setLoop_var = 0
