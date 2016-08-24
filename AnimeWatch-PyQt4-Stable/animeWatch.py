@@ -6675,7 +6675,7 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_player_opt.insertWidget(9,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtGui.QMenu()
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server']
+		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background']
 		self.action_player_menu =[]
 		for i in self.player_menu_option:
 			self.action_player_menu.append(self.player_menu.addAction(i, lambda x=i:self.playerPlaylist(x)))
@@ -7228,6 +7228,8 @@ class Ui_MainWindow(object):
 		self.local_ip_stream = ''
 		self.local_port_stream = ''
 		self.search_term = ''
+		self.current_background = home+'/default.jpg'
+		self.default_background = home+'/default.jpg'
 		self.torrent_type = 'file'
 		self.torrent_handle = ''
 		self.torrent_upload_limit = 0
@@ -7615,7 +7617,7 @@ class Ui_MainWindow(object):
 			self.sortList()
 	def playerPlaylist(self,val):
 		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player,Player,httpd
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server']
+		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background']
 		#txt = str(self.player_playlist.text())
 		#playlist_show = 1-playlist_show
 		#self.action[]
@@ -7736,6 +7738,9 @@ class Ui_MainWindow(object):
 				if self.local_http_server.isRunning():
 					httpd.shutdown()
 					self.local_http_server.quit()
+		elif val == "Set As Default Background":
+			if os.path.exists(self.current_background) and self.current_background != self.default_background:
+					shutil.copy(self.current_background,self.default_background)
 		elif site == "Music" or site == "Local" or site == "Video" or site == "PlayLists":
 			if val == "Order by Name(Descending)":
 				try:
@@ -13224,6 +13229,7 @@ class Ui_MainWindow(object):
 					print (picn)
 				else:
 					os.makedirs(dir_path)
+		self.current_background = fanart
 	def musicBackground(self,val,srch):
 		global name,epnArrList,artist_name_mplayer
 		if self.list3.currentItem():
@@ -13336,6 +13342,7 @@ class Ui_MainWindow(object):
 				palette	= QtGui.QPalette()
 				palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
 				MainWindow.setPalette(palette)
+				self.current_background = fanart
 			#self.dockWidget_3.hide()
 
 			img = QtGui.QPixmap(picn, "1")

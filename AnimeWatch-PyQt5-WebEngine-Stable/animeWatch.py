@@ -7148,7 +7148,7 @@ class Ui_MainWindow(object):
 		self.local_ip_stream = ''
 		self.local_port_stream = ''
 		self.search_term = ''
-		self.current_background = ''
+		self.current_background = home+'/default.jpg'
 		self.default_background = home+'/default.jpg'
 		self.torrent_type = 'file'
 		self.torrent_handle = ''
@@ -7847,8 +7847,7 @@ class Ui_MainWindow(object):
 					httpd.shutdown()
 					self.local_http_server.quit()
 		elif val == "Set As Default Background":
-			if self.current_background:
-				if os.path.exists(self.current_background):
+			if os.path.exists(self.current_background) and self.current_background != self.default_background:
 					shutil.copy(self.current_background,self.default_background)
 		elif site == "Music" or site == "Local" or site == "Video" or site == "PlayLists":
 			if val == "Order by Name(Descending)":
