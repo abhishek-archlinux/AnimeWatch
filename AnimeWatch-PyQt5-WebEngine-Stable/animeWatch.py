@@ -7148,6 +7148,7 @@ class Ui_MainWindow(object):
 		self.local_ip_stream = ''
 		self.local_port_stream = ''
 		self.search_term = ''
+		self.mpv_cnt = 0
 		self.current_background = home+'/default.jpg'
 		self.default_background = home+'/default.jpg'
 		self.torrent_type = 'file'
@@ -14691,16 +14692,22 @@ class Ui_MainWindow(object):
 				val = int(val1[0])*3600+int(val1[1])*60+int(val1[2])
 				
 				if not mplayerLength:
-					m = re.findall('[/][^(]*',out)
-					n = re.sub(' |[/]','',m[0])
-					print (n)
-					o = n.split(':')
-					mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
-					print (mplayerLength,"--mpvlength")
-					#print (mplayerLength)
-					self.progressEpn.setMaximum(int(mplayerLength))
-					self.slider.setRange(0,int(mplayerLength))
-				
+					#print(a,self.mpv_cnt)
+					#print(mplayerLength)
+					
+					if self.mpv_cnt > 4:
+						m = re.findall('[/][^(]*',out)
+						n = re.sub(' |[/]','',m[0])
+						print (n)
+						o = n.split(':')
+						mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
+						print (mplayerLength,"--mpvlength",a)
+						#print (mplayerLength)
+						self.progressEpn.setMaximum(int(mplayerLength))
+						self.slider.setRange(0,int(mplayerLength))
+						self.mpv_cnt = 0
+					print(mplayerLength)
+					self.mpv_cnt = self.mpv_cnt + 1
 				#self.progressEpn.setValue(val)
 				out1 = out+" ["+epn_name_in_list+"]"
 				self.progressEpn.setFormat((out1))
