@@ -61,7 +61,6 @@ try:
 except:
 	pass
 from musicArtist import musicArtist
-#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
@@ -14175,7 +14174,7 @@ class Ui_MainWindow(object):
 				torrent_dest = local_torrent_file_path
 				print(torrent_dest,path)
 				
-				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(tmp,path)
+				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(tmp,path,ui.list6)
 				#self.handle.pause()
 				file_arr = []
 				ui.list2.clear()
@@ -14192,7 +14191,7 @@ class Ui_MainWindow(object):
 			else:
 				index = int(self.list2.currentRow())
 				
-				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.torrent_download_folder,self.stream_session)
+				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.torrent_download_folder,self.stream_session,ui.list6)
 				
 				self.do_get_thread = TorrentThread(self.torrent_handle,cnt,cnt_limit,self.stream_session)
 				self.do_get_thread.start()
@@ -14213,7 +14212,7 @@ class Ui_MainWindow(object):
 			torrent_dest = local_torrent_file_path
 			print(torrent_dest,index,path)
 			
-			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session)
+			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session,ui.list6)
 			
 			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 			self.torrent_handle.set_download_limit(self.torrent_download_limit)
@@ -15747,8 +15746,8 @@ class Ui_MainWindow(object):
 	def options(self,val):
 	
 		global opt,pgn,genre_num,site,name,base_url,name1,embed,list1_items,pre_opt,mirrorNo,insidePreopt,quality,home,siteName,finalUrlFound,nameListArr,original_path_name,original_path_name,show_hide_playlist,show_hide_titlelist
-		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,hist_arr,list2_items,bookmark,status,viewMode
-	
+		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,hist_arr,list2_items,bookmark,status,viewMode,video_local_stream
+		
 		hist_arr[:]=[]
 		pict_arr[:]=[]
 		name_arr[:]=[]
@@ -15884,7 +15883,10 @@ class Ui_MainWindow(object):
 				self.text.setText('Wait...Loading')
 				QtWidgets.QApplication.processEvents()
 				try:
-					m = site_var.getCompleteList(t_opt,0)
+					if video_local_stream:
+						m = site_var.getCompleteList(t_opt,ui.list6)
+					else:
+						m = site_var.getCompleteList(t_opt,0)
 					self.text.setText('Load Complete!')
 				except:
 					self.text.setText('Load Failed!')

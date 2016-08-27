@@ -174,7 +174,7 @@ class Torrent():
 		m = ['Not Available']
 		return m
 		
-	def getCompleteList(self,opt,genre_num):
+	def getCompleteList(self,opt,ui):
 		m = ['Not Able To Open']
 		if opt == 'Open':
 			MainWindow = QtWidgets.QWidget()
@@ -197,7 +197,7 @@ class Torrent():
 					m = [name]
 				elif item.startswith('magnet:'):
 					
-					torrent_handle,stream_session,info = get_torrent_info_magnet(item,'/tmp/AnimeWatch')
+					torrent_handle,stream_session,info = get_torrent_info_magnet(item,'/tmp/AnimeWatch',ui)
 					torrent_file = lt.create_torrent(info)
 					
 					home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'

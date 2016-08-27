@@ -279,8 +279,9 @@ def session_finished(var):
 				print(g)
 			
 	
-def set_torrent_info(v1,v2,v3,session):
-	global handle,ses,info,cnt,cnt_limit,file_name
+def set_torrent_info(v1,v2,v3,session,u):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui
+	ui = u
 	i=0
 	handle = v1
 	fileIndex = int(v2)
@@ -341,8 +342,9 @@ def set_torrent_info(v1,v2,v3,session):
 	handle.resume()
 	return cnt,cnt_limit
 		
-def get_torrent_info_magnet(v1,v3):
-	global handle,ses,info,cnt,cnt_limit,file_name
+def get_torrent_info_magnet(v1,v3,u):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui
+	ui = u
 	#print(v1,'------------hello----------info---')
 	sett = lt.session_settings()
 	sett.user_agent = 'qBittorrent v3.3.5'
