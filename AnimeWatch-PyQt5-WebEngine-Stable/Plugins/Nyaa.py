@@ -15,6 +15,7 @@ try:
 except:
 	pass
 from stream import ThreadServer,TorrentThread,get_torrent_info
+import shutil
 #from hurry.filesize import size
 
 def naturallysorted(l): 
@@ -138,10 +139,10 @@ class Nyaa():
 			criteria = ['Date','Seeders','Leechers','Downloads','History','LocalStreaming']
 			return criteria
 		
-	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session):
-		nm = name.rsplit('-',1)
-		name = nm[0]
-		name_id = nm[1]
+	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui):
+		#nm = name.rsplit('-',1)
+		#name = nm[0]
+		#name_id = nm[1]
 		index = int(epn)
 		ip_n = local_ip.rsplit(':',1)
 		ip = ip_n[0]
@@ -160,7 +161,7 @@ class Nyaa():
 		#handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path)
 		#print(get_torrent_info(torrent_dest,index,path))
 		#print('---before--error---164---')
-		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session)
+		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui)
 		#print('---line--error---166---')
 		torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
 		torrent_thread.start()
@@ -204,28 +205,28 @@ class Nyaa():
 	def search(self,name):
 		strname = str(name)
 		print(strname)
-		url = "http://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+strname
+		url = "https://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+strname
 		m = self.process_page(url)
 		return m
 		
 	def getCompleteList(self,opt,genre_num):
 		if opt == 'Date':
-			url = 'http://www.nyaa.se/?cats=1_37'
+			url = 'https://www.nyaa.se/?cats=1_37'
 		elif opt == 'Seeders':
-			url = 'http://www.nyaa.se/?cats=1_37&sort=2'
+			url = 'https://www.nyaa.se/?cats=1_37&sort=2'
 		elif opt == 'Leechers':
-			url = 'http://www.nyaa.se/?cats=1_37&sort=3'
+			url = 'https://www.nyaa.se/?cats=1_37&sort=3'
 		elif opt == 'Downloads':
-			url = 'http://www.nyaa.se/?cats=1_37&sort=4'
+			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
 			
 		m = self.process_page(url)
 		return m
 	
 	def getEpnList(self,name,opt):
 		nm = name.rsplit('-',1)
-		name = nm[0]
+		#name = nm[0]
 		name_id = nm[1]
-		url = "http://www.nyaa.se/?page=download&tid=" + name_id
+		url = "https://www.nyaa.se/?page=download&tid=" + name_id
 		print(url)
 		summary = ""
 		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
@@ -248,15 +249,15 @@ class Nyaa():
 
 	def getNextPage(self,opt,pgn,genre_num,name):
 		if opt == 'Date':
-			url = 'http://www.nyaa.se/?cats=1_37'
+			url = 'https://www.nyaa.se/?cats=1_37'
 		elif opt == 'Seeders':
-			url = 'http://www.nyaa.se/?cats=1_37&sort=2'
+			url = 'https://www.nyaa.se/?cats=1_37&sort=2'
 		elif opt == 'Leechers':
-			url = 'http://www.nyaa.se/?cats=1_37&sort=3'
+			url = 'https://www.nyaa.se/?cats=1_37&sort=3'
 		elif opt == 'Downloads':
-			url = 'http://www.nyaa.se/?cats=1_37&sort=4'
+			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
 		elif opt == 'Search':
-			url = "http://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+str(name)
+			url = "https://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+str(name)
 		url = url + '&offset='+str(pgn)
 		print(url)
 		m = self.process_page(url)
