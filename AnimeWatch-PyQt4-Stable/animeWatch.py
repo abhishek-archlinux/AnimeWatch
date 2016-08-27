@@ -3040,6 +3040,8 @@ class List1(QtGui.QListWidget):
 						conn.close()
 						ui.options_clicked()
 						self.setCurrentRow(r)
+				elif site == 'None':
+					print('Nothing To Delete')
 				else:
 					ui.deleteHistory()
 			
@@ -3660,8 +3662,9 @@ class List2(QtGui.QListWidget):
 						ui.list6.clear()
 				ui.list6.addItem(self.currentItem().text()+':'+str(self.currentRow()))
 		elif event.key() == QtCore.Qt.Key_Delete:
-			
-			if site == "Video":
+			if site == 'None':
+				print("Nothing To Delete")
+			elif site == "Video":
 				r = self.currentRow()
 				item = self.item(r)
 				if item:
@@ -3687,8 +3690,11 @@ class List2(QtGui.QListWidget):
 					else:
 						if os.path.exists(home+'/History/'+site+'/'+name+'/Ep.txt'):
 							file_path = home+'/History/'+site+'/'+name+'/Ep.txt'		
-					ui.replace_lineByIndex(file_path,'','',row)
-					ui.update_list2()
+					if file_path:
+						ui.replace_lineByIndex(file_path,'','',row)
+						ui.update_list2()
+					else:
+						pass
 			elif site == "PlayLists" or (site == "Music" and ui.list3.currentItem().text()=="Playlist"):
 				if site == "Music":
 					r = ui.list1.currentRow()
@@ -11305,7 +11311,8 @@ class Ui_MainWindow(object):
 		nepn = str(epn) + "\n"
 		replc = ""
 	
-		
+		if site == 'None':
+			return 0
 		if bookmark == "True" and os.path.exists(home+'/Bookmark/'+status+'.txt'):
 			file_path = home+'/Bookmark/'+status+'.txt'
 			
@@ -11362,6 +11369,7 @@ class Ui_MainWindow(object):
 								f.write(j+'\n')
 							f.close()
 		elif opt == "History":
+			file_path = ''
 			if site == "SubbedAnime" or site == "DubbedAnime":
 				if os.path.exists(home+'/History/'+site+"/"+siteName+'/history.txt'):
 					file_path = home+'/History/'+site+"/"+siteName+'/history.txt'
@@ -11369,7 +11377,8 @@ class Ui_MainWindow(object):
 			else:
 				if os.path.exists(home+'/History/'+site+'/history.txt'):
 					file_path = home+'/History/'+site+'/history.txt'
-				
+			if not file_path:
+				return 0
 			row = self.list1.currentRow()
 			item = self.list1.item(row)
 			nam = str(item.text())
@@ -17554,6 +17563,7 @@ if __name__ == "__main__":
 			t = '"'+t+'"'
 			epn_name_in_list = urllib.parse.unquote(new_epn)
 			#t = t.replace('file:///','/')
+			site = 'None'
 			ui.watchDirectly(urllib.parse.unquote(t))
 			ui.dockWidget_3.hide()
 	
