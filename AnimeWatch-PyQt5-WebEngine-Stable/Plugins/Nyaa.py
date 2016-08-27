@@ -15,7 +15,6 @@ try:
 except:
 	pass
 from stream import ThreadServer,TorrentThread,get_torrent_info
-import shutil
 #from hurry.filesize import size
 
 def naturallysorted(l): 
@@ -140,9 +139,9 @@ class Nyaa():
 			return criteria
 		
 	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session):
-		#nm = name.rsplit('-',1)
-		#name = nm[0]
-		#name_id = nm[1]
+		nm = name.rsplit('-',1)
+		name = nm[0]
+		name_id = nm[1]
 		index = int(epn)
 		ip_n = local_ip.rsplit(':',1)
 		ip = ip_n[0]
@@ -205,28 +204,28 @@ class Nyaa():
 	def search(self,name):
 		strname = str(name)
 		print(strname)
-		url = "https://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+strname
+		url = "http://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+strname
 		m = self.process_page(url)
 		return m
 		
 	def getCompleteList(self,opt,genre_num):
 		if opt == 'Date':
-			url = 'https://www.nyaa.se/?cats=1_37'
+			url = 'http://www.nyaa.se/?cats=1_37'
 		elif opt == 'Seeders':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=2'
+			url = 'http://www.nyaa.se/?cats=1_37&sort=2'
 		elif opt == 'Leechers':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=3'
+			url = 'http://www.nyaa.se/?cats=1_37&sort=3'
 		elif opt == 'Downloads':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
+			url = 'http://www.nyaa.se/?cats=1_37&sort=4'
 			
 		m = self.process_page(url)
 		return m
 	
 	def getEpnList(self,name,opt):
 		nm = name.rsplit('-',1)
-		#name = nm[0]
+		name = nm[0]
 		name_id = nm[1]
-		url = "https://www.nyaa.se/?page=download&tid=" + name_id
+		url = "http://www.nyaa.se/?page=download&tid=" + name_id
 		print(url)
 		summary = ""
 		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
@@ -249,15 +248,15 @@ class Nyaa():
 
 	def getNextPage(self,opt,pgn,genre_num,name):
 		if opt == 'Date':
-			url = 'https://www.nyaa.se/?cats=1_37'
+			url = 'http://www.nyaa.se/?cats=1_37'
 		elif opt == 'Seeders':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=2'
+			url = 'http://www.nyaa.se/?cats=1_37&sort=2'
 		elif opt == 'Leechers':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=3'
+			url = 'http://www.nyaa.se/?cats=1_37&sort=3'
 		elif opt == 'Downloads':
-			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
+			url = 'http://www.nyaa.se/?cats=1_37&sort=4'
 		elif opt == 'Search':
-			url = "https://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+str(name)
+			url = "http://www.nyaa.se/?page=search&cats=1_37&sort=2&term="+str(name)
 		url = url + '&offset='+str(pgn)
 		print(url)
 		m = self.process_page(url)

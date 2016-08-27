@@ -140,7 +140,7 @@ class Torrent():
 			criteria = ['Open','History','LocalStreaming']
 			return criteria
 		
-	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session):
+	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui):
 		
 		index = int(epn)
 		ip_n = local_ip.rsplit(':',1)
@@ -157,7 +157,7 @@ class Torrent():
 		print(torrent_dest,index,path)
 		
 		
-		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session)
+		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui)
 		torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
 		torrent_thread.start()
 		

@@ -18,6 +18,8 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
+
+
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 import sys
 import urllib
@@ -59,7 +61,7 @@ try:
 except:
 	pass
 from musicArtist import musicArtist
-from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
+#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
@@ -84,7 +86,7 @@ AW_MPRIS_BUS_NAME = 'org.mpris.MediaPlayer2.animewatch'
 MPRIS_OBJECT_PATH = '/org/mpris/MediaPlayer2'
 MPRIS_MEDIAPLAYER_INTERFACE = 'org.mpris.MediaPlayer2'
 MPRIS_MEDIAPLAYER_PLAYER_INTERFACE = 'org.mpris.MediaPlayer2.Player'
-
+#ui = ""
 def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -127,7 +129,21 @@ def get_lan_ip():
 			except:
 				pass
 	return ip
-
+"""
+#global ui
+@pyqtSlot(str)
+def session_finished(var):
+	global ui,video_local_stream
+	print(video_local_stream)
+	print(var,'inside--session-finished')
+	if ui.local_file_index:
+		t = ui.local_file_index[0]
+		del ui.local_file_index[0]
+		item = ui.list6.item(0)
+		if item:
+			ui.list6.takeItem(0)
+			del item
+"""
 def progressBar(cmd):
 	MainWindow = QtWidgets.QWidget()
 	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
@@ -3644,7 +3660,7 @@ class List2(QtWidgets.QListWidget):
 			QListWidget.dropEvent(event)
 	def keyPressEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
-		global site,opt,pre_opt,name,siteName,Player,total_till
+		global site,opt,pre_opt,name,siteName,Player,total_till,video_local_stream
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Left:
 			ui.tab_5.setFocus()
 		elif event.key() == QtCore.Qt.Key_Return:
@@ -3707,6 +3723,17 @@ class List2(QtWidgets.QListWidget):
 						f = open(file_path,'a')
 						f.write('\n'+epnArrList[r])
 				f.close()
+			elif video_local_stream:
+				#if not ui.local_file_index:
+				#	ui.list6.clear()
+				#ui.local_file_index.append(self.currentRow())
+				if ui.list6.count() >0:
+					txt = ui.list6.item(0).text()
+					if txt.startswith('Queue Empty:'):
+						ui.list6.clear()
+				ui.list6.addItem(self.currentItem().text()+':'+str(self.currentRow()))
+				
+				#ui.local_file_index.append(ui.list6.count())
 		elif event.key() == QtCore.Qt.Key_Delete:
 			
 			if site == "Video":
@@ -4995,7 +5022,7 @@ class List6(QtWidgets.QListWidget):
 		super(List6, self).__init__(parent)
 
 	def keyPressEvent(self, event):
-		global category,home,site,bookmark
+		global category,home,site,bookmark,video_local_stream
 		
 		if event.key() == QtCore.Qt.Key_Down:
 			nextr = self.currentRow() + 1
@@ -5041,7 +5068,8 @@ class List6(QtWidgets.QListWidget):
 				item = self.item(r)
 				self.takeItem(r)
 				del item
-				del ui.queue_url_list[r]
+				if not video_local_stream:
+					del ui.queue_url_list[r]
 class QLineCustom(QtWidgets.QLineEdit):
 	def __init__(self, parent):
 		super(QLineCustom, self).__init__(parent)
@@ -5879,7 +5907,7 @@ class tab5(QtWidgets.QWidget):
 		
 	def keyPressEvent(self, event):
 		global mpvplayer,Player,wget,cycle_pause,cache_empty,buffering_mplayer,curR,pause_indicator,thumbnail_indicator,iconv_r_indicator
-		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,total_seek,site,iconv_r,browse_cnt,total_till,browse_cnt,sub_id,audio_id,rfr_url,show_hide_cover,show_hide_playlist,show_hide_titlelist
+		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,total_seek,site,iconv_r,browse_cnt,total_till,browse_cnt,sub_id,audio_id,rfr_url,show_hide_cover,show_hide_playlist,show_hide_titlelist,video_local_stream
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Right:
 			ui.list2.setFocus()
 		elif event.key() == QtCore.Qt.Key_Right:
@@ -6279,6 +6307,9 @@ class tab5(QtWidgets.QWidget):
 			quitReally = "yes"
 			mpvplayer.write(b'\n quit \n')
 			ui.player_play_pause.setText("Play")
+			if video_local_stream:
+				f = open('/tmp/AnimeWatch/player_stop.txt','w')
+				f.close()
 			if ui.tab_6.isHidden():
 				ui.tab_5.showNormal()
 				ui.tab_5.hide()
@@ -7149,6 +7180,7 @@ class Ui_MainWindow(object):
 		self.local_port_stream = ''
 		self.search_term = ''
 		self.mpv_cnt = 0
+		self.local_file_index = []
 		self.current_background = home+'/default.jpg'
 		self.default_background = home+'/default.jpg'
 		self.torrent_type = 'file'
@@ -7597,7 +7629,9 @@ class Ui_MainWindow(object):
 					if self.do_get_thread.isRunning():
 						print('----------stream-----pausing-----')
 						self.stream_session.pause()
-							
+					elif self.stream_session:
+						if not self.stream_session.is_paused():
+							self.stream_session.pause()
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
 					mpvplayer.write(b'\n quit \n')
@@ -13440,7 +13474,7 @@ class Ui_MainWindow(object):
 							self.videoImage(poster,thumb,fan,summary)
 			else:
 				music_dir_art = home+'/Music/Artist'
-				
+				print(music_dir_art,'--music-dir-art--')
 				try:
 					if srch != "Queue":
 						nm = epnArrList[val].split('	')[2]
@@ -13453,6 +13487,7 @@ class Ui_MainWindow(object):
 					if '/' in nm:
 						nm = nm.replace('/','-')
 					music_dir_art_name = home+'/Music/Artist/'+nm
+					print(music_dir_art_name,'--music-dir-art-name--')
 					if not os.path.exists(music_dir_art_name):
 						os.makedirs(music_dir_art_name)
 						
@@ -13555,7 +13590,7 @@ class Ui_MainWindow(object):
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded,show_hide_player,show_hide_cover
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path,video_local_stream
 		buffering_mplayer="no"
 		self.list4.hide()
 		self.player_play_pause.setText("Pause")
@@ -13566,7 +13601,9 @@ class Ui_MainWindow(object):
 			pass
 		
 		
-		
+		if video_local_stream:
+			if os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
+				os.remove('/tmp/AnimeWatch/player_stop.txt')
 			
 		if mpvplayer:
 			if mpvplayer.pid() > 0:
@@ -13704,14 +13741,20 @@ class Ui_MainWindow(object):
 					if video_local_stream:
 						if self.thread_server.isRunning():
 							if self.do_get_thread.isRunning():
+								row_file = '/tmp/AnimeWatch/row.txt'
+								f = open(row_file,'w')
+								f.write(str(row))
+								f.close()
 								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
 							else:
-								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session)
+								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6)
 						else:
-							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session)
+							#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
+							#self.list6.clear()
+							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6)
 						self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 						self.torrent_handle.set_download_limit(self.torrent_download_limit)
-
+						#self.do_get_thread.session_signal.connect(self.session_finished)
 					else:
 						finalUrl = site_var.getFinalUrl(name,epn,mirrorNo,quality)
 				except:
@@ -14106,10 +14149,11 @@ class Ui_MainWindow(object):
 				self.frame.hide()
 				self.text.hide()
 				self.label.hide()
-				
+	
+		
 	def local_torrent_open(self,tmp):
 		global local_torrent_file_path
-		
+		from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 		if not self.local_ip:
 			self.local_ip = get_lan_ip()
 		if not self.local_port:
@@ -14582,423 +14626,425 @@ class Ui_MainWindow(object):
 		#a = str((p.readAllStandardOutput())).strip()
 		#el = time.process_time() - tt
 		#print(el)
-		if Player == "mpv":
-			#a = str(a.decode('utf-8'))
-			#a = a.replace('\n','')
-			#print(a)
-			if "Audio_ID" in a:
-				print (a)
-				a_id = re.sub('[^"]*Audio_ID=','',a)
-				#a_id = a.split('=')[-1]
-				print (a_id)
-				audio_s = (re.search('[(][^)]*',a_id))
-				if audio_s:
-					audio_id = (audio_s.group()).replace('(','')
-				else:
-					audio_id="no"
-				print ("audio_id="+audio_id)
-				self.audio_track.setText("A:"+str(a_id[:8]))
-			if "SUB_ID" in a:
-				print (a)
-				#s_id = a.split('=')[-1]
-				s_id = re.sub('[^"]*SUB_ID=','',a)
-				sub_s = (re.search('[(][^)]*',s_id))
-				if sub_s:
-					sub_id = (sub_s.group()).replace('(','')
-				else:
-					sub_id = "no"
-				print ("sub_id="+sub_id)
-				self.subtitle_track.setText("Sub:"+str(s_id[:8]))
-			#if not mplayerLength and mpv_start:
-			#	mpvplayer.write('\n'+'print-text "Length_Seconds=${duration}"'+'\n')
-			#	time.sleep(0.01)
-			if "Length_Seconds=" in a and not mplayerLength and 'args=' not in a:
-				print (a)
-				if a.startswith(r"b'"):
-					mpl = re.sub('[^"]*Length_Seconds=','',a)
-					mpl = mpl.replace(r"\n'",'')
-				else:
-					mpl = re.sub('[^"]*Length_Seconds=','',a)
-				print (mpl,'--mpl--')
-				o = mpl.split(':')
-				if o and len(o) == 3:
-					if o[0].isdigit() and (o[1]).isdigit() and (o[2]).isdigit():
-						mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
+		try:
+			if Player == "mpv":
+				#a = str(a.decode('utf-8'))
+				#a = a.replace('\n','')
+				#print(a)
+				if "Audio_ID" in a:
+					print (a)
+					a_id = re.sub('[^"]*Audio_ID=','',a)
+					#a_id = a.split('=')[-1]
+					print (a_id)
+					audio_s = (re.search('[(][^)]*',a_id))
+					if audio_s:
+						audio_id = (audio_s.group()).replace('(','')
 					else:
-						mplayerLength = 0
-					print (mpl)
-					print (mplayerLength)
-					#self.progress.setMinimum(0)
-					#self.progressEpn.setMaximum(int(mplayerLength))
-					self.slider.setRange(0,int(mplayerLength))
+						audio_id="no"
+					print ("audio_id="+audio_id)
+					self.audio_track.setText("A:"+str(a_id[:8]))
+				if "SUB_ID" in a:
+					print (a)
+					#s_id = a.split('=')[-1]
+					s_id = re.sub('[^"]*SUB_ID=','',a)
+					sub_s = (re.search('[(][^)]*',s_id))
+					if sub_s:
+						sub_id = (sub_s.group()).replace('(','')
+					else:
+						sub_id = "no"
+					print ("sub_id="+sub_id)
+					self.subtitle_track.setText("Sub:"+str(s_id[:8]))
+				#if not mplayerLength and mpv_start:
+				#	mpvplayer.write('\n'+'print-text "Length_Seconds=${duration}"'+'\n')
+				#	time.sleep(0.01)
+				if "Length_Seconds=" in a and not mplayerLength and 'args=' not in a:
+					print (a)
+					if a.startswith(r"b'"):
+						mpl = re.sub('[^"]*Length_Seconds=','',a)
+						mpl = mpl.replace(r"\n'",'')
+					else:
+						mpl = re.sub('[^"]*Length_Seconds=','',a)
+					print (mpl,'--mpl--')
+					o = mpl.split(':')
+					if o and len(o) == 3:
+						if o[0].isdigit() and (o[1]).isdigit() and (o[2]).isdigit():
+							mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
+						else:
+							mplayerLength = 0
+						print (mpl)
+						print (mplayerLength)
+						#self.progress.setMinimum(0)
+						#self.progressEpn.setMaximum(int(mplayerLength))
+						self.slider.setRange(0,int(mplayerLength))
+				
 			
-		
-			if "AV:" in a or "A:" in a:
-				#print a
-				if not mpv_start:
-					mpv_start.append("Start")
-					try:
-						npn = '"'+"Playing: "+epn_name_in_list.replace('#','')+'"'
-						npn1 = bytes('\n'+'show-text '+npn+' 4000'+'\n','utf-8')
-						mpvplayer.write(npn1)
-					except:
-						pass
-					if MainWindow.isFullScreen() and layout_mode != "Music":
-						self.gridLayout.setSpacing(0)
-						if not self.frame1.isHidden():
-							self.frame1.hide()
-						if self.frame_timer.isActive():
-							self.frame_timer.stop()
-						self.frame_timer.start(1000)
-						#QtGui.QApplication.processEvents()
-				if "Buffering" in a and not mpv_indicator and (site != "Local" or site != "Music" or site != "Video"):
-					cache_empty = "yes"
-					mpv_indicator.append("cache empty") 
-					print ("buffering")
-					mpvplayer.write(b'\n set pause yes \n')
-					if self.mplayer_timer.isActive():
-						self.mplayer_timer.stop()
-					self.mplayer_timer.start(5000)
+				if "AV:" in a or "A:" in a:
+					#print a
+					if not mpv_start:
+						mpv_start.append("Start")
+						try:
+							npn = '"'+"Playing: "+epn_name_in_list.replace('#','')+'"'
+							npn1 = bytes('\n'+'show-text '+npn+' 4000'+'\n','utf-8')
+							mpvplayer.write(npn1)
+						except:
+							pass
+						if MainWindow.isFullScreen() and layout_mode != "Music":
+							self.gridLayout.setSpacing(0)
+							if not self.frame1.isHidden():
+								self.frame1.hide()
+							if self.frame_timer.isActive():
+								self.frame_timer.stop()
+							self.frame_timer.start(1000)
+							#QtGui.QApplication.processEvents()
+					if "Buffering" in a and not mpv_indicator and (site != "Local" or site != "Music" or site != "Video"):
+						cache_empty = "yes"
+						mpv_indicator.append("cache empty") 
+						print ("buffering")
+						mpvplayer.write(b'\n set pause yes \n')
+						if self.mplayer_timer.isActive():
+							self.mplayer_timer.stop()
+						self.mplayer_timer.start(5000)
+						if MainWindow.isFullScreen() and layout_mode != "Music":
+							self.gridLayout.setSpacing(0)
+							self.frame1.show()
+							if self.frame_timer.isActive():
+								self.frame_timer.stop()
+							self.frame_timer.start(5000)
+							
+					t = re.findall("AV:[^)]*[)]|A:[^)]*[)]",a)
+					if "Cache:" in a:
+						n = re.findall("Cache:[^+]*",a)
+						out = t[0] +"  "+n[0]
+					else:
+						out = t[0]
+					if "Paused" in a and not mpv_indicator:
+						out = "(Paused) "+out
+						#self.gridLayout.setSpacing(0)
+						#if not "Buffering" in a:
+						#	self.player_play_pause.setText("Play")
+							#print('set play button text = Play')
+					elif "Paused" in a and mpv_indicator:
+						out = "(Paused Caching..Wait Few Seconds) "+out
+						#self.gridLayout.setSpacing(0)
+						#if not "Buffering" in a:
+						#	self.player_play_pause.setText("Play")
+							#print('set play button text = Play')
+					out = re.sub('AV:[^0-9]*|A:[^0-9]*','',out)
+					#l = re.findall("[(][^%]*",t[0])
+					#val = re.sub('[(]','',l[0])
+					l = re.findall("[0-9][^ ]*",out)
+					val1 = l[0].split(':')
+					val = int(val1[0])*3600+int(val1[1])*60+int(val1[2])
+					
+					if not mplayerLength:
+						#print(a,self.mpv_cnt)
+						#print(mplayerLength)
+						
+						if self.mpv_cnt > 4:
+							m = re.findall('[/][^(]*',out)
+							n = re.sub(' |[/]','',m[0])
+							print (n)
+							o = n.split(':')
+							mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
+							print (mplayerLength,"--mpvlength",a)
+							#print (mplayerLength)
+							self.progressEpn.setMaximum(int(mplayerLength))
+							self.slider.setRange(0,int(mplayerLength))
+							self.mpv_cnt = 0
+						print(mplayerLength)
+						self.mpv_cnt = self.mpv_cnt + 1
+					#self.progressEpn.setValue(val)
+					out1 = out+" ["+epn_name_in_list+"]"
+					self.progressEpn.setFormat((out1))
+					self.slider.setValue(val)
+				if "VO:" in a or "AO:" in a or 'Stream opened successfully' in a:
+				#if "AV:" not in a:
+					t = "Loading: "+epn_name_in_list+" (Please Wait)"
+					self.progressEpn.setFormat((t))
 					if MainWindow.isFullScreen() and layout_mode != "Music":
 						self.gridLayout.setSpacing(0)
 						self.frame1.show()
 						if self.frame_timer.isActive():
 							self.frame_timer.stop()
-						self.frame_timer.start(5000)
-						
-				t = re.findall("AV:[^)]*[)]|A:[^)]*[)]",a)
-				if "Cache:" in a:
-					n = re.findall("Cache:[^+]*",a)
-					out = t[0] +"  "+n[0]
-				else:
-					out = t[0]
-				if "Paused" in a and not mpv_indicator:
-					out = "(Paused) "+out
-					#self.gridLayout.setSpacing(0)
-					#if not "Buffering" in a:
-					#	self.player_play_pause.setText("Play")
-						#print('set play button text = Play')
-				elif "Paused" in a and mpv_indicator:
-					out = "(Paused Caching..Wait Few Seconds) "+out
-					#self.gridLayout.setSpacing(0)
-					#if not "Buffering" in a:
-					#	self.player_play_pause.setText("Play")
-						#print('set play button text = Play')
-				out = re.sub('AV:[^0-9]*|A:[^0-9]*','',out)
-				#l = re.findall("[(][^%]*",t[0])
-				#val = re.sub('[(]','',l[0])
-				l = re.findall("[0-9][^ ]*",out)
-				val1 = l[0].split(':')
-				val = int(val1[0])*3600+int(val1[1])*60+int(val1[2])
-				
-				if not mplayerLength:
-					#print(a,self.mpv_cnt)
-					#print(mplayerLength)
-					
-					if self.mpv_cnt > 4:
-						m = re.findall('[/][^(]*',out)
-						n = re.sub(' |[/]','',m[0])
-						print (n)
-						o = n.split(':')
-						mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
-						print (mplayerLength,"--mpvlength",a)
-						#print (mplayerLength)
-						self.progressEpn.setMaximum(int(mplayerLength))
-						self.slider.setRange(0,int(mplayerLength))
-						self.mpv_cnt = 0
-					print(mplayerLength)
-					self.mpv_cnt = self.mpv_cnt + 1
-				#self.progressEpn.setValue(val)
-				out1 = out+" ["+epn_name_in_list+"]"
-				self.progressEpn.setFormat((out1))
-				self.slider.setValue(val)
-			if "VO:" in a or "AO:" in a or 'Stream opened successfully' in a:
-			#if "AV:" not in a:
-				t = "Loading: "+epn_name_in_list+" (Please Wait)"
-				self.progressEpn.setFormat((t))
-				if MainWindow.isFullScreen() and layout_mode != "Music":
-					self.gridLayout.setSpacing(0)
-					self.frame1.show()
-					if self.frame_timer.isActive():
-						self.frame_timer.stop()
-					self.frame_timer.start(1000)
-			#if "EndOfFile:" in a:
-			#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-			if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-				if self.player_setLoop_var:
-					t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
-					mpvplayer.write(t2)
-					return 0
-					#curR = self.list2.currentRow()
-				else:
-					if curR == self.list2.count() - 1:
-						curR = 0
-						if site == "Music" and not self.playerPlaylist_setLoop_var:
-							r1 = self.list1.currentRow()
-							it1 = self.list1.item(r1)
-							if it1:
-								if r1 < self.list1.count():
-									r2 = r1+1
-								else:
-									r2 = 0
-								self.list1.setCurrentRow(r2)
-								self.listfound()
+						self.frame_timer.start(1000)
+				#if "EndOfFile:" in a:
+				#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
+				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
+					if self.player_setLoop_var:
+						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
+						mpvplayer.write(t2)
+						return 0
+						#curR = self.list2.currentRow()
 					else:
-						curR = curR + 1
-				mplayerLength = 0
-				self.total_file_size = 0
-				if mpv_start:
-					mpv_start.pop()
-				self.list2.setCurrentRow(curR)
-				#epn = self.list2.currentItem().text()
-				#epn = re.sub("#","",str(epn))
-				#mpvplayer.waitForReadyRead()
-				if "HTTP error 403 Forbidden" in a:
-					print (a)
-					quitReally = "yes"
-					#self.player_playlist.setText("End")
-					#self.player_playlist.setToolTip('Stop After Playing Current File')
-				if quitReally == "no":
-					if self.tab_5.isHidden() and thumbnail_indicator:
-						#p1 = "mn = ui.label_"+str(curR)+".winId()"
-						#exec p1
-						#idw = str(mn)
-						length_1 = self.list2.count()
-						q3="self.label_epn_"+str(length_1+cur_label_num)+".setText(epn_name_in_list)"
-						exec (q3)
-						QtWidgets.QApplication.processEvents()
-					if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
-						if len(self.queue_url_list)>0:
-							self.getQueueInList()
+						if curR == self.list2.count() - 1:
+							curR = 0
+							if site == "Music" and not self.playerPlaylist_setLoop_var:
+								r1 = self.list1.currentRow()
+								it1 = self.list1.item(r1)
+								if it1:
+									if r1 < self.list1.count():
+										r2 = r1+1
+									else:
+										r2 = 0
+									self.list1.setCurrentRow(r2)
+									self.listfound()
 						else:
-							self.localGetInList()
-					else:
-						if len(self.queue_url_list)>0:
-							self.getQueueInList()
+							curR = curR + 1
+					mplayerLength = 0
+					self.total_file_size = 0
+					if mpv_start:
+						mpv_start.pop()
+					self.list2.setCurrentRow(curR)
+					#epn = self.list2.currentItem().text()
+					#epn = re.sub("#","",str(epn))
+					#mpvplayer.waitForReadyRead()
+					if "HTTP error 403 Forbidden" in a:
+						print (a)
+						quitReally = "yes"
+						#self.player_playlist.setText("End")
+						#self.player_playlist.setToolTip('Stop After Playing Current File')
+					if quitReally == "no":
+						if self.tab_5.isHidden() and thumbnail_indicator:
+							#p1 = "mn = ui.label_"+str(curR)+".winId()"
+							#exec p1
+							#idw = str(mn)
+							length_1 = self.list2.count()
+							q3="self.label_epn_"+str(length_1+cur_label_num)+".setText(epn_name_in_list)"
+							exec (q3)
+							QtWidgets.QApplication.processEvents()
+						if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
+							if len(self.queue_url_list)>0:
+								self.getQueueInList()
+							else:
+								self.localGetInList()
 						else:
-							self.getNextInList()
-				elif quitReally == "yes": 
-					self.list2.setFocus()
-		elif Player == "mplayer":
-			#print(a)
-			if "PAUSE" in a:
-				if buffering_mplayer != 'yes':
-					self.player_play_pause.setText("Play")
-					#print('set play button text = Play')
-				if MainWindow.isFullScreen() and layout_mode != "Music":
-					self.gridLayout.setSpacing(0)
-					self.frame1.show()
-					if buffering_mplayer == "yes":
-						if self.frame_timer.isActive:
-							self.frame_timer.stop()
-						self.frame_timer.start(10000)
-			if "Cache empty" in a:
-				cache_empty = "yes"
-				
-			if "ID_VIDEO_BITRATE" in a:
-				try:
-					a0 = re.findall('ID_VIDEO_BITRATE=[^\n]*',a)
-					print (a0[0],'--videobit')
-					a1 = a0[0].replace('ID_VIDEO_BITRATE=','')
-					self.id_video_bitrate=int(a1)
-				except:
-					self.id_video_bitrate = 0
-				
-			if "ID_AUDIO_BITRATE" in a:
-				try:
-					a0 = re.findall('ID_AUDIO_BITRATE=[^\n]*',a)
-					print (a0[0],'--audiobit')
-					a1 = a0[0].replace('ID_AUDIO_BITRATE=','')
-					self.id_audio_bitrate=int(a1)
-				except:
-					self.id_audio_bitrate=0
-			if "ANS_switch_audio" in a:
-				print (a)
-				audio_id = a.split('=')[-1]
-				
-				print ("audio_id="+audio_id)
-				self.audio_track.setText("A:"+str(audio_id))
-			if "ANS_sub" in a:
-				sub_id = a.split('=')[-1]
-				
-				print ("sub_id="+sub_id)
-				self.subtitle_track.setText("Sub:"+str(sub_id))
-			
-			if "ID_LENGTH" in a and not mplayerLength:
-				#print a
-				t = re.findall('ID_LENGTH=[0-9][^.]*',a)
-				mplayerLength = re.sub('ID_LENGTH=','',t[0])
-				print (mplayerLength)
-				#mplayerLength = float(mplayerLength)
-				mplayerLength = int(mplayerLength) *1000
-				#self.progress.setMinimum(0)
-				#self.progressEpn.setMaximum(int(mplayerLength))
-				self.slider.setRange(0,int(mplayerLength))
-				self.total_file_size = int(((self.id_audio_bitrate+self.id_video_bitrate)*mplayerLength)/(8*1024*1024*1000))
-				print(self.total_file_size,' MB')
-				#self.id_audio_bitrate = 0
-				#self.id_video_bitrate = 0
-			if ("A:" in a) or ("PAUSE" in a):
-				if not mpv_start:
-					mpv_start.append("Start")
-					try:
-						npn = '"'+"Playing: "+epn_name_in_list.replace('#','')+'"'
-						npn1 = bytes('\n'+'osd_show_text '+str(npn)+' 4000'+'\n','utf-8')
-						mpvplayer.write(npn1)
-					except:
-						pass
+							if len(self.queue_url_list)>0:
+								self.getQueueInList()
+							else:
+								self.getNextInList()
+					elif quitReally == "yes": 
+						self.list2.setFocus()
+			elif Player == "mplayer":
+				#print(a)
+				if "PAUSE" in a:
+					if buffering_mplayer != 'yes':
+						self.player_play_pause.setText("Play")
+						#print('set play button text = Play')
 					if MainWindow.isFullScreen() and layout_mode != "Music":
 						self.gridLayout.setSpacing(0)
-						if not self.frame1.isHidden():
-							self.frame1.hide()
+						self.frame1.show()
+						if buffering_mplayer == "yes":
+							if self.frame_timer.isActive:
+								self.frame_timer.stop()
+							self.frame_timer.start(10000)
+				if "Cache empty" in a:
+					cache_empty = "yes"
+					
+				if "ID_VIDEO_BITRATE" in a:
+					try:
+						a0 = re.findall('ID_VIDEO_BITRATE=[^\n]*',a)
+						print (a0[0],'--videobit')
+						a1 = a0[0].replace('ID_VIDEO_BITRATE=','')
+						self.id_video_bitrate=int(a1)
+					except:
+						self.id_video_bitrate = 0
+					
+				if "ID_AUDIO_BITRATE" in a:
+					try:
+						a0 = re.findall('ID_AUDIO_BITRATE=[^\n]*',a)
+						print (a0[0],'--audiobit')
+						a1 = a0[0].replace('ID_AUDIO_BITRATE=','')
+						self.id_audio_bitrate=int(a1)
+					except:
+						self.id_audio_bitrate=0
+				if "ANS_switch_audio" in a:
+					print (a)
+					audio_id = a.split('=')[-1]
+					
+					print ("audio_id="+audio_id)
+					self.audio_track.setText("A:"+str(audio_id))
+				if "ANS_sub" in a:
+					sub_id = a.split('=')[-1]
+					
+					print ("sub_id="+sub_id)
+					self.subtitle_track.setText("Sub:"+str(sub_id))
+				
+				if "ID_LENGTH" in a and not mplayerLength:
+					#print a
+					t = re.findall('ID_LENGTH=[0-9][^.]*',a)
+					mplayerLength = re.sub('ID_LENGTH=','',t[0])
+					print (mplayerLength)
+					#mplayerLength = float(mplayerLength)
+					mplayerLength = int(mplayerLength) *1000
+					#self.progress.setMinimum(0)
+					#self.progressEpn.setMaximum(int(mplayerLength))
+					self.slider.setRange(0,int(mplayerLength))
+					self.total_file_size = int(((self.id_audio_bitrate+self.id_video_bitrate)*mplayerLength)/(8*1024*1024*1000))
+					print(self.total_file_size,' MB')
+					#self.id_audio_bitrate = 0
+					#self.id_video_bitrate = 0
+				if ("A:" in a) or ("PAUSE" in a):
+					if not mpv_start:
+						mpv_start.append("Start")
+						try:
+							npn = '"'+"Playing: "+epn_name_in_list.replace('#','')+'"'
+							npn1 = bytes('\n'+'osd_show_text '+str(npn)+' 4000'+'\n','utf-8')
+							mpvplayer.write(npn1)
+						except:
+							pass
+						if MainWindow.isFullScreen() and layout_mode != "Music":
+							self.gridLayout.setSpacing(0)
+							if not self.frame1.isHidden():
+								self.frame1.hide()
+							if self.frame_timer.isActive():
+								self.frame_timer.stop()
+							self.frame_timer.start(1000)
+					if "PAUSE" in a:
+						
+						if "%" in a:
+							#print a
+							m = re.findall('[0-9]*%',a)
+							c = m[-1]
+						else:
+							c = "0%"
+						try:
+							t = str(self.progressEpn.text())
+						#if "Paused" in t:
+						
+							#t = re.sub('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 10s[)] ','',t)
+							#t = t.replace('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 10s[)] ','')
+							t = re.sub('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 5s[)] ','',t)
+						except:
+							t = ""
+						
+						if buffering_mplayer == "yes":
+							out = "(Paused Caching..Wait 5s) " + t+" Cache: "+c
+							if not self.mplayer_timer.isActive():
+								self.mplayer_timer.start(5000)
+							#buffering_mplayer = "no"
+						else:
+							
+							#out = "(Paused) "+t+" Cache: "+c
+							out = "(Paused) "+t
+						
+					else:
+						if "%" in a:
+							#print a
+							m = re.findall('[0-9]*%',a)
+							try:
+								c = m[3]
+							except:
+								c = m[-1]
+						else:
+							c = "0%"
+					
+						t = re.findall('A:[^.]*',a)
+						#print t
+						l = re.sub('A:[^0-9]*','',t[0])
+						#l = int(l)
+						l =int(l)*1000
+						#val = int((l/mplayerLength)*100)
+						#print val
+						#print mplayerLength
+						#self.progressEpn.setValue(int(l))
+						self.slider.setValue(int(l))
+						#out = str(int(l/60))+"/"+str(int(mplayerLength/60))+" ("+str(val)+")"
+						#out = str(datetime.timedelta(seconds=int(l))) + " / " + str(datetime.timedelta(seconds=int(mplayerLength)))+" ["+epn_name_in_list+"]"+" Cache: "+c
+						if site == "Music":
+							out = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))+" ["+epn_name_in_list+'('+artist_name_mplayer+')' +"]"
+						else:
+							out = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))+" ["+epn_name_in_list+"]"
+					
+					if cache_empty == "yes" and (site != "Local" or site != "Music" or site != "Video"):
+						#mpvplayer.write('\n'+'get_property stream_length'+'\n')
+						mpvplayer.write(b'\n pause \n')
+						cache_empty = "no"
+						buffering_mplayer = "yes"
+						#mpvplayer.write('\n'+'osd_show_text Buffering'+'\n')
+					if total_seek != 0:
+						r = "Seeking "+str(total_seek)+'s'
+						self.progressEpn.setFormat((r))
+					else:
+						#self.progressEpn.setFormat('')
+						self.progressEpn.setFormat((out))
+				if 'http' in a:
+				#if "AV:" not in a:
+					t = "Loading: "+epn_name_in_list+" (Please Wait)"
+					self.progressEpn.setFormat((t))
+					if MainWindow.isFullScreen() and layout_mode != "Music":
+						self.gridLayout.setSpacing(0)
+						self.frame1.show()
 						if self.frame_timer.isActive():
 							self.frame_timer.stop()
 						self.frame_timer.start(1000)
-				if "PAUSE" in a:
-					
-					if "%" in a:
-						#print a
-						m = re.findall('[0-9]*%',a)
-						c = m[-1]
-					else:
-						c = "0%"
-					try:
-						t = str(self.progressEpn.text())
-					#if "Paused" in t:
-					
-						#t = re.sub('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 10s[)] ','',t)
-						#t = t.replace('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 10s[)] ','')
-						t = re.sub('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 5s[)] ','',t)
-					except:
-						t = ""
-					
-					if buffering_mplayer == "yes":
-						out = "(Paused Caching..Wait 5s) " + t+" Cache: "+c
-						if not self.mplayer_timer.isActive():
-							self.mplayer_timer.start(5000)
-						#buffering_mplayer = "no"
-					else:
+				#if site=="Local":
+				#if ("(End of file)" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
+				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
+					mplayerLength = 0
+					self.total_file_size = 0
+					mpv_start.pop()
+					#self.progressEpn.setMaximum(100)
+					#self.progressEpn.setValue(0)
+					#if self.player_setLoop_var:
+						#quitReally == "yes"
+					#	curR = self.list2.currentRow()
+					#else:
+						#quitReally == "no"
+					if self.player_setLoop_var:
+						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
+						mpvplayer.write(t2)
+						return 0
+						#curR = self.list2.currentRow()
 						
-						#out = "(Paused) "+t+" Cache: "+c
-						out = "(Paused) "+t
-					
-				else:
-					if "%" in a:
-						#print a
-						m = re.findall('[0-9]*%',a)
-						try:
-							c = m[3]
-						except:
-							c = m[-1]
 					else:
-						c = "0%"
-				
-					t = re.findall('A:[^.]*',a)
-					#print t
-					l = re.sub('A:[^0-9]*','',t[0])
-					#l = int(l)
-					l =int(l)*1000
-					#val = int((l/mplayerLength)*100)
-					#print val
-					#print mplayerLength
-					#self.progressEpn.setValue(int(l))
-					self.slider.setValue(int(l))
-					#out = str(int(l/60))+"/"+str(int(mplayerLength/60))+" ("+str(val)+")"
-					#out = str(datetime.timedelta(seconds=int(l))) + " / " + str(datetime.timedelta(seconds=int(mplayerLength)))+" ["+epn_name_in_list+"]"+" Cache: "+c
-					if site == "Music":
-						out = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))+" ["+epn_name_in_list+'('+artist_name_mplayer+')' +"]"
-					else:
-						out = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))+" ["+epn_name_in_list+"]"
-				
-				if cache_empty == "yes" and (site != "Local" or site != "Music" or site != "Video"):
-					#mpvplayer.write('\n'+'get_property stream_length'+'\n')
-					mpvplayer.write(b'\n pause \n')
-					cache_empty = "no"
-					buffering_mplayer = "yes"
-					#mpvplayer.write('\n'+'osd_show_text Buffering'+'\n')
-				if total_seek != 0:
-					r = "Seeking "+str(total_seek)+'s'
-					self.progressEpn.setFormat((r))
-				else:
-					#self.progressEpn.setFormat('')
-					self.progressEpn.setFormat((out))
-			if 'http' in a:
-			#if "AV:" not in a:
-				t = "Loading: "+epn_name_in_list+" (Please Wait)"
-				self.progressEpn.setFormat((t))
-				if MainWindow.isFullScreen() and layout_mode != "Music":
-					self.gridLayout.setSpacing(0)
-					self.frame1.show()
-					if self.frame_timer.isActive():
-						self.frame_timer.stop()
-					self.frame_timer.start(1000)
-			#if site=="Local":
-			#if ("(End of file)" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-			if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-				mplayerLength = 0
-				self.total_file_size = 0
-				mpv_start.pop()
-				#self.progressEpn.setMaximum(100)
-				#self.progressEpn.setValue(0)
-				#if self.player_setLoop_var:
-					#quitReally == "yes"
-				#	curR = self.list2.currentRow()
-				#else:
-					#quitReally == "no"
-				if self.player_setLoop_var:
-					t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
-					mpvplayer.write(t2)
-					return 0
-					#curR = self.list2.currentRow()
-					
-				else:
-					if curR == self.list2.count() - 1:
-						curR = 0
-						if site == "Music" and not self.playerPlaylist_setLoop_var:
-							r1 = self.list1.currentRow()
-							it1 = self.list1.item(r1)
-							if it1:
-								if r1 < self.list1.count():
-									r2 = r1+1
-								else:
-									r2 = 0
-								self.list1.setCurrentRow(r2)
-								self.listfound()
-					else:
-						curR = curR + 1
-				self.list2.setCurrentRow(curR)
-				if "HTTP error 403 Forbidden" in a:
-					print (a)
-					quitReally = "yes"
-					#self.player_playlist.setText("End")
-					#self.player_playlist.setToolTip('Stop After Playing Current File')
-				#epn = self.list2.currentItem().text()
-				#epn = re.sub("#","",str(epn))
-				#epn = epn.replace('#','')
-				#mpvplayer.waitForReadyRead()
-				if quitReally == "no":
-					if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
-						if len(self.queue_url_list)>0:
-							self.getQueueInList()
+						if curR == self.list2.count() - 1:
+							curR = 0
+							if site == "Music" and not self.playerPlaylist_setLoop_var:
+								r1 = self.list1.currentRow()
+								it1 = self.list1.item(r1)
+								if it1:
+									if r1 < self.list1.count():
+										r2 = r1+1
+									else:
+										r2 = 0
+									self.list1.setCurrentRow(r2)
+									self.listfound()
 						else:
-							self.localGetInList()
-					else:
-						if len(self.queue_url_list)>0:
-							self.getQueueInList()
+							curR = curR + 1
+					self.list2.setCurrentRow(curR)
+					if "HTTP error 403 Forbidden" in a:
+						print (a)
+						quitReally = "yes"
+						#self.player_playlist.setText("End")
+						#self.player_playlist.setToolTip('Stop After Playing Current File')
+					#epn = self.list2.currentItem().text()
+					#epn = re.sub("#","",str(epn))
+					#epn = epn.replace('#','')
+					#mpvplayer.waitForReadyRead()
+					if quitReally == "no":
+						if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
+							if len(self.queue_url_list)>0:
+								self.getQueueInList()
+							else:
+								self.localGetInList()
 						else:
-							self.getNextInList()
-					if self.tab_5.isHidden() and thumbnail_indicator:
-						#p1 = "mn = ui.label_"+str(curR)+".winId()"
-						#exec p1
-						#idw = str(mn)
-						length_1 = self.list2.count()
-						q3="self.label_epn_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
-						exec (q3)
-						QtWidgets.QApplication.processEvents()
-					
-				elif quitReally == "yes": 
-					self.list2.setFocus()
-			
+							if len(self.queue_url_list)>0:
+								self.getQueueInList()
+							else:
+								self.getNextInList()
+						if self.tab_5.isHidden() and thumbnail_indicator:
+							#p1 = "mn = ui.label_"+str(curR)+".winId()"
+							#exec p1
+							#idw = str(mn)
+							length_1 = self.list2.count()
+							q3="self.label_epn_"+str(length_1+cur_label_num)+".setText((epn_name_in_list))"
+							exec (q3)
+							QtWidgets.QApplication.processEvents()
+						
+					elif quitReally == "yes": 
+						self.list2.setFocus()
+		except:
+			pass
 		
 		
 				
@@ -17855,7 +17901,5 @@ if __name__ == "__main__":
 	print(ret,'--Return--')
 	del app
 	sys.exit(ret)
-	
-	
 	
 
