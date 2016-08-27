@@ -139,7 +139,7 @@ class Nyaa():
 			criteria = ['Date','Seeders','Leechers','Downloads','History','LocalStreaming']
 			return criteria
 		
-	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session):
+	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui):
 		#nm = name.rsplit('-',1)
 		#name = nm[0]
 		#name_id = nm[1]
@@ -161,7 +161,7 @@ class Nyaa():
 		#handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path)
 		#print(get_torrent_info(torrent_dest,index,path))
 		#print('---before--error---164---')
-		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session)
+		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui)
 		#print('---line--error---166---')
 		torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
 		torrent_thread.start()

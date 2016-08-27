@@ -60,7 +60,6 @@ except:
 	pass
 from musicArtist import musicArtist
 
-from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
 import threading
@@ -3589,7 +3588,7 @@ class List2(QtGui.QListWidget):
 		else:
 			QListWidget.dropEvent(event)
 	def keyPressEvent(self, event):
-		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
+		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList,show_hide_playlist,show_hide_titlelist,video_local_stream
 		global site,opt,pre_opt,name,siteName
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Left:
 			ui.tab_5.setFocus()
@@ -3653,6 +3652,13 @@ class List2(QtGui.QListWidget):
 						f = open(file_path,'a')
 						f.write('\n'+epnArrList[r])
 				f.close()
+			elif video_local_stream:
+				
+				if ui.list6.count() >0:
+					txt = ui.list6.item(0).text()
+					if txt.startswith('Queue Empty:'):
+						ui.list6.clear()
+				ui.list6.addItem(self.currentItem().text()+':'+str(self.currentRow()))
 		elif event.key() == QtCore.Qt.Key_Delete:
 			
 			if site == "Video":
@@ -4933,7 +4939,7 @@ class List6(QtGui.QListWidget):
 		super(List6, self).__init__(parent)
 
 	def keyPressEvent(self, event):
-		global category,home,site,bookmark
+		global category,home,site,bookmark,video_local_stream
 		
 		if event.key() == QtCore.Qt.Key_Down:
 			nextr = self.currentRow() + 1
@@ -4979,7 +4985,8 @@ class List6(QtGui.QListWidget):
 				item = self.item(r)
 				self.takeItem(r)
 				del item
-				del ui.queue_url_list[r]
+				if not video_local_stream:
+					del ui.queue_url_list[r]
 class QLineCustom(QtGui.QLineEdit):
 	def __init__(self, parent):
 		super(QLineCustom, self).__init__(parent)
@@ -5803,7 +5810,7 @@ class tab5(QtGui.QWidget):
 		
 	def keyPressEvent(self, event):
 		global mpvplayer,Player,wget,cycle_pause,cache_empty,buffering_mplayer,curR,pause_indicator,thumbnail_indicator,iconv_r_indicator
-		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,total_seek,site,iconv_r,browse_cnt,total_till,browse_cnt,sub_id,audio_id,rfr_url,show_hide_cover,show_hide_playlist,show_hide_titlelist
+		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,total_seek,site,iconv_r,browse_cnt,total_till,browse_cnt,sub_id,audio_id,rfr_url,show_hide_cover,show_hide_playlist,show_hide_titlelist,video_local_stream
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Right:
 			ui.list2.setFocus()
 		elif event.key() == QtCore.Qt.Key_Right:
@@ -6201,6 +6208,9 @@ class tab5(QtGui.QWidget):
 			quitReally = "yes"
 			mpvplayer.write('\n'+'quit'+'\n')
 			ui.player_play_pause.setText("Play")
+			if video_local_stream:
+				f = open('/tmp/AnimeWatch/player_stop.txt','w')
+				f.close()
 			if ui.tab_6.isHidden():
 				ui.tab_5.showNormal()
 				ui.tab_5.hide()
@@ -7213,7 +7223,7 @@ class Ui_MainWindow(object):
 		#self.gridLayout.addLayout(self.VerticalLayoutLabel,1, 1, 1, 1)
 		#self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
 		
-		self.version_number = (2,7,0,0)
+		self.version_number = (2,7,1,0)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.player_setLoop_var = 0
@@ -7228,6 +7238,8 @@ class Ui_MainWindow(object):
 		self.local_ip_stream = ''
 		self.local_port_stream = ''
 		self.search_term = ''
+		self.mpv_cnt = 0
+		self.local_file_index = []
 		self.current_background = home+'/default.jpg'
 		self.default_background = home+'/default.jpg'
 		self.torrent_type = 'file'
@@ -7490,6 +7502,9 @@ class Ui_MainWindow(object):
 					if self.do_get_thread.isRunning():
 						print('----------stream-----pausing-----')
 						self.stream_session.pause()
+					elif self.stream_session:
+						if not self.stream_session.is_paused():
+							self.stream_session.pause()
 							
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
@@ -13382,7 +13397,7 @@ class Ui_MainWindow(object):
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path,video_local_stream
 		
 		buffering_mplayer="no"
 		self.list4.hide()
@@ -13393,7 +13408,10 @@ class Ui_MainWindow(object):
 		except:
 			pass
 			
-		
+		if video_local_stream:
+			if os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
+				os.remove('/tmp/AnimeWatch/player_stop.txt')
+				
 		if mpvplayer:
 			if mpvplayer.pid() > 0:
 				#mpvplayer.write('\n'+'quit'+'\n')
@@ -13528,11 +13546,15 @@ class Ui_MainWindow(object):
 				if video_local_stream:
 					if self.thread_server.isRunning():
 						if self.do_get_thread.isRunning():
+							row_file = '/tmp/AnimeWatch/row.txt'
+							f = open(row_file,'w')
+							f.write(str(row))
+							f.close()
 							finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
 						else:
-							finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session)
+							finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6)
 					else:
-						finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session)
+						finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6)
 					self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 					self.torrent_handle.set_download_limit(self.torrent_download_limit)
 				else:
@@ -13910,7 +13932,7 @@ class Ui_MainWindow(object):
 				
 	def local_torrent_open(self,tmp):
 		global local_torrent_file_path
-		
+		from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 		if not self.local_ip:
 			self.local_ip = get_lan_ip()
 		if not self.local_port:
@@ -13932,7 +13954,7 @@ class Ui_MainWindow(object):
 				torrent_dest = local_torrent_file_path
 				print(torrent_dest,path)
 				
-				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(tmp,path)
+				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(tmp,path,ui.list6)
 				#self.handle.pause()
 				file_arr = []
 				ui.list2.clear()
@@ -13949,7 +13971,7 @@ class Ui_MainWindow(object):
 			else:
 				index = int(self.list2.currentRow())
 				
-				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.torrent_download_folder,self.stream_session)
+				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.torrent_download_folder,self.stream_session,ui.list6)
 				
 				self.do_get_thread = TorrentThread(self.torrent_handle,cnt,cnt_limit,self.stream_session)
 				self.do_get_thread.start()
@@ -13970,7 +13992,7 @@ class Ui_MainWindow(object):
 			torrent_dest = local_torrent_file_path
 			print(torrent_dest,index,path)
 			
-			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session)
+			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session,ui.list6)
 			
 			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 			self.torrent_handle.set_download_limit(self.torrent_download_limit)
@@ -14470,15 +14492,19 @@ class Ui_MainWindow(object):
 				val = int(val1[0])*3600+int(val1[1])*60+int(val1[2])
 				
 				if not mplayerLength:
-					m = re.findall('[/][^(]*',out)
-					n = re.sub(' |[/]','',m[0])
-					print (n)
-					o = n.split(':')
-					mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
-					print (mplayerLength,"--mpvlength")
-					#print (mplayerLength)
-					self.progressEpn.setMaximum(int(mplayerLength))
-					self.slider.setRange(0,int(mplayerLength))
+					if self.mpv_cnt > 4:
+						m = re.findall('[/][^(]*',out)
+						n = re.sub(' |[/]','',m[0])
+						print (n)
+						o = n.split(':')
+						mplayerLength = int(o[0])*3600+int(o[1])*60+int(o[2])
+						print (mplayerLength,"--mpvlength")
+						#print (mplayerLength)
+						self.progressEpn.setMaximum(int(mplayerLength))
+						self.slider.setRange(0,int(mplayerLength))
+						self.mpv_cnt = 0
+					print(mplayerLength)
+					self.mpv_cnt = self.mpv_cnt + 1
 				
 				#self.progressEpn.setValue(val)
 				out1 = out+" ["+epn_name_in_list+"]"
@@ -15462,7 +15488,7 @@ class Ui_MainWindow(object):
 	def options(self,val):
 	
 		global opt,pgn,genre_num,site,name,base_url,name1,embed,list1_items,pre_opt,mirrorNo,insidePreopt,quality,home,siteName,finalUrlFound,nameListArr,original_path_name,original_path_name,show_hide_playlist,show_hide_titlelist
-		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,hist_arr,list2_items,bookmark,status,viewMode
+		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,hist_arr,list2_items,bookmark,status,viewMode,video_local_stream
 	
 		hist_arr[:]=[]
 		pict_arr[:]=[]
@@ -15588,7 +15614,10 @@ class Ui_MainWindow(object):
 				site_var = getattr(module,site)()
 				self.text.setText('Wait...Loading')
 				QtGui.QApplication.processEvents()
-				m = site_var.getCompleteList(t_opt,0)
+				if video_local_stream:
+					m = site_var.getCompleteList(t_opt,ui.list6)
+				else:
+					m = site_var.getCompleteList(t_opt,0)
 				self.text.setText('Load Complete!')
 				list1_items[:] = []
 				for i in m:
