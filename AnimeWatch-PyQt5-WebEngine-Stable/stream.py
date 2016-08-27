@@ -200,6 +200,7 @@ class TorrentThread(QtCore.QThread):
 				time.sleep(5)
 			
 			if self.handle.is_seed():
+				print('Download Complete, Entering into seeding mode')
 				break
 			time.sleep(1)
 			
