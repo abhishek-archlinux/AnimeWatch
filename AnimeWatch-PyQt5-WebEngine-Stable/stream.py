@@ -32,6 +32,8 @@ import os
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	
+	
+		
 	def do_GET(self):
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
 		print(handle,ses,info)
@@ -50,7 +52,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					print (fileStr.path)
 				except:
 					return 0
-				
 				
 				pr = info.map_file(fileIndex,0,fileStr.size)
 				print(pr.length,info.piece_length(),info.num_pieces())
@@ -82,11 +83,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				file_name = torrent_download_path +'/'+ fileStr.path
 			except:
 				pass
-		# Send response status code
 		self.send_response(200)
-		#simple_class.do_get_signal.emit('hello world')
-		# Send headers
-		#self.send_header('Content-type','text/html')
 		if file_name.endswith('.mkv'):
 			self.send_header('Content-type','video/x-matroska')
 		else:
@@ -129,14 +126,17 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				time.sleep(2)
 				if ses.is_paused() or os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
 					break
-		f.close()
 		
+		
+		f.close()
 		if os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
 			os.remove('/tmp/AnimeWatch/player_stop.txt')
 		if os.path.exists('/tmp/AnimeWatch/row.txt'):
 			os.remove('/tmp/AnimeWatch/row.txt')
 		return 0
-
+		
+	
+		
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 
@@ -271,11 +271,7 @@ def session_finished(var):
 			new_cnt_limit = pr.piece+n_pieces
 			cnt1 = cnt
 			
-			#ses.pause()
-			#time.sleep(1)
-			#ses.resume()
-			#handle.resume()
-			#thread_start_again(handle,cnt,cnt_limit,ses)
+			
 			g = fileStr.path
 			if '/' in g:
 				print(g.split('/')[-1])
@@ -438,7 +434,8 @@ def get_torrent_info(v1,v2,v3,session,u):
 		print(i)
 
 	
-
+	content_length = fileStr.size
+	print(content_length,'content-length')
 	pr = info.map_file(fileIndex,0,fileStr.size)
 	print(pr.length,info.piece_length(),info.num_pieces())
 	n_pieces = pr.length / info.piece_length() + 1 
