@@ -54,6 +54,7 @@ import datetime
 import socket
 import fcntl
 import struct
+import asyncio
 from PyQt5.QtWidgets import QInputDialog
 import sqlite3
 try:
@@ -61,12 +62,13 @@ try:
 except:
 	pass
 from musicArtist import musicArtist
+from yt import get_yt_url
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
 
 from PyQt5 import QtDBus
-from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,
+from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty)
 from PyQt5.QtDBus import QDBusConnection, QDBusAbstractAdaptor
 try:
@@ -829,31 +831,202 @@ class ServerAdaptor(QDBusAbstractAdaptor):
 	def Metadata(self):
 		
 		return self.parent().Metadata
+		
+
+class MyPage(QtWebEngineWidgets.QWebEnginePage):
+	def __init__(self):
+		super(MyPage, self).__init__()
+		
+	def acceptNavigationRequest(self, url, nav_type,frame):
+		print(url,nav_type,'--print--nav--type--')
+		if nav_type == 0:
+			print('clicked',url.url())
+			#self.parent.urlSignal.emit(url.url())
+		return super(MyPage, self).acceptNavigationRequest(url,nav_type,frame)
+            
 class Browser(QtWebEngineWidgets.QWebEngineView):
-	#urlSignal = pyqtSignal(str)
+	urlSignal = pyqtSignal(str)
 	def __init__(self):
 		super(Browser, self).__init__()
 		#self.action_arr = []
 		#self.threadPool = []
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		global screen_width,home
+		self.pg = MyPage()
+		self.setPage(self.pg)
+		if ui.btnWebReviews.currentText() == 'Youtube':
+			self.hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
+		else:
+			self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		#self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		#self.m = self.profile().cookieStore()
 		#self.page().profile().QWebEngineProfile()
 		#profile_ = QtWebEngineWidgets.QWebEngineProfile(self)
-		self.page().profile().NoPersistentCookies
-		self.page().profile().cookieStore().deleteAllCookies()
+		#self.page().profile().NoPersistentCookies
+		#self.page().profile().cookieStore().deleteAllCookies()
 		self.page().profile().setHttpUserAgent(self.hdr)
 		p = NetWorkManager(self)
 		self.page().profile().setRequestInterceptor(p)
 		#self.profile().clearHttpCache()
-		self.page().profile().setCachePath('/tmp/AnimeWatch')
-		self.page().profile().setPersistentStoragePath('/tmp/AnimeWatch')
+		cache_path = os.path.join(home,'Cache')
+		print(cache_path,'--cache--path--')
+		if not os.path.exists(cache_path):
+			os.makedirs(cache_path)
+		#self.page().profile().setCachePath('/tmp/AnimeWatch')
+		#self.page().profile().setPersistentStoragePath('/tmp/AnimeWatch')
+		self.page().profile().setCachePath(cache_path)
+		self.page().profile().setPersistentStoragePath(cache_path)
 		self.page().linkHovered.connect(self.custom_links)
+		self.urlChanged.connect(self.url_changed)
 		self.hoveredLink = ''
 		self.media_url = ''
+		#self.loadFinished.connect(self._load_finished)
+		#self.loadStarted.connect(self._load_started)
+		self.titleChanged.connect(self.title_changed)
+		self.loadProgress.connect(self.load_progress)
+		self.current_link = ''
+		self.title_page = ''
+		#ui.tab_2.showMaximized()
+		ui.tab_2.setMaximumWidth(screen_width)
+		self.url_arr = []
+		self.timer = QtCore.QTimer()
+		self.timer.timeout.connect(self.player_wait)
+		self.timer.setSingleShot(True)
+		self.urlSignal.connect(self.final_found)
+	@pyqtSlot(str)
+	def final_found(self,var):
+		global wait_player,mpvplayer
+		print(var,'clicked')
+		#if wait_player:
+		#	ui.watchDirectly(var)
+		#	ui.tab_5.show()
+		#	ui.frame1.show()
+		#	ui.tab_2.setMaximumWidth(300)
+			#self.timer.start(5000)
+		#	wait_player = False
+	def player_wait(self):
+		global wait_player
+		wait_player = False
+		self.page().runJavaScript("location.reload();",self.var_remove)
+	def get_html(self,var):
+		global epn_name_in_list,quality
+		print('--got--html--')
+		if 'youtube' in self.url().url():
+		
+			x = urllib.parse.unquote(var)
+			
+			x = x.replace('\\\\u0026','&')
+			
+			#print(x)
+			#f = open('/tmp/1.txt','w')
+			#f.write(x)
+			#f.close()
+			
+			l = re.findall('url=https[^"]*',x)
+			#for i in l:
+			#	if 'itag=18' in i:
+			#		print(i)
+			for i in l:
+				if quality == 'sd': 
+					if 'itag=18' in i:
+						final_url = re.sub('url=','',i)
+						#print('\n----final_url---\n',final_url,'----final---url\n')
+						#self.urlSignal.emit(final_url)
+					
+			soup = BeautifulSoup(var,'lxml')
+			m = soup.find('div',{'id':'player'})
+			
+			if m:
+				print('removing')
+				#self.page().runJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);",self.var_remove)
+				self.page().runJavaScript("var element = document.getElementById('player');element.innerHtml='';",self.var_remove)
+			title = soup.find('title')
+			if title:
+				if self.current_link.startswith("https://m.youtube.com/watch?v=") or self.current_link.startswith("https://www.youtube.com/watch?v="):
+					epn_name_in_list = title.text
+					#self.clicked_link(self.current_link)
+			print(title,self.url().url(),'--changed-title--')
+		
+	def var_remove(self,var):
+		print(var,'--js--')
+	def load_progress(self,var):
+		if var == 100:
+			print(self.url(),self.title(),'--load--progress--')
+			self.page().toHtml(self.get_html)
+	def title_changed(self,title):
+		global epn_name_in_list
+		
+	def url_changed(self,link):
+		global mpvplayer,wait_player
+		
+		if not self.url_arr:
+			self.url_arr.append(link.url())
+			prev_url = ''
+		else:
+			prev_url = self.url_arr[-1]
+			self.url_arr.append(link.url())
+			
+		if prev_url != link.url() and 'youtube' in link.url():
+			self.current_link = link.url()
+			#self.current_link = re.sub('&itct=[^"]*','',self.current_link)
+			#print(link.url(),'--url-changed--')
+			#if '/watch?list=' in link.url():
+			#	t = re.search('&v=[^&]*',link.url())
+			#	w = t.group()
+			#	w = w.replace('&','')
+			#	self.current_link = 'https://m.youtube.com/watch?'+w
+			m = []
+			if '/watch?' in link.url():
+				a = link.url().split('?')[-1]
+				b = a.split('&')
+				if b:
+					for i in b:
+						j = i.split('=')
+						k = (j[0],j[1])
+						m.append(k)
+				else:
+					j = a.split('=')
+					k = (j[0],j[1])
+					m.append(k)
+				d = dict(m)
+				print(d,'----dict--arguments---generated---')
+				try:
+					self.current_link = 'https://m.youtube.com/watch?v='+d['v']
+				except:
+					pass
+			if (self.current_link.startswith("https://m.youtube.com/watch?v=") or self.current_link.startswith("https://www.youtube.com/watch?v=")) and not wait_player:
+				self.page().runJavaScript("var element = document.getElementById('player');element.innerHtml='';",self.var_remove)
+				wait_player = True
+				self.clicked_link(self.current_link)
+				#asyncio.get_event_loop().run_until_complete(self.clicked_link(self.current_link))
+				self.timer.start(1000)
+				
+				
+		#print(self.url_arr)
+	
+	def clicked_link(self,link):
+		global quality,current_playing_file_path,epn_name_in_list,mpvplayer,quitReally,wait_player
+		
+		final_url = ''
+		url = link
+		epn_name_in_list = self.title_page
+		print(url,'clicked_link')
+		if 'youtube.com/watch?v=' in url:
+			quitReally = 'yes'
+			if mpvplayer.pid() > 0:
+				mpvplayer.kill()
+			final_url = get_yt_url(url,quality)
+			if final_url:
+				print(final_url,'--youtube--')
+				ui.watchDirectly(final_url)
+				ui.tab_5.show()
+				ui.frame1.show()
+				ui.tab_2.setMaximumWidth(400)
+				#self.timer.start(5000)
+			#wait_player = False
 	def custom_links(self,q_url):
 		url = q_url
 		self.hoveredLink = url
-	
+		
 	def urlHeaders(self,url):
 		m =[]
 		o = []
@@ -894,12 +1067,24 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		menu = self.page().createStandardContextMenu()
 		try:
 			data = self.page().contextMenuData()
+			self.title_page = data.linkText()
+			try:
+				tmp = self.title_page.replace('\n','#')
+				print(tmp)
+				tmp = re.search('[#][^#]*',tmp)
+				print(tmp)
+				self.title_page = tmp.group()
+				self.title_page = self.title_page.replace('#','')
+			except:
+				pass
+			print(data.mediaUrl().url(),data.mediaType(),data.linkText(),data.linkUrl().url(),'--media--url--and--type--')
 			if data.mediaType() == 1:
 				self.media_url = data.mediaUrl().url()
 				if not self.media_url.startswith('http'):
 					self.media_url = ''
 					print('--no--image-url--')
 				print(data.mediaUrl().url(),'--media-url--image--')
+			
 		except:
 			pass
 		url = self.hoveredLink
@@ -907,8 +1092,14 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		arr = ['Download As Fanart','Download As Cover','Artist/Series Link','Season Episode Link']
 		action = []
 		if url or self.media_url:
+			if url:
+				if 'youtube.com' in url:
+					arr.append('Play with AnimeWatch')
+					arr.append('Download')
+					#self.page().profile().setHttpUserAgent(self.hdr1)
 			if not url:
 				url = self.media_url
+			
 			menu.addSeparator()
 			j = 0
 			for i in range(len(arr)):
@@ -922,7 +1113,22 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			#j = j+1
 		#menu.exec_(event.globalPos())
 		else:
-			super(Browser, self).contextMenuEvent(event)
+			if 'youtube.com/watch?v=' in self.url().url():
+				self.title_page = self.title()
+				arr = ['Download']
+				action = []
+				menu.addSeparator()
+				j = 0
+				for i in range(len(arr)):
+					action.append(menu.addAction(arr[i]))
+					
+				act = menu.exec_(event.globalPos())
+				
+				for i in range(len(action)):
+					if act == action[i]:
+						self.download(self.url().url(),arr[i])
+			else:
+				super(Browser, self).contextMenuEvent(event)
 	def getContentUnicode(self,content):
 		if isinstance(content,bytes):
 			print("I'm byte")
@@ -940,118 +1146,136 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		content = ccurl(url)
 		return content
 	def download(self, url,option):
-		global site,epnArrList
-		print ("Hello")
-		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		if url:
-			url1 = str(url)
+		global quality
+		if option.lower() == 'play with animewatch':
+			global quality,current_playing_file_path,epn_name_in_list,mpvplayer
+			if mpvplayer.pid() > 0:
+				mpvplayer.kill()
+			final_url = ''
+			epn_name_in_list = self.title_page
+			print(epn_name_in_list)
+			final_url = get_yt_url(url,quality)
+			if final_url:
+				ui.watchDirectly(final_url)
+				ui.tab_5.show()
+				ui.frame1.show()
+				ui.tab_2.setMaximumWidth(400)
+		elif option.lower() == 'download':
+			finalUrl = get_yt_url(url,quality)
+			finalUrl = finalUrl.replace('\n','')
+			title = self.title_page+'.mp4'
+			title = title.replace('"','')
+			title = title.replace('/','-')
+			if os.path.exists(ui.default_download_location):
+				title = os.path.join(ui.default_download_location,title)
+			else:
+				title = '/tmp/AnimeWatch/'+title
+			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
+			print (command)		
+			ui.infoWget(command,0)
 		else:
-			url1 = self.media_url
-		print (url1)
-		url_artist = url1
-		found = ""
-		final_found = False
-		url1Code = url1.split('/')[-1]
-		#dict_tmp = self.urlHeaders(url1)
-		#content_type = dict_tmp['Content-Type']
-		t_content = ccurl(url1+'#'+'-I')
-		if 'image/jpeg' in t_content and not 'Location:' in t_content:
-			final_found = True
-		elif 'image/jpeg' in t_content and 'Location:' in t_content:
-			m = re.findall('Location: [^\n]*',t_content)
-			found = re.sub('Location: |\r','',m[0])
-			url1 = found
-			final_found = True
-		elif self.media_url:
-			url1 = self.media_url
-			final_found = True
-		else:
-			return 0
-		print(url1,'----------image-url----------')
-		if site == "Music":
-			if (ui.list3.currentItem().text())=="Artist":
+			global site,epnArrList
+			print ("Hello")
+			hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+			if url:
+				url1 = str(url)
+			else:
+				url1 = self.media_url
+			print (url1)
+			url_artist = url1
+			found = ""
+			final_found = False
+			url1Code = url1.split('/')[-1]
+			#dict_tmp = self.urlHeaders(url1)
+			#content_type = dict_tmp['Content-Type']
+			t_content = ccurl(url1+'#'+'-I')
+			if 'image/jpeg' in t_content and not 'Location:' in t_content:
+				final_found = True
+			elif 'image/jpeg' in t_content and 'Location:' in t_content:
+				m = re.findall('Location: [^\n]*',t_content)
+				found = re.sub('Location: |\r','',m[0])
+				url1 = found
+				final_found = True
+			elif self.media_url:
+				url1 = self.media_url
+				final_found = True
+			else:
+				return 0
+			print(url1,'----------image-url----------')
+			if site == "Music":
+				if (ui.list3.currentItem().text())=="Artist":
+					name = str(ui.list1.currentItem().text())
+				else:
+					r = ui.list2.currentRow()
+					name = epnArrList[r].split('	')[2]
+			else:
 				name = str(ui.list1.currentItem().text())
-			else:
-				r = ui.list2.currentRow()
-				name = epnArrList[r].split('	')[2]
-		else:
-			name = str(ui.list1.currentItem().text())
-			
-		if '/' in name:
-				name = name.replace('/','-')
 				
-		if (url1.endswith('.jpg') or final_found) and (site!='Music'):
-			final = url1
-			if site == "Local":
-				if name.startswith('@'):
-					name1 = name.split('@')[-1]
-				else:
-					name1 = name
-				thumb = '/tmp/AnimeWatch/'+name1+'.jpg'
-			else:
-				thumb = '/tmp/AnimeWatch/'+name+'.jpg'
-			#subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
-			ccurl(final+'#'+'-o'+'#'+thumb)
-		else:
-			if site == "Music" and (option == "Download As Fanart" or option == "Download As Cover"):
-				if 'last.fm' in url1:
-					print(url1,'--artist-link---')
-					#content = self.ccurl(url1,'')
-					content = ccurl(url1)
-					soup = BeautifulSoup(content,'lxml')
-					link = soup.findAll('img')
-					
-					for i in link:
-						if 'src' in str(i):
-							j = i['src']
-							k = j.split('/')[-1]
-							if url1Code == k:
-								found = j
-								break
-					print (str(found))
-					u1 = found.rsplit('/',2)[0]
-					u2 = found.split('/')[-1]
-					final = u1 + '/770x0/'+u2
-					print (final)
-				elif final_found:
-					final = url1
-				else:
-					final = ''
-				if '/' in name:
+			if '/' in name:
 					name = name.replace('/','-')
-				thumb = '/tmp/AnimeWatch/'+name+'.jpg'
-				try:
-					if final.startswith('http'):
-						#subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
-						ccurl(final+'#'+'-o'+'#'+thumb)
-				except:
-					pass
-		print (option)
-		if str(option) == "Download As Fanart":
-			ui.copyFanart()
-		elif str(option) == "Download As Cover":
-			ui.copyImg()
-		elif str(option) == "Artist/Series Link":
-			ui.posterfound(url_artist)
-			ui.copyImg()
-			ui.copySummary()
-		elif str(option) == "Season Episode Link":
-			if site != "Music" and site != "PlayLists":
-				ui.getTvdbEpnInfo(url1)
+					
+			if (url1.endswith('.jpg') or final_found) and (site!='Music'):
+				final = url1
+				if site == "Local":
+					if name.startswith('@'):
+						name1 = name.split('@')[-1]
+					else:
+						name1 = name
+					thumb = '/tmp/AnimeWatch/'+name1+'.jpg'
+				else:
+					thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+				#subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
+				ccurl(final+'#'+'-o'+'#'+thumb)
+			else:
+				if site == "Music" and (option == "Download As Fanart" or option == "Download As Cover"):
+					if 'last.fm' in url1:
+						print(url1,'--artist-link---')
+						#content = self.ccurl(url1,'')
+						content = ccurl(url1)
+						soup = BeautifulSoup(content,'lxml')
+						link = soup.findAll('img')
+						
+						for i in link:
+							if 'src' in str(i):
+								j = i['src']
+								k = j.split('/')[-1]
+								if url1Code == k:
+									found = j
+									break
+						print (str(found))
+						u1 = found.rsplit('/',2)[0]
+						u2 = found.split('/')[-1]
+						final = u1 + '/770x0/'+u2
+						print (final)
+					elif final_found:
+						final = url1
+					else:
+						final = ''
+					if '/' in name:
+						name = name.replace('/','-')
+					thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+					try:
+						if final.startswith('http'):
+							#subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
+							ccurl(final+'#'+'-o'+'#'+thumb)
+					except:
+						pass
+			print (option)
+			if str(option) == "Download As Fanart":
+				ui.copyFanart()
+			elif str(option) == "Download As Cover":
+				ui.copyImg()
+			elif str(option) == "Artist/Series Link":
+				ui.posterfound(url_artist)
+				ui.copyImg()
+				ui.copySummary()
+			elif str(option) == "Season Episode Link":
+				if site != "Music" and site != "PlayLists":
+					ui.getTvdbEpnInfo(url1)
 	def finishedDownload(self):
 		
-		
-		
-		
-		
-		#if option == "Download As Fanart":
-		#	ui.copyFanart()
-		#elif option == "Download As Cover":
 		ui.copyImg()
-		#elif option == "Artist Link":
-		#	ui.posterfound(url1)
-		#	ui.copyImg()
-		#	ui.copySummary()
+		
 class ThreadingExample(QtCore.QThread):
     
 	def __init__(self,name):
@@ -1064,14 +1288,6 @@ class ThreadingExample(QtCore.QThread):
 		self.wait()                        
 	def ccurlT(self,url,rfr):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	#	if rfr:
-	#		content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
-	#	else:
-	#		content = subprocess.check_output(['curl','-L','-A',hdr,url])
-			
-		#hdrs = {'user-agent':hdr}
-		#req = requests.get(url,headers=hdrs)
-		#content = req.text
 		content = ccurl(url)
 		return content
 	def run(self):
@@ -3443,6 +3659,7 @@ class List1(QtWidgets.QListWidget):
 				review5 = submenuR.addAction("ANN")
 				review6 = submenuR.addAction("AniDB")
 				review7 = submenuR.addAction("Google")
+				review8 = submenuR.addAction("Youtube")
 				addBookmark = submenu.addAction("Add Bookmark")
 				#watching = submenu.addAction("Watching")
 				#completed = submenu.addAction("Completed")
@@ -3552,6 +3769,9 @@ class List1(QtWidgets.QListWidget):
 					ui.reviewsWeb()
 				elif action == review7:	
 					ui.btnWebReviews.setCurrentIndex(7)
+					ui.reviewsWeb()
+				elif action == review8:	
+					ui.btnWebReviews.setCurrentIndex(8)
 					ui.reviewsWeb()
 				elif action == tvdb:
 					ui.posterfound("")
@@ -6270,7 +6490,8 @@ class tab5(QtWidgets.QWidget):
 				ui.tab_5.show()
 				ui.tab_5.setFocus()
 				#ui.tab_5.showFullScreen()
-				
+				if not ui.tab_2.isHidden():
+					ui.tab_2.hide()
 				#ui.gridLayout.showFullScreen()
 				if (Player == "mplayer" or Player=="mpv"):
 					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
@@ -6400,6 +6621,11 @@ class tab5(QtWidgets.QWidget):
 				ui.superGridLayout.setSpacing(10)
 				ui.superGridLayout.setContentsMargins(10,10,10,10)
 			#ui.list2.setFocus()
+			if not ui.tab_2.isHidden():
+				ui.list2.hide()
+				ui.goto_epn.hide()
+				ui.list1.hide()
+				ui.frame.hide()
 	
 		#super(List2, self).keyPressEvent(event)
 	
@@ -6795,7 +7021,7 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_player_opt.insertWidget(9,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background']
+		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
 		self.action_player_menu =[]
 		for i in self.player_menu_option:
 			self.action_player_menu.append(self.player_menu.addAction(i, lambda x=i:self.playerPlaylist(x)))
@@ -7193,9 +7419,9 @@ class Ui_MainWindow(object):
 		self.torrent_upload_limit = 0
 		self.torrent_download_limit = 0
 		self.torrent_download_folder = '/tmp/AnimeWatch'
+		self.default_download_location = '/tmp/AnimeWatch'
 		
 		
-		
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7212,6 +7438,8 @@ class Ui_MainWindow(object):
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
+		self.btn2.addItem(_fromUtf8(""))
+		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
@@ -7407,6 +7635,7 @@ class Ui_MainWindow(object):
 		self.btn2.setItemText(5, _translate("MainWindow", "ANN", None))
 		self.btn2.setItemText(6, _translate("MainWindow", "AniDB", None))
 		self.btn2.setItemText(7, _translate("MainWindow", "Google", None))
+		self.btn2.setItemText(8, _translate("MainWindow", "Youtube", None))
 		self.btnWebReviews.setItemText(0, _translate("MainWindow", "Reviews", None))
 		self.btnWebReviews.setItemText(1, _translate("MainWindow", "MyAnimeList", None))
 		self.btnWebReviews.setItemText(2, _translate("MainWindow", "Anime-Planet", None))
@@ -7415,6 +7644,7 @@ class Ui_MainWindow(object):
 		self.btnWebReviews.setItemText(5, _translate("MainWindow", "ANN", None))
 		self.btnWebReviews.setItemText(6, _translate("MainWindow", "AniDB", None))
 		self.btnWebReviews.setItemText(7, _translate("MainWindow", "Google", None))
+		self.btnWebReviews.setItemText(8, _translate("MainWindow", "Youtube", None))
 		self.chk.setItemText(0, _translate("MainWindow", "mpv", None))
 		#self.chk.setItemText(1, _translate("MainWindow", "Default", None))
 		self.chk.setItemText(1, _translate("MainWindow", "mplayer", None))
@@ -7768,7 +7998,7 @@ class Ui_MainWindow(object):
 					
 	def playerPlaylist(self,val):
 		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player,Player,httpd
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background']
+		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
 		#txt = str(self.player_playlist.text())
 		#playlist_show = 1-playlist_show
 		#self.action[]
@@ -7848,6 +8078,7 @@ class Ui_MainWindow(object):
 			elif v == "UnLock Playlist":
 					self.playerPlaylist_setLoop_var = 0
 					self.action_player_menu[4].setText("Lock Playlist")
+		
 		elif val == "Stop After Current File":
 			quitReally = "yes"
 			#self.player_setLoop_var = 0
@@ -7889,6 +8120,14 @@ class Ui_MainWindow(object):
 		elif val == "Set As Default Background":
 			if os.path.exists(self.current_background) and self.current_background != self.default_background:
 					shutil.copy(self.current_background,self.default_background)
+		elif val == "Show/Hide Web Browser":
+			if self.tab_2.isHidden():
+				if mpvplayer.pid() > 0:
+					self.tab_2.show()
+				else:
+					self.showHideBrowser()
+			else:
+				self.tab_2.hide()
 		elif site == "Music" or site == "Local" or site == "Video" or site == "PlayLists":
 			if val == "Order by Name(Descending)":
 				try:
@@ -11948,6 +12187,7 @@ class Ui_MainWindow(object):
 			self.label.clear()
 			self.text.clear()
 			site = 'None'
+		
 		elif site == "Addons":
 			site == 'None'
 			self.btnAddon.show()
@@ -11955,6 +12195,15 @@ class Ui_MainWindow(object):
 			bookmark = "False"
 			if not os.path.exists(home+"/History" + "/" + site):
 				os.makedirs(home+"/History" + "/" + site)
+			self.search()
+		elif site == "YouTube":
+			site == 'None'
+			bookmark = "False"
+			self.list3.clear()
+			self.list1.clear()
+			self.list2.clear()
+			self.label.clear()
+			self.text.clear()
 			self.search()
 		else:
 			bookmark = "False"
@@ -12074,11 +12323,22 @@ class Ui_MainWindow(object):
 		
 	def reviewsWeb(self):
 		global name,nam,old_manager,new_manager
-		if not self.web:
+		review_site = str(self.btnWebReviews.currentText())
+		if not self.web and review_site:
 			self.web = Browser()
+			
 			self.web.setObjectName(_fromUtf8("web"))
 			self.horizontalLayout_5.addWidget(self.web)
-		review_site = str(self.btnWebReviews.currentText())
+		elif self.web:
+			print(self.web.url().url(),'--web--url--')
+			if 'youtube' in review_site.lower() and 'youtube' not in self.web.url().url():
+				
+				self.web.close()
+				self.web.deleteLater()
+				self.web = Browser()
+				
+				self.web.setObjectName(_fromUtf8("web"))
+				self.horizontalLayout_5.addWidget(self.web)
 		#if review_site == "Reviews":
 		#	review_site = "MyAnimeList"
 		
@@ -12117,6 +12377,8 @@ class Ui_MainWindow(object):
 			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
 		elif review_site == "Google":
 			self.web.load(QUrl("https://www.google.com/search?q="+name1))
+		elif review_site == "Youtube":
+			self.web.load(QUrl("https://www.youtube.com/results?search_query="+name1))
 		elif review_site == "Reviews":
 			self.web.setHtml('<html>Reviews:</html>')
 		#new_manager = NetWorkManager(old_manager)
@@ -12314,11 +12576,10 @@ class Ui_MainWindow(object):
 		global search,name
 		site = str(self.btn1.currentText())
 		if site == "Select":
-			site = "Local"
-			
+			site = "None"
 			return 0
 		elif (self.line.placeholderText()) == "No Search Option":
-			site = "Local"
+			#site = "None"
 			return 0
 		else:
 			self.search()
@@ -12326,7 +12587,7 @@ class Ui_MainWindow(object):
 	def search(self):
 		code = 1
 		global site,base_url,embed,list1_items,opt,mirrorNo,hdr,quality,site_arr,siteName,finalUrlFound,epnArrList
-		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,list2_items,bookmark,refererNeeded,video_local_stream
+		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,list2_items,bookmark,refererNeeded,video_local_stream,name
 		pict_arr[:]=[]
 		name_arr[:]=[]
 		summary_arr[:]=[]
@@ -12451,6 +12712,16 @@ class Ui_MainWindow(object):
 			self.line.setReadOnly(True)
 			refererNeeded = False
 			#finalUrlFound = False
+		elif site == "YouTube":
+			self.line.setPlaceholderText("Search Available")
+			self.line.setReadOnly(False)
+			name_t = self.line.text()
+			if name_t:
+				name = name_t
+				self.btnWebReviews.setCurrentIndex(8)
+				self.reviewsWeb()
+			#if ui.btn1.currentText() == 'Addons' and addon_index >=0 and addon_index < ui.btnAddon.count():
+			#ui.btnAddon.setCurrentIndex(addon_index)
 		elif site == "DubbedAnime" or site == "SubbedAnime":
 			#cmd = site +"()"
 			#site_var=eval(cmd)
@@ -14454,7 +14725,10 @@ class Ui_MainWindow(object):
 		if mpvplayer:
 			if mpvplayer.pid() > 0:
 				mpvplayer.write(b"\n quit \n")
-		quitReally = "no"
+		if not self.tab_2.isHidden():
+			quitReally = 'yes'
+		else:
+			quitReally = "no"
 		self.list1.hide()
 		self.text.hide()
 		self.label.hide()
@@ -14551,12 +14825,16 @@ class Ui_MainWindow(object):
 	def dataReadyW(self,p):
 		global wget,new_epn,quitReally,curR,epn,opt,base_url,Player,site,sizeFile
 		#wget.waitForReadyRead()
-		a = str(p.readAllStandardOutput()).strip()
-		#print a
+		try:
+			a = str(p.readAllStandardOutput(),'utf-8').strip()
+		except:
+			a =''
+		#sizeFile = '0'
 		if "Length:" in a:
 			l = re.findall('[(][^)]*[)]',a)
 			if l:
 				sizeFile = l[0]
+			
 		if "%" in a:
 			m = re.findall('[0-9][^\n]*',a)
 			if m:
@@ -14568,8 +14846,10 @@ class Ui_MainWindow(object):
 					except:
 						val = 0
 					self.progress.setValue(val)
-						
-				out = str(m[0])+" "+sizeFile
+				try:
+					out = str(m[0])+" "+sizeFile
+				except:
+					out = str(m[0])+" "+'0'
 				#self.goto_epn.setText(out)
 				self.progress.setFormat(out)
 			
@@ -14592,7 +14872,8 @@ class Ui_MainWindow(object):
 		print ("Process Ended")
 		self.progress.setValue(100)
 		self.progress.hide()
-		self.goto_epn.show()
+		if self.tab_2.isHidden():
+			self.goto_epn.show()
 		self.downloadWget_cnt = self.downloadWget_cnt+1
 		if self.downloadWget_cnt == 4:
 			self.downloadWget = self.downloadWget[5:]
@@ -14603,7 +14884,8 @@ class Ui_MainWindow(object):
 					self.infoWget(self.downloadWget[i],i)
 	def infoWget(self,command,src):
 		global wget
-		
+		if not self.tab_2.isHidden():
+			self.horizontalLayout_5.addWidget(self.progress)
 		wget = QtCore.QProcess()
 		wget.setProcessChannelMode(QtCore.QProcess.MergedChannels)
 		
@@ -17159,7 +17441,8 @@ if __name__ == "__main__":
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
-	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path,wait_player
+	wait_player = False
 	local_torrent_file_path = ''
 	video_local_stream = False
 	default_arr_setting = [0,0,0,0,0]
@@ -17184,8 +17467,8 @@ if __name__ == "__main__":
 	base_url_picn = ""
 	base_url_summary = ""
 	type_arr = ['.mkv','.mp4','.avi','.mp3','.flv','.flac']
-	site_arr = ["SubbedAnime","DubbedAnime","Local","PlayLists","Bookmark","Music",'Video']
-	default_option_arr = ["Select","Video","Music","Local","Bookmark","PlayLists","Addons"]
+	site_arr = ["SubbedAnime","DubbedAnime","Local","PlayLists","Bookmark","Music",'Video','YouTube']
+	default_option_arr = ["Select","Video","Music","Local","Bookmark","PlayLists","YouTube","Addons"]
 	addons_option_arr = []
 	audio_id = "auto"
 	sub_id = "auto"
@@ -17569,9 +17852,13 @@ if __name__ == "__main__":
 				else:
 					ui.local_ip_stream = '127.0.0.1'
 					ui.local_port_stream = 9001
+			elif 'DEFAULT_DOWNLOAD_LOCATION' in i:
+				j = re.sub('\n','',j)
+				ui.default_download_location = j
 	else:
 		f = open(home+'/other_options.txt','w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
+		f.write("\nDEFAULT_DOWNLOAD_LOCATION=/tmp/AnimeWatch")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001
