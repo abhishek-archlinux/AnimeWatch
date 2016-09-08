@@ -18,6 +18,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Media Server](#media-server)
 
+[YouTube Player](#youtube-support)
+
 [Addons (Plugins) Structure] (#addon-structure)
 
 [Dependencies and Installation](#dependencies-and-installation)
@@ -66,6 +68,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 18. Media Server capability.
 
+19. Youtube Support.
+
 ## Normal Mode 
 ######[Index](#index)
 ![AnimeWatch](/Images/Video.png)
@@ -110,6 +114,8 @@ This feature is based on libtorrent-rasterbar {which is being used by bittorrent
 
 If you are using mpv as backend for watching streaming torrent then it might be possible that seeking within the stream won't work. Therefore, in order to enable seeking within torrent stream forcibly using mpv, open '~/.mpv/config' file and insert line 'force-seekable=yes' into it. Seeking within torrent is not perfect, and sometime playback stops. In such case, first focus the video by taking mouse pointer over the video and press key 'q' to quit the current playing instance, and then restart the video again. If you click 'Stop' button in the AnimeWatch player, then along with quitting current playing instance, it will stop Torrent also. Therefore, if you want torrent to continue, and only restart of the the internal player then use key 'q'.
 
+If torrent contains multiple files then users can enqueue the desired files by selecting appropriate entry in Playlist column and pressing 'key q'.
+ 
 ## Media Server
 ######[Index](#index)
 From version 2.6.0-0, it's possible to use AnimeWatch player as media server. The media server functionality can be started by clicking 'More' button, and selecting 'Start Media Server' option. By default media server will start on 'http://127.0.0.1:9001' i.e. default loop-back address of your machine. In order to use it as media server which can be accessed from any device on the same local network, you have to change this loop-back address '127.0.0.1' to your local network address which normally starts with '192.168.x.y'. You can check, default local network address using cli tools like 'ifconfig' on any gnu/linux based systems. Once you know local network address of your server, then manually edit '~/.config/AnimeWatch/other_options.txt' file and change the field "LOCAL_STREAM_IP" appropriately with local network address. Once you've set up the 'LOCAL_STREAM_IP' field properly, then you should be able to access the current playlist on the AnimeWatch, from any device on the network. 
@@ -117,6 +123,10 @@ From version 2.6.0-0, it's possible to use AnimeWatch player as media server. Th
 For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current selected file in the playlist at the address 'http://192.168.1.1/play'. Next and previous files in the playlist can be accessed using url's 'http://192.168.1.1/next' and 'http://192.168.1.1/prev' respectively.
 
 Note: This feature won't work with streaming torrent content, since streaming torrent starts another http server process different than that of media server process mentioned in this section. You can access torrent streams from other machines or devices as per the instructions given in [Torrent Streaming](#torrent-streaming) section.
+
+## YouTube Support
+######[Index](#index)
+This player provides a wrapper around youtube site using qtwebengine (since version 2.8.0-0). If your GNU/linux distro does not package qtwebengine, then it will fallback to qtwebkit, which is slower compared to qtwebengine for rendering web pages. Users need to install livestreamer(for watching live streams) and youtube-dl for directly playing youtube videos on this player. Ubuntu users have to install python3-livestreamer also.
 
 ## Addon Structure
 ######[Index](#index)
@@ -130,13 +140,13 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 ## Dependencies and Installation
 ######[Index](#index)
-1. Arch users first need to install 'python-pytaglib' from AUR. Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'. Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
+1. Arch users first need to install 'python-pytaglib' from AUR. ~~Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'.~~ Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
 
    Note : AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) and [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt' or any other conventional method. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/scr/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
 
 2. Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Ubuntu 14.04 users also have to install 'python3-dbus.mainloop.qt' for MPRIS2 support. Pyqt5 version is not available for Ubuntu, since qt5-webengine is not availbale on it. Currently there are no significant featurewise differences between pyqt5 and pyqt4 version, there are only structural differences. Users won't notice any significant variation between the two while using. For removing the package use 'sudo apt-get remove AnimeWatch'
 
-3. Common Method: Users have to manually install all the dependencies listed below. Then they should clone the repository and go to AnimeWatch-PyQt4-Stable directory. Open terminal in that directory and run 'python3 install.py' (or 'python install.py' if default python points to python3). Application launcher will be created in '~/.local/share/applications/'.
+3. Common Method: Users have to manually install all the dependencies listed below. Then they should clone the repository and go to AnimeWatch-PyQt4-Stable or AnimeWatch-PyQt5 directory. Open terminal in that directory and run 'python3 install.py' (or 'python install.py' if default python points to python3). Application launcher will be created in '~/.local/share/applications/'.
 
 4. If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/
 
@@ -146,6 +156,8 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 python3 {Main Language}
 
 python-pyqt4 (Main GUI Builder)
+
+python-pyqt5 (for pyqt5 version)
 
 python-pillow {For Image Processing}
 
@@ -171,13 +183,19 @@ python-psutil
 
 curl
 
+wget
+
 libtorrent-rasterbar {since version 2.5.0-0}
 
 python3-libtorrent (for Ubuntu 14.04, since version 2.5.0-0)
 
-~~python-requests { Not required for version >= 2.1.1-1}~~
+livestreamer, youtube-dl {for YouTube Support}
 
-~~wget { Not required for version >= 2.0.0-1}~~
+python3-livestreamer {on ubuntu 16.04}
+
+python3-dbus {for MPRIS DBus support}
+
+~~python-requests { Not required for version >= 2.1.1-1}~~
 
 ~~phantomjs(Headless Browser) { Not required for version >= 2.0.0-1}~~
 
@@ -185,21 +203,28 @@ python3-libtorrent (for Ubuntu 14.04, since version 2.5.0-0)
 
 ~~jsbeautifier(required for resolving certain links) {Not required for version >= 2.1.1-1}~~
 
-###Dependencies installation in Arch.
+###Dependencies installation in Arch for pyqt4 version.
 
-sudo pacman -S python python-pyqt4 python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3 libtorrent-rasterbar
+sudo pacman -S python python-pyqt4 python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3 libtorrent-rasterbar python-dbus
 
-If you want to try PyQt5 Experimental Version then install 'python-pyqt5' package also.
+###Dependencies installation in Arch for pyqt5 version.
 
+sudo pacman -S python python-pyqt5 qt5-webengine python-dbus python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3 libtorrent-rasterbar livestreamer youtube-dl wget
 
 ###In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
 
 sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent
 
 
-PyQt5 version can't work on Ubuntu since qt5-webengine is not available on it as dependency.
+~~PyQt5 version can't work on Ubuntu since qt5-webengine is not available on it as dependency.~~
 
-###Once Dependencies are installed Download the Appropriate Stable or Experimental folder containing 'install.py' file. Open Terminal in the directory and use following command:
+AnimeWatch-PyQt5 from version number 2.8.0-0 onwards can be installed on ubuntu (16.04 or higher) or any other distro which does not package qt5-webengine. In case qt5-webengine is not packaged in the distro, it will use qtwebkit in fallback mode.
+
+###Dependencies installation in Ubuntu 16.04
+
+sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl wget libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent livestreamer python3-livestreamer youtube-dl python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebkit python3-dbus
+
+###Once Dependencies are installed Download the Appropriate folder (AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable) containing 'install.py' file. Open Terminal in the directory and use following command:
 
 ###In Arch:
 
