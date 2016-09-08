@@ -17504,12 +17504,15 @@ if __name__ == "__main__":
 	#QtWidgets.QApplication.processEvents()
 	#index_site = ui.btn1.findText(site)
 	
-	#print(site,index_site)
-	if site_index >=0 and site_index < ui.btn1.count():
+	print(site,site_index,'==site_index')
+	if site_index >0 and site_index < ui.btn1.count():
 		ui.btn1.setCurrentIndex(site_index)
 		if ui.btn1.currentText() == 'Addons' and addon_index >=0 and addon_index < ui.btnAddon.count():
 			ui.btnAddon.setCurrentIndex(addon_index)
-	
+	elif site_index == 0:
+		ui.btn1.setCurrentIndex(1)
+		ui.btn1.setCurrentIndex(0)
+		
 	if option_index < 0 and ui.list3.count() > 0:
 		option_index = 0
 		print(option_index,ui.list3.count(),'--list3--cnt--')
