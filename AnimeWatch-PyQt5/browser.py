@@ -435,7 +435,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		else:
 			if 'youtube.com/watch?v=' in self.url().url():
 				self.title_page = self.title()
-				arr = ['Download']
+				arr = ['Play with AnimeWatch','Download']
 				action = []
 				menu.addSeparator()
 				j = 0

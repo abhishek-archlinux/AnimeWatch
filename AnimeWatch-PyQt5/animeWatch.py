@@ -6075,6 +6075,10 @@ class tab5(QtWidgets.QWidget):
 					ui.tab_6.show()
 					ui.list2.hide()
 					ui.goto_epn.hide()
+				if ui.btn1.currentText().lower() == 'youtube':
+					ui.list2.hide()
+					ui.goto_epn.hide()
+					ui.tab_2.show()
 				#ui.tab_5.showNormal()
 				#self.showNormal()
 		elif event.key() == QtCore.Qt.Key_Period:
