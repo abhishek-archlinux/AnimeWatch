@@ -375,6 +375,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		menu = self.page().createStandardContextMenu()
 		try:
 			data = self.page().contextMenuData()
+			url = data.linkUrl().url()
 			self.title_page = data.linkText()
 			try:
 				#self.title_page = self.title_page.strip()
@@ -396,20 +397,29 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				print(data.mediaUrl().url(),'--media-url--image--')
 			
 		except:
+			url = self.hoveredLink
 			pass
-		url = self.hoveredLink
 		print(url)
-		arr = ['Download As Fanart','Download As Cover','Artist/Series Link','Season Episode Link']
+		if not url.startswith('http'):
+			url = self.media_url
+			print(url)
+			
+		arr = ['Download As Fanart','Download As Cover']
+		arr_extra_tvdb = ['Series Link','Season Episode Link']
+		arr_last = ['Artist Link']
 		action = []
 		if url or self.media_url:
 			if url:
+				if 'tvdb' in url:
+					arr = arr + arr_extra_tvdb
+				if 'last.fm' in url:
+					arr = arr + arr_last
 				if 'youtube.com' in url:
+					arr[:]=[]
 					arr.append('Play with AnimeWatch')
 					arr.append('Download')
 					#self.page().profile().setHttpUserAgent(self.hdr1)
-			if not url:
-				url = self.media_url
-			
+				
 			menu.addSeparator()
 			j = 0
 			for i in range(len(arr)):
@@ -482,6 +492,15 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
 			print (command)		
 			self.ui.infoWget(command,0)
+		elif option.lower() == 'season episode link':
+			
+			if self.site != "Music" and self.site != "PlayLists":
+				self.ui.getTvdbEpnInfo(url)
+				
+		elif option.lower() == 'artist link' or option.lower() == 'series link':
+			self.ui.posterfound(url)
+			self.ui.copyImg()
+			self.ui.copySummary()
 		else:
 			print ("Hello")
 			hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -572,12 +591,6 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.copyFanart()
 			elif str(option) == "Download As Cover":
 				self.ui.copyImg()
-			elif str(option) == "Artist/Series Link":
-				self.ui.posterfound(url_artist)
-				self.ui.copyImg()
-				self.ui.copySummary()
-			elif str(option) == "Season Episode Link":
-				if self.site != "Music" and self.site != "PlayLists":
-					self.ui.getTvdbEpnInfo(url1)
+								
 	def finishedDownload(self):
 		self.ui.copyImg()

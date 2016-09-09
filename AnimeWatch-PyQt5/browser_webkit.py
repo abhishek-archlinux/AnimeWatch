@@ -357,7 +357,9 @@ class Browser(QtWebKitWidgets.QWebView):
 		menu = self.page().createStandardContextMenu()
 		hit = self.page().currentFrame().hitTestContent(event.pos())
 		url = hit.linkUrl()
-		arr = ['Download As Fanart','Download As Cover','Artist/Series Link','Season Episode Link']
+		arr = ['Download As Fanart','Download As Cover']
+		arr_extra_tvdb = ['Series Link','Season Episode Link']
+		arr_last = ['Artist Link']
 		action = []
 		self.img_url = hit.imageUrl()
 		self.title_page = hit.linkText()
@@ -382,7 +384,12 @@ class Browser(QtWebKitWidgets.QWebView):
 		if url.isEmpty():
 			url = self.url()
 		if not url.isEmpty() or self.img_url:
+			if 'tvdb' in url.toString():
+				arr = arr + arr_extra_tvdb
+			if 'last.fm' in url.toString():
+				arr = arr + arr_last
 			if 'youtube.com' in url.toString():
+				arr[:]=[]
 				arr.append('Play with AnimeWatch')
 				arr.append('Download')
 				#url = hit.linkUrl()
@@ -438,6 +445,14 @@ class Browser(QtWebKitWidgets.QWebView):
 			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
 			print (command)		
 			self.ui.infoWget(command,0)
+		elif option.lower() == 'season episode link':
+			if self.site != "Music" and self.site != "PlayLists":
+				self.ui.getTvdbEpnInfo(url.toString())
+				
+		elif option.lower() == 'artist link' or option.lower() == 'series link':
+			self.ui.posterfound(url.toString())
+			self.ui.copyImg()
+			self.ui.copySummary()
 		else:
 			print ("Hello")
 			hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -523,13 +538,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				self.ui.copyFanart()
 			elif str(option) == "Download As Cover":
 				self.ui.copyImg()
-			elif str(option) == "Artist/Series Link":
-				self.ui.posterfound(url_artist)
-				self.ui.copyImg()
-				self.ui.copySummary()
-			elif str(option) == "Season Episode Link":
-				if self.site != "Music" and self.site != "PlayLists":
-					self.ui.getTvdbEpnInfo(url1)
+			
 	
 	def finishedDownload(self):
 		self.ui.copyImg()

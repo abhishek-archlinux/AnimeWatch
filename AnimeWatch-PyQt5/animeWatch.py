@@ -46,15 +46,15 @@ except:
 	from browser_webkit import Browser
 	from adb_webkit import NetWorkManager
 	QT_WEB_ENGINE = False
+	
 from PyQt5.QtCore import QUrl
-
 import imp
 import shutil
 from tempfile import mkstemp
 from shutil import move
 from os import remove, close
-import fileinput
-import codecs
+#import fileinput
+#import codecs
 import time
 from PIL import Image 
 import PIL
