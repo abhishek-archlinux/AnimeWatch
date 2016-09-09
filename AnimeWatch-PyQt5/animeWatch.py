@@ -271,15 +271,20 @@ def ccurl(url):
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	
 	def do_GET(self):
-		global current_playing_file_path
+		global current_playing_file_path,path_final_Url
 		print(self.path)
 		path = self.path.replace('/','')
-		if path.lower() == 'play':
+		if path.lower() == 'play' or not path:
 			
 			self.row = ui.list2.currentRow()
 			if self.row < 0:
 				self.row = 0
-			nm = ui.epn_return(self.row)
+			if ui.btn1.currentText().lower() == 'youtube':
+				nm = path_final_Url
+				if not nm:
+					return 0
+			else:
+				nm = ui.epn_return(self.row)
 			if nm.startswith('http'):
 				self.send_response(303)
 				self.send_header('Location',nm)
@@ -302,7 +307,12 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.row = ui.list2.currentRow()+1
 			if self.row < 0:
 				self.row = 0
-			nm = ui.epn_return(self.row)
+			if ui.btn1.currentText().lower() == 'youtube':
+				nm = path_final_Url
+				if not nm:
+					return 0
+			else:
+				nm = ui.epn_return(self.row)
 			ui.list2.setCurrentRow(self.row)
 			if nm.startswith('http'):
 				self.send_response(303)
@@ -324,7 +334,12 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.row = ui.list2.currentRow()-1
 			if self.row < 0:
 				self.row = 0
-			nm = ui.epn_return(self.row)
+			if ui.btn1.currentText().lower() == 'youtube':
+				nm = path_final_Url
+				if not nm:
+					return 0
+			else:
+				nm = ui.epn_return(self.row)
 			ui.list2.setCurrentRow(self.row)
 			if nm.startswith('http'):
 				self.send_response(303)
@@ -14284,7 +14299,7 @@ class Ui_MainWindow(object):
 		return finalUrl
 	
 	def watchDirectly(self,finalUrl,title,quit_val):
-		global site,base_url,idw,quitReally,mpvplayer,Player,epn_name_in_list
+		global site,base_url,idw,quitReally,mpvplayer,Player,epn_name_in_list,path_final_Url
 		if title:
 			self.epn_name_in_list = title
 		else:
@@ -14301,6 +14316,7 @@ class Ui_MainWindow(object):
 		self.tab_5.show()
 		self.tab_5.setFocus()
 		finalUrl = str(finalUrl)
+		path_final_Url = finalUrl
 		if Player == "mplayer":
 			if finalUrl.startswith('/'):
 				command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
@@ -17009,6 +17025,7 @@ if __name__ == "__main__":
 	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path,wait_player
 	wait_player = False
 	local_torrent_file_path = ''
+	path_final_Url = ''
 	video_local_stream = False
 	default_arr_setting = [0,0,0,0,0]
 	music_arr_setting = [0,0,0]
