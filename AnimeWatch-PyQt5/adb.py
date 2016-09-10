@@ -42,6 +42,8 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 			if l in lower_path:
 				block = True
 				break
+		if 'itag=' in urlLnk:
+			print(urlLnk,'--urlLnk--')
 		if block:
 			info.block(True)
 			

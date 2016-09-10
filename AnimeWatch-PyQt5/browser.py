@@ -237,9 +237,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			x = x.replace('\\\\u0026','&')
 			
 			#print(x)
-			#f = open('/tmp/1.txt','w')
-			#f.write(x)
-			#f.close()
+			f = open('/tmp/1.txt','w')
+			f.write(x)
+			f.close()
 			
 			l = re.findall('url=https[^"]*',x)
 			#for i in l:

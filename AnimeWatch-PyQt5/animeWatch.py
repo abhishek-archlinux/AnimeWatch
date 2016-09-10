@@ -9728,6 +9728,7 @@ class Ui_MainWindow(object):
 		global view_layout
 		#homeN = home+'/src/default.html'
 		#self.web.load(QUrl(homeN))
+		#self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
 		try:
 			self.web.close()
 			self.web.deleteLater()
@@ -14959,9 +14960,8 @@ class Ui_MainWindow(object):
 	def infoPlay(self,command):
 		global mpvplayer,Player,site,new_epn
 		
-		if mpvplayer:
-			if mpvplayer.pid()>0:
-				mpvplayer.kill()
+		if mpvplayer.pid()>0:
+			mpvplayer.kill()
 		mpvplayer = QtCore.QProcess()
 		self.mpvplayer_val = mpvplayer
 		mpvplayer.setProcessChannelMode(QtCore.QProcess.MergedChannels)
