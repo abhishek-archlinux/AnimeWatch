@@ -50,7 +50,12 @@ def get_yt_url(url,quality):
 			except:
 				final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
 		else:
-			final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+			try:
+				final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+			except:
+				txt ='Please Update livestreamer and youtube-dl'
+				subprocess.Popen(['notify-send',txt])
+				final_url = b''
 		final_url = str(final_url,'utf-8')
 	print(final_url)
 	return final_url

@@ -39,12 +39,15 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl
 
-from adb import NetWorkManager
+#from adb import NetWorkManager
 
 import time
 from yt import get_yt_url
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty)
+
+
+
 
 def getContentUnicode(content):
 	if isinstance(content,bytes):
@@ -155,6 +158,7 @@ def ccurl(url):
 		content = storage.getvalue()
 		content = getContentUnicode(content)
 		return content
+		
 
 class MyPage(QtWebEngineWidgets.QWebEnginePage):
 	def __init__(self):
@@ -166,7 +170,31 @@ class MyPage(QtWebEngineWidgets.QWebEnginePage):
 			print('clicked',url.url())
 			#self.parent.urlSignal.emit(url.url())
 		return super(MyPage, self).acceptNavigationRequest(url,nav_type,frame)
-	    
+		
+class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
+	
+	def __init__(self,parent):
+		super(NetWorkManager, self).__init__(parent)
+		self.p = parent
+	def interceptRequest(self,info):
+		t = info.requestUrl()
+		urlLnk = t.url()
+		
+		
+		lower_path = urlLnk.lower()
+		
+		block_list = ["doubleclick.net",'adnxs','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
+		block = False
+		for l in block_list:
+			if l in lower_path:
+				block = True
+				break
+		if self.p.wait_player:
+			if 'itag=' in urlLnk:
+				block = True
+				print(urlLnk,'--urlLnk--')
+		if block:
+			info.block(True)
 class Browser(QtWebEngineWidgets.QWebEngineView):
 	urlSignal = pyqtSignal(str)
 	def __init__(self,ui,home,screen_width,quality,site,epnArrList):
@@ -176,6 +204,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.wait_player = False
 		#self.action_arr = []
 		#self.threadPool = []
+		self.home = home
 		self.ui = ui
 		self.quality = quality
 		self.site = site
@@ -222,8 +251,14 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.timer.setSingleShot(True)
 		self.urlSignal.connect(self.final_found)
 	@pyqtSlot(str)
-	def final_found(self,var):
-		print(var,'clicked')
+	def final_found(self,final_url):
+		print(final_url,'clicked')
+		if final_url:
+			print(final_url,'--youtube--')
+			self.ui.watchDirectly(final_url,self.epn_name_in_list,'yes')
+			self.ui.tab_5.show()
+			self.ui.frame1.show()
+			self.ui.tab_2.setMaximumWidth(400)
 	def player_wait(self):
 		#global wait_player
 		self.wait_player = False
@@ -370,6 +405,26 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif event.modifiers() == QtCore.Qt.AltModifier and event.key() == QtCore.Qt.Key_Right:
 			self.forward()
 		super(Browser, self).keyPressEvent(event)
+		
+	def triggerPlaylist(self,value,url,title):
+		print ('Menu Clicked')
+		print (value)
+		file_path = os.path.join(self.home,'Playlists',str(value))
+		if '/' in title:
+			title = title.replace('/','-')
+		print(title,url,file_path)
+		t = title + '	'+url+'	'+'NONE'
+		if os.stat(file_path).st_size == 0:
+			f = open(file_path,'w')
+		else:
+			f = open(file_path,'a')
+			t = '\n'+t
+		try:
+			f.write(str(t))
+		except:
+			f.write(t)
+		f.close()
+		self.ui.options('')
 	def contextMenuEvent(self, event):
 		self.media_url = ''
 		menu = self.page().createStandardContextMenu()
@@ -408,6 +463,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		arr_extra_tvdb = ['Series Link','Season Episode Link']
 		arr_last = ['Artist Link']
 		action = []
+		yt = False
 		if url or self.media_url:
 			if url:
 				if 'tvdb' in url:
@@ -415,13 +471,26 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				if 'last.fm' in url:
 					arr = arr + arr_last
 				if 'youtube.com' in url:
+					yt = True
 					arr[:]=[]
 					arr.append('Play with AnimeWatch')
 					arr.append('Download')
 					#self.page().profile().setHttpUserAgent(self.hdr1)
 				
-			menu.addSeparator()
-			j = 0
+					menu.addSeparator()
+					submenuR = QtWidgets.QMenu(menu)
+					submenuR.setTitle("Add To Playlist")
+					menu.addMenu(submenuR)
+					pls = os.listdir(os.path.join(self.home,'Playlists'))
+					home1 = os.path.join(self.home,'Playlists')
+					pls = sorted(pls,key = lambda x:os.path.getmtime(os.path.join(home1,x)),reverse=True)
+					item_m = []
+					for i in pls:
+						item_m.append(submenuR.addAction(i))
+					
+					submenuR.addSeparator()
+					new_pls = submenuR.addAction("Create New Playlist")
+			
 			for i in range(len(arr)):
 				action.append(menu.addAction(arr[i]))
 				
@@ -430,6 +499,21 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			for i in range(len(action)):
 				if act == action[i]:
 					self.download(url,arr[i])
+			if yt:
+				for i in range(len(item_m)):
+					if act == item_m[i]:
+						self.triggerPlaylist(pls[i],url,self.epn_name_in_list)
+				
+				
+				if act == new_pls:
+					print ("creating")
+					MainWindow = QtWidgets.QWidget()
+					item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Playlist Name')
+					if ok and item:
+						file_path = os.path.join(self.home,'Playlists',item)
+						if not os.path.exists(file_path):
+							f = open(file_path,'w')
+							f.close()
 			#j = j+1
 		#menu.exec_(event.globalPos())
 		else:
@@ -438,7 +522,20 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				arr = ['Play with AnimeWatch','Download']
 				action = []
 				menu.addSeparator()
-				j = 0
+				
+				submenuR = QtWidgets.QMenu(menu)
+				submenuR.setTitle("Add To Playlist")
+				menu.addMenu(submenuR)
+				pls = os.listdir(os.path.join(self.home,'Playlists'))
+				home1 = os.path.join(self.home,'Playlists')
+				pls = sorted(pls,key = lambda x:os.path.getmtime(os.path.join(home1,x)),reverse=True)
+				item_m = []
+				for i in pls:
+					item_m.append(submenuR.addAction(i))
+				
+				submenuR.addSeparator()
+				new_pls = submenuR.addAction("Create New Playlist")
+				
 				for i in range(len(arr)):
 					action.append(menu.addAction(arr[i]))
 					
@@ -447,6 +544,21 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				for i in range(len(action)):
 					if act == action[i]:
 						self.download(self.url().url(),arr[i])
+				
+				for i in range(len(item_m)):
+					if act == item_m[i]:
+						self.triggerPlaylist(pls[i],self.url().url(),self.title_page)
+				
+				
+				if act == new_pls:
+					print ("creating")
+					MainWindow = QtWidgets.QWidget()
+					item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Playlist Name')
+					if ok and item:
+						file_path = os.path.join(self.home,'Playlists',item)
+						if not os.path.exists(file_path):
+							f = open(file_path,'w')
+							f.close()
 			else:
 				super(Browser, self).contextMenuEvent(event)
 	def getContentUnicode(self,content):
