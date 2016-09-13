@@ -11779,7 +11779,7 @@ class Ui_MainWindow(object):
 			site = 'None'
 		
 		elif site == "Addons":
-			site == 'None'
+			site = 'None'
 			self.btnAddon.show()
 			site = self.btnAddon.currentText()
 			bookmark = "False"
@@ -11787,7 +11787,7 @@ class Ui_MainWindow(object):
 				os.makedirs(home+"/History" + "/" + site)
 			self.search()
 		elif site == "YouTube":
-			site == 'None'
+			site = 'None'
 			bookmark = "False"
 			self.list3.clear()
 			self.list1.clear()
@@ -12200,7 +12200,7 @@ class Ui_MainWindow(object):
 		
 		
 		
-		
+		print(site,self.btn1.currentText().lower())
 		
 		if site not in site_arr:
 			print (site)
@@ -17186,7 +17186,7 @@ if __name__ == "__main__":
 	base_url_picn = ""
 	base_url_summary = ""
 	type_arr = ['.mkv','.mp4','.avi','.mp3','.flv','.flac']
-	site_arr = ["SubbedAnime","DubbedAnime","Local","PlayLists","Bookmark","Music",'Video','YouTube']
+	site_arr = ["SubbedAnime","DubbedAnime","Local","PlayLists","Bookmark","Music",'Video','YouTube','None']
 	default_option_arr = ["Select","Video","Music","Local","Bookmark","PlayLists","YouTube","Addons"]
 	addons_option_arr = []
 	audio_id = "auto"
