@@ -380,7 +380,7 @@ class Browser(QtWebKitWidgets.QWebView):
 		except:
 			f.write(t)
 		f.close()
-		self.ui.options('')
+		self.ui.update_playlist(file_path)
 		
 	def contextMenuEvent(self, event):
 		self.img_url = ''

@@ -6770,7 +6770,11 @@ class Ui_MainWindow(object):
 		self.btnWebReviews.setObjectName(_fromUtf8("btnWebReviews"))
 		self.verticalLayout_50.addWidget(self.btnWebReviews)
 		self.btnWebReviews.setMaximumSize(200,50)
-		
+		self.btnPls = QtWidgets.QPushButton(self.tab_2)
+		self.btnPls.setObjectName(_fromUtf8("btnPls"))
+		self.verticalLayout_50.addWidget(self.btnPls)
+		self.btnPls.setMaximumSize(200,50)
+		self.btnPls.setText("Playlist")
 		##################
 		
 		
@@ -7106,6 +7110,7 @@ class Ui_MainWindow(object):
 		self.btn201.clicked.connect(self.prev_thumbnails)
 		#QtCore.QObject.connect(self.btnWebClose, QtCore.SIGNAL(_fromUtf8("clicked()")), self.webHide)
 		self.btnWebClose.clicked.connect(self.webHide)
+		self.btnPls.clicked.connect(self.togglePlaylist)
 		#QtCore.QObject.connect(self.go_opt, QtCore.SIGNAL(_fromUtf8("clicked()")), self.go_opt_options)
 		self.go_opt.clicked.connect(self.go_opt_options)
 		#QtCore.QObject.connect(self.btn10, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.browse_epn)
@@ -9757,6 +9762,13 @@ class Ui_MainWindow(object):
 		self.frame.show()
 		self.frame1.show()
 		self.goto_epn.show()
+	def togglePlaylist(self):
+		if self.list2.isHidden():
+			self.list2.show()
+			self.goto_epn.show()
+		else:
+			self.list2.hide()
+			self.goto_epn.hide()
 	def dockShowHide(self):
 		global fullscr
 		if self.dockWidget_3.isHidden():
@@ -15752,6 +15764,23 @@ class Ui_MainWindow(object):
 		opt = "Random" 
 		for i in nameListArr:
 			self.list1.addItem(i)
+	
+	def update_playlist(self,pls):
+		global epnArrList
+		self.list1.clear()
+		self.list2.clear()
+		epnArrList[:]=[]
+		file_path = pls
+		if os.path.exists(file_path):
+			f = open(file_path)
+			lines = f.readlines()
+			f.close()
+			for i in lines:
+				i = i.replace('\n','')
+				if i:
+					epnArrList.append(i)
+					j = i.split('	')[0]
+					self.list2.addItem((j))
 	
 	def options(self,val):
 	
