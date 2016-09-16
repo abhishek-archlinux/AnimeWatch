@@ -1,10 +1,9 @@
-pkgname=animewatch-pyqt5
+pkgname=AnimeWatch
 _pkgname=AnimeWatch
-pkgver=2.8.2
-pkgrel=0
+pkgver=3.0.0.r31.0840967
+pkgrel=1
 pkgdesc="An Audio/Video Manager and Front End for mpv/mplayer with special emphasis on Anime Collection"
 arch=(any)
-conflicts=('animewatch-pyqt4')
 license=('GPL3')
 depends=('python' 'qt5-webengine' 'python-pyqt5' 'python-pycurl' 'python-urllib3' 'curl' 'libnotify' 'python-dbus' 'libtorrent-rasterbar'
         'python-beautifulsoup4' 'python-psutil' 'python-pillow' 'python-lxml' 'mpv' 'mplayer' 'ffmpegthumbnailer' 'sqlite3' 'python-pytaglib' 
@@ -12,15 +11,15 @@ depends=('python' 'qt5-webengine' 'python-pyqt5' 'python-pycurl' 'python-urllib3
 #optdepends=('livestreamer' 'youtube-dl' 'wget')
 makedepends=('git')
 
-#source=("git+https://github.com/kanishka-linux/AnimeWatch.git")
-source=("https://github.com/kanishka-linux/${_pkgname}/releases/download/v${pkgver}-${pkgrel}/${_pkgname}-${pkgver}-${pkgrel}.tar.bz2")
-md5sums=('281a4588b53ee853cc96bb3426507a85')
+source=("git+https://github.com/kanishka-linux/AnimeWatch.git")
+#source=("https://github.com/kanishka-linux/"${pkgname}"/archive/v"${pkgver}-${pkgrel}".zip")
+md5sums=('SKIP')
 _gitname=AnimeWatch-PyQt5
 
 
 package() {
 
-  _bpath="${srcdir}/${_pkgname}-${pkgver}-${pkgrel}/${_gitname}"
+  _bpath="${srcdir}/AnimeWatch/${_gitname}"
 
   install -d "${pkgdir}/usr/share/${_pkgname}/"
   install -d "${pkgdir}/usr/share/${_pkgname}/Plugins/"
