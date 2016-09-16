@@ -126,6 +126,8 @@ Note: This feature won't work with streaming torrent content, since streaming to
 
 ## YouTube Support
 ######[Index](#index)
+![AnimeWatch](/Images/Youtube.png)
+
 This player provides a wrapper around youtube site using qtwebengine (since version 2.8.0-0). If your GNU/linux distro does not package qtwebengine, then it will fallback to qtwebkit, which is slower compared to qtwebengine for rendering web pages. Users need to install livestreamer(for watching live streams) and youtube-dl for directly playing youtube videos on this player. Ubuntu users have to install python3-livestreamer also.
 
 ## Addon Structure
