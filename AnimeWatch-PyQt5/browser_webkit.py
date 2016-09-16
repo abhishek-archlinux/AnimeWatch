@@ -510,7 +510,13 @@ class Browser(QtWebKitWidgets.QWebView):
 				self.ui.frame1.show()
 				self.ui.tab_2.setMaximumWidth(400)
 		elif option.lower() == 'download':
-			finalUrl = get_yt_url(url.toString(),self.ui.quality_val)
+			if self.ui.quality_val == 'sd480p':
+				txt = "Video can't be saved in 480p, Saving in either HD or SD"
+				subprocess.Popen(['notify-send',txt])
+				quality = 'hd'
+			else:
+				quality = self.ui.quality_val
+			finalUrl = get_yt_url(url.toString(),quality)
 			finalUrl = finalUrl.replace('\n','')
 			title = self.title_page+'.mp4'
 			title = title.replace('"','')

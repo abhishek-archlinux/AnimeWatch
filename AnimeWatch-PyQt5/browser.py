@@ -192,7 +192,8 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 		if self.p.wait_player:
 			if 'itag=' in urlLnk:
 				block = True
-				print(urlLnk,'--urlLnk--')
+				#print(urlLnk,'--urlLnk--')
+				#a = 0
 		if block:
 			info.block(True)
 class Browser(QtWebEngineWidgets.QWebEngineView):
@@ -267,25 +268,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		print('--got--html--')
 		if 'youtube' in self.url().url():
 		
-			x = urllib.parse.unquote(var)
 			
-			x = x.replace('\\\\u0026','&')
-			
-			#print(x)
-			#f = open('/tmp/1.txt','w')
-			#f.write(x)
-			#f.close()
-			
-			l = re.findall('url=https[^"]*',x)
-			#for i in l:
-			#	if 'itag=18' in i:
-			#		print(i)
-			for i in l:
-				if self.ui.quality_val == 'sd': 
-					if 'itag=18' in i:
-						final_url = re.sub('url=','',i)
-						#print('\n----final_url---\n',final_url,'----final---url\n')
-						#self.urlSignal.emit(final_url)
 					
 			soup = BeautifulSoup(var,'lxml')
 			m = soup.find('div',{'id':'player'})
@@ -342,6 +325,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					pass
 			if (self.current_link.startswith("https://m.youtube.com/watch?v=") or self.current_link.startswith("https://www.youtube.com/watch?v=")) and not self.wait_player:
 				self.page().runJavaScript("var element = document.getElementById('player');element.innerHtml='';",self.var_remove)
+				#self.page().runJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);",self.var_remove)
 				self.wait_player = True
 				self.clicked_link(self.current_link)
 				#asyncio.get_event_loop().run_until_complete(self.clicked_link(self.current_link))
@@ -592,7 +576,13 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.frame1.show()
 				self.ui.tab_2.setMaximumWidth(400)
 		elif option.lower() == 'download':
-			finalUrl = get_yt_url(url,self.ui.quality_val)
+			if self.ui.quality_val == 'sd480p':
+				txt = "Video can't be saved in 480p, Saving in either HD or SD"
+				subprocess.Popen(['notify-send',txt])
+				quality = 'hd'
+			else:
+				quality = self.ui.quality_val
+			finalUrl = get_yt_url(url,quality)
 			finalUrl = finalUrl.replace('\n','')
 			title = self.title_page+'.mp4'
 			title = title.replace('"','')

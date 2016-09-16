@@ -2843,7 +2843,19 @@ class List1(QtWidgets.QListWidget):
 			r = self.currentRow()
 			item = self.item(r)
 			if item:
-				if site == "Video" and bookmark == "False":
+				if site == "PlayLists":
+					index = self.currentRow()
+					item_r  = self.item(index)
+					if item_r:
+						item = str(self.currentItem().text())
+						if item != "Default":
+							file_pls = home+'/Playlists/'+item
+							if os.path.exists(file_pls):
+								os.remove(file_pls)
+							self.takeItem(index)
+							del item_r
+							ui.list2.clear()
+				elif site == "Video" and bookmark == "False":
 					video_db = home+'/VideoDB/Video.db'
 					conn = sqlite3.connect(video_db)
 					cur = conn.cursor()
@@ -3397,7 +3409,7 @@ class List2(QtWidgets.QListWidget):
 									file_path = home+'/History/'+site+"/"+siteName+'/'+name+'/Ep.txt'
 								
 							elif site == "PlayLists":
-								pls = ui.list3.currentItem().text()
+								pls = ui.list1.currentItem().text()
 								file_path = home+'/Playlists/'+pls
 							else:
 								if os.path.exists(home+'/History/'+site+'/'+name+'/Ep.txt'):
@@ -3564,7 +3576,7 @@ class List2(QtWidgets.QListWidget):
 					if ui.list1.item(r):
 						pls = str(ui.list1.item(r).text())
 				else:
-					pls = ui.list3.currentItem().text()
+					pls = ui.list1.currentItem().text()
 				file_path = home+'/Playlists/'+pls
 				row = self.currentRow()
 				item = self.item(row)
@@ -3608,7 +3620,7 @@ class List2(QtWidgets.QListWidget):
 						file_path = home+'/History/'+site+"/"+siteName+'/'+name+'/Ep.txt'
 				elif site == "PlayLists" or site=="Music":
 						if site == "PlayLists":
-							pls = ui.list3.currentItem().text()
+							pls = ui.list1.currentItem().text()
 						else:
 							pls = ui.list1.currentItem().text()
 						file_path = home+'/Playlists/'+pls
@@ -3644,6 +3656,8 @@ class List2(QtWidgets.QListWidget):
 						for i in lines:
 							i = i.replace('\n','')
 							if i:
+								if '	' in i:
+									i = i.split('	')[0]
 								self.addItem(i)
 						self.setCurrentRow(nRow)
 			elif site=="Video":
@@ -3704,7 +3718,7 @@ class List2(QtWidgets.QListWidget):
 						file_path = home+'/History/'+site+"/"+siteName+'/'+name+'/Ep.txt'
 				elif site == "PlayLists" or site == "Music":
 						if site == "PlayLists":
-							pls = ui.list3.currentItem().text()
+							pls = ui.list1.currentItem().text()
 						else:
 							pls = ui.list1.currentItem().text()
 						file_path = home+'/Playlists/'+pls
@@ -3741,6 +3755,8 @@ class List2(QtWidgets.QListWidget):
 						for i in lines:
 							i = i.replace('\n','')
 							if i:
+								if '	' in i:
+									i = i.split('	')[0]
 								self.addItem(i)
 						self.setCurrentRow(nRow)
 			elif site=="Video":
@@ -4191,7 +4207,7 @@ class List2(QtWidgets.QListWidget):
 		print (value)
 		file_path = home+'/Playlists/'+str(value)
 		print(file_path)
-		if site == "Music" or site == "Video" or site == "Local" or site == "None":
+		if site == "Music" or site == "Video" or site == "Local" or site == "None" or site == 'PlayLists':
 			#print (epnArrList)
 			if os.path.exists(file_path):
 				i = self.currentRow()
@@ -4308,7 +4324,7 @@ class List2(QtWidgets.QListWidget):
 					file_path = ""
 					
 					if site == "PlayLists":
-							pls = ui.list3.currentItem().text()
+							pls = ui.list1.currentItem().text()
 							file_path = home+'/Playlists/'+pls
 					elif site == "Local":
 						if os.path.exists(home+'/History/'+site+'/'+name+'/Ep.txt'):
@@ -7742,6 +7758,9 @@ class Ui_MainWindow(object):
 		global quality
 		txt = str(self.sd_hd.text())
 		if txt == "SD":
+			quality = "sd480p"
+			self.sd_hd.setText("480")
+		elif txt == "480":
 			quality = "hd"
 			self.sd_hd.setText("HD")
 		elif txt == "HD":
@@ -11102,7 +11121,7 @@ class Ui_MainWindow(object):
 					epnArrList[row] = epnArrList[row].replace('#','')
 				#self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				self.list2.setCurrentRow(row)
-				file_path = home+'/Playlists/'+str(self.list3.currentItem().text())
+				file_path = home+'/Playlists/'+str(self.list1.currentItem().text())
 				if os.path.exists(file_path):
 					f = open(file_path,'w')
 					k = 0
@@ -11176,7 +11195,7 @@ class Ui_MainWindow(object):
 		if site!= "Music":
 			self.subtitle_track.setText("Subtitle")
 			self.audio_track.setText("A/V")
-		if opt == "History" or site == "Music" or site == "Video":
+		if opt == "History" or site == "Music" or site == "Video" or site == "PlayLists":
 		
 			self.listfound()
 		else:
@@ -11760,8 +11779,9 @@ class Ui_MainWindow(object):
 			home_n = os.path.join(home,'Playlists')
 			criteria = sorted(criteria,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),reverse=True)
 			self.list3.clear()
+			self.list1.clear()
 			for i in criteria:
-				self.list3.addItem(i)
+				self.list1.addItem(i)
 		elif site == "Bookmark":
 			bookmark = "True"
 			criteria = ['All','Watching','Completed','Incomplete',"Later",'Interesting','Music-Videos']
@@ -12053,6 +12073,7 @@ class Ui_MainWindow(object):
 		thumbnail = "/tmp/AnimeWatch/"+name+"-thumbnail.jpg"
 		m = []
 		epnArrList[:]=[]
+		
 		if site == "SubbedAnime" or site == "DubbedAnime":
 			file_name = home+'/History/'+site+'/'+siteName+'/'+name+'/Ep.txt'
 			picn1 = home+'/History/'+site+'/'+siteName+'/'+name+'/'+'poster.jpg'
@@ -12177,9 +12198,9 @@ class Ui_MainWindow(object):
 				self.label.setPixmap(img)
 			
 				#self.label.setToolTip(_translate("MainWindow", "<html><h1>"+name+"</h1><head/><body><p>"+summary+"</p></body></html>" , None))
-			
-			
-			
+		
+		
+		
 			self.list2.clear()
 			for i in m:
 				#print i
@@ -13268,7 +13289,25 @@ class Ui_MainWindow(object):
 				i = i.split('	')[0]
 				self.list2.addItem((i))
 			self.musicBackground(0,'offline')
-			
+		elif site == "PlayLists":
+			#self.list1.clear()
+			self.list2.clear()
+			r = self.list1.currentRow()
+			item = self.list1.item(r)
+			epnArrList[:]=[]
+			if item:
+				pls = self.list1.currentItem().text()
+				file_path = home+'/Playlists/'+str(pls)
+				if os.path.exists(file_path):
+					f = open(file_path)
+					lines = f.readlines()
+					f.close()
+					for i in lines:
+						i = i.replace('\n','')
+						if i:	
+							epnArrList.append(i)
+							j = i.split('	')[0]
+							self.list2.addItem((j))
 		elif site == "Video":
 			r = self.list1.currentRow()
 			item = self.list1.item(r)
@@ -13469,7 +13508,7 @@ class Ui_MainWindow(object):
 				self.list2.insertItem(row,i)	
 			#self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
-			file_path = home+'/Playlists/'+str(self.list3.currentItem().text())
+			file_path = home+'/Playlists/'+str(self.list1.currentItem().text())
 			if os.path.exists(file_path):
 				f = open(file_path,'w')
 				k = 0
@@ -13864,36 +13903,49 @@ class Ui_MainWindow(object):
 				finalUrl = finalUrl[0]
 			#if '""' in finalUrl:
 			finalUrl = finalUrl.replace('"','')
-			finalUrl = '"'+finalUrl+'"'
-			try:
-				finalUrl = str(finalUrl)
-			except:
-				finalUrl = finalUrl
-			
-			if Player == "mpv":
-				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
-				print (command)
-				self.infoPlay(command)
-			elif Player == "mplayer":
-				quitReally = "no"
-				
-				idw = str(int(self.tab_5.winId()))
-				if site != "Music":
-					self.tab_5.show()
-					##self.tab_5.setFocus()
-				if finalUrl.startswith('"http'):
-					command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+			if '#' in finalUrl:
+				if mpvplayer.pid() > 0:
+					mpvplayer.kill()
+				video_url = finalUrl.split('#')[-1]
+				audio_url = finalUrl.split('#')[0]
+				if Player == 'mplayer':
+					if mpvplayer.pid() > 0:
+						subprocess.Popen(['killall','mplayer'])
+					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
 				else:
-					command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-				print (command)
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
 				self.infoPlay(command)
 			else:
-				finalUrl = finalUrl.replace('"','')
-				subprocess.Popen([Player, finalUrl], stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-			if site == "Music":
-				self.list2.setFocus()
-				r = self.list2.currentRow()
-				self.musicBackground(r,'Search')
+				finalUrl = '"'+finalUrl+'"'
+				try:
+					finalUrl = str(finalUrl)
+				except:
+					finalUrl = finalUrl
+				
+				if Player == "mpv":
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+					print (command)
+					self.infoPlay(command)
+				elif Player == "mplayer":
+					quitReally = "no"
+					
+					idw = str(int(self.tab_5.winId()))
+					if site != "Music":
+						self.tab_5.show()
+						##self.tab_5.setFocus()
+					if finalUrl.startswith('"http'):
+						command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+					else:
+						command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+					print (command)
+					self.infoPlay(command)
+				else:
+					finalUrl = finalUrl.replace('"','')
+					subprocess.Popen([Player, finalUrl], stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+				if site == "Music":
+					self.list2.setFocus()
+					r = self.list2.currentRow()
+					self.musicBackground(r,'Search')
 				
 		else:
 		
@@ -14449,15 +14501,23 @@ class Ui_MainWindow(object):
 		idw = str(int(self.tab_5.winId()))
 		self.tab_5.show()
 		self.tab_5.setFocus()
-		finalUrl = str(finalUrl)
-		path_final_Url = finalUrl
-		if Player == "mplayer":
-			if finalUrl.startswith('/'):
-				command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+		if '#' in finalUrl:
+			video_url = finalUrl.split('#')[-1]
+			audio_url = finalUrl.split('#')[0]
+			if Player == 'mplayer':
+				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
 			else:
-				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
 		else:
-			command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+			finalUrl = str(finalUrl)
+			path_final_Url = finalUrl
+			if Player == "mplayer":
+				if finalUrl.startswith('/'):
+					command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+				else:
+					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+			else:
+				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 		self.infoPlay(command)
 		self.tab_5.setFocus()
 		
@@ -15118,7 +15178,7 @@ class Ui_MainWindow(object):
 			pass
 		mplayerLength = 0
 		buffering_mplayer = "no"
-		
+		external_audio = False
 		if site == "Music":
 			if self.list3.currentRow() >= 0:
 				music_arr_setting[0]=self.list3.currentRow()
@@ -15225,7 +15285,8 @@ class Ui_MainWindow(object):
 		
 		
 		
-		elif site == "None" or site == "Music" or site == "Video":
+		elif site == "None" or site == "Music" or site == "Video" or site == 'PlayLists':
+			
 			if '	' in epnArrList[row]:
 					finalUrl = '"'+(epnArrList[row]).split('	')[1]+'"'
 			else:
@@ -15243,6 +15304,7 @@ class Ui_MainWindow(object):
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
 			if 'youtube.com' in finalUrl.lower():
+				external_audio = True
 				finalUrl = finalUrl.replace('"','')
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 				finalUrl = '"'+finalUrl+'"'
@@ -15252,82 +15314,103 @@ class Ui_MainWindow(object):
 		
 		#if '""' in finalUrl:
 		finalUrl = finalUrl.replace('"','')
-		finalUrl = '"'+finalUrl+'"'
-		try:
-			finalUrl = str(finalUrl)
-		except:
-			finalUrl = finalUrl
-		if mpvplayer:
-			if Player == "mplayer":
-				if audio_id == "auto":
-					audio_id = "0"
-				if sub_id == "auto":
-					sub_id = "0"
-				command1 = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
-				try:
-					command = str(command1)
-					#command = command.encode('utf-8')
-				except:
-					command = command1
+		if '#' in finalUrl:
 				if mpvplayer.pid()>0:
-					try:
-						epnShow = '"' + "Queued:  "+ new_epn + '"'
-						t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
-						t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
-						print (finalUrl,'---hello-----')
-						
-						mpvplayer.write(t1)
-						mpvplayer.write(t2)
-						if self.mplayer_SubTimer.isActive():
-							self.mplayer_SubTimer.stop()
-						self.mplayer_SubTimer.start(2000)
-							#mpvplayer.write('\n'+"switch_audio "+str(audio_id)+'\n')
-							#mpvplayer.write('\n'+"sub_select "+str(sub_id)+'\n')
-					except:
-						self.infoPlay(command)
-					
-			elif Player == "mpv":
-				command1 = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
-				try:
-					command = str(command1)
-					#command = command.encode('utf-8')
-				except:
-					command = command1
-			
-				if mpvplayer.pid()>0:
-					
-					try:
-						epnShow = '"' + "Queued:  "+ new_epn + '"'
-						t1 = bytes('\n'+'show-text '+(epnShow)+'\n','utf-8')
-						t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
-						print (finalUrl,'---hello-----')
-						mpvplayer.write(t1)
-						mpvplayer.write(t2)
-					except:
-						self.infoPlay(command)
+					mpvplayer.kill()
+				video_url = finalUrl.split('#')[-1]
+				audio_url = finalUrl.split('#')[0]
+				if Player == 'mplayer':
+					if mpvplayer.pid() > 0:
+						subprocess.Popen(['killall','mplayer'])
+					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
 				else:
-					
-					
-					
-					self.infoPlay(command)
-		
-			print ("mpv=" + str(mpvplayer.pid()))
-			if site == "Music":
-				try:
-					artist_name_mplayer = epnArrList[row].split('	')[2]
-					if artist_name_mplayer == "None":
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
+				self.infoPlay(command)
+		else:
+			finalUrl = '"'+finalUrl+'"'
+			try:
+				finalUrl = str(finalUrl,'utf-8')
+			except:
+				finalUrl = finalUrl
+			
+			if mpvplayer.pid() == 0:
+				finalUrl = finalUrl.replace('"','')
+				if Player == 'mplayer':
+					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+				else:
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+final_url
+				self.infoPlay(command)
+			elif mpvplayer.pid() > 0:
+				if Player == "mplayer":
+					if audio_id == "auto":
+						audio_id = "0"
+					if sub_id == "auto":
+						sub_id = "0"
+					command1 = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
+					try:
+						command = str(command1,'utf-8')
+						#command = command.encode('utf-8')
+					except:
+						command = command1
+					if mpvplayer.pid()>0:
+						try:
+							epnShow = '"' + "Queued:  "+ new_epn + '"'
+							t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
+							t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
+							print (finalUrl,'---hello-----')
+							
+							mpvplayer.write(t1)
+							mpvplayer.write(t2)
+							if self.mplayer_SubTimer.isActive():
+								self.mplayer_SubTimer.stop()
+							self.mplayer_SubTimer.start(2000)
+								#mpvplayer.write('\n'+"switch_audio "+str(audio_id)+'\n')
+								#mpvplayer.write('\n'+"sub_select "+str(sub_id)+'\n')
+						except:
+							self.infoPlay(command)
+						
+				elif Player == "mpv":
+					command1 = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
+					try:
+						command = str(command1,'utf-8')
+						#command = command.encode('utf-8')
+					except:
+						command = command1
+				
+					if mpvplayer.pid()>0:
+						
+						try:
+							epnShow = '"' + "Queued:  "+ new_epn + '"'
+							t1 = bytes('\n'+'show-text '+(epnShow)+'\n','utf-8')
+							t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
+							print (finalUrl,'---hello-----')
+							mpvplayer.write(t1)
+							mpvplayer.write(t2)
+							if external_audio:
+								mpvplayer.write(b'\n set aid 1 \n')
+						except:
+							self.infoPlay(command)
+					else:
+						self.infoPlay(command)
+			
+				print ("mpv=" + str(mpvplayer.pid()))
+				if site == "Music":
+					try:
+						artist_name_mplayer = epnArrList[row].split('	')[2]
+						if artist_name_mplayer == "None":
+							artist_name_mplayer = ""
+					except:
 						artist_name_mplayer = ""
-				except:
-					artist_name_mplayer = ""
-				self.updateMusicCount('count',finalUrl)
-				r = self.list2.currentRow()
-				self.musicBackground(r,'Search')
-			elif site == "Video":
-				self.updateVideoCount('mark',finalUrl)
-			current_playing_file_path = finalUrl
+					self.updateMusicCount('count',finalUrl)
+					r = self.list2.currentRow()
+					self.musicBackground(r,'Search')
+				elif site == "Video":
+					self.updateVideoCount('mark',finalUrl)
+				current_playing_file_path = finalUrl
 			
 	def getQueueInList(self):
 		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server,current_playing_file_path,quality
+		external_audio = False
 		try:
 			t1 = self.queue_url_list[0]
 			server._emitMeta("queue"+'#'+t1)
@@ -15349,6 +15432,7 @@ class Ui_MainWindow(object):
 			if not idw:
 				idw = str(int(self.tab_5.winId()))
 			if 'youtube.com' in epnShow.lower():
+				external_audio = True
 				finalUrl = epnShow.replace('"','')
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 				epnShow = '"'+finalUrl+'"'
@@ -15357,40 +15441,62 @@ class Ui_MainWindow(object):
 			curR = curR - 1
 			print('--------inside getQueueInlist------')
 			self.list2.setCurrentRow(curR)
-		epnShowN = '"'+epnShow.replace('"','')+'"'
-		if Player == "mplayer":
-				
-				command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+epnShowN
-		elif Player == "mpv":
-				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+epnShowN
-		if mpvplayer.pid() > 0:
-			epnShow = '"'+epnShow.replace('"','')+'"'
-			t2 = bytes('\n'+"loadfile "+epnShow+" replace"+'\n','utf-8')
-			print(t2)
-			mpvplayer.write(t2)
-			if Player == "mplayer":
-				if self.mplayer_SubTimer.isActive():
-					self.mplayer_SubTimer.stop()
-				self.mplayer_SubTimer.start(2000)
-		else:
-			print (command)
-			self.infoPlay(command)
-			self.list1.hide()
-			self.frame.hide()
-			self.text.hide()
-			self.label.hide()
-			self.tab_5.show()
-		
-		epnShow = epnShow.replace('"','')
-		if not epnShow.startswith('http'):
-			if site == "Music":
-				
-				self.updateMusicCount('count',epnShowN)
-				self.musicBackground(0,'Queue')
-			elif site == "Video":
-				self.updateVideoCount('mark',epnShowN)
 			
-		current_playing_file_path = epnShow
+		
+		if '#' in epnShow:
+				epnShow = epnShow.replace('"','')
+				if mpvplayer.pid()>0:
+					mpvplayer.kill()
+				video_url = epnShow.split('#')[-1]
+				audio_url = epnShow.split('#')[0]
+				if Player == 'mplayer':
+					if mpvplayer.pid() > 0:
+						subprocess.Popen(['killall','mplayer'])
+					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
+				else:
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
+					if mpvplayer.pid() > 0:
+						subprocess.Popen(['killall','mpv'])
+				self.infoPlay(command)
+		else:
+			epnShowN = '"'+epnShow.replace('"','')+'"'
+			if Player == "mplayer":
+					
+					command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+epnShowN
+			elif Player == "mpv":
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+epnShowN
+			if mpvplayer.pid() > 0:
+				epnShow = '"'+epnShow.replace('"','')+'"'
+				if epnShow.startswith('"http'):
+					epnShow = epnShow.replace('"','')
+				t2 = bytes('\n'+"loadfile "+epnShow+" replace"+'\n','utf-8')
+				print(t2)
+				mpvplayer.write(t2)
+				if external_audio and Player == 'mpv':
+					mpvplayer.write(b'\n set aid 1 \n')
+				if Player == "mplayer":
+					if self.mplayer_SubTimer.isActive():
+						self.mplayer_SubTimer.stop()
+					self.mplayer_SubTimer.start(2000)
+			else:
+				print (command)
+				self.infoPlay(command)
+				self.list1.hide()
+				self.frame.hide()
+				self.text.hide()
+				self.label.hide()
+				self.tab_5.show()
+			
+			epnShow = epnShow.replace('"','')
+			if not epnShow.startswith('http'):
+				if site == "Music":
+					
+					self.updateMusicCount('count',epnShowN)
+					self.musicBackground(0,'Queue')
+				elif site == "Video":
+					self.updateVideoCount('mark',epnShowN)
+				
+			current_playing_file_path = epnShow
 		
 	def getNextInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,rfr_url
@@ -16218,6 +16324,8 @@ class Ui_MainWindow(object):
 					original_path_name.append(i)
 					self.list1.addItem((ti))
 		elif site == "PlayLists":
+			a = 0
+			"""
 			self.list1.clear()
 			self.list2.clear()
 			r = self.list3.currentRow()
@@ -16237,7 +16345,7 @@ class Ui_MainWindow(object):
 							epnArrList.append(i)
 							j = i.split('	')[0]
 							self.list2.addItem((j))
-		
+			"""
 		self.page_number.setText(str(self.list1.count()))
 		insidePreopt = 0
 		if opt == "History":
@@ -17451,6 +17559,8 @@ if __name__ == "__main__":
 					quality = re.sub('\n','',j)
 					if quality == "hd":
 						ui.sd_hd.setText("HD")
+					elif quality == 'sd480p':
+						ui.sd_hd.setText("480")
 					else:
 						ui.sd_hd.setText("SD")
 				elif "Dock_Option" in i:

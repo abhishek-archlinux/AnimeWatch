@@ -25,37 +25,53 @@ import subprocess
 
 def get_yt_url(url,quality):
 	final_url = ''
+	url = url.replace('"','')
 	try:
-		import livestreamer as lvt
-		s = lvt.streams(url)
-		#print(s)
+		
 		try:
+			import livestreamer as lvt
+			s = lvt.streams(url)
+			print(s)
 			if quality == 'sd':
 				final_url = s['360p'].url
 			elif quality == 'hd':
 				final_url = s['720p'].url
-			elif quality == 'sd480p':
-				final_url = s['480p'].url
 		except:
-			#txt = str(quality) + ' quality not found, Selecting best one'
-			#subprocess.Popen(['notify-send',txt])
-			final_url = s['best'].url
+			final_url = ''
 		
+						
+		if not final_url.startswith('http'):
+			if quality == 'sd480p':
+				try:
+					try:
+						audio = subprocess.check_output(['youtube-dl','-f','171','-g',url])
+					except:
+						audio = subprocess.check_output(['youtube-dl','-f','140','-g',url])
+					try:
+						video = subprocess.check_output(['youtube-dl','-f','244','-g',url])
+					except:
+						video = subprocess.check_output(['youtube-dl','-f','135','-g',url])
+					audio = str(audio,'utf-8').strip()
+					video = str(video,'utf-8').strip()
+					final_url = audio+'#'+video
+				except:
+					final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+					final_url = str(final_url,'utf-8')
+			elif quality == 'sd':
+				final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+				final_url = str(final_url,'utf-8')
+			elif quality == 'hd':
+				try:
+					final_url = subprocess.check_output(['youtube-dl','-f','22','-g',url])
+					final_url = str(final_url,'utf-8')
+				except:
+					final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+					final_url = str(final_url,'utf-8')
 	except:
-		#txt = 'LiveStreamer either not found or Livestreamer could not handle stream, hence trying youtube-dl'
-		#subprocess.Popen(['notify-send',txt])
-		if quality == 'hd':
-			try:
-				final_url = subprocess.check_output(['youtube-dl','-f','22','-g',url])
-			except:
-				final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
-		else:
-			try:
-				final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
-			except:
-				txt ='Please Update livestreamer and youtube-dl'
-				subprocess.Popen(['notify-send',txt])
-				final_url = b''
-		final_url = str(final_url,'utf-8')
+		txt ='Please Update livestreamer and youtube-dl'
+		subprocess.Popen(['notify-send',txt])
+		final_url = ''
+		
+		
 	print(final_url)
 	return final_url
