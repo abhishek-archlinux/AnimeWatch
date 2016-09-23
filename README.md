@@ -108,7 +108,9 @@ In 'torrent_config.txt' you can set some other fields like upload , download rat
 
 Now with inclusion of torrent streaming feature, it's possible to write addons based on torrenting capability.
 
-Torrent file can be directly played by opening it with AnimeWatch using right-click context menu. If you've installed AnimeWatch using .deb or AUR package, then you can use command 'anime-watch path_to.torrent' to open torrent file, or 'anime-watch magnet_link' for opening magnet links. Those who have installed the player using common method, have to use the command 'python -B ~/.config/AnimeWatch/src/animeWatch.py path_to.torrent_or_magnet_link'.
+For opening torrents within this player, goto Addons->Torrent->Open and enter torrent file name or torent url or magnet link inside the input dialog box, and then select appropriate entry which will appear in either Title list or Playlist. Your list of visited torrents will be accessible from the 'History' section. 
+
+Alternatively, Torrent file can be directly played by opening it with AnimeWatch using right-click context menu. If you've installed AnimeWatch using .deb or AUR package, then you can use command 'anime-watch path_to.torrent' to open torrent file, or 'anime-watch magnet_link' for opening magnet links. Those who have installed the player using common method, have to use the command 'python -B ~/.config/AnimeWatch/src/animeWatch.py path_to.torrent_or_magnet_link'.
 
 This feature is based on libtorrent-rasterbar {which is being used by bittorrent clients like qBittorrent and deluge} and it's python3 bindings. If you've installed latest version of libtorrent-rasterbar then python3 bindings are included along with it. In systems where older version of libtorrent-rasterbar is installed (for example in Ubuntu 14.04) , users need to install python3-libtorrent to use this feature.  
 
