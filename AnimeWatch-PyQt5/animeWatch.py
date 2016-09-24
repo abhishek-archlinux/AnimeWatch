@@ -1714,7 +1714,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				ui.gridLayout.setSpacing(10)
 	def mouseReleaseEvent(self, ev):
 		#def mouseDoubleClickEvent(self,ev):
-		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval,iconv_r,total_till,browse_cnt,site,epn_name_in_list,memory_num_arr,thumbnail_indicator,mpvplayer,iconv_r_indicator,tab_6_size_indicator,tab_6_player,site,finalUrlFound,artist_name_mplayer,server
+		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval,iconv_r,total_till,browse_cnt,site,epn_name_in_list,memory_num_arr,thumbnail_indicator,mpvplayer,iconv_r_indicator,tab_6_size_indicator,tab_6_player,site,finalUrlFound,artist_name_mplayer,server,quality
 	
 		
 		
@@ -1792,10 +1792,21 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					except:
 						finalUrl = finalUrl
 					finalUrl = finalUrl.replace('"','')
+					if 'youtube.com' in finalUrl:
+						ui.external_url = True
+						finalUrl = get_yt_url(finalUrl,quality).strip()
+						if '#' in finalUrl:
+							audio_url = finalUrl.split('#')[0]
+							video_url = finalUrl.split('#')[1]
+							if Player == 'mpv':
+								finalUrl = "--audio-file="+audio_url+' '+video_url
+							elif Player == 'mplayer':
+								finalUrl = '-audiofile '+audio_url+' '+video_url
 					if finalUrl.startswith('"'):
 						print('finalURL startswith .". ')
 						finalUrl = re.sub('"','',finalUrl)
-					finalUrl = '"'+finalUrl+'"'
+					if finalUrl.startswith('/'):
+						finalUrl = '"'+finalUrl+'"'
 					if Player == "mplayer":
 						command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 						print (command)
@@ -2144,6 +2155,17 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				if site == "PlayLists":
 					finalUrl = finalUrl.replace('""','"')
 				print (finalUrl)
+				if 'youtube.com' in finalUrl:
+					ui.external_url = True
+					finalUrl = finalUrl.replace('"','')
+					finalUrl = get_yt_url(finalUrl,quality).strip()
+					if '#' in finalUrl:
+						audio_url = finalUrl.split('#')[0]
+						video_url = finalUrl.split('#')[1]
+						if Player == 'mpv':
+							finalUrl = "--audio-file="+audio_url+' '+video_url
+						elif Player == 'mplayer':
+							finalUrl = '-audiofile '+audio_url+' '+video_url
 				if num < ui.list2.count():
 					ui.list2.setCurrentRow(num)
 					p1 = "ui.label_epn_"+str(num)+".winId()"
@@ -2263,6 +2285,17 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				finalUrl = finalUrl.replace('#','')
 				if site == "PlayLists":
 					finalUrl = finalUrl.replace('""','"')
+				if 'youtube.com' in finalUrl:
+					ui.external_url = True
+					finalUrl = finalUrl.replace('"','')
+					finalUrl = get_yt_url(finalUrl,quality).strip()
+					if '#' in finalUrl:
+						audio_url = finalUrl.split('#')[0]
+						video_url = finalUrl.split('#')[1]
+						if Player == 'mpv':
+							finalUrl = "--audio-file="+audio_url+' '+video_url
+						elif Player == 'mplayer':
+							finalUrl = '-audiofile '+audio_url+' '+video_url
 				if num < ui.list2.count():
 					ui.list2.setCurrentRow(num)
 					p1 = "ui.label_epn_"+str(num)+".winId()"
@@ -2380,8 +2413,10 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						os.remove('/tmp/AnimeWatch/00000001.jpg')
 				elif site == "PlayLists":
 					rfr_url = str((epnArrList[num]).split('	')[2])
-					print (rfr_url)
-					if rfr_url != "NONE":
+					rfr_url1 = rfr_url.replace('"','')
+					rfr_url1 = rfr_url1.replace("'",'')
+					print (rfr_url1)
+					if rfr_url1.lower().startswith('http'):
 						path = path.replace('"','')
 						path = '"'+path+'"'
 						rfr = "--referrer="+rfr_url
@@ -2391,7 +2426,14 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							shutil.copy('/tmp/AnimeWatch/00000001.jpg',picn)
 							os.remove('/tmp/AnimeWatch/00000001.jpg')
 					else:
-						subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t",str(inter),'-q','10','-s','350'])
+						path1 = path.replace('"','')
+						if path1.startswith('http'):
+							subprocess.call(["mpv","--ytdl=yes","--quiet","--no-audio","--vo=image:outdir=/tmp/AnimeWatch","--start="+str(interval)+"%","--frames=1",path])
+							if os.path.exists('/tmp/AnimeWatch/00000001.jpg'):
+								shutil.copy('/tmp/AnimeWatch/00000001.jpg',picn)
+								os.remove('/tmp/AnimeWatch/00000001.jpg')
+						elif path1.startswith('/'):
+							subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t",str(inter),'-q','10','-s','350'])
 						
 				else:
 					print (path +'************')
@@ -3571,32 +3613,35 @@ class List2(QtWidgets.QListWidget):
 					else:
 						pass
 			elif site == "PlayLists" or (site == "Music" and ui.list3.currentItem().text()=="Playlist"):
+				pls = ''
 				if site == "Music":
 					r = ui.list1.currentRow()
 					if ui.list1.item(r):
 						pls = str(ui.list1.item(r).text())
 				else:
-					pls = ui.list1.currentItem().text()
-				file_path = home+'/Playlists/'+pls
-				row = self.currentRow()
-				item = self.item(row)
-				#epnArrList[:]=[]
-				if item:
-					
-					self.takeItem(row)
-					
-					del item
-					del epnArrList[row]
-					f = open(file_path,'w')
-					j = 0
-					for i in range(self.count()):
-						fname = epnArrList[i]
-						if j == 0:
-							f.write(fname)
-						else:
-							f.write('\n'+fname)
-						j = j+1
-					f.close()
+					if ui.list1.currentItem():
+						pls = ui.list1.currentItem().text()
+				if pls:
+					file_path = home+'/Playlists/'+pls
+					row = self.currentRow()
+					item = self.item(row)
+					#epnArrList[:]=[]
+					if item and os.path.exists(file_path):
+						
+						self.takeItem(row)
+						
+						del item
+						del epnArrList[row]
+						f = open(file_path,'w')
+						j = 0
+						for i in range(self.count()):
+							fname = epnArrList[i]
+							if j == 0:
+								f.write(fname)
+							else:
+								f.write('\n'+fname)
+							j = j+1
+						f.close()
 		#elif event.key() == QtCore.Qt.Key_Q: 
 		#	startPlayer = "No"
 		#	ui.epnfound()
@@ -5183,7 +5228,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 			#if yy+ht1 > ui.tab_6.height():
 		
 	def keyPressEvent(self, event):
-		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval,iconv_r,total_till,browse_cnt,site,epn_name_in_list,memory_num_arr,thumbnail_indicator,mpvplayer,iconv_r_indicator,tab_6_size_indicator,tab_6_player,finalUrlFound
+		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval,iconv_r,total_till,browse_cnt,site,epn_name_in_list,memory_num_arr,thumbnail_indicator,mpvplayer,iconv_r_indicator,tab_6_size_indicator,tab_6_player,finalUrlFound,quality
 		if not mpvplayer:
 			mpvRunning = "False"
 		if  mpvplayer:
@@ -5282,7 +5327,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 					else:
 						self.sizeAdjust(nextR+iconv_r,"up")
 			elif event.key() == QtCore.Qt.Key_Backspace:
-				if site!= "PlayLists" and ui.list1.currentItem():
+				if ui.list1.currentItem():
 					ui.labelFrame2.setText(ui.list1.currentItem().text())
 					ui.prev_thumbnails()
 					ui.scrollArea.setFocus()
@@ -5299,7 +5344,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 					if mpvplayer.pid() > 0:
 						mpvplayer.write(b'\n quit \n')
 						mpvplayer.kill()
-				if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists":
+				if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site=='None':
 					
 					
 					quitReally = "no"
@@ -5348,7 +5393,11 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 						finalUrl = finalUrl.replace('#','')
 						finalUrl = str(finalUrl)
 						finalUrl = finalUrl.replace('"','')
-						finalUrl = '"'+finalUrl+'"'
+						if 'youtube.com' in finalUrl:
+							ui.external_url = True
+							finalUrl = get_yt_url(finalUrl,quality).strip()
+						if not finalUrl.startswith('http'):
+							finalUrl = '"'+finalUrl+'"'
 						if Player == "mplayer":
 							command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 							print (command)
@@ -6778,14 +6827,22 @@ class Ui_MainWindow(object):
 		self.verticalLayout_50 = QtWidgets.QHBoxLayout()
 		self.verticalLayout_50.setObjectName(_fromUtf8("verticalLayout_50"))
 		self.horizontalLayout_5.addLayout(self.verticalLayout_50)
+		
+		self.btnWebHide = QtWidgets.QPushButton(self.tab_2)
+		self.btnWebHide.setObjectName(_fromUtf8("btnWebHide"))
+		self.btnWebHide.setMaximumSize(200,50)
+		self.verticalLayout_50.addWidget(self.btnWebHide)
+		
 		self.btnWebClose = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebClose.setObjectName(_fromUtf8("btnWebClose"))
 		self.btnWebClose.setMaximumSize(200,50)
 		self.verticalLayout_50.addWidget(self.btnWebClose)
+		
 		self.btnWebReviews = QtWidgets.QComboBox(self.tab_2)
 		self.btnWebReviews.setObjectName(_fromUtf8("btnWebReviews"))
 		self.verticalLayout_50.addWidget(self.btnWebReviews)
 		self.btnWebReviews.setMaximumSize(200,50)
+		
 		self.btnPls = QtWidgets.QPushButton(self.tab_2)
 		self.btnPls.setObjectName(_fromUtf8("btnPls"))
 		self.verticalLayout_50.addWidget(self.btnPls)
@@ -7020,7 +7077,7 @@ class Ui_MainWindow(object):
 		self.torrent_download_folder = '/tmp/AnimeWatch'
 		self.default_download_location = '/tmp/AnimeWatch'
 		self.epn_name_in_list = ''
-		
+		self.external_url = False
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7125,7 +7182,8 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.btn201, QtCore.SIGNAL(_fromUtf8("clicked()")), self.prev_thumbnails)
 		self.btn201.clicked.connect(self.prev_thumbnails)
 		#QtCore.QObject.connect(self.btnWebClose, QtCore.SIGNAL(_fromUtf8("clicked()")), self.webHide)
-		self.btnWebClose.clicked.connect(self.webHide)
+		self.btnWebClose.clicked.connect(self.webClose)
+		self.btnWebHide.clicked.connect(self.webHide)
 		self.btnPls.clicked.connect(self.togglePlaylist)
 		#QtCore.QObject.connect(self.go_opt, QtCore.SIGNAL(_fromUtf8("clicked()")), self.go_opt_options)
 		self.go_opt.clicked.connect(self.go_opt_options)
@@ -7227,6 +7285,7 @@ class Ui_MainWindow(object):
 		self.btn30.setItemText(7, _translate("MainWindow", "KissAnime", None))
 		self.btn3.setText(_translate("MainWindow", "Library", None))
 		self.btnWebClose.setText(_translate("MainWindow", "Close", None))
+		self.btnWebHide.setText(_translate("MainWindow", "Hide", None))
 		self.btn2.setItemText(0, _translate("MainWindow", "Reviews", None))
 		self.btn2.setItemText(1, _translate("MainWindow", "MyAnimeList", None))
 		self.btn2.setItemText(2, _translate("MainWindow", "Anime-Planet", None))
@@ -8019,6 +8078,7 @@ class Ui_MainWindow(object):
 		ui.tab_5.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 		#ui.btn9.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+		ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
@@ -9041,7 +9101,7 @@ class Ui_MainWindow(object):
 				j = iconv_r+1
 				k = 0
 				if opt != "History":
-					if site == "Local" or site == "Video" or site == "Music":
+					if site == "Local" or site == "Video" or site == "Music" or site=='PlayLists':
 						length = len(tmp_name)
 					else:
 						length = 100
@@ -9465,22 +9525,50 @@ class Ui_MainWindow(object):
 						if '	' in epnArrList[browse_cnt]:
 							nameEpn = (epnArrList[browse_cnt]).split('	')[0]
 							
-							#nameEpn = nameEpn.decode('utf8')
-							
-							#path = ((epnArrList[browse_cnt]).split('	')[1]).decode('utf8')
 							path = ((epnArrList[browse_cnt]).split('	')[1])
 						else:
 							nameEpn = (epnArrList[browse_cnt]).split('/')[-1]
 							nameEpn = nameEpn
 							path = (epnArrList[browse_cnt])
 						#picn = home+'/thumbnails/'+nameEpn+'.jpg'
-						picnD = home+'/thumbnails/'+name
+						if self.list1.currentItem():
+							name_t = self.list1.currentItem().text()
+						else:
+							name_t = ''
+						if self.list3.currentItem():
+							if self.list3.currentItem().text() == 'Playlist':
+								picnD = os.path.join(home,'thumbnails','PlayLists',name_t)
+							else:
+								picnD = os.path.join(home,'thumbnails',site,name_t)
+						else:
+							picnD = os.path.join(home,'thumbnails',site,name_t)
+						print(picnD,'=picnD')
 						if not os.path.exists(picnD):
 							os.makedirs(picnD)
-						picn = picnD+'/'+nameEpn+'.jpg'
+						picn = os.path.join(picnD,nameEpn)+'.jpg'
 						picn = picn.replace('#','')
-						if (site=="Local" or site=="None" or site == "Music" or site == "Video") and not os.path.exists(picn):
+						path = path.replace('"','')
+						if not os.path.exists(picn) and not path.startswith('http'):
 							subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t","10",'-q','10','-s','350'])
+						elif not os.path.exists(picn) and path.startswith('http') and 'youtube.com' in path:
+								if '/watch?' in path:
+									a = path.split('?')[-1]
+									b = a.split('&')
+									if b:
+										for i in b:
+											j = i.split('=')
+											k = (j[0],j[1])
+											m.append(k)
+									else:
+										j = a.split('=')
+										k = (j[0],j[1])
+										m.append(k)
+									d = dict(m)
+								try:
+									img_url="https://i.ytimg.com/vi/"+d['v']+"/hqdefault.jpg"
+									ccurl(img_url+'#'+'-o'+'#'+picn)
+								except:
+									pass
 						if site == "Music":
 							if os.path.exists(picn):
 								if os.stat(picn).st_size == 0:
@@ -9499,13 +9587,43 @@ class Ui_MainWindow(object):
 							path = ((epnArrList[browse_cnt]).split('	')[1])
 							
 							#picn = home+'/thumbnails/'+nameEpn+'.jpg'
-							picnD = home+'/thumbnails/'+name
-							if not os.path.exists(picnD):
-								os.makedirs(picnD)
-							picn = picnD+'/'+nameEpn+'.jpg'
+							playlist_dir = os.path.join(home,'thumbnails','PlayLists')
+							if not os.path.exists(playlist_dir):
+								os.makedirs(playlist_dir)
+							pl_n = self.list1.currentItem().text()
+							playlist_name = os.path.join(playlist_dir,pl_n)
+							if not os.path.exists(playlist_name):
+								os.makedirs(playlist_name)
+							#picnD = home+'/thumbnails/'+name
+							picnD = os.path.join(playlist_name,nameEpn)
+							#if not os.path.exists(picnD):
+							#	os.makedirs(picnD)
+							#picn = picnD+'/'+nameEpn+'.jpg'
+							picn = picnD+'.jpg'
 							picn = picn.replace('#','')
-							if not os.path.exists(picn) and 'http' not in path:
-								subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t","10",'-q','10','-s','350'])
+							path1 = path.replace('"','')
+							if not os.path.exists(picn) and not path1.startswith('http'):
+								subprocess.call(["ffmpegthumbnailer","-i",path1,"-o",picn,"-t","10",'-q','10','-s','350'])
+							elif not os.path.exists(picn) and path1.startswith('http') and 'youtube.com' in path1:
+								if '/watch?' in path1:
+									a = path1.split('?')[-1]
+									b = a.split('&')
+									if b:
+										for i in b:
+											j = i.split('=')
+											k = (j[0],j[1])
+											m.append(k)
+									else:
+										j = a.split('=')
+										k = (j[0],j[1])
+										m.append(k)
+									d = dict(m)
+								try:
+									img_url="https://i.ytimg.com/vi/"+d['v']+"/hqdefault.jpg"
+									ccurl(img_url+'#'+'-o'+'#'+picn)
+								except:
+									pass
+								
 					else:
 						if finalUrlFound == True:
 							if '	' in epnArrList[browse_cnt]:
@@ -9759,7 +9877,7 @@ class Ui_MainWindow(object):
 				self.list1.hide()
 				self.frame.hide()
 				self.tab_5.show()
-	def webHide(self):
+	def webClose(self):
 		global view_layout
 		#homeN = home+'/src/default.html'
 		#self.web.load(QUrl(homeN))
@@ -9781,6 +9899,13 @@ class Ui_MainWindow(object):
 		self.frame.show()
 		self.frame1.show()
 		self.goto_epn.show()
+	def webHide(self):
+		global mpvplayer
+		if mpvplayer.pid() > 0:
+			self.tab_2.hide()
+		else:
+			self.showHideBrowser()
+		
 	def togglePlaylist(self):
 		if self.list2.isHidden():
 			self.list2.show()
@@ -10321,6 +10446,7 @@ class Ui_MainWindow(object):
 				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
 				img.save(picn)
 				shutil.copy(picn,home+'/Music/Artist/'+nm+'/'+'fanart.jpg')
+				print(picn,home+'/Music/Artist/'+nm+'/'+'fanart.jpg')
 				ui.videoImage(picn,home+'/Music/Artist/'+nm+'/'+'thumbnail.jpg',home+'/Music/Artist/'+nm+'/'+'fanart.jpg','')
 			#ui.listfound()
 	def copySummary(self):
@@ -10328,6 +10454,7 @@ class Ui_MainWindow(object):
 		print (site)
 		print (opt)
 		print (pre_opt)
+		sumry = ''
 		if site == "Local":
 			r = self.list1.currentRow()
 			name = str(self.list1.currentItem().text())
@@ -10358,7 +10485,10 @@ class Ui_MainWindow(object):
 						nm = ""
 			if nm and os.path.exists(home+'/Music/Artist/'+nm):
 				sumry = '/tmp/AnimeWatch/'+nm+'-bio.txt'
-				shutil.copy(sumry,home+'/Music/Artist/'+nm+'/'+'bio.txt')			
+				shutil.copy(sumry,home+'/Music/Artist/'+nm+'/'+'bio.txt')
+		if os.path.exists(sumry):
+			txt = open(sumry,'r').read()
+			self.text.setText(txt)
 	def showImage(self):
 		global name
 		thumb = '/tmp/AnimeWatch/' + name + '.jpg'
@@ -11450,25 +11580,60 @@ class Ui_MainWindow(object):
 				a1 = a1.replace('#','')
 				#picn = home+'/thumbnails/'+a1+'.jpg'
 				inter = str(inter_val)+'s'
-				picnD = home+'/thumbnails/'+name
-				if not os.path.exists(picnD):
-					os.makedirs(picnD)
-				try:
-					picn = picnD+'/'+a1+'.jpg'
-				except:
-					picn = picnD+'/'+str(a1)+'.jpg'
+				picnD = ''
+				picn = ''
 				if site == "PlayLists" or site == "Local" or site == "Video" or site == "Music":
-					if not os.path.exists(picn) and 'http' not in path:
-						#subprocess.call(["mpv","--ytdl=no","--quiet","--no-audio","--vo=image:outdir=/tmp","--start="+str(inter_val)+"%","--frames=1",path])
-						#subprocess.Popen(["ffmpegthumbnailer","-i",path,"-o",picn,"-t",str(inter),'-q','10','-s','350'])
+					if site == 'PlayLists':
+						playlist_dir = os.path.join(home,'thumbnails','PlayLists')
+						if not os.path.exists(playlist_dir):
+							os.makedirs(playlist_dir)
+						if self.list1.currentItem():
+							pl_n = self.list1.currentItem().text()
+							playlist_name = os.path.join(playlist_dir,pl_n)
+							if not os.path.exists(playlist_name):
+								os.makedirs(playlist_name)
+							picnD = os.path.join(playlist_name,a1)
+							try:
+								picn = picnD+'.jpg'
+							except:
+								picn = str(picnD)+'.jpg'
+					else:
+						if self.list1.currentItem():
+							name_t = self.list1.currentItem().text()
+						else:
+							name_t = ''
+						if self.list3.currentItem() and site == 'Music':
+							if self.list3.currentItem().text() == 'Playlist':
+								picnD = os.path.join(home,'thumbnails','PlayLists',name_t)
+							else:
+								picnD = os.path.join(home,'thumbnails',site,name_t)
+						else:
+							picnD = os.path.join(home,'thumbnails',site,name_t)
+						print(picnD,'=picnD')
+						if not os.path.exists(picnD):
+							os.makedirs(picnD)
+						picn = os.path.join(picnD,a1)+'.jpg'
+					if picn and not os.path.exists(picn) and 'http' not in path:
 						
+						path = path.replace('"','')
 						self.threadPoolthumb.append(ThreadingThumbnail(path,picn,inter))
 						self.threadPoolthumb[len(self.threadPoolthumb)-1].finished.connect(self.thumbnail_generated)
 						length = len(self.threadPoolthumb)
 						if length == 1:
 							if not self.threadPoolthumb[0].isRunning():
 								self.threadPoolthumb[0].start()
-					
+				if not picnD:
+					if self.list1.currentItem():
+						name_t = self.list1.currentItem().text()
+					else:
+						name_t = ''
+					picnD = os.path.join(home,'thumbnails',name_t)
+					if not os.path.exists(picnD):
+						os.makedirs(picnD)
+					try:
+						picn = os.path.join(picnD,a1)+'.jpg'
+					except:
+						picn = os.path.join(picnD,str(a1))+'.jpg'
 				if os.path.exists(picn):
 					img = QtGui.QPixmap(picn, "1")			
 					self.label.setPixmap(img)
@@ -11986,6 +12151,8 @@ class Ui_MainWindow(object):
 		if not name1:
 			if self.list1.currentItem():
 				name1 = self.list1.currentItem().text()
+				if self.list2.currentItem() and site == 'PlayLists':
+					name1 = self.list2.currentItem().text()
 			elif self.list2.currentItem():
 				name1 = self.list2.currentItem().text()
 			name1 = name1.replace('#','')
@@ -13489,8 +13656,9 @@ class Ui_MainWindow(object):
 
 			img = QtGui.QPixmap(picn, "1")
 			self.label.setPixmap(img)
+		self.text.clear()
 		if summary:
-			self.text.clear()
+			#self.text.clear()
 			self.text.insertPlainText((summary))
 	def playlistUpdate(self):
 		global home,epnArrList
@@ -13508,20 +13676,21 @@ class Ui_MainWindow(object):
 				self.list2.insertItem(row,i)	
 			#self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
-			file_path = home+'/Playlists/'+str(self.list1.currentItem().text())
-			if os.path.exists(file_path):
-				f = open(file_path,'w')
-				k = 0
-				for i in range(self.list2.count()):
-					#it = str(self.list2.item(i).text())
-					it = epnArrList[i]
-					#it = it.encode('utf8')
-					if k == 0:
-						f.write(it)
-					else:
-						f.write('\n'+it)
-					k = k+1
-				f.close()
+			if self.list1.currentItem():
+				file_path = home+'/Playlists/'+str(self.list1.currentItem().text())
+				if os.path.exists(file_path):
+					f = open(file_path,'w')
+					k = 0
+					for i in range(self.list2.count()):
+						#it = str(self.list2.item(i).text())
+						it = epnArrList[i]
+						#it = it.encode('utf8')
+						if k == 0:
+							f.write(it)
+						else:
+							f.write('\n'+it)
+						k = k+1
+					f.close()
 			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded,show_hide_player,show_hide_cover
@@ -15178,7 +15347,7 @@ class Ui_MainWindow(object):
 			pass
 		mplayerLength = 0
 		buffering_mplayer = "no"
-		external_audio = False
+		#external_url = False
 		if site == "Music":
 			if self.list3.currentRow() >= 0:
 				music_arr_setting[0]=self.list3.currentRow()
@@ -15233,8 +15402,8 @@ class Ui_MainWindow(object):
 				epn = self.epn_name_in_list
 				self.playlistUpdate()
 				self.list2.setCurrentRow(row)
-				if 'youtube.com' in finalUrl:
-					finalUrl = get_yt_url(finalUrl,quality).strip()
+				#if 'youtube.com' in finalUrl:
+				#	finalUrl = get_yt_url(finalUrl,quality).strip()
 		if thumbnail_indicator and not self.tab_5.isHidden():
 			title_num = row + ui.list2.count()
 			if '#' in self.epn_name_in_list:
@@ -15304,43 +15473,43 @@ class Ui_MainWindow(object):
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
 			if 'youtube.com' in finalUrl.lower():
-				external_audio = True
 				finalUrl = finalUrl.replace('"','')
 				finalUrl = get_yt_url(finalUrl,quality).strip()
-				finalUrl = '"'+finalUrl+'"'
-				
+				#if '#' in finalUrl:
+				self.external_url = True
+			
 		new_epn = self.epn_name_in_list
 	
 		
-		#if '""' in finalUrl:
 		finalUrl = finalUrl.replace('"','')
-		if '#' in finalUrl:
+		if '#' in finalUrl or finalUrl.startswith('http'):
 				if mpvplayer.pid()>0:
 					mpvplayer.kill()
-				video_url = finalUrl.split('#')[-1]
-				audio_url = finalUrl.split('#')[0]
+				if '#' in finalUrl:
+					video_url = finalUrl.split('#')[-1]
+					audio_url = finalUrl.split('#')[0]
+					if Player == 'mpv':
+						finalUrl = "--audio-file="+audio_url+' '+video_url
+					elif Player == 'mplayer':
+						finalUrl = '-audiofile '+audio_url+' '+video_url
 				if Player == 'mplayer':
 					if mpvplayer.pid() > 0:
 						subprocess.Popen(['killall','mplayer'])
-					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
+					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 				else:
-					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
+					if mpvplayer.pid() > 0:
+						subprocess.Popen(['killall','mpv'])
 				self.infoPlay(command)
+				
 		else:
 			finalUrl = '"'+finalUrl+'"'
 			try:
 				finalUrl = str(finalUrl,'utf-8')
 			except:
 				finalUrl = finalUrl
-			
-			if mpvplayer.pid() == 0:
-				finalUrl = finalUrl.replace('"','')
-				if Player == 'mplayer':
-					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-				else:
-					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+final_url
-				self.infoPlay(command)
-			elif mpvplayer.pid() > 0:
+				
+			if mpvplayer.pid() > 0:
 				if Player == "mplayer":
 					if audio_id == "auto":
 						audio_id = "0"
@@ -15352,23 +15521,27 @@ class Ui_MainWindow(object):
 						#command = command.encode('utf-8')
 					except:
 						command = command1
-					if mpvplayer.pid()>0:
-						try:
-							epnShow = '"' + "Queued:  "+ new_epn + '"'
-							t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
-							t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
-							print (finalUrl,'---hello-----')
-							
-							mpvplayer.write(t1)
-							mpvplayer.write(t2)
-							if self.mplayer_SubTimer.isActive():
-								self.mplayer_SubTimer.stop()
-							self.mplayer_SubTimer.start(2000)
-								#mpvplayer.write('\n'+"switch_audio "+str(audio_id)+'\n')
-								#mpvplayer.write('\n'+"sub_select "+str(sub_id)+'\n')
-						except:
-							self.infoPlay(command)
+					if not self.external_url:
+						#try:
+						epnShow = '"' + "Queued:  "+ new_epn + '"'
+						t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
+						t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
+						print (finalUrl,'---hello-----')
 						
+						mpvplayer.write(t1)
+						mpvplayer.write(t2)
+						if self.mplayer_SubTimer.isActive():
+							self.mplayer_SubTimer.stop()
+						self.mplayer_SubTimer.start(2000)
+							
+						#except:
+						#	self.infoPlay(command)
+					else:
+						mpvplayer.write(b'\n quit \n')
+						if mpvplayer.pid() > 0:
+							subprocess.Popen(['killall','mplayer'])
+						self.infoPlay(command)
+						self.external_url = False
 				elif Player == "mpv":
 					command1 = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
 					try:
@@ -15386,8 +15559,9 @@ class Ui_MainWindow(object):
 							print (finalUrl,'---hello-----')
 							mpvplayer.write(t1)
 							mpvplayer.write(t2)
-							if external_audio:
+							if self.external_url:
 								mpvplayer.write(b'\n set aid 1 \n')
+								self.external_url = False
 						except:
 							self.infoPlay(command)
 					else:
@@ -15410,7 +15584,6 @@ class Ui_MainWindow(object):
 			
 	def getQueueInList(self):
 		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server,current_playing_file_path,quality
-		external_audio = False
 		try:
 			t1 = self.queue_url_list[0]
 			server._emitMeta("queue"+'#'+t1)
@@ -15432,10 +15605,10 @@ class Ui_MainWindow(object):
 			if not idw:
 				idw = str(int(self.tab_5.winId()))
 			if 'youtube.com' in epnShow.lower():
-				external_audio = True
 				finalUrl = epnShow.replace('"','')
 				finalUrl = get_yt_url(finalUrl,quality).strip()
-				epnShow = '"'+finalUrl+'"'
+				epnShow = finalUrl
+				self.external_url = True
 		else:
 			epnShow = self.queue_url_list.pop()
 			curR = curR - 1
@@ -15443,18 +15616,23 @@ class Ui_MainWindow(object):
 			self.list2.setCurrentRow(curR)
 			
 		
-		if '#' in epnShow:
+		if '#' in epnShow or epnShow.startswith('http'):
 				epnShow = epnShow.replace('"','')
 				if mpvplayer.pid()>0:
 					mpvplayer.kill()
 				video_url = epnShow.split('#')[-1]
 				audio_url = epnShow.split('#')[0]
+				if Player == 'mpv':
+					finalUrl = "--audio-file="+audio_url+' '+video_url
+				elif Player == 'mplayer':
+					finalUrl = '-audiofile '+audio_url+' '+video_url
+				
 				if Player == 'mplayer':
 					if mpvplayer.pid() > 0:
 						subprocess.Popen(['killall','mplayer'])
-					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
+					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 				else:
-					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
+					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
 					if mpvplayer.pid() > 0:
 						subprocess.Popen(['killall','mpv'])
 				self.infoPlay(command)
@@ -15471,13 +15649,23 @@ class Ui_MainWindow(object):
 					epnShow = epnShow.replace('"','')
 				t2 = bytes('\n'+"loadfile "+epnShow+" replace"+'\n','utf-8')
 				print(t2)
-				mpvplayer.write(t2)
-				if external_audio and Player == 'mpv':
-					mpvplayer.write(b'\n set aid 1 \n')
-				if Player == "mplayer":
-					if self.mplayer_SubTimer.isActive():
-						self.mplayer_SubTimer.stop()
-					self.mplayer_SubTimer.start(2000)
+				if Player == 'mpv':
+					mpvplayer.write(t2)
+					if self.external_url:
+						mpvplayer.write(b'\n set aid 1 \n')
+						self.external_url = False
+				elif Player == "mplayer":
+					if not self.external_url:
+						mpvplayer.write(t2)
+						if self.mplayer_SubTimer.isActive():
+							self.mplayer_SubTimer.stop()
+						self.mplayer_SubTimer.start(2000)
+					else:
+						mpvplayer.write(b'\n quit \n')
+						if mpvplayer.pid() > 0:
+							subprocess.Popen(['killall','mplayer'])
+						self.infoPlay(command)
+						self.external_url = False
 			else:
 				print (command)
 				self.infoPlay(command)
@@ -17136,7 +17324,7 @@ class Ui_MainWindow(object):
 							n = os.listdir(i)
 							p[:]=[]
 							for k in n:
-								if k.endswith('.mp3') or k.endswith('.flac'):
+								if k.endswith('.mp3') or k.endswith('.flac') or k.endswith('.ogg') or k.endswith('.wav') or k.endswith('.aac') or k.endswith('.wma') or k.endswith('.m4a') or k.endswith('.m4b') or k.endswith('.opus') or k.endswith('.webm'):
 									p.append((i+'/'+k))
 									
 									path = str(i+'/'+k)

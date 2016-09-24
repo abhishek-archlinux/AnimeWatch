@@ -165,9 +165,9 @@ class MyPage(QtWebEngineWidgets.QWebEnginePage):
 		super(MyPage, self).__init__()
 		
 	def acceptNavigationRequest(self, url, nav_type,frame):
-		print(url,nav_type,'--print--nav--type--')
+		#print(url,nav_type,'--print--nav--type--')
 		if nav_type == 0:
-			print('clicked',url.url())
+			print('clicked')
 			#self.parent.urlSignal.emit(url.url())
 		return super(MyPage, self).acceptNavigationRequest(url,nav_type,frame)
 		
@@ -189,11 +189,14 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 			if l in lower_path:
 				block = True
 				break
-		if self.p.wait_player:
-			if 'itag=' in urlLnk:
-				block = True
-				#print(urlLnk,'--urlLnk--')
-				#a = 0
+		try:
+			if self.p.wait_player:
+				if 'itag=' in urlLnk:
+					block = True
+					#print(urlLnk,'--urlLnk--')
+					#a = 0
+		except:
+			pass
 		if block:
 			info.block(True)
 class Browser(QtWebEngineWidgets.QWebEngineView):
@@ -266,7 +269,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.page().runJavaScript("location.reload();",self.var_remove)
 	def get_html(self,var):
 		print('--got--html--')
-		if 'youtube' in self.url().url():
+		if 'youtube.com' in self.url().url():
 		
 			
 					
@@ -288,7 +291,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 	def var_remove(self,var):
 		print(var,'--js--')
 	def load_progress(self,var):
-		if var == 100:
+		if var == 100 and 'youtube.com' in self.url().url():
 			print(self.url(),self.title(),'--load--progress--')
 			self.page().toHtml(self.get_html)
 	def title_changed(self,title):
@@ -302,7 +305,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			prev_url = self.url_arr[-1]
 			self.url_arr.append(link.url())
 			
-		if prev_url != link.url() and 'youtube' in link.url():
+		if prev_url != link.url() and 'youtube.com' in link.url():
 			self.current_link = link.url()
 			m = []
 			if '/watch?' in link.url():
@@ -543,6 +546,21 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 						if not os.path.exists(file_path):
 							f = open(file_path,'w')
 							f.close()
+			elif 'tvdb' in self.url().url() or 'last.fm' in self.url().url():
+				print(self.url().url(),'--tvdb-url--')
+				if 'tvdb' in self.url().url():
+					arr = arr + arr_extra_tvdb
+				if 'last.fm' in self.url().url():
+					arr = arr + arr_last
+			
+				for i in range(len(arr)):
+					action.append(menu.addAction(arr[i]))
+					
+				act = menu.exec_(event.globalPos())
+				
+				for i in range(len(action)):
+					if act == action[i]:
+						self.download(self.url().url(),arr[i])
 			else:
 				super(Browser, self).contextMenuEvent(event)
 	def getContentUnicode(self,content):

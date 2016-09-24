@@ -277,7 +277,7 @@ class Browser(QtWebKitWidgets.QWebView):
 	
 	def load_progress(self,var):
 		#self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
-		if var == 100:
+		if var == 100 and 'youtube.com' in self.url().toString():
 			print(self.url().toString(),self.title(),'--load--progress--')
 			frame = self.page().mainFrame().toHtml()
 			self.get_html(frame)
@@ -423,6 +423,7 @@ class Browser(QtWebKitWidgets.QWebView):
 			url = self.img_url
 		if url.isEmpty():
 			url = self.url()
+			print('--next--url=',self.url().toString())
 		if not url.isEmpty() or self.img_url:
 			if 'tvdb' in url.toString():
 				arr = arr + arr_extra_tvdb
@@ -479,6 +480,7 @@ class Browser(QtWebKitWidgets.QWebView):
 						if not os.path.exists(file_path):
 							f = open(file_path,'w')
 							f.close()
+		
 		super(Browser, self).contextMenuEvent(event)
 	def getContentUnicode(self,content):
 		if isinstance(content,bytes):

@@ -26,6 +26,25 @@ import subprocess
 def get_yt_url(url,quality):
 	final_url = ''
 	url = url.replace('"','')
+	m = []
+	if '/watch?' in url:
+		a = url.split('?')[-1]
+		b = a.split('&')
+		if b:
+			for i in b:
+				j = i.split('=')
+				k = (j[0],j[1])
+				m.append(k)
+		else:
+			j = a.split('=')
+			k = (j[0],j[1])
+			m.append(k)
+		d = dict(m)
+		print(d,'----dict--arguments---generated---')
+		try:
+			url = 'https://m.youtube.com/watch?v='+d['v']
+		except:
+			pass
 	try:
 		
 		try:
