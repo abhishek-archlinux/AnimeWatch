@@ -5393,11 +5393,20 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 						finalUrl = finalUrl.replace('#','')
 						finalUrl = str(finalUrl)
 						finalUrl = finalUrl.replace('"','')
-						if 'youtube.com' in finalUrl:
-							ui.external_url = True
-							finalUrl = get_yt_url(finalUrl,quality).strip()
 						if not finalUrl.startswith('http'):
 							finalUrl = '"'+finalUrl+'"'
+						if 'youtube.com' in finalUrl:
+							finalUrl = finalUrl.replace('"','')
+							ui.external_url = True
+							finalUrl = get_yt_url(finalUrl,quality).strip()
+							if '#' in finalUrl:
+								audio_url = finalUrl.split('#')[0]
+								video_url = finalUrl.split('#')[1]
+								if Player == 'mpv':
+									finalUrl = "--audio-file="+audio_url+' '+video_url
+								elif Player == 'mplayer':
+									finalUrl = '-audiofile '+audio_url+' '+video_url
+						
 						if Player == "mplayer":
 							command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 							print (command)
