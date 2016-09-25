@@ -6219,6 +6219,7 @@ class tab5(QtWidgets.QWidget):
 				#ui.frame2.show()
 				num = ui.list2.currentRow()
 				ui.thumbnail_label_update_epn()
+				#ui.thumbnail_label_update()
 				QtWidgets.QApplication.processEvents()
 				ui.frame2.show()
 				p1 = "ui.label_epn_"+str(num)+".y()"
@@ -9367,7 +9368,7 @@ class Ui_MainWindow(object):
 				k = 0
 			
 			
-				QtWidgets.QApplication.processEvents()
+				#QtWidgets.QApplication.processEvents()
 				while(i<length1):
 					
 					#p2="self.label_"+str(i)+".setMaximumSize(QtCore.QSize(300,200))"
@@ -9394,7 +9395,7 @@ class Ui_MainWindow(object):
 						j = j+2*iconv_r
 						k = 0
 				total_till_epn = length1
-				QtWidgets.QApplication.processEvents()
+				#QtWidgets.QApplication.processEvents()
 				
 		
 			
@@ -13715,6 +13716,9 @@ class Ui_MainWindow(object):
 				#mpvplayer.waitForReadyRead()
 				#time.sleep(2)
 				mpvplayer.kill()
+				if Player == 'mplayer':
+					if mpvplayer.pid() > 0:
+						subprocess.Popen(['killall','mplayer'])
 	
 		self.tab_5.show()
 		if epn_goto == 0 and site != "PlayLists":
