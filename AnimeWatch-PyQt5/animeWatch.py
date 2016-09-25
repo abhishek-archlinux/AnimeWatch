@@ -12189,7 +12189,7 @@ class Ui_MainWindow(object):
 		if not name1:
 			if self.list1.currentItem():
 				name1 = self.list1.currentItem().text()
-				if self.list2.currentItem() and site == 'PlayLists':
+				if self.list2.currentItem() and self.btn1.currentText() == 'PlayLists':
 					name1 = self.list2.currentItem().text()
 			elif self.list2.currentItem():
 				name1 = self.list2.currentItem().text()
