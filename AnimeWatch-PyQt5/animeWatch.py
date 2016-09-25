@@ -2416,6 +2416,19 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					rfr_url1 = rfr_url.replace('"','')
 					rfr_url1 = rfr_url1.replace("'",'')
 					print (rfr_url1)
+					playlist_dir = os.path.join(home,'thumbnails','PlayLists')
+					if not os.path.exists(playlist_dir):
+						os.makedirs(playlist_dir)
+					if ui.list1.currentItem():
+						pl_n = ui.list1.currentItem().text()
+						playlist_name = os.path.join(playlist_dir,pl_n)
+						if not os.path.exists(playlist_name):
+							os.makedirs(playlist_name)
+						picnD = os.path.join(playlist_name,a1)
+						try:
+							picn = picnD+'.jpg'
+						except:
+							picn = str(picnD)+'.jpg'
 					if rfr_url1.lower().startswith('http'):
 						path = path.replace('"','')
 						path = '"'+path+'"'
@@ -2437,6 +2450,21 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						
 				else:
 					print (path +'************')
+					if ui.list1.currentItem():
+						name_t = ui.list1.currentItem().text()
+					else:
+						name_t = ''
+					if ui.list3.currentItem() and site == 'Music':
+						if ui.list3.currentItem().text() == 'Playlist':
+							picnD = os.path.join(home,'thumbnails','PlayLists',name_t)
+						else:
+							picnD = os.path.join(home,'thumbnails',site,name_t)
+					else:
+						picnD = os.path.join(home,'thumbnails',site,name_t)
+					print(picnD,'=picnD')
+					if not os.path.exists(picnD):
+						os.makedirs(picnD)
+					picn = os.path.join(picnD,a1)+'.jpg'
 					subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t",str(inter),'-q','10','-s','350'])
 				img = QtGui.QPixmap(picn, "1")			
 				q1="ui.label_epn_"+str(num)+".setPixmap(img)"
