@@ -6352,7 +6352,7 @@ class Ui_MainWindow(object):
 		MainWindow.resize(875, 600)
 		
 		try:
-			icon = QtGui.QIcon('tray.png')
+			icon = QtGui.QIcon('/usr/share/AnimeWatch/tray.png')
 		except:
 			icon = QtGui.QIcon.fromTheme(_fromUtf8(""))
 		MainWindow.setWindowIcon(icon)
