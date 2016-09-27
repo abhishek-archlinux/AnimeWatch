@@ -26,10 +26,10 @@ import shutil
 import subprocess
 import platform
 import sys
-home1 = expanduser("~")
-home = home1+"/.config/AnimeWatch"
-nHome = home+'/src' 
-pluginDir = nHome+'/Plugins'
+home_user = expanduser("~")
+home = os.path.join(home_user,".config","AnimeWatch")
+nHome = os.path.join(home,'src' )
+pluginDir = os.path.join(nHome,'Plugins')
 if not os.path.exists(home):
 	os.makedirs(home)
 
@@ -43,7 +43,7 @@ if not os.path.exists(pluginDir):
 if os.path.exists(nHome):
 	n = os.listdir(nHome)
 	for i in n:
-		k = nHome+'/'+i
+		k = os.path.join(nHome,i)
 		if os.path.isfile(k):
 			os.remove(k)
 
@@ -54,13 +54,13 @@ if os.path.exists(nHome):
 cwd = os.getcwd()
 m = os.listdir(cwd)
 for i in m:
-	k = cwd+'/'+i
+	k = os.path.join(cwd,i)
 	if os.path.isfile(k) and i != "install.py":
 		shutil.copy(k,nHome)
 	elif os.path.isdir(k) and i == "Plugins":
 		p_dir_list = os.listdir(k)
 		for j in p_dir_list:
-			q = k+'/'+j
+			q = os.path.join(k,j)
 			if os.path.isfile(q) and j != "installPlugins.py":
 				shutil.copy(q,pluginDir)
 
@@ -71,24 +71,27 @@ os_name = platform.platform()
 
 os_name = os_name.lower()
 print(os_name)
+icon_path = os.path.join(nHome,'tray.png')
+icon_line = "Icon="+icon_path+'\n'
+lines[4]=icon_line
 if 'arch' in os_name:
 	lines[5]="Exec=python "+nHome+'/animeWatch.py '+'%u'+'\n'
 else:
 	lines[5]="Exec=python3 "+nHome+'/animeWatch.py '+'%u'+'\n'
-f = open(home+'/AnimeWatch.desktop','w')
+f = open(os.path.join(home,'AnimeWatch.desktop'),'w')
 for i in lines:
 	f.write(i)
 f.close()
 
-picn = home+'/default.jpg'
+picn = os.path.join(home,'default.jpg')
 if not os.path.exists(picn):
-	shutil.copy('default.jpg',home+'/default.jpg')
+	shutil.copy('default.jpg',os.path.join(home,'default.jpg'))
 	
 #dest_file = '/usr/share/applications/AnimeWatch.desktop'
-dest_file = home1+'/.local/share/applications/AnimeWatch.desktop'
+dest_file = os.path.join(home_user,'.local','share','applications','AnimeWatch.desktop')
 print ('\nApplication Launcher Copying To:'+dest_file)
 
-shutil.copy(home+'/AnimeWatch.desktop',dest_file)
+shutil.copy(os.path.join(home,'AnimeWatch.desktop'),dest_file)
 
 print ("\nInstalled Successfully!\n")
 

@@ -2,7 +2,7 @@
 [Desktop Entry]
 Type=Application
 Name=AnimeWatch
-#Icon=/usr/share/icons/hicolor/64x64/apps/mpv.png
+Icon=/usr/share/AnimeWatch/tray.png
 Exec=
 Terminal=true
 NoDisplay=false
