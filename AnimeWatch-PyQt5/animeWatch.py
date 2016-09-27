@@ -18015,7 +18015,7 @@ if __name__ == "__main__":
 		for i in m:
 			if i.endswith('.py'):
 				i = i.replace('.py','')
-				if i != 'headlessBrowser' and i != 'headlessEngine' and i!='stream' and i!='local_ip' and i!= 'headlessBrowser_webkit':
+				if i != 'headlessBrowser' and i != 'headlessEngine' and i!='stream' and i!='local_ip' and i!= 'headlessBrowser_webkit' and i!='installPlugins':
 					addons_option_arr.append(i)
 	
 	
