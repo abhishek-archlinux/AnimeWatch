@@ -15658,6 +15658,7 @@ class Ui_MainWindow(object):
 			
 		
 		if '#' in epnShow or epnShow.startswith('http'):
+			if '#' in epnShow:
 				epnShow = epnShow.replace('"','')
 				if mpvplayer.pid()>0:
 					mpvplayer.kill()
@@ -15667,16 +15668,17 @@ class Ui_MainWindow(object):
 					finalUrl = "--audio-file="+audio_url+' '+video_url
 				elif Player == 'mplayer':
 					finalUrl = '-audiofile '+audio_url+' '+video_url
-				
-				if Player == 'mplayer':
-					if mpvplayer.pid() > 0:
-						subprocess.Popen(['killall','mplayer'])
-					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-				else:
-					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
-					if mpvplayer.pid() > 0:
-						subprocess.Popen(['killall','mpv'])
-				self.infoPlay(command)
+			else:
+				finalUrl = epnShow
+			if Player == 'mplayer':
+				if mpvplayer.pid() > 0:
+					subprocess.Popen(['killall','mplayer'])
+				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+			else:
+				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
+				if mpvplayer.pid() > 0:
+					subprocess.Popen(['killall','mpv'])
+			self.infoPlay(command)
 		else:
 			epnShowN = '"'+epnShow.replace('"','')+'"'
 			if Player == "mplayer":
