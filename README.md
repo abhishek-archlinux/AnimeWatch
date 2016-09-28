@@ -68,7 +68,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 18. Media Server capability.
 
-19. Youtube Support.
+19. Youtube wrapper using qtwebengine/qtwebkit.
 
 ## Normal Mode 
 ######[Index](#index)
@@ -146,7 +146,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 ######[Index](#index)
 1. Arch users first need to install 'python-pytaglib' from AUR. ~~Then they can directly go to Release section, and download appropriate pkg.tar.xz package and install it using 'sudo pacman -U pkg_name'.~~ Alternatively they can use PKGBUILD located in Arch related directory and can build package by themselves using 'makepkg -s' command, and then install package using 'pacman'. 
 
-   Note : AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) , [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) and [animewatch-pyqt5-git](https://aur.archlinux.org/packages/animewatch-pyqt5-git)(thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt' or any other conventional method. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/scr/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
+   Note : AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) , [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) and [animewatch-pyqt5-git](https://aur.archlinux.org/packages/animewatch-pyqt5-git) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt' or any other conventional method. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/scr/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
 
 2. Ubuntu or Debian based distro users can also go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Ubuntu 14.04 users also have to install 'python3-dbus.mainloop.qt' for MPRIS2 support. ~~Pyqt5 version is not available for Ubuntu, since qt5-webengine is not availbale on it. Currently there are no significant featurewise differences between pyqt5 and pyqt4 version, there are only structural differences. Users won't notice any significant variation between the two while using.~~. PyQt5 version is now available for Ubuntu 16.04 (from version number 2.8.0-0 onwards) which uses qtwebkit in fallback mode if qtwebengine is not available. For removing the package use 'sudo apt-get remove animewatch'. PyQt5 version won't work on Ubuntu 14.04.
 
