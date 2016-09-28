@@ -144,6 +144,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
 
 ## Dependencies and Installation
 ######[Index](#index)
+
 1. AnimeWatch is now available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) , [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) and [animewatch-pyqt5-git](https://aur.archlinux.org/packages/animewatch-pyqt5-git) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt' or any other conventional method. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/scr/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
 
 Note: A recent update on Arch broke the python3 bindings for libtorrent, which is required for streaming torrent. [A bug report](https://bugs.archlinux.org/task/50745) has already been filed. Therefore as a temporary fix users have to install libtorrent-rasterbar by using alternative PKGBUILD suggested by the developer in the bug report.
