@@ -1,8 +1,0 @@
-dependencies=('python' 'qt5-webengine' 'python-pyqt5' 'python-pycurl' 'python-urllib3' 'curl' 'libnotify' 'libtorrent-rasterbar'
-        'python-beautifulsoup4' 'python-psutil' 'python-pillow' 'python-lxml' 'mpv' 'mplayer' 'ffmpegthumbnailer' 'sqlite3' 'python-pytaglib')
-
-First Remove or uninstall PyQt4 or PyQt5-WebKit version of the AnimeWatch. After uninstall either backup or remove '~/.config/AnimeWatch/src' directory, since it might contain incompatible Addons or plugins, because of which programme might not work.
-
-Make sure qt5-webengine is installed.
-
-Now In the 'AnimeWatch-PyQt5-WebEngine-Stable' directory open a terminal and run 'python install.py'. Now application launcher should be created in '~/.local/share/applications/' directory. If application launcher is not working, then directly go to '~/.config/AnimeWatch/src' directory, open terminal and run 'python -B animeWatch.py'.
