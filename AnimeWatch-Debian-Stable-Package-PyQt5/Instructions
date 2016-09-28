@@ -1,1 +1,2 @@
-In order to create .deb package from the source, open terminal in the current working directory and execute the command 'dpkg-deb --build name-of-the-AnimeWatch-directory-present-in-the-current-working-directory' 
+In order to create .deb package from the source, open terminal in the current working directory and execute the command 'dpkg-deb --build SOURCE-FOLDER'. 
+While executing the command replace SOURCE-FOLDER with the name of the AnimeWatch-folder present in the current working directory. After executing the command, the .deb package will be created in the current directory, which users can install using 'gdebi'. 
