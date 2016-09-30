@@ -305,7 +305,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			
 		elif path.lower() == 'next':
 			self.row = ui.list2.currentRow()+1
-			if self.row < 0:
+			if self.row < 0 or self.row > ui.list2.count()-1:
 				self.row = 0
 			if ui.btn1.currentText().lower() == 'youtube':
 				nm = path_final_Url
@@ -14557,7 +14557,7 @@ class Ui_MainWindow(object):
 			epn = (epnArrList[row]).split('	')[1]
 	
 		if site == "PlayLists":
-			row = self.list2.currentRow()
+			#row = self.list2.currentRow()
 			item = self.list2.item(row)
 			if item:
 				#line = str(self.list2.currentItem().text())
@@ -14580,7 +14580,7 @@ class Ui_MainWindow(object):
 					refererNeeded = False
 				self.epn_name_in_list = arr[0]
 				epn = self.epn_name_in_list
-				self.playlistUpdate()
+				#self.playlistUpdate()
 				if 'youtube.com' in finalUrl:
 					finalUrl = get_yt_url(finalUrl,quality).strip()
 		
@@ -14594,21 +14594,31 @@ class Ui_MainWindow(object):
 				site_var = getattr(module,site)()
 				try:
 					if video_local_stream:
-						finalUrl = site_var.getFinalUrl(name,row,mirrorNo,quality)
+						finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+						print(finalUrl,'=finalUrl--torrent--')
+						if self.thread_server.isRunning():
+							if self.do_get_thread.isRunning():
+								row_file = '/tmp/AnimeWatch/row.txt'
+								f = open(row_file,'w')
+								f.write(str(row))
+								f.close()
+								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+							else:
+								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6)
+						else:
+							#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
+							#self.list6.clear()
+							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6)
+						self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+						self.torrent_handle.set_download_limit(self.torrent_download_limit)
+						#finalUrl = site_var.getFinalUrl(name,row,mirrorNo,quality)
 					else:
 						finalUrl = site_var.getFinalUrl(name,epn,mirrorNo,quality)
 				except:
 					return 0
 				del site_var
-			elif site == "Local":
-				#finalUrl = '"'+path_Local_Dir+'/'+epn+'"'
-				#finalUrl = re.sub(' ','\ ',finalUrl)
-				if '	' in epnArrList[row]:
-					finalUrl = '"'+(epnArrList[row]).split('	')[1]+'"'
-				
-				else:
-					finalUrl = '"'+(epnArrList[row]).replace('#','')+'"'
-				#finalUrl = finalUrl.decode('utf8')
+			
+			
 		elif finalUrlFound == True:
 				row_num = self.list2.currentRow()
 			
@@ -14663,7 +14673,7 @@ class Ui_MainWindow(object):
 						finalUrl = site_var.getFinalUrl(siteName,name,epn,mirrorNo,quality) 
 					except:
 						return 0
-	
+		
 		elif site=="None" or site == "Music" or site == "Video" or site == "Local":
 			if '	' in epnArrList[row]:
 				finalUrl = '"'+(epnArrList[row]).split('	')[1]+'"'
@@ -14677,7 +14687,7 @@ class Ui_MainWindow(object):
 			if 'youtube.com' in finalUrl.lower():
 				finalUrl = finalUrl.replace('"','')
 				finalUrl = get_yt_url(finalUrl,quality).strip()
-				finalUrl = '"'+finalUrl+'"'
+				#finalUrl = '"'+finalUrl+'"'
 			#finalUrl = finalUrl.decode('utf8')
 		#path_final_Url = finalUrl
 		return finalUrl
