@@ -3423,7 +3423,7 @@ class List1(QtWidgets.QListWidget):
 					ui.label.clear()
 					"""
 				elif action == thumbnail:
-					if site == "Local" or bookmark == "True" or opt == "History" or site == "Video":
+					if (site == "Local" or site == 'PlayLists') or bookmark == "True" or opt == "History" or site == "Video":
 						ui.scrollArea.setFocus()
 						ui.lock_process = True
 						ui.IconView()
@@ -8063,7 +8063,11 @@ class Ui_MainWindow(object):
 			self.scrollArea1.hide()
 			self.scrollArea.show()
 			i = 0
-			self.labelFrame2.setText(ui.list1.currentItem().text())
+			try:
+				self.labelFrame2.setText(ui.list1.currentItem().text())
+			except AttributeError as attr_err:
+				print(attr_err)
+				return 0
 			if thumbnail_indicator:
 				print ("prev_thumb")
 				print (thumbnail_indicator)
@@ -16632,7 +16636,7 @@ class Ui_MainWindow(object):
 				hist_arr.append(i)
 		
 		if (viewMode == "Thumbnail" or not self.tab_6.isHidden()) and (opt == "History" or site == "Local" or bookmark=="True" or site == "PlayLists"):
-			if site == "PlayLists":
+			if site == "NotMentioned":
 				#ui.IconViewEpn()
 				#ui.scrollArea1.setFocus()
 				print("PlayLists")
@@ -16650,7 +16654,7 @@ class Ui_MainWindow(object):
 				self.scrollArea1.hide()
 				self.scrollArea.show()
 				
-				if opt == "History" or site == "Local" or bookmark == "True":
+				if opt == "History" or (site == "Local" or site == 'PlayLists') or bookmark == "True":
 						i = 0
 					
 					
