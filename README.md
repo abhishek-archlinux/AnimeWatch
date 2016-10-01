@@ -374,6 +374,8 @@ ao=pulse
 
 vo=opengl {or anything that works on your system}
 
+cache-secs=120
+
 ###Some global Shortcuts:
 L : show/hide Player ('shift+L' in pyqt5 version)
 
