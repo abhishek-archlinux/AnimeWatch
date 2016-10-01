@@ -31,6 +31,7 @@ from PyQt5.QtCore import pyqtSlot,pyqtSignal,QObject
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 import os
+import subprocess,re
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	
@@ -155,7 +156,17 @@ class ThreadServer(QtCore.QThread):
 	def run(self):
 		print('starting server...')
 		server_address = (self.ip,self.port)
-		httpd = ThreadedHTTPServer(server_address, testHTTPServer_RequestHandler)
+		try:
+			httpd = ThreadedHTTPServer(server_address, testHTTPServer_RequestHandler)
+		except:
+			txt = 'Your local IP changed..or port is blocked\n..Trying to find new IP'
+			subprocess.Popen(['notify-send',txt])
+			self.ip = get_ip()
+			txt = 'Your New Address is '+self.ip + '\n Please restart the player'
+			subprocess.Popen(['notify-send',txt])
+			change_config_file(self.ip,self.port)
+			server_address = (self.ip,self.port)
+			httpd = ThreadedHTTPServer(server_address, testHTTPServer_RequestHandler)
 		print('running server...at..'+self.ip+':'+str(self.port))
 		httpd.serve_forever()
 		
@@ -210,6 +221,30 @@ class TorrentThread(QtCore.QThread):
 		print (self.handle.name(), 'complete')
 		#self.session_signal.emit('..Finished..')
 		
+def change_config_file(ip,port):
+	config_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','torrent_config.txt')
+	new_ip = 'TORRENT_STREAM_IP='+ip+':'+str(port)
+	content = open(config_file,'r').read()
+	content = re.sub('TORRENT_STREAM_IP=[^\n]*',new_ip,content)
+	f = open(config_file,'w')
+	f.write(content)
+	f.close()
+	
+def get_ip():
+	a = subprocess.check_output(['ip','addr','show'])
+	b = str(a,'utf-8')
+	print(b)
+	c = re.findall('inet [^ ]*',b)
+	final = ''
+	for i in c:
+		if '127.0.0.1' not in i:
+			final = i.replace('inet ','')
+			final = re.sub('/[^"]*','',final)
+			
+	print(c)
+	print(final)
+	return final
+	
 @pyqtSlot(str)
 def session_finished(var):
 	#from animeWatch import ui

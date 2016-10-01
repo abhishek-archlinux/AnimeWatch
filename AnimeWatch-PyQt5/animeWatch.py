@@ -130,7 +130,7 @@ def get_interface_ip(ifname):
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', ifname[:15]))[20:24])
 
-def get_lan_ip():
+def get_lan_ip_old():
 	ip = socket.gethostbyname(socket.gethostname())
 	if ip.startswith("127."):
 		interfaces = ["wlan0","wlan1","wlp1s0","wlp1s1","wifi0","eth0","eth1","eth2","ath0","ath1","ppp0"]
@@ -141,6 +141,29 @@ def get_lan_ip():
 			except:
 				pass
 	return ip
+
+def get_lan_ip():
+	a = subprocess.check_output(['ip','addr','show'])
+	b = str(a,'utf-8')
+	print(b)
+	c = re.findall('inet [^ ]*',b)
+	final = ''
+	for i in c:
+		if '127.0.0.1' not in i:
+			final = i.replace('inet ','')
+			final = re.sub('/[^"]*','',final)
+	print(c)
+	print(final)
+	return final
+
+def change_config_file(ip,port):
+	config_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','other_options.txt')
+	new_ip = 'LOCAL_STREAM_IP='+ip+':'+str(port)
+	content = open(config_file,'r').read()
+	content = re.sub('LOCAL_STREAM_IP=[^\n]*',new_ip,content)
+	f = open(config_file,'w')
+	f.write(content)
+	f.close()
 
 def progressBar(cmd):
 	MainWindow = QtWidgets.QWidget()
@@ -370,11 +393,8 @@ class ThreadedHTTPServerLocal(ThreadingMixIn, HTTPServer):
 class MyTCPServer(TCPServer):
 	def server_bind(self):
 		self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		try:
-			self.socket.bind(self.server_address)
-		except:
-			pass
-
+		self.socket.bind(self.server_address)
+				
 class ThreadServerLocal(QtCore.QThread):
 	
 	def __init__(self,ip,port):
@@ -388,9 +408,25 @@ class ThreadServerLocal(QtCore.QThread):
 	def run(self):
 		global httpd
 		print('starting server...')
-		server_address = (self.ip,self.port)
-		#httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
-		httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
+		try:
+			server_address = (self.ip,self.port)
+			#httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+			httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
+		except OSError as e:
+			e_str = str(e)
+			print(e_str)
+			if 'errno 99' in e_str.lower():
+				txt = 'Your local IP changed..or port is blocked.\n..Trying to find new IP'
+				subprocess.Popen(['notify-send',txt])
+				self.ip = get_lan_ip()
+				txt = 'Your New Address is '+self.ip+':'+str(self.port) + '\n Please restart the player'
+				subprocess.Popen(['notify-send',txt])
+				change_config_file(self.ip,self.port)
+				server_address = (self.ip,self.port)
+				httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
+				#httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+			else:
+				pass
 		print('running server...at..'+self.ip+':'+str(self.port))
 		#httpd.allow_reuse_address = True
 		httpd.serve_forever()
@@ -7814,6 +7850,8 @@ class Ui_MainWindow(object):
 				if self.local_http_server.isRunning():
 					httpd.shutdown()
 					self.local_http_server.quit()
+					msg = 'Stopping Media Server\n http://'+self.local_ip_stream+':'+str(self.local_port_stream)
+					subprocess.Popen(["notify-send",msg])
 		elif val == "Set As Default Background":
 			if os.path.exists(self.current_background) and self.current_background != self.default_background:
 					shutil.copy(self.current_background,self.default_background)
