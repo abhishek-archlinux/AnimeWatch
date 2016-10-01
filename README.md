@@ -118,6 +118,8 @@ If you are using mpv as backend for watching streaming torrent then it might be 
 
 If torrent contains multiple files then users can enqueue the desired files by selecting appropriate entry in Playlist column and pressing 'key q'.
  
+Note: Key 'q' used on playing video will quit the playing instance, and the same key 'q' used on playlist column will queue the item.
+
 ## Media Server
 ######[Index](#index)
 From version 2.6.0-0, it's possible to use AnimeWatch player as media server. The media server functionality can be started by clicking 'More' button, and selecting 'Start Media Server' option. By default media server will start on 'http://127.0.0.1:9001' i.e. default loop-back address of your machine. In order to use it as media server which can be accessed from any device on the same local network, you have to change this loop-back address '127.0.0.1' to your local network address which normally starts with '192.168.x.y'. You can check, default local network address using cli tools like 'ifconfig' on any gnu/linux based systems. Once you know local network address of your server, then manually edit '~/.config/AnimeWatch/other_options.txt' file and change the field "LOCAL_STREAM_IP" appropriately with local network address. Once you've set up the 'LOCAL_STREAM_IP' field properly, then you should be able to access the current playlist on the AnimeWatch, from any device on the network. 
@@ -140,7 +142,7 @@ Most of the above things are possible in KODI or Plex . But I wanted some simple
 
 This player is made mainly for GNU/Linux systems. But probably it may work on BSD and other Unix-like systems, if dependencies are satisfied. And one thing is sure it can't work on Windows.
 
-It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04.
+It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(PyQt4 version) and ubuntu 16.04(PyQt5 version).
 
 ## Dependencies and Installation
 ######[Index](#index)
@@ -461,40 +463,4 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
 
 
-## Recent Updates
-######[Index](#index)
-###Latest Release
 
-1. System Tray support added. (Currently temporary tray icon is provided which will change in future)
-
-2. QtWebengine support in pyqt5 version.
-
-3. Remembers most of the default settings.
-
-4. Minimal music mode added.
-
-5. Proper MPRIS2 support and integration with sound menu.
-
-###Update AnimeWatch-2.1.1-1
-
-1. 'python-requests' no longer required.
-
-2. 'jsbeautifier' no longer required.
-
-3. changes in the code of headless browser.
-
-
-
-###Update AnimeWatch-2.0.0-1
-
-1. 'phantomjs' no longer required. The player has it's own version of headless browser with javascript support and it's own adblock.
-
-2. 'wget' no longer required, all the webpages are fetched using 'pycurl'.
-
-3. Less number of dependencies required as phantomjs and wget are no longer required.
-
-4. Proper implementation of multithreading.
-
-5. Addons of previous version might not work with this version so update addons also.
-
-6. If you've already old version of the application installed on your system and now want to upgrade it then before upgrading remove config directory '~/.config/AnimeWatch/src/' and if AnimeWatch.desktop file is located in '~/.local/share/applications/' then remove that .desktop file also.
