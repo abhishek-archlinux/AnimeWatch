@@ -28,8 +28,6 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Brief Documentation](#documentation)
 
-[Recent Updates](#recent-updates)
-
 ## Features
 
 1.  Combine Audio-Video Player and Manager with special emphasis on Anime collection.
