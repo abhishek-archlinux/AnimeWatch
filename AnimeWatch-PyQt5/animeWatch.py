@@ -35,6 +35,7 @@ from subprocess import check_output
 from bs4 import BeautifulSoup
 
 try:
+	import haha
 	from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
 	from PyQt5.QtWebEngineWidgets import QWebEngineView
 	from browser import Browser
@@ -12225,14 +12226,25 @@ class Ui_MainWindow(object):
 		name1 = re.sub('-| ','+',name)
 		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
 		key = self.line.text()
+		self.line.clear()
 		if key:
 			name1 = str(key)
 		#old_manager = self.web.page().networkAccessManager()
+		pl_list = False
+		new_url = ''
 		if not name1:
 			if self.list1.currentItem():
 				name1 = self.list1.currentItem().text()
 				if self.list2.currentItem() and self.btn1.currentText() == 'PlayLists':
 					name1 = self.list2.currentItem().text()
+					r = self.list2.currentRow()
+					#try:
+					finalUrl = epnArrList[r].split('	')[1]
+					if 'youtube.com' in finalUrl and 'list=' in finalUrl:
+						new_url = finalUrl
+						pl_list = True
+					#except:
+					#	pass
 			elif self.list2.currentItem():
 				name1 = self.list2.currentItem().text()
 			name1 = name1.replace('#','')
@@ -12257,7 +12269,10 @@ class Ui_MainWindow(object):
 			if not name1:
 				name1 = 'GNU Linux FSF'
 			self.webStyle(self.web)
-			self.web.load(QUrl("https://www.youtube.com/results?search_query="+name1))
+			if pl_list and new_url:
+				self.web.load(QUrl(new_url))
+			else:
+				self.web.load(QUrl("https://www.youtube.com/results?search_query="+name1))
 		elif review_site == "Reviews":
 			self.web.setHtml('<html>Reviews:</html>')
 		#new_manager = NetWorkManager(old_manager)

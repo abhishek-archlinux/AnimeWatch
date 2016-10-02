@@ -197,7 +197,7 @@ class Browser(QtWebKitWidgets.QWebView):
 		self.timer.setSingleShot(True)
 		#self.linkClicked.connect(self.link_clicked)
 		self.hit_link =''
-		
+		self.playlist_dict = {}
 		
 	def link_clicked(self,link):
 		print('--link--clicked--')
@@ -273,7 +273,47 @@ class Browser(QtWebKitWidgets.QWebView):
 					#self.clicked_link(self.current_link)
 					#url = soup.find('meta',{'property':'og:url'})
 					print(title.text,self.url().toString(),'--changed-title--')
-		
+					
+			if 'list=' in self.url().toString() and 'www.youtube.com' in self.url().toString():
+				
+				ut = soup.findAll('li',{'class':"yt-uix-scroller-scroll-unit "})
+				if not ut:
+					ut = soup.findAll('li',{'class':"yt-uix-scroller-scroll-unit "})
+				print(ut)
+				arr = []
+				for i in ut:
+					try:
+						j1 = i['data-video-id']+'#'+i['data-video-title']
+						print(j1)
+						j = i['data-video-id']
+						k = i['data-video-title']
+						l = (j,k)
+						arr.append(l)
+					except:
+						pass
+				d = dict(arr)
+				print(d)
+				print(arr)
+				if d:
+					self.playlist_dict = d
+			elif 'list=' in self.url().toString():
+				new_m = soup .findAll('div',{'class':'_mghb'})
+				arr = []
+				for i in new_m:
+					#print(i)
+					try:
+						j = i.find('img')['src']
+						j = j.split('/')[-2]
+						k = i.find('h4').text
+						l = (j,k)
+						arr.append(l)
+					except:
+						pass
+				d = dict(arr)
+				print(d)
+				print(arr)
+				if d:
+					self.playlist_dict = d
 	
 	def load_progress(self,var):
 		#self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
@@ -366,6 +406,14 @@ class Browser(QtWebKitWidgets.QWebView):
 		print ('Menu Clicked')
 		print (value)
 		file_path = os.path.join(self.home,'Playlists',str(value))
+		if 'ytimg.com' in url:
+			try:
+				print(self.playlist_dict)
+				yt_id = url.split('/')[-2]
+				url = 'https://m.youtube.com/watch?v='+yt_id
+				title = self.playlist_dict[yt_id]
+			except:
+				pass
 		if '/' in title:
 			title = title.replace('/','-')
 		print(title,url,file_path)
@@ -429,7 +477,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				arr = arr + arr_extra_tvdb
 			if 'last.fm' in url.toString():
 				arr = arr + arr_last
-			if 'youtube.com' in url.toString():
+			if 'youtube.com' in url.toString() or 'ytimg.com' in url.toString():
 				yt = True
 				arr[:]=[]
 				arr.append('Play with AnimeWatch')

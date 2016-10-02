@@ -160,6 +160,24 @@ def ccurl(url):
 		return content
 		
 
+class downloadThread(QtCore.QThread):
+    
+	def __init__(self,url,ui,file_path):
+		QtCore.QThread.__init__(self)
+	
+		self.url = url
+		self.interval = 1
+		self.ui = ui
+		self.file_path = file_path
+	def __del__(self):
+		self.wait()                        
+	
+	def run(self):
+		content = ccurl(self.url)
+		soup = BeautifulSoup(content,'lxml')
+		title = soup.title.text.strip().replace('/','-')
+		self.ui.gotHtmlSignal.emit(title,self.url,self.file_path)
+
 class MyPage(QtWebEngineWidgets.QWebEnginePage):
 	def __init__(self):
 		super(MyPage, self).__init__()
@@ -201,6 +219,7 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 			info.block(True)
 class Browser(QtWebEngineWidgets.QWebEngineView):
 	urlSignal = pyqtSignal(str)
+	gotHtmlSignal = pyqtSignal(str,str,str)
 	def __init__(self,ui,home,screen_width,quality,site,epnArrList):
 		super(Browser, self).__init__()
 		
@@ -254,6 +273,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.timer.timeout.connect(self.player_wait)
 		self.timer.setSingleShot(True)
 		self.urlSignal.connect(self.final_found)
+		self.gotHtmlSignal.connect(self.got_curl_html)
+		self.playlist_dict = {}
+	
+		
 	@pyqtSlot(str)
 	def final_found(self,final_url):
 		print(final_url,'clicked')
@@ -269,6 +292,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.page().runJavaScript("location.reload();",self.var_remove)
 	def get_html(self,var):
 		print('--got--html--')
+		f = open('/tmp/ht.html','w')
+		f.write(var)
+		f.close()
 		if 'youtube.com' in self.url().url():
 		
 			
@@ -287,7 +313,46 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					self.ui.epn_name_in_list = title.text
 					#self.clicked_link(self.current_link)
 			print(title,self.url().url(),'--changed-title--')
-		
+			if 'list=' in self.url().url() and 'www.youtube.com' in self.url().url():
+				
+				ut = soup.findAll('li',{'class':"yt-uix-scroller-scroll-unit "})
+				if not ut:
+					ut = soup.findAll('li',{'class':"yt-uix-scroller-scroll-unit "})
+				print(ut)
+				arr = []
+				for i in ut:
+					try:
+						j1 = i['data-video-id']+'#'+i['data-video-title']
+						print(j1)
+						j = i['data-video-id']
+						k = i['data-video-title']
+						l = (j,k)
+						arr.append(l)
+					except:
+						pass
+				d = dict(arr)
+				print(d)
+				print(arr)
+				if d:
+					self.playlist_dict = d
+			elif 'list=' in self.url().url():
+				new_m = soup .findAll('div',{'class':'_mghb'})
+				arr = []
+				for i in new_m:
+					#print(i)
+					try:
+						j = i.find('img')['src']
+						j = j.split('/')[-2]
+						k = i.find('h4').text
+						l = (j,k)
+						arr.append(l)
+					except:
+						pass
+				d = dict(arr)
+				print(d)
+				print(arr)
+				if d:
+					self.playlist_dict = d
 	def var_remove(self,var):
 		print(var,'--js--')
 	def load_progress(self,var):
@@ -393,6 +458,21 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.forward()
 		super(Browser, self).keyPressEvent(event)
 		
+	@pyqtSlot(str,str,str)
+	def got_curl_html(self,title,url,file_path):
+		t = title + '	'+url+'	'+'NONE'
+		if os.stat(file_path).st_size == 0:
+			f = open(file_path,'w')
+		else:
+			f = open(file_path,'a')
+			t = '\n'+t
+		try:
+			f.write(str(t))
+		except:
+			f.write(t)
+		f.close()
+		self.ui.update_playlist(file_path)
+		
 	def triggerPlaylist(self,value,url,title):
 		print ('Menu Clicked')
 		print (value)
@@ -400,6 +480,15 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		if '/' in title:
 			title = title.replace('/','-')
 		print(title,url,file_path)
+		if 'ytimg.com' in url:
+			try:
+				yt_id = url.split('/')[-2]
+				url = 'https://m.youtube.com/watch?v='+yt_id
+				title = self.playlist_dict[yt_id]
+			except:
+				pass
+		if 'list=' in url:
+			title = title + '-Playlist'
 		t = title + '	'+url+'	'+'NONE'
 		if os.stat(file_path).st_size == 0:
 			f = open(file_path,'w')
@@ -419,13 +508,19 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			data = self.page().contextMenuData()
 			url = data.linkUrl().url()
 			self.title_page = data.linkText()
+			#print(data.selectedText(),'--selected-text--')
 			try:
 				#self.title_page = self.title_page.strip()
 				tmp = self.title_page.replace('\n','#')
 				print(tmp)
-				tmp = re.search('[#][^#]*',tmp)
-				print(tmp)
-				self.title_page = tmp.group()
+				tmp1 = tmp.split('#')[0]
+				if tmp1:
+					self.title_page = tmp.split('#')[1]
+				else:
+					self.title_page = tmp.split('#')[1]+'-'+tmp.split('#')[2]
+				#tmp = re.search('[#][^#]*',tmp)
+				#print(tmp)
+				#self.title_page = tmp.group()
 				self.title_page = self.title_page.replace('#','')
 			except:
 				pass
@@ -457,7 +552,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					arr = arr + arr_extra_tvdb
 				if 'last.fm' in url:
 					arr = arr + arr_last
-				if 'youtube.com' in url:
+				if 'youtube.com' in url or 'ytimg.com' in url:
 					yt = True
 					arr[:]=[]
 					arr.append('Play with AnimeWatch')
