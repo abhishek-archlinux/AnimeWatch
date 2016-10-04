@@ -35,7 +35,7 @@ from subprocess import check_output
 from bs4 import BeautifulSoup
 
 try:
-	import haha
+	#import hahaha
 	from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
 	from PyQt5.QtWebEngineWidgets import QWebEngineView
 	from browser import Browser
@@ -4575,26 +4575,21 @@ class List2(QtWidgets.QListWidget):
 			item_m = []
 			for i in pls:
 				item_m.append(submenuR.addAction(i))
-				#receiver = lambda taskType=i: self.triggerPlaylist(taskType)
-				#item.triggered.connect(receiver)
+				
 				
 			submenuR.addSeparator()
 			new_pls = submenuR.addAction("Create New Playlist")
-			
-			#watch = menu.addAction("Watch Now")
+			r = self.currentRow()
+			url_web = epnArrList[r].split('	')[1]
+			if 'youtube.com' in url_web:
+				goto_web = menu.addAction('Open in Youtube Browser')
+			else:
+				goto_web = menu.addAction('Open in Browser')
 			thumb = menu.addAction("Show Thumbnails")
 			fix_ord = menu.addAction("Lock Order")
-			#download = menu.addAction("Download")
-			#stop = menu.addAction("Stop Download")
-			#wd = menu.addAction("Watch Downloaded")
-			#sortD = menu.addAction("Sort By Date (Descending)")
-			#sortN = menu.addAction("Sort By Name (Ascending)")
+			
 			submenu = QtWidgets.QMenu(menu)
-			#submenu.setTitle("Playlist Options")
-			#menu.addMenu(submenu)
-			#if bookmark == "True":
-			#pl1 = submenu.addAction("Continue Playlist")
-			#pl2 = submenu.addAction("Stop After Current File")
+			
 			eplist = menu.addAction("Get Episode Thumbnails(TVDB)")
 			eplistM = menu.addAction("Get Episode Thumbnails Manually(TVDB)")
 			epl = menu.addAction("Get Episode Info(TVDB)")
@@ -4633,29 +4628,32 @@ class List2(QtWidgets.QListWidget):
 					if os.path.exists(dest):
 						os.remove(dest)
 					r = r+1
-			elif action == editN:
-				item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Episode Name Manually')
+			elif action == editN and not ui.list1.isHidden():
+				row = self.currentRow()
+				default_text = epnArrList[row].split('	')[0]
+				item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Episode Name Manually',QtWidgets.QLineEdit.Normal,default_text)
 				if ok and item:
-					#scode = subprocess.check_output(["zenity","--entry","--text","Enter Episode Name Manually"])
-					#nm = re.sub("\n|[ ]","",scode)
+					
 					nm = item
 					row = self.currentRow()
 					t = epnArrList[row]
 					print(nm,row,t)
-					if '	' in t and '	' not in nm and site!= "Video" and site!="PlayLists" and site!="None":
+					if '	' in t and '	' not in nm and site!= "Video" and site!="None" and site!= 'PlayLists':
 						r = t.split('	')[1]
 						epnArrList[row]=nm + '	'+r
 						ui.mark_History()
-					
+					elif site == 'PlayLists':
+						tmp = epnArrList[row]
+						tmp = re.sub('[^	]*',nm,tmp,1)
+						epnArrList[row] = tmp
+						if ui.list1.currentItem():
+							pls_n = os.path.join(home,'Playlists',ui.list1.currentItem().text())
+							ui.update_playlist_original(pls_n)
+							self.setCurrentRow(row)
 			elif action == default_name:
 					row = self.currentRow()
 					t = epnArrList[row]
-					"""
-					if '	' in t:
-						r = t.split('	')[1]
-						epnArrList[row]=r
-						ui.mark_History()
-					"""
+					
 					if site == "Video":
 						video_db = home+'/VideoDB/Video.db'
 						conn = sqlite3.connect(video_db)
@@ -4699,46 +4697,12 @@ class List2(QtWidgets.QListWidget):
 				ui.scrollArea1.setFocus()
 			elif action == fix_ord:
 				self.fix_order()
-			"""
-			elif action == watch:
-					if not wget:
-						curR = self.currentRow()
-						queueNo = queueNo + 1
-						mpvAlive = 0
-						ui.epnfound()
-					else:
-						if wget.pid() == 0:
-							curR = self.currentRow()
-							queueNo = queueNo + 1
-							mpvAlive = 0
-							ui.epnfound()
-						else:
-							ui.watchDirectly("/tmp/AnimeWatch/"+new_epn)
-			#elif action == download:
-			#	curr_row = self.currentRow()
-			#	downloadVideo = 1
-			#	ui.epnfound()
-			#	self.setCurrentRow(curr_row)
-			
-			
-			elif action == wd:
-				n = str(ui.list2.currentItem().text())
-				new_epn = re.sub('#','',n)
-				if '/' in new_epn:
-					l = re.findall('[^:]*',new_epn)
-					p = re.sub('http','',l[0])
-					new_epn = p+'.mkv'
-				elif finalUrlFound == True:
-					new_epn = new_epn
+			elif action == goto_web:
+				txt = action.text()
+				if txt.lower() == 'open in youtube browser':
+					ui.goto_web_directly(url_web)
 				else:
-					new_epn = new_epn+'.mp4'
-				if os.path.isfile("/tmp/AnimeWatch/"+new_epn):
-					ui.watchDirectly("/tmp/AnimeWatch/"+new_epn)
-			elif action == stop:
-				if wget:
-					if wget.pid > 0:
-						wget.kill()
-			"""
+					ui.reviewsWeb()
 			#super(List2, self).keyPressEvent(event)
 
 class List3(QtWidgets.QListWidget):
@@ -11742,7 +11706,7 @@ class Ui_MainWindow(object):
 		global embed, playMpv,Player,mpvplayer
 		Player = str(self.chk.currentText())
 		if mpvplayer:
-			if mpvplayer.pid()>0:
+			if mpvplayer.pid()>0 and self.tab_2.isHidden():
 				mpvplayer.kill()
 				self.epnfound()
 		
@@ -12022,8 +11986,10 @@ class Ui_MainWindow(object):
 		if site == "PlayLists":
 			bookmark = "False"
 			criteria = os.listdir(home+'/Playlists')
+			criteria.sort()
 			home_n = os.path.join(home,'Playlists')
-			criteria = sorted(criteria,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),reverse=True)
+			criteria = naturallysorted(criteria)
+			#criteria = sorted(criteria,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),reverse=True)
 			self.list3.clear()
 			self.list1.clear()
 			for i in criteria:
@@ -12190,6 +12156,50 @@ class Ui_MainWindow(object):
 		#new_manager = NetWorkManager(old_manager)
 		#self.web.page().setNetworkAccessManager(old_manager)
 		
+	def goto_web_directly(self,url):
+		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
+		print(self.web,'0')
+		if not self.web:
+			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
+			self.web.setObjectName(_fromUtf8("web"))
+			self.horizontalLayout_5.addWidget(self.web)
+			print(self.web,'1')
+		else:
+			if QT_WEB_ENGINE:
+				cur_location = self.web.url().url()
+			else:
+				cur_location = self.web.url().toString()
+			print(cur_location,'--web--url--')
+			if 'youtube' not in cur_location and QT_WEB_ENGINE:
+				self.web.close()
+				self.web.deleteLater()
+				self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
+				self.web.setObjectName(_fromUtf8("web"))
+				self.horizontalLayout_5.addWidget(self.web)
+			print(self.web,'2')
+		
+		self.list1.hide()
+		self.list2.hide()
+		self.label.hide()
+		self.dockWidget_3.hide()
+		self.text.hide()
+		self.frame.hide()
+		self.frame1.hide()
+		self.tab_2.show()
+		self.goto_epn.hide()
+		name = str(name)
+		name1 = re.sub('-| ','+',name)
+		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
+		key = self.line.text()
+		self.line.clear()
+		
+		if not QT_WEB_ENGINE:
+			nam = NetWorkManager()
+			self.web.page().setNetworkAccessManager(nam)
+		self.webStyle(self.web)
+		self.web.load(QUrl(url))
+		
+			
 	def reviewsWeb(self):
 		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
 		review_site = str(self.btnWebReviews.currentText())
@@ -16169,13 +16179,43 @@ class Ui_MainWindow(object):
 		for i in nameListArr:
 			self.list1.addItem(i)
 	
+	def update_playlist_original(self,pls):
+		global epnArrList
+		#self.list1.clear()
+		self.list2.clear()
+		#epnArrList[:]=[]
+		file_path = pls
+		fh, abs_path = mkstemp()
+		shutil.copy(file_path,abs_path)
+		if os.path.exists(file_path):
+			#fh, abs_path = mkstemp()
+			try:
+				f = open(file_path,'w')
+				j = 0
+				for i in epnArrList:
+					if j == 0:
+						f.write(i)
+					else:
+						f.write('\n'+i)
+					j = j+1
+				f.close()
+			except:
+				print('Error processing playlist file, hence restoring original')
+				shutil.copy(abs_path,file_path)
+			for i in epnArrList:
+				i = i.strip()
+				if i and '	' in i:
+					i = i.split('	')[0]
+					self.list2.addItem(i)
+			
 	def update_playlist(self,pls):
 		global epnArrList
-		self.list1.clear()
-		self.list2.clear()
-		epnArrList[:]=[]
+		#self.list1.clear()
+		
 		file_path = pls
-		if os.path.exists(file_path):
+		if os.path.exists(file_path) and self.btn1.currentText().lower() == 'youtube':
+			self.list2.clear()
+			epnArrList[:]=[]
 			f = open(file_path)
 			lines = f.readlines()
 			f.close()
@@ -16185,7 +16225,23 @@ class Ui_MainWindow(object):
 					epnArrList.append(i)
 					j = i.split('	')[0]
 					self.list2.addItem((j))
-	
+		elif os.path.exists(file_path) and self.btn1.currentText().lower() == 'playlists':
+			pl_name = file_path.split('/')[-1]
+			if self.list1.currentItem().text() != pl_name:  
+				for i in range(self.list1.count()):
+					item = self.list1.item(i)
+					if item.text() == pl_name:
+						self.list1.setCurrentRow(i)
+						break
+			else:
+				f = open(file_path,'r')
+				lines = f.readlines()
+				f.close()
+				new_epn = lines[-1].strip()
+				epnArrList.append(new_epn)
+				new_epn_title = new_epn.split('	')[0]
+				self.list2.addItem(new_epn_title)
+				
 	def options(self,val):
 	
 		global opt,pgn,genre_num,site,name,base_url,name1,embed,list1_items,pre_opt,mirrorNo,insidePreopt,quality,home,siteName,finalUrlFound,nameListArr,original_path_name,original_path_name,show_hide_playlist,show_hide_titlelist
