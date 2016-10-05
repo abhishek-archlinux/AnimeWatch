@@ -18209,15 +18209,18 @@ if __name__ == "__main__":
 	#myFilter	 = MyEventFilter()
 	#app.installEventFilter(myFilter)
 	#gc.disable()
-	tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
+	#tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
 	try:
-		#tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
+		tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
 		tray.show()
 	except:
 		pass
 	
 	if layout_mode == "Music":
-		t1 = tray.geometry().height()
+		try:
+			t1 = tray.geometry().height()
+		except:
+			t1 = 65
 		
 		print(t1,'tray--geometry\n')
 		if t1 > 64:
