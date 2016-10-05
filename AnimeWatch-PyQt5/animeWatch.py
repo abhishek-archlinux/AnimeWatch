@@ -35,7 +35,6 @@ from subprocess import check_output
 from bs4 import BeautifulSoup
 
 try:
-	import hahaha
 	from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
 	from PyQt5.QtWebEngineWidgets import QWebEngineView
 	from browser import Browser
