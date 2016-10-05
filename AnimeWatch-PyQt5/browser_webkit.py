@@ -260,7 +260,6 @@ class Browser(QtWebKitWidgets.QWebView):
 			self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);")
 			self.wait_player = True
 			self.clicked_link(self.current_link)
-			#asyncio.get_event_loop().run_until_complete(self.clicked_link(self.current_link))
 			self.timer.start(1000)
 	
 	def player_wait(self):
@@ -276,21 +275,15 @@ class Browser(QtWebKitWidgets.QWebView):
 			
 			x = x.replace('\\\\u0026','&')
 			
-			#print(x)
-			#f = open('/tmp/1.txt','w')
-			#f.write(x)
-			#f.close()
+			
 			
 			l = re.findall('url=https[^"]*',x)
-			#for i in l:
-			#	if 'itag=18' in i:
-			#		print(i)
+			
 			for i in l:
 				if self.ui.quality_val == 'sd': 
 					if 'itag=18' in i:
 						final_url = re.sub('url=','',i)
-						#print('\n----final_url---\n',final_url,'----final---url\n')
-						#self.urlSignal.emit(final_url)
+						
 					
 			soup = BeautifulSoup(var,'lxml')
 			m = soup.find('div',{'id':'player'})
@@ -351,21 +344,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				print(d)
 				if d:
 					self.playlist_dict = d
-				"""
-				new_m = soup .findAll('div',{'class':'_mghb'})
-				arr = []
-				for i in new_m:
-					#print(i)
-					try:
-						j = i.find('img')['src']
-						j = j.split('/')[-2]
-						k = i.find('h4').text
-						l = (j,k)
-						arr.append(l)
-					except:
-						pass
-				d = dict(arr)
-				"""
+				
 				
 			
 	def load_progress(self,var):
@@ -381,18 +360,11 @@ class Browser(QtWebKitWidgets.QWebView):
 		print(title,self.url().toString(),'--title--change--')
 		#self.page().mainFrame().evaluateJavaScript("location.reload();")
 		self.ui.epn_name_in_list = title
-		#if 'reload' in self.url().toString():
-		#	print('reload # in url')
-		#	url = self.url().toString()
-		#	n_url = re.sub('\?reload[^\/]*\/|&mode=NORMAL|&params[^&]*','',url)
-		#	self.load(QUrl(n_url))
-		#	#link = QUrl(n_url)
+		
 	def url_changed(self,link):
 		#self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
 		print('\n--url_changed--\n',link.url(),'\n--url_changed--\n')
-		#hit = self.page().currentFrame().hitTestContent(event.pos())
-		#print(hit.linkUrl())
-		#self.page().mainFrame().evaluateJavaScript("location.reload();")
+		
 		
 		if not self.url_arr:
 			self.url_arr.append(link.url())
@@ -577,16 +549,10 @@ class Browser(QtWebKitWidgets.QWebView):
 				print(tmp1)
 				self.title_page = tmp1.group()
 				self.title_page = self.title_page.replace('#','')
-				#if 'views' in self.title_page:
-				#	content = ccurl
-				#else:
-				#	self.title_page = re.sub('[0-9][^ ]*','',self.title_page)
-				#	self.title_page = self.title_page.strip()
-				#	self.title_page = re.sub(' views[^"]*','',self.title_page)
+				
 			else:
 				self.title_page = hit.title()
 		except:
-			#pass
 			self.title_page = hit.title()
 			
 			
@@ -638,9 +604,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				
 				submenuR.addSeparator()
 				new_pls = submenuR.addAction("Create New Playlist")
-				#url = hit.linkUrl()
-			#menu.addSeparator()
-			#j = 0
+				
 			for i in range(len(arr)):
 				action.append(menu.addAction(arr[i]))
 				
