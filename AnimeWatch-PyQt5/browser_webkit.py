@@ -156,9 +156,38 @@ def ccurl(url):
 		content = getContentUnicode(content)
 		return content
 
+
+class downloadThread(QtCore.QThread):
+    
+	def __init__(self,url,ui,file_path):
+		QtCore.QThread.__init__(self)
+	
+		self.url = url
+		self.interval = 1
+		self.ui = ui
+		self.file_path = file_path
+	def __del__(self):
+		self.wait()                        
+	
+	def run(self):
+		content = ccurl(self.url)
+		soup = BeautifulSoup(content,'lxml')
+		title = soup.title.text.strip().replace('/','-')
+		self.ui.gotHtmlSignal.emit(title,self.url,self.file_path)
+
 class BrowserPage(QWebPage):  
 	def __init__(self):
 		super(BrowserPage, self).__init__()
+		
+	def acceptNavigationRequest(self,frame,req,nav_type):
+		print(req.url().toString(),nav_type,self.currentFrame().url().toString(),'--print--nav--type--')
+		
+		if nav_type == 0:
+			print('clicked inside nav-type--',req.url().toString())
+			#self.parent.urlSignal.emit(url.url())
+		
+		return super(BrowserPage, self).acceptNavigationRequest(frame,req,nav_type)
+		
 	def userAgentForUrl(self, url):
 		#return self.hdr
 		if 'youtube' in url.toString():
@@ -167,6 +196,7 @@ class BrowserPage(QWebPage):
 			return 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 
 class Browser(QtWebKitWidgets.QWebView):
+	gotHtmlSignal = pyqtSignal(str,str,str)
 	def __init__(self,ui,home,screen_width,quality,site,epnArrList):
 		super(Browser, self).__init__()
 		self.setPage(BrowserPage())
@@ -200,6 +230,7 @@ class Browser(QtWebKitWidgets.QWebView):
 		self.playlist_dict = {}
 		self.get_playlist = False
 		self.playlist_name = ''
+		self.gotHtmlSignal.connect(self.got_curl_html)
 		
 	def link_clicked(self,link):
 		print('--link--clicked--')
@@ -235,7 +266,7 @@ class Browser(QtWebKitWidgets.QWebView):
 	def player_wait(self):
 		#global wait_player
 		self.wait_player = False
-		#self.page().mainFrame().evaluateJavaScript("location.reload();")
+		self.page().mainFrame().evaluateJavaScript("location.reload();")
 		
 	def get_html(self,var):
 		print('--got--html--',self.url().toString())
@@ -246,9 +277,9 @@ class Browser(QtWebKitWidgets.QWebView):
 			x = x.replace('\\\\u0026','&')
 			
 			#print(x)
-			f = open('/tmp/1.txt','w')
-			f.write(x)
-			f.close()
+			#f = open('/tmp/1.txt','w')
+			#f.write(x)
+			#f.close()
 			
 			l = re.findall('url=https[^"]*',x)
 			#for i in l:
@@ -339,7 +370,7 @@ class Browser(QtWebKitWidgets.QWebView):
 			
 	def load_progress(self,var):
 		#self.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
-		print(var,self.url().toString())
+		#print(var,self.url().toString())
 		if var == 100 and 'youtube.com' in self.url().toString():
 			print(self.url().toString(),self.title(),'--load--progress--')
 			frame = self.page().mainFrame().toHtml()
@@ -431,6 +462,24 @@ class Browser(QtWebKitWidgets.QWebView):
 			self.forward()
 		super(Browser, self).keyPressEvent(event)
 		
+	@pyqtSlot(str,str,str)
+	def got_curl_html(self,title,url,value):
+		file_path = os.path.join(self.home,'Playlists',str(value))
+		if '/' in title:
+			title = title.replace('/','-')
+		t = title + '	'+url+'	'+'NONE'
+		if os.stat(file_path).st_size == 0:
+			f = open(file_path,'w')
+		else:
+			f = open(file_path,'a')
+			t = '\n'+t
+		try:
+			f.write(str(t))
+		except:
+			f.write(t)
+		f.close()
+		self.ui.update_playlist(file_path)
+		
 	def add_playlist(self,value):
 		value = value.replace('/','-')
 		file_path = os.path.join(self.home,'Playlists',str(value))
@@ -504,6 +553,7 @@ class Browser(QtWebKitWidgets.QWebView):
 		menu = self.page().createStandardContextMenu()
 		hit = self.page().currentFrame().hitTestContent(event.pos())
 		hit_m = self.page().mainFrame()
+		hit_n = hit_m.hitTestContent(event.pos())
 		url = hit.linkUrl()
 		arr = ['Download As Fanart','Download As Cover']
 		arr_extra_tvdb = ['Series Link','Season Episode Link']
@@ -515,12 +565,17 @@ class Browser(QtWebKitWidgets.QWebView):
 		try:
 			if self.title_page:
 				print('self.title_page=',self.title_page)
+				#self.title_page = self.title_page.strip()
+				if 'youtube.com' in self.url().toString(): 
+					self.title_page = hit_n.linkElement().toPlainText()
+				if not self.title_page:
+					self.title_page = hit.linkText()
 				self.title_page = self.title_page.strip()
 				tmp = self.title_page.replace('\n','#')
 				print(tmp)
-				tmp = re.search('[^#]*',self.title_page)
-				print(tmp)
-				self.title_page = tmp.group()
+				tmp1 = re.search('#[^#]*',tmp)
+				print(tmp1)
+				self.title_page = tmp1.group()
 				self.title_page = self.title_page.replace('#','')
 				#if 'views' in self.title_page:
 				#	content = ccurl
@@ -535,12 +590,19 @@ class Browser(QtWebKitWidgets.QWebView):
 			self.title_page = hit.title()
 			
 			
-		print('url--info\n',self.img_url.toString(),'=img_url\n',url,'=url',hit.title(),'=title\n',hit.linkText(),'=linktext\n',hit_m.title(),'--p_title--')
+		print('url--info\n',self.img_url.toString(),'=img_url\n',url,'=url',hit.title(),'=title\n',hit.linkText(),'=linktext\n',hit_m.title(),'--p_title--',hit_n.linkElement().toPlainText(),'--link-element')
 		if (url.isEmpty() or not url.toString().startswith('http')) and self.img_url:
 			url = self.img_url
 		if url.isEmpty():
 			url = self.url()
 			print('--next--url=',self.url().toString())
+			self.title_page = hit_m.title()
+			if 'reload' in self.url().toString():
+				print('reload # in url')
+				url = self.url().toString()
+				n_url = re.sub('\?reload[^\/]*\/|&mode=NORMAL|&params[^&]*','',url)
+				url = QUrl(n_url)
+			print('--next--url=',url.toString())
 		if not url.isEmpty() or self.img_url:
 			if 'tvdb' in url.toString():
 				arr = arr + arr_extra_tvdb
@@ -601,8 +663,10 @@ class Browser(QtWebKitWidgets.QWebView):
 							content = ccurl(url.toString())
 							soup = BeautifulSoup(content,'lxml')
 							self.title_page = soup.title.text.strip().replace('/','-')
-							#self.title_page = hit_m.title().strip().replace('/','-')
-						print(hit.title(),self.title_page)
+							##self.title_page = hit_m.title().strip().replace('/','-')
+							##print(hit.title(),self.title_page)
+							#thr = downloadThread(url.toString(),self,pls[i])
+							#thr.start()
 						self.triggerPlaylist(pls[i],url.toString(),self.title_page)
 				
 				

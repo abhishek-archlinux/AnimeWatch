@@ -35,7 +35,7 @@ from subprocess import check_output
 from bs4 import BeautifulSoup
 
 try:
-	#import hahaha
+	import hahaha
 	from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
 	from PyQt5.QtWebEngineWidgets import QWebEngineView
 	from browser import Browser
@@ -17523,12 +17523,25 @@ class RightClickMenu(QtWidgets.QMenu):
 		videoMode = QtWidgets.QAction("&Default Mode", self)
 		videoMode.triggered.connect(self.video)
 		self.addAction(videoMode)
-
+		
+		self.hideMode = QtWidgets.QAction("&Hide", self)
+		self.hideMode.triggered.connect(self._hide_mode)
+		self.addAction(self.hideMode)
+		
 		icon = QtGui.QIcon.fromTheme("Quit")
 		exitAction = QtWidgets.QAction(icon, "&Exit", self)
 		exitAction.triggered.connect(QtWidgets.qApp.quit)
 		self.addAction(exitAction)
-		
+	def _hide_mode(self):
+		#MainWindow.hide()
+		txt = (self.hideMode.text())
+		if txt == '&Hide':
+			MainWindow.hide()
+			self.hideMode.setText('&Show')
+		elif txt == '&Show':
+			MainWindow.show()
+			self.hideMode.setText('&Hide')
+	
 	def music(self):
 		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt
 		MainWindow.hide()
@@ -17640,9 +17653,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 			
 			if MainWindow.isHidden():
 				MainWindow.show()
+				self.right_menu.hideMode.setText('&Hide')
 			else:
 				MainWindow.hide()
-				
+				self.right_menu.hideMode.setText('&Show')
 if __name__ == "__main__":
 	import sys
 	global hdr,name,pgn,genre_num,site,name,epn,base_url,name1,embed,epn_goto,list1_items,opt,mirrorNo,mpv,queueNo,playMpv,mpvAlive,pre_opt,insidePreopt,posterManually,labelGeometry
@@ -18196,9 +18210,9 @@ if __name__ == "__main__":
 	#myFilter	 = MyEventFilter()
 	#app.installEventFilter(myFilter)
 	#gc.disable()
-	
+	tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
 	try:
-		tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
+		#tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
 		tray.show()
 	except:
 		pass
