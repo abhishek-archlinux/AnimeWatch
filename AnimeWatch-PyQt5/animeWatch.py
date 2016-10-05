@@ -579,7 +579,31 @@ class MprisServer(dbus.service.Object):
 					t = t1[0]
 					art = t
 				
+				if (site == 'Music' and ui.list3.currentItem()) or (site == 'PlayLists'): 
+					if (site == 'Music' and ui.list3.currentItem().text().lower() == 'playlist') or (site == 'PlayLists'):
+						
+						artist = art
+						if artist.lower() == 'none':
+							artist = t.replace('#','')
+						pls = ui.list1.currentItem().text()
+						pls_entry = ui.list2.currentItem().text().replace('#','')+'.jpg'
+						img_place = os.path.join(home,'thumbnails','PlayLists',pls,pls_entry)
+						print(img_place,'--img--place')
+						title = re.sub('.jpg','',pls_entry)
+						art_u = img_place
+						if os.path.exists(art_u):
+							art_url = art_u
+							print(art_url,'img--url--exists')
+				elif site == 'Music':
+					title = t
+					artist = art
+					title = title.replace('#','')
+					artist = artist.replace('#','')
+					art_u = home+'/Music/Artist/'+artist+'/poster.jpg'
+					if os.path.exists(art_u):
+						art_url = art_u
 				
+				"""
 				title = t
 				artist = art
 				title = title.replace('#','')
@@ -588,10 +612,11 @@ class MprisServer(dbus.service.Object):
 				if os.path.exists(art_u):
 					art_url = art_u
 				else:
+					
 					print(t1,'---==--------')
 					artist = t1[1].split('/')[-2]
 					print(artist,'---==--------')
-					art_u = home+'/thumbnails/'+artist+'/'+title+'.jpg'
+					art_u = home+'/thumbnails/'+site+'/'+artist+'/'+title+'.jpg'
 					print(artist,art_u,'---==--------')
 					if os.path.exists(art_u):
 						art_url = art_u
@@ -600,7 +625,9 @@ class MprisServer(dbus.service.Object):
 						print(artist,art_u,'---==--------')
 						if os.path.exists(art_u):
 							art_url = art_u
-				
+					
+					
+				"""
 			except:
 				title = "AnimeWatch"
 				artist = "AnimeWatch"
