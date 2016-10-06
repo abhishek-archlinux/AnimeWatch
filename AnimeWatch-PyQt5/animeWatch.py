@@ -560,14 +560,15 @@ class MprisServer(dbus.service.Object):
 
 	@pyqtSlot(str)
 	def _emitMeta(self,info):
-		
 		global site,epnArrList,home
 		if epnArrList and (site == "Music" or site == "PlayLists"):
 			
 			try:
+				queue_list = False
 				if ui.queue_url_list:
 					t2 = info.split('#')[1]
 					t1 = t2.split('	')
+					queue_list = True
 				else:
 					r = ui.list2.currentRow()
 					print(epnArrList[r])
@@ -586,7 +587,10 @@ class MprisServer(dbus.service.Object):
 						if artist.lower() == 'none':
 							artist = t.replace('#','')
 						pls = ui.list1.currentItem().text()
-						pls_entry = ui.list2.currentItem().text().replace('#','')+'.jpg'
+						if not queue_list:
+							pls_entry = ui.list2.currentItem().text().replace('#','')+'.jpg'
+						else:
+							pls_entry = t.replace('#','')
 						img_place = os.path.join(home,'thumbnails','PlayLists',pls,pls_entry)
 						print(img_place,'--img--place')
 						title = re.sub('.jpg','',pls_entry)
@@ -594,14 +598,14 @@ class MprisServer(dbus.service.Object):
 						if os.path.exists(art_u):
 							art_url = art_u
 							print(art_url,'img--url--exists')
-				elif site == 'Music':
-					title = t
-					artist = art
-					title = title.replace('#','')
-					artist = artist.replace('#','')
-					art_u = home+'/Music/Artist/'+artist+'/poster.jpg'
-					if os.path.exists(art_u):
-						art_url = art_u
+					elif site == 'Music':
+						title = t
+						artist = art
+						title = title.replace('#','')
+						artist = artist.replace('#','')
+						art_u = home+'/Music/Artist/'+artist+'/poster.jpg'
+						if os.path.exists(art_u):
+							art_url = art_u
 				
 				"""
 				title = t
@@ -1044,11 +1048,17 @@ class ThreadingThumbnail(QtCore.QThread):
 		self.wait()                        
 	
 	def run(self):
-		if not os.path.exists(self.picn):
-			try:
+		print(self.path)
+		if not os.path.exists(self.picn) and self.path:
+			#try:
+			
+			if self.path.startswith('http') and (self.path.endswith('.jpg') or self.path.endswith('.png')):
+				ccurl(self.path+'#'+'-o'+'#'+self.picn)
+			else:
 				subprocess.call(["ffmpegthumbnailer","-i",self.path,"-o",self.picn,"-t",str(self.inter),'-q','10','-s','350'])
-			except:
-				pass
+			
+			#except:
+			#	pass
 
 class MainWindowWidget(QtWidgets.QWidget):
 	def __init__(self):
@@ -2015,7 +2025,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				
 				sumry = epnArrList[i].split('	')[1]
 				sumry = sumry.replace('"','')
-				sumry = '"'+sumry+'"'
+				if not sumry.startswith('http'):
+					sumry = '"'+sumry+'"'
 				t = sumr+'	'+sumry+'	'+rfr_url
 				if os.stat(file_path).st_size == 0:
 					f = open(file_path,'w')
@@ -4606,12 +4617,17 @@ class List2(QtWidgets.QListWidget):
 			submenuR.addSeparator()
 			new_pls = submenuR.addAction("Create New Playlist")
 			r = self.currentRow()
-			url_web = epnArrList[r].split('	')[1]
-			if 'youtube.com' in url_web:
-				goto_web = menu.addAction('Open in Youtube Browser')
-			else:
-				goto_web = menu.addAction('Open in Browser')
+			
+			
 			thumb = menu.addAction("Show Thumbnails")
+			try:
+				url_web = epnArrList[r].split('	')[1]
+				if 'youtube.com' in url_web:
+					goto_web = menu.addAction('Open in Youtube Browser')
+				else:
+					goto_web = menu.addAction('Open in Browser')
+			except:
+				pass
 			fix_ord = menu.addAction("Lock Order")
 			
 			submenu = QtWidgets.QMenu(menu)
@@ -11618,7 +11634,23 @@ class Ui_MainWindow(object):
 			
 			
 			
-
+	def create_img_url(self,path):
+		m = []
+		if '/watch?' in path:
+			a = path.split('?')[-1]
+			b = a.split('&')
+			if b:
+				for i in b:
+					j = i.split('=')
+					k = (j[0],j[1])
+					m.append(k)
+			else:
+				j = a.split('=')
+				k = (j[0],j[1])
+				m.append(k)
+			d = dict(m)
+			img_url="https://i.ytimg.com/vi/"+d['v']+"/hqdefault.jpg"
+			return img_url
 	def epn_highlight(self):
 		global epnArrList,home,site
 		#self.text.hide()
@@ -11684,15 +11716,18 @@ class Ui_MainWindow(object):
 						if not os.path.exists(picnD):
 							os.makedirs(picnD)
 						picn = os.path.join(picnD,a1)+'.jpg'
-					if picn and not os.path.exists(picn) and 'http' not in path:
-						
+					if (picn and not os.path.exists(picn) and 'http' not in path) or (picn and not os.path.exists(picn) and 'http' in path and 'youtube.com' in path ):
 						path = path.replace('"','')
+						if 'http' in path and 'youtube.com' in path and '/watch?' in path:
+							path = self.create_img_url(path)
 						self.threadPoolthumb.append(ThreadingThumbnail(path,picn,inter))
 						self.threadPoolthumb[len(self.threadPoolthumb)-1].finished.connect(self.thumbnail_generated)
 						length = len(self.threadPoolthumb)
 						if length == 1:
 							if not self.threadPoolthumb[0].isRunning():
 								self.threadPoolthumb[0].start()
+					
+						
 				if not picnD:
 					if self.list1.currentItem():
 						name_t = self.list1.currentItem().text()
