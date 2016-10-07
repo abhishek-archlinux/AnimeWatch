@@ -196,6 +196,8 @@ class BrowserPage(QWebPage):
 			cookie_file = '/tmp/AnimeWatch/animeplace.txt'
 		elif 'moetube' in self.url:
 			cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
+		elif 'nyaa' in self.url:
+			cookie_file = '/tmp/AnimeWatch/nyaa.txt'
 		if 'moetube' in self.url:
 			txt_file = '/tmp/AnimeWatch/moetube.txt'
 			frame = self.mainFrame()  
@@ -265,7 +267,7 @@ class BrowserPage(QWebPage):
 			j = re.findall("'[^']*",k)
 			for i in j:
 				i = re.sub("'",'',i)
-				if 'kissanime.to' in i or 'kissasian.com' in i or 'kisscartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i:
+				if 'kissanime.to' in i or 'kissasian.com' in i or 'kisscartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i or 'nyaa.se' in i:
 					j = re.findall('expires=[^;]*',i)
 					if j:
 						l = re.sub('expires=','',j[0])
@@ -363,10 +365,12 @@ class BrowseUrl(QtWidgets.QWidget):
 			cookie_file = '/tmp/AnimeWatch/animeplace.txt'
 		elif 'moetube' in url:
 			cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
+		elif 'nyaa' in url:
+			cookie_file = '/tmp/AnimeWatch/nyaa.txt'
 			#if os.path.exists(cookie_file):
 			#	os.remove(cookie_file)
 		
-		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url:
+		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:
 			content = ccurl(url)
 		else:
 			content = 'checking_browser'

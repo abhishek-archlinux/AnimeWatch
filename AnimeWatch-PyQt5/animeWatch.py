@@ -53,8 +53,6 @@ import shutil
 from tempfile import mkstemp
 from shutil import move
 from os import remove, close
-#import fileinput
-#import codecs
 import time
 from PIL import Image 
 import PIL
@@ -3678,7 +3676,14 @@ class List2(QtWidgets.QListWidget):
 					if txt.startswith('Queue Empty:'):
 						ui.list6.clear()
 				ui.list6.addItem(self.currentItem().text()+':'+str(self.currentRow()))
-				
+			else:
+				if not ui.queue_url_list:
+					ui.list6.clear()
+				r = self.currentRow()
+				item = self.item(r)
+				if item:
+					ui.queue_url_list.append(r)
+					ui.list6.addItem(epnArrList[r].split('	')[0])
 				#ui.local_file_index.append(ui.list6.count())
 		elif event.key() == QtCore.Qt.Key_Delete:
 			if site == 'None':
@@ -12586,6 +12591,7 @@ class Ui_MainWindow(object):
 					refererNeeded = True
 					video_local_stream = False
 				elif tmp == 'LocalStreaming':
+					from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 					criteria.pop()
 					video_local_stream = True
 					if not self.local_ip:
@@ -14402,18 +14408,27 @@ class Ui_MainWindow(object):
 				else:
 					
 						#filename = "--filename="
-						if '/' in new_epn:
-							l = re.findall('[^:]*',new_epn)
-							p = re.sub('http','',l[0])
-							new_epn = p+'.mkv'
+						finalUrl = finalUrl.replace('"','')
+						self.list2.setFocus()
+						r = self.list2.currentRow()
+						print(r)
+						new_epn = self.list2.item(row).text().replace('#','')
+						new_epn = new_epn.replace('/','-')
+						new_epn = new_epn.replace('"','')
+						if new_epn.startswith('.'):
+							new_epn = new_epn[1:]
+						if finalUrl.endswith('.mkv'):
+							new_epn = new_epn+'.mkv'
 						else:
 							new_epn = new_epn+'.mp4'
-						new_epn = new_epn.replace('#','')
-						new_epn = new_epn.replace('"','')
-						npn = os.path.join('/tmp/AnimeWatch',new_epn)
-						finalUrl = finalUrl.replace('"','')
+						title = name
+						folder_name = os.path.join(self.default_download_location,title)
+						if not os.path.exists(folder_name):
+							os.makedirs(folder_name)
+						npn = os.path.join(folder_name,new_epn)
+						
 						if finalUrl.startswith('http'):
-							command = "wget -c --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+							command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
 							print (command)
 					
 							self.infoWget(command,0)
@@ -14989,6 +15004,7 @@ class Ui_MainWindow(object):
 		
 		
 	def finishedW(self,src):
+		global name,hdr
 		#t = "File Download Complete"
 		#subprocess.Popen(["notify-send",t])
 		print ("Process Ended")
@@ -14996,14 +15012,37 @@ class Ui_MainWindow(object):
 		self.progress.hide()
 		if self.tab_2.isHidden():
 			self.goto_epn.show()
-		self.downloadWget_cnt = self.downloadWget_cnt+1
-		if self.downloadWget_cnt == 4:
-			self.downloadWget = self.downloadWget[5:]
-			length = len(self.downloadWget)
-			self.downloadWget_cnt = 0
-			for i in range(5):
-				if i < length:
-					self.infoWget(self.downloadWget[i],i)
+		
+		if self.queue_url_list:
+			t = self.queue_url_list[0]
+			if type(t) is int:
+				del self.queue_url_list[0]
+				t1 = self.list6.item(0)
+				nepn = t1.text()
+				nepn = re.sub('#|"','',nepn)
+				nepn = nepn.replace('/','-')
+				self.list6.takeItem(0)
+				del t1
+				finalUrl = self.epn_return(t)
+				title = name
+				npn = os.path.join(self.default_download_location,title,nepn)
+				if finalUrl.endswith('.mkv'):
+					npn = npn+'.mkv'
+				else:
+					npn = npn+'.mp4'
+				if finalUrl.startswith('http'):
+					command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+					print (command)
+					self.infoWget(command,0)
+		
+		#self.downloadWget_cnt = self.downloadWget_cnt+1
+		#if self.downloadWget_cnt == 4:
+		#	self.downloadWget = self.downloadWget[5:]
+		#	length = len(self.downloadWget)
+		#	self.downloadWget_cnt = 0
+		#	for i in range(5):
+		#		if i < length:
+		#			self.infoWget(self.downloadWget[i],i)
 	def infoWget(self,command,src):
 		global wget
 		if not self.tab_2.isHidden():

@@ -17,6 +17,13 @@ except:
 from stream import ThreadServer,TorrentThread,get_torrent_info
 import shutil
 #from hurry.filesize import size
+try:
+	from headlessBrowser import BrowseUrl
+except:
+	from headlessBrowser_webkit import BrowseUrl
+
+def cloudfare(url,quality):
+	web = BrowseUrl(url,quality)
 
 def naturallysorted(l): 
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -64,6 +71,12 @@ def ccurl(url):
 			post2 = post.split('=')[1]
 			post_data = {post1:post2}
 			postfield = urllib.parse.urlencode(post_data)
+	if os.path.exists('/tmp/AnimeWatch/nyaa.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/nyaa.txt')
+	else:
+		print('inside ccurl')
+		cloudfare(url,'')
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/nyaa.txt')
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
