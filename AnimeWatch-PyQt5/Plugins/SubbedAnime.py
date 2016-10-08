@@ -3079,7 +3079,7 @@ class SubbedAnime():
 				final = findurl(url)
 			
 		elif siteName == "AnimeMix":
-			
+			shrink_link = ''
 			if "adf.acb.im" in url:
 				#shrink_link=str(cloudfare(url))
 				shrink_link=str(unshorten_url(url))
@@ -3090,7 +3090,11 @@ class SubbedAnime():
 
 			if 'linkshrink' in shrink_link:
 				shrink_link = shrink_url(str(url))
-	
+			
+			if not shrink_link:
+				shrink_link = url
+				
+			
 			if "mediafire" in shrink_link or "embedupload" in shrink_link or "solidfiles" in shrink_link or "mirrorcreator" in shrink_link or "tusfiles" in shrink_link:
 				final = findurl(shrink_link)
 			else:

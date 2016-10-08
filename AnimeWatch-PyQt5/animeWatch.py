@@ -3608,6 +3608,7 @@ class List2(QtWidgets.QListWidget):
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Left:
 			ui.tab_5.setFocus()
 		elif event.key() == QtCore.Qt.Key_Return:
+			"""
 			if not wget:
 				curR = self.currentRow()
 				queueNo = queueNo + 1
@@ -3621,6 +3622,11 @@ class List2(QtWidgets.QListWidget):
 					ui.epnfound()
 				else:
 					ui.watchDirectly("/tmp/AnimeWatch/"+new_epn,'','no')
+			"""
+			curR = self.currentRow()
+			queueNo = queueNo + 1
+			mpvAlive = 0
+			ui.epnfound()
 		elif event.key() == QtCore.Qt.Key_Backspace:
 			if ui.list1.isHidden() and ui.list1.count() > 0:
 				ui.list2.hide()
@@ -3957,21 +3963,23 @@ class List2(QtWidgets.QListWidget):
 		elif event.key() == QtCore.Qt.Key_Left:
 			ui.list1.setFocus()
 		
-		elif event.key() == QtCore.Qt.Key_D:
+		elif event.key() == QtCore.Qt.Key_O:
 			#ui.goto_epn.hide()
 			#ui.progress.show()
-			if site!= "Local":
-				if not wget:
+			if site.lower() != "Local" and site.lower() != 'video' and site.lower() != 'music':
+				if wget.pid() == 0:
 					curr_row = self.currentRow()
 					downloadVideo = 1
 					ui.epnfound()
 					self.setCurrentRow(curr_row)
 				else:
-					if wget.pid() == 0:
-						curr_row = self.currentRow()
-						downloadVideo = 1
-						ui.epnfound()
-						self.setCurrentRow(curr_row)	
+					if not ui.queue_url_list:
+						ui.list6.clear()
+					r = self.currentRow()
+					item = self.item(r)
+					if item:
+						ui.queue_url_list.append(r)
+						ui.list6.addItem(epnArrList[r].split('	')[0])
 		elif event.key() == QtCore.Qt.Key_2: 
 			mirrorNo = 2
 			msg = "Mirror No. 2 Selected"
@@ -6232,7 +6240,7 @@ class tab5(QtWidgets.QWidget):
 				#if Player == "mpv":
 				if wget:
 					if wget.pid() > 0:
-						ui.goto_epn.hide()
+						#ui.goto_epn.hide()
 						ui.progress.show()
 					
 				ui.frame1.show()
@@ -6334,7 +6342,7 @@ class tab5(QtWidgets.QWidget):
 				"""
 			if wget:
 				if wget.pid() > 0:
-					ui.goto_epn.hide()
+					#ui.goto_epn.hide()
 					ui.progress.show()
 		
 			if MainWindow.isFullScreen():
@@ -6608,7 +6616,8 @@ class Ui_MainWindow(object):
 		
 		self.progress = QtWidgets.QProgressBar(MainWindow)
 		self.progress.setObjectName(_fromUtf8("progress"))
-		self.gridLayout.addWidget(self.progress, 1, 3, 1, 1)
+		#self.gridLayout.addWidget(self.progress, 1, 3, 1, 1)
+		self.verticalLayout_50.insertWidget(3,self.progress,0)
 		self.progress.setMinimum(0)
 		self.progress.setMaximum(100)
 		self.progress.setMaximumSize(QtCore.QSize(300,16777215))
@@ -6910,28 +6919,28 @@ class Ui_MainWindow(object):
 		#self.horizontalLayout_5.addWidget(self.web)
 		##self.gridLayout.addWidget(self.tab_2,2,1,1,1)
 		#self.web.hide()
-		self.verticalLayout_50 = QtWidgets.QHBoxLayout()
-		self.verticalLayout_50.setObjectName(_fromUtf8("verticalLayout_50"))
-		self.horizontalLayout_5.addLayout(self.verticalLayout_50)
+		self.horizLayout_web = QtWidgets.QHBoxLayout()
+		self.horizLayout_web.setObjectName(_fromUtf8("horizLayout_web"))
+		self.horizontalLayout_5.addLayout(self.horizLayout_web)
 		
 		self.btnWebHide = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebHide.setObjectName(_fromUtf8("btnWebHide"))
 		self.btnWebHide.setMaximumSize(200,50)
-		self.verticalLayout_50.addWidget(self.btnWebHide)
+		self.horizLayout_web.addWidget(self.btnWebHide)
 		
 		self.btnWebClose = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebClose.setObjectName(_fromUtf8("btnWebClose"))
 		self.btnWebClose.setMaximumSize(200,50)
-		self.verticalLayout_50.addWidget(self.btnWebClose)
+		self.horizLayout_web.addWidget(self.btnWebClose)
 		
 		self.btnWebReviews = QtWidgets.QComboBox(self.tab_2)
 		self.btnWebReviews.setObjectName(_fromUtf8("btnWebReviews"))
-		self.verticalLayout_50.addWidget(self.btnWebReviews)
+		self.horizLayout_web.addWidget(self.btnWebReviews)
 		self.btnWebReviews.setMaximumSize(200,50)
 		
 		self.btnPls = QtWidgets.QPushButton(self.tab_2)
 		self.btnPls.setObjectName(_fromUtf8("btnPls"))
-		self.verticalLayout_50.addWidget(self.btnPls)
+		self.horizLayout_web.addWidget(self.btnPls)
 		self.btnPls.setMaximumSize(200,50)
 		self.btnPls.setText("Playlist")
 		##################
@@ -13863,13 +13872,91 @@ class Ui_MainWindow(object):
 							f.write('\n'+it)
 						k = k+1
 					f.close()
+	def get_file_name(self,row,list_widget):
+		global name,site,epnArrList
+		new_epn = list_widget.item(row).text().replace('#','')
+		new_epn = new_epn.replace('/','-')
+		new_epn = new_epn.replace('"','')
+		if new_epn.startswith('.'):
+			new_epn = new_epn[1:]
+		if site.lower() == 'playlists':
+			if list_widget == self.list2:
+				st = epnArrList[row].split('	')[1]
+			elif list_widget == self.list6:
+				st = self.queue_url_list[row].split('	')[1]
+			if 'youtube.com' in st:
+				new_epn_mkv = new_epn+'.mkv'
+				new_epn_mp4 = new_epn+'.mp4'
+			else:
+				new_epn_mkv = new_epn
+				new_epn_mp4 = new_epn
+		else:
+			new_epn_mkv = new_epn+'.mkv'
+			new_epn_mp4 = new_epn+'.mp4'
+		if site.lower() == 'playlists':
+			title = self.list1.currentItem().text()
+		else:
+			title = name
+		file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
+		file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
+		return file_name_mp4,file_name_mkv
+		
+		
+	def play_file_now(self,file_name):
+		global Player,epn_name_in_list,mpvplayer,idw
+		
+		print(file_name)
+		self.text.hide()
+		self.label.hide()
+		finalUrl = file_name.replace('"','')
+		self.epn_name_in_list = finalUrl.split('/')[-1]
+		self.epn_name_in_list = re.sub('.mkv|.mp4|.avi','',self.epn_name_in_list)
+		finalUrl = '"'+finalUrl+'"'
+		idw = str(int(self.tab_5.winId()))
+		if mpvplayer.pid() > 0:
+			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
+			if Player == "mplayer":
+				t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
+			elif Player == 'mpv':
+				t1 = bytes('\n'+'show-text '+(epnShow)+'\n','utf-8')
+			t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
+			print (finalUrl,'---hello-----')
+			mpvplayer.write(t1)
+			mpvplayer.write(t2)
+			if self.mplayer_SubTimer.isActive():
+				self.mplayer_SubTimer.stop()
+			self.mplayer_SubTimer.start(2000)
+		else:
+			if Player == 'mpv':
+				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 			
+			else:
+				command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+			print(command)
+			self.infoPlay(command)
+		
+	def if_file_path_exists_then_play(self,row,list_widget):
+		global site,downloadVideo,wget,video_local_stream
+		file_path_name_mp4, file_path_name_mkv = self.get_file_name(row,list_widget)
+		if (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local') and downloadVideo == 0 and not video_local_stream:
+			print('now--playing',file_path_name_mp4,file_path_name_mkv)
+			if os.path.exists(file_path_name_mp4):
+				self.play_file_now(file_path_name_mp4)
+			else:
+				self.play_file_now(file_path_name_mkv)
+			return True
+		elif wget.pid() > 0:
+			return True
+		else:
+			return False
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded,show_hide_player,show_hide_cover
 		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path,video_local_stream
 		buffering_mplayer="no"
 		self.list4.hide()
 		self.player_play_pause.setText("Pause")
+		
+		
 		try:
 			
 			server._emitMeta("Play")
@@ -13890,6 +13977,7 @@ class Ui_MainWindow(object):
 				if Player == 'mplayer':
 					if mpvplayer.pid() > 0:
 						subprocess.Popen(['killall','mplayer'])
+				mpvplayer = QtCore.QProcess()
 	
 		self.tab_5.show()
 		if epn_goto == 0 and site != "PlayLists":
@@ -13903,7 +13991,11 @@ class Ui_MainWindow(object):
 			if '	' in epnArrList[row]:
 				epn = (epnArrList[row]).split('	')[1]
 			epn = epn.replace('#','')
-			
+		row = self.list2.currentRow()
+		
+		if self.if_file_path_exists_then_play(row,self.list2):
+			return 0
+		
 		if site == "PlayLists":
 			
 			row = self.list2.currentRow()
@@ -14421,7 +14513,10 @@ class Ui_MainWindow(object):
 							new_epn = new_epn+'.mkv'
 						else:
 							new_epn = new_epn+'.mp4'
-						title = name
+						if site.lower() == 'playlists':
+							title = self.list1.currentItem().text()
+						else:
+							title = name
 						folder_name = os.path.join(self.default_download_location,title)
 						if not os.path.exists(folder_name):
 							os.makedirs(folder_name)
@@ -14995,7 +15090,7 @@ class Ui_MainWindow(object):
 	def startedW(self):
 		global new_epn
 		self.progress.setValue(0)
-		self.goto_epn.hide()
+		#self.goto_epn.hide()
 		self.progress.show()
 		
 		#t = "Downloading "+new_epn+' to /tmp/AnimeWatch/'+new_epn
@@ -15004,7 +15099,7 @@ class Ui_MainWindow(object):
 		
 		
 	def finishedW(self,src):
-		global name,hdr
+		global name,hdr,site
 		#t = "File Download Complete"
 		#subprocess.Popen(["notify-send",t])
 		print ("Process Ended")
@@ -15012,19 +15107,31 @@ class Ui_MainWindow(object):
 		self.progress.hide()
 		if self.tab_2.isHidden():
 			self.goto_epn.show()
-		
+		type_int = False
 		if self.queue_url_list:
-			t = self.queue_url_list[0]
+			j = 0
+			for i in self.queue_url_list:
+				if type(i) is int:
+					type_int = True
+					break
+				j = j+1
+			if j < len(self.queue_url_list):
+				t = self.queue_url_list[j]
+			else:
+				t = 'not found'
 			if type(t) is int:
-				del self.queue_url_list[0]
-				t1 = self.list6.item(0)
+				del self.queue_url_list[j]
+				t1 = self.list6.item(j)
 				nepn = t1.text()
 				nepn = re.sub('#|"','',nepn)
 				nepn = nepn.replace('/','-')
-				self.list6.takeItem(0)
+				self.list6.takeItem(j)
 				del t1
 				finalUrl = self.epn_return(t)
-				title = name
+				if site.lower() == 'playlists':
+					title = self.list1.currentItem().text()
+				else:
+					title = name
 				npn = os.path.join(self.default_download_location,title,nepn)
 				if finalUrl.endswith('.mkv'):
 					npn = npn+'.mkv'
@@ -15045,8 +15152,8 @@ class Ui_MainWindow(object):
 		#			self.infoWget(self.downloadWget[i],i)
 	def infoWget(self,command,src):
 		global wget
-		if not self.tab_2.isHidden():
-			self.horizontalLayout_5.addWidget(self.progress)
+		#if not self.tab_2.isHidden():
+		#	self.horizontalLayout_5.addWidget(self.progress)
 		wget = QtCore.QProcess()
 		wget.setProcessChannelMode(QtCore.QProcess.MergedChannels)
 		
@@ -15059,7 +15166,7 @@ class Ui_MainWindow(object):
 		
 	def dataReady(self,p):
 		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode
-		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path
+		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path,wget
 		#tt = time.process_time()
 		#print (p.readAllStandardOutput())
 		
@@ -15265,12 +15372,12 @@ class Ui_MainWindow(object):
 							exec (q3)
 							QtWidgets.QApplication.processEvents()
 						if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
-							if len(self.queue_url_list)>0:
+							if len(self.queue_url_list)>0 and wget.pid() == 0:
 								self.getQueueInList()
 							else:
 								self.localGetInList()
 						else:
-							if len(self.queue_url_list)>0:
+							if len(self.queue_url_list)>0 and wget.pid() == 0:
 								self.getQueueInList()
 							else:
 								self.getNextInList()
@@ -15475,12 +15582,12 @@ class Ui_MainWindow(object):
 					#mpvplayer.waitForReadyRead()
 					if quitReally == "no":
 						if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
-							if len(self.queue_url_list)>0:
+							if len(self.queue_url_list)>0 and wget.pid() == 0:
 								self.getQueueInList()
 							else:
 								self.localGetInList()
 						else:
-							if len(self.queue_url_list)>0:
+							if len(self.queue_url_list)>0 and wget.pid() == 0:
 								self.getQueueInList()
 							else:
 								self.getNextInList()
@@ -15553,7 +15660,7 @@ class Ui_MainWindow(object):
 		
 	def localGetInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,artist_name_mplayer
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path,music_arr_setting,default_arr_setting
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path,music_arr_setting,default_arr_setting,wget,idw
 		print (self.player_setLoop_var)
 		row = self.list2.currentRow()
 		if row > len(epnArrList) or row < 0:
@@ -15566,6 +15673,10 @@ class Ui_MainWindow(object):
 		mplayerLength = 0
 		buffering_mplayer = "no"
 		#external_url = False
+		
+		if self.if_file_path_exists_then_play(row,self.list2):
+			return 0
+		
 		if site == "Music":
 			if self.list3.currentRow() >= 0:
 				music_arr_setting[0]=self.list3.currentRow()
@@ -15701,6 +15812,7 @@ class Ui_MainWindow(object):
 		
 		finalUrl = finalUrl.replace('"','')
 		if '#' in finalUrl or finalUrl.startswith('http'):
+				print('---*******-------line 15802--')
 				if mpvplayer.pid()>0:
 					mpvplayer.kill()
 				if '#' in finalUrl:
@@ -15808,6 +15920,12 @@ class Ui_MainWindow(object):
 		except:
 			pass
 		
+		if self.if_file_path_exists_then_play(0,self.list6):
+			del self.queue_url_list[0]
+			self.list6.takeItem(0)
+			del t1
+			return 0
+		
 		if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
 			t = self.queue_url_list[0]
 			epnShow = '"'+t.split('	')[1]+'"'
@@ -15908,7 +16026,7 @@ class Ui_MainWindow(object):
 		
 	def getNextInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,rfr_url
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path,default_arr_setting,music_arr_setting,video_local_stream
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path,default_arr_setting,music_arr_setting,video_local_stream,wget
 		
 		row = self.list2.currentRow()
 		self.total_file_size = 0
@@ -15920,6 +16038,9 @@ class Ui_MainWindow(object):
 			server._emitMeta("Next")
 		except:
 			pass
+		
+		if self.if_file_path_exists_then_play(row,self.list2):
+			return 0
 		
 		if site != "PlayLists":
 			if '	' in epnArrList[row]:
@@ -17818,7 +17939,7 @@ if __name__ == "__main__":
 	fullscrT = 0
 	player_focus = 0
 	mplayerLength = 0
-	wget = ""
+	wget = QtCore.QProcess()
 	
 		
 	status = "bookmark"
