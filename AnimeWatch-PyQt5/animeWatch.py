@@ -13972,7 +13972,19 @@ class Ui_MainWindow(object):
 					self.play_file_now(file_path_name_mp4)
 				else:
 					self.play_file_now(file_path_name_mkv)
-				self.musicBackground(row,'Search')
+				if list_widget == self.list6:
+					txt = self.list6.item(0).text()
+					txt = txt.replace('#','')
+					for i in range(self.list2.count()):
+						new_txt = self.list2.item(i).text()
+						new_txt = new_txt.replace('#','')
+						if new_txt == txt:
+							r = i
+							break
+					self.list2.setCurrentRow(r)
+				else:
+					r = row
+				self.musicBackground(r,'Search')
 				return True
 			else:
 				if os.path.exists(file_path_name_mp4):
