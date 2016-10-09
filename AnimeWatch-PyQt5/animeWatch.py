@@ -73,6 +73,7 @@ except:
 	pass
 from musicArtist import musicArtist
 from yt import get_yt_url
+from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info,get_torrent_info_magnet
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
 
@@ -12600,7 +12601,6 @@ class Ui_MainWindow(object):
 					refererNeeded = True
 					video_local_stream = False
 				elif tmp == 'LocalStreaming':
-					from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 					criteria.pop()
 					video_local_stream = True
 					if not self.local_ip:
@@ -14620,7 +14620,7 @@ class Ui_MainWindow(object):
 			self.label.hide()
 	def local_torrent_open(self,tmp):
 		global local_torrent_file_path
-		from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
+		#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 		if not self.local_ip:
 			self.local_ip = get_lan_ip()
 		if not self.local_port:
@@ -14636,7 +14636,7 @@ class Ui_MainWindow(object):
 		if self.torrent_type == 'magnet' or 'magnet:' in tmp:
 			
 			if tmp.startswith('magnet:'):
-				from stream import get_torrent_info_magnet
+				#from stream import get_torrent_info_magnet
 				print('------------magnet-----------')
 				path = self.torrent_download_folder
 				torrent_dest = local_torrent_file_path
