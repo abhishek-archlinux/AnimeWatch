@@ -12696,7 +12696,7 @@ class Ui_MainWindow(object):
 			self.line.setReadOnly(True)
 			refererNeeded = False
 			#finalUrlFound = False
-		elif site == "None" and self.btn1.currentText().lower() == 'youtube':
+		elif (site == "None" and self.btn1.currentText().lower() == 'youtube') or not self.tab_2.isHidden():
 			self.mirror_change.hide()
 			self.line.setPlaceholderText("Search Available")
 			self.line.setReadOnly(False)
@@ -13880,10 +13880,10 @@ class Ui_MainWindow(object):
 		if new_epn.startswith('.'):
 			new_epn = new_epn[1:]
 		opt_val = self.btn1.currentText().lower()
-		if opt_val == 'addons':
+		if site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local' and site.lower() != 'playlists' and site.lower() != 'none':
 			new_epn_mkv = new_epn+'.mkv'
 			new_epn_mp4 = new_epn+'.mp4'
-		elif opt_val == 'playlists' or opt_val == 'youtube' or (opt_val == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
+		elif site.lower() == 'playlists' or opt_val == 'youtube' or (site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
 			if list_widget == self.list2:
 				st = epnArrList[row].split('	')[1]
 			elif list_widget == self.list6:
@@ -13896,7 +13896,7 @@ class Ui_MainWindow(object):
 				new_epn_mkv = st.split('/')[-1]
 				new_epn_mp4 = st.split('/')[-1]
 		
-		if opt_val == 'playlists' or(opt_val == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
+		if site.lower() == 'playlists' or(site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
 			title = self.list1.currentItem().text()
 		else:
 			title = name
@@ -13921,10 +13921,11 @@ class Ui_MainWindow(object):
 		if mpvplayer.pid() > 0:
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
-				t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
+				t1 = bytes('\n'+'show_text '+epnShow+'\n','utf-8')
+				t2 = bytes('\n'+"loadfile "+finalUrl+" replace"+'\n','utf-8')
 			elif Player == 'mpv':
-				t1 = bytes('\n'+'show-text '+(epnShow)+'\n','utf-8')
-			t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
+				t1 = bytes('\n'+'show-text '+epnShow+'\n','utf-8')
+				t2 = bytes('\n'+"loadfile "+finalUrl+'\n','utf-8')
 			print (finalUrl,'---hello-----')
 			mpvplayer.write(t1)
 			mpvplayer.write(t2)
@@ -16397,23 +16398,17 @@ class Ui_MainWindow(object):
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+sub_id+" -aid "+audio_id+" "+finalUrl
 				print ("mpv=" + str(mpvplayer.pid()))
 				print(Player,'---------state----'+str(mpvplayer.state()))
-				if mpvplayer.state() > 0:
-						#if mpvplayer.pid()>0:
-						if Player == "mplayer":
-							finalUrl = finalUrl.replace('"','')
-							epnShow = '"'+finalUrl+'"'
+				if mpvplayer.pid() > 0:
+					#if mpvplayer.pid()>0:
+					if Player == "mplayer" or Player == "mpv":
+						finalUrl = finalUrl.replace('"','')
+						epnShow = '"'+finalUrl+'"'
+						if Player == 'mplayer':
 							t2 = bytes('\n'+"loadfile "+epnShow+" replace"+'\n','utf-8')
-							print (t2)
-							mpvplayer.write(t2)
 						else:
-							finalUrl = finalUrl.replace('"','')
-							#epnShow = finalUrl
-							epnShow = '"'+finalUrl+'"'
 							t2 = bytes('\n'+"loadfile "+epnShow+'\n','utf-8')
-							print (t2)
-							mpvplayer.write(t2)
-					
-					
+						print (t2)
+						mpvplayer.write(t2)
 				else:
 					self.infoPlay(command)
 				
@@ -16474,6 +16469,11 @@ class Ui_MainWindow(object):
 		#self.list1.clear()
 		
 		file_path = pls
+		if os.path.exists(file_path):
+			index = self.btn1.findText('PlayLists')
+			if index >= 0:
+				self.btn1.setCurrentIndex(index)
+				
 		if os.path.exists(file_path) and self.btn1.currentText().lower() == 'youtube':
 			self.list2.clear()
 			epnArrList[:]=[]
@@ -16488,6 +16488,8 @@ class Ui_MainWindow(object):
 					self.list2.addItem((j))
 		elif os.path.exists(file_path) and self.btn1.currentText().lower() == 'playlists':
 			pl_name = file_path.split('/')[-1]
+			if not self.list1.currentItem():
+				self.list1.setCurrentRow(0)
 			if self.list1.currentItem().text() != pl_name:  
 				for i in range(self.list1.count()):
 					item = self.list1.item(i)
