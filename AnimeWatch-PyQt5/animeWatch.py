@@ -13591,7 +13591,10 @@ class Ui_MainWindow(object):
 			music_file = home+'/Music/Music.txt'
 			music_file_bak = home+'/Music/Music_bak.txt'
 			if bookmark == "False":
-				music_opt = str(self.list3.currentItem().text())
+				if not self.list3.currentItem():
+					self.list3.setCurrentRow(0)
+				music_opt = self.list3.currentItem().text()
+					
 			artist =[]
 			
 			#if music_opt == "Artist":
@@ -13874,6 +13877,8 @@ class Ui_MainWindow(object):
 					f.close()
 	def get_file_name(self,row,list_widget):
 		global name,site,epnArrList
+		file_name_mkv = ''
+		file_name_mp4 = ''
 		new_epn = list_widget.item(row).text().replace('#','')
 		new_epn = new_epn.replace('/','-')
 		new_epn = new_epn.replace('"','')
@@ -13895,13 +13900,15 @@ class Ui_MainWindow(object):
 			else:
 				new_epn_mkv = st.split('/')[-1]
 				new_epn_mp4 = st.split('/')[-1]
-		
+				file_name_mkv = st
+				file_name_mp4 = st
 		if site.lower() == 'playlists' or(site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
 			title = self.list1.currentItem().text()
 		else:
 			title = name
-		file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
-		file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
+		if not file_name_mkv and not file_name_mp4:
+			file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
+			file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
 		print(file_name_mkv,file_name_mp4)
 		return file_name_mp4,file_name_mkv
 		
@@ -13917,7 +13924,7 @@ class Ui_MainWindow(object):
 		self.epn_name_in_list = finalUrl.split('/')[-1]
 		self.epn_name_in_list = re.sub('.mkv|.mp4|.avi','',self.epn_name_in_list)
 		finalUrl = '"'+finalUrl+'"'
-		idw = str(int(self.tab_5.winId()))
+		
 		if mpvplayer.pid() > 0:
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
@@ -13933,6 +13940,7 @@ class Ui_MainWindow(object):
 				self.mplayer_SubTimer.stop()
 			self.mplayer_SubTimer.start(2000)
 		else:
+			idw = str(int(self.tab_5.winId()))
 			if Player == 'mpv':
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 			
@@ -13957,13 +13965,14 @@ class Ui_MainWindow(object):
 					return file_path_name_mp4
 				else:
 					return file_path_name_mkv
-		elif site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist' and (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)):
+		elif site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist' and (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and downloadVideo == 0 and not video_local_stream:
 			print('now--playing',file_path_name_mp4,file_path_name_mkv)
 			if play_now:
 				if os.path.exists(file_path_name_mp4):
 					self.play_file_now(file_path_name_mp4)
 				else:
 					self.play_file_now(file_path_name_mkv)
+				self.musicBackground(row,'Search')
 				return True
 			else:
 				if os.path.exists(file_path_name_mp4):
