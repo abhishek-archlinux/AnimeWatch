@@ -13885,9 +13885,17 @@ class Ui_MainWindow(object):
 		if new_epn.startswith('.'):
 			new_epn = new_epn[1:]
 		opt_val = self.btn1.currentText().lower()
+		
+		if site.lower() == 'playlists' or(site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
+			title = self.list1.currentItem().text()
+		else:
+			title = name
+		
 		if site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local' and site.lower() != 'playlists' and site.lower() != 'none':
 			new_epn_mkv = new_epn+'.mkv'
 			new_epn_mp4 = new_epn+'.mp4'
+			file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
+			file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
 		elif site.lower() == 'playlists' or opt_val == 'youtube' or (site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
 			if list_widget == self.list2:
 				st = epnArrList[row].split('	')[1]
@@ -13897,18 +13905,14 @@ class Ui_MainWindow(object):
 			if 'youtube.com' in st:
 				new_epn_mkv = new_epn+'.mp4'
 				new_epn_mp4 = new_epn+'.mp4'
+				file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
+				file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
 			else:
 				new_epn_mkv = st.split('/')[-1]
 				new_epn_mp4 = st.split('/')[-1]
 				file_name_mkv = st
 				file_name_mp4 = st
-		if site.lower() == 'playlists' or(site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
-			title = self.list1.currentItem().text()
-		else:
-			title = name
-		if not file_name_mkv and not file_name_mp4:
-			file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
-			file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
+			
 		print(file_name_mkv,file_name_mp4)
 		return file_name_mp4,file_name_mkv
 		
