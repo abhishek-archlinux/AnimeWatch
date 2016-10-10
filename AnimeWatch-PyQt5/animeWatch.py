@@ -6764,7 +6764,7 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_player_opt.insertWidget(9,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
+		self.player_menu_option = ['Show/Hide Video','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
 		self.action_player_menu =[]
 		for i in self.player_menu_option:
 			self.action_player_menu.append(self.player_menu.addAction(i, lambda x=i:self.playerPlaylist(x)))
@@ -7759,7 +7759,7 @@ class Ui_MainWindow(object):
 					
 	def playerPlaylist(self,val):
 		global quitReally,playlist_show,mpvplayer,epnArrList,site,show_hide_cover,show_hide_playlist,show_hide_titlelist,show_hide_player,Player,httpd
-		self.player_menu_option = ['Show/Hide Player','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
+		self.player_menu_option = ['Show/Hide Video','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
 		#txt = str(self.player_playlist.text())
 		#playlist_show = 1-playlist_show
 		#self.action[]
@@ -7848,7 +7848,7 @@ class Ui_MainWindow(object):
 		elif val == "Shuffle":
 			epnArrList = random.sample(epnArrList,len(epnArrList))
 			self.update_list2()
-		elif val == "Show/Hide Player":
+		elif val == "Show/Hide Video":
 			if self.tab_5.isHidden():
 				self.tab_5.show()
 				show_hide_player = 1
@@ -11246,55 +11246,162 @@ class Ui_MainWindow(object):
 		
 		        
 		        
+	def mark_video_list(self,mark_val):
+		global site,epnArrList
+		if site.lower() == "video":
+			row = self.list2.currentRow()
+			item = self.list2.item(row)
+			if item:
+				i = str(self.list2.item(row).text())
+				if mark_val == 'mark' and i.startswith('#'):
+					pass
+				elif mark_val == 'unmark' and not i.startswith('#'):
+					pass
+				elif mark_val == 'mark' and not i.startswith('#'):
+					j = self.list2.item(row)
+					url1 = epnArrList[row].split('	')[1]
+					self.list2.takeItem(row)
+					del j
+					self.list2.insertItem(row,'#'+i)
+					self.updateVideoCount('mark',url1)
+				elif mark_val == 'unmark' and i.startswith('#'):
+					j = self.list2.item(row)
+					url1 = epnArrList[row].split('	')[1]
+					self.list2.takeItem(row)
+					del j
+					i = i.replace('#','')
+					self.list2.insertItem(row,i)
+					self.updateVideoCount('unmark',url1)
+				self.list2.setCurrentRow(row)
+				
+	def update_playlist_file(self,file_path):
+		global epnArrList
+		if os.path.exists(file_path):
+			f = open(file_path,'w')
+			k = 0
+			for i in range(self.list2.count()):
+				it = epnArrList[i]
+				if k == 0:
+					f.write(it)
+				else:
+					f.write('\n'+it)
+				k = k+1
+			f.close()
 			
-	def watchToggle(self):
-		global site,base_url,embed,epn,epn_goto,pre_opt,home,path_Local_Dir,epnArrList,opt,siteName,finalUrlFound,refererNeeded
-		if opt == "History" and site!="Video":
-				row = self.list2.currentRow()
+	def mark_playlist(self,mark_val):
+		global site,epnArrList,home
+		music_pl = False
+		if site == 'music':
+			if self.list3.currentItem():
+				if self.list3.currentItem().text().lower() == 'playlist':
+					music_pl = True
+					
+		if site.lower() == "playlists" or music_pl:
+			row = self.list2.currentRow()
+			item = self.list2.item(row)
+			file_path = os.path.join(home,'Playlists',self.list1.currentItem().text())
+			if item:
+				i = str(self.list2.item(row).text())
+				if mark_val == 'mark' and i.startswith('#'):
+					pass
+				elif mark_val == 'unmark' and not i.startswith('#'):
+					pass
+				elif mark_val == 'mark' and not i.startswith('#'):
+					j = self.list2.item(row)
+					self.list2.takeItem(row)
+					del j
+					self.list2.insertItem(row,'#'+i)
+					epnArrList[row] = '#'+epnArrList[row]
+					self.list2.setCurrentRow(row)
+					self.update_playlist_file(file_path)
+				elif mark_val == 'unmark' and i.startswith('#'):
+					j = self.list2.item(row)
+					self.list2.takeItem(row)
+					del j
+					i = i.replace('#','')
+					self.list2.insertItem(row,i)
+					epnArrList[row] = epnArrList[row].replace('#','')
+					self.list2.setCurrentRow(row)
+					self.update_playlist_file(file_path)
+					
+	def get_local_file_ep_name(self):
+		global site,name,siteName
+		file_path = ''
+		if site.lower() == "local":
+			file_path = os.path.join(home,'History',site,name,'Ep.txt')
+		elif site.lower() == 'subbedanime' or site.lower() == 'dubbedanime':
+			file_path = os.path.join(home,'History',site,siteName,name,'Ep.txt')
+		elif site.lower() == 'playlists' and self.list1.currentItem():
+			file_path = os.path.join(home,'Playlists',self.list1.currentItem().text())
+		elif site.lower() == 'music' and self.list3.currentItem():
+			if self.list1.currentItem():
+				file_path = os.path.join(home,'Playlists',self.list1.currentItem().text())
+		elif site.lower() != 'video':
+			file_path = os.path.join(home,'History',site,name,'Ep.txt')
+		return file_path
+		
+	def mark_addons_history_list(self,mark_val):
+		global opt,site,epnArrList,home,site,name,siteName,finalUrlFound,refererNeeded,path_Local_Dir
+		if opt == "History" and (site.lower() !="video" and site.lower()!= 'music' and site.lower()!= 'playlists' and site.lower()!= 'none'):
+			file_change = False
+			row = self.list2.currentRow()
+			item = self.list2.item(row)
+			if item:
 				if '	' in epnArrList[row]:
-					if '#' in epnArrList[row]:
+					if epnArrList[row].startswith('#') and mark_val == 'unmark':
 						n_epn = epnArrList[row].replace('#','')
-			
-					else:
+					elif not epnArrList[row].startswith('#') and mark_val == 'mark':
 						n_epn = '#'+epnArrList[row]
+					else:
+						return 0
 			
 				else:
 					epn = self.list2.currentItem().text()
 					if site != "Local":
-						if "#" in str(epn):
+						if epn.startswith('#') and mark_val == 'unmark':
 							n_epn = epn.replace('#','')
 							epn = str(epn)
-						else:
+						elif not epn.startswith('#') and mark_val == 'mark':
 							n_epn = "#" + str(epn)
 							epn = epn.replace('#','')
 							epn = str(epn)
+						else:
+							return 0
 					else:
-						if "#" in (epn):
+						if epn.startswith('#') and mark_val == 'unmark':
 							n_epnt = epn.replace('#','')
 							n_epn = ((epnArrList[row])).replace('#','')
-			
 							epn = "#"+path_Local_Dir+'/'+n_epnt 
-						else:
+						elif not epn.startswith('#') and mark_val == 'mark':
 							n_epnt = str(epn)
 							n_epn = "#" + epnArrList[row]
 							epn = path_Local_Dir+'/' +str(epn)
+						else:
+							return 0
 						epn = n_epnt
-				#self.goto_epn.clear()
-				#self.goto_epn.setText(epn)
-				if site == "Local" or (site!="PlayLists" and site != "SubbedAnime" and site != "DubbedAnime"):
-					file_path = home+'/History/'+site+'/'+name+'/Ep.txt'
-				else:
-	
-					file_path = home+'/History/'+site+'/'+siteName+'/'+name+'/Ep.txt'
-				if os.path.exists(file_path):
+						
+				file_path = self.get_local_file_ep_name()
+				
+				txt = item.text()
+				j = self.list2.item(row)
+				self.list2.takeItem(row)
+				del j
+				
+				if txt.startswith('#') and mark_val == 'unmark':
+					self.list2.insertItem(row,txt.replace('#',''))
+					file_change = True
+				elif not txt.startswith('#') and mark_val == 'mark':
+					self.list2.insertItem(row,'#'+txt)
+					file_change = True
+					
+				if os.path.exists(file_path) and file_change:
 					f = open(file_path, 'r')
 					lines = f.readlines()
 					f.close()
 					if finalUrlFound == True:
-						
-						if "#" in lines[row]:
+						if lines[row].startswith('#') and mark_val == 'unmark':
 							lines[row]=lines[row].replace('#','')
-						else:
+						elif not lines[row].startswith('#') and mark_val == 'mark':
 							lines[row] = '#'+lines[row]
 					else:
 						if "\n" in lines[row]:
@@ -11311,89 +11418,38 @@ class Ui_MainWindow(object):
 						epnArrList.append(i)
 					#replace_line(file_path,epn,n_epn)
 					f.close()
-					lines = tuple(open(file_path, 'r'))
-					self.list2.clear()
-					k = 0
-					for i in lines:
-							if '	' in i:
-									i = i.split('	')[0]
-									if (finalUrlFound == True) and (k == len(epnArrList) - 1):
-										print ("Referer")
-									else:
-										self.list2.addItem((i))
-										if '#' in i:
-											self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-							else:
-									i = i.replace('\n','')
-									if site == "Local" or finalUrlFound == True:
-											j = i.split('/')[-1]
-											if ('#' in i) and j:
-												j = "#" + j
-									else:
-										j = i
-									if j:
-										if (refererNeeded == True) and (k == len(epnArrList) - 1):
-											print ("Referer")
-										else:
-											self.list2.addItem((j))
-											if '#' in j:
-												self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-							k = k+1
 				self.list2.setCurrentRow(row)
-		elif site == "PlayLists":
-			
-			row = self.list2.currentRow()
-			item = self.list2.item(row)
-			#hash_exists = False
-			if item:
-				i = str(self.list2.item(row).text())
-				j = self.list2.item(row)
-				self.list2.takeItem(row)
-				del j
-				if not '#' in i:
-					self.list2.insertItem(row,'#'+i)
-					epnArrList[row] = '#'+epnArrList[row]
-				else:
-					i = i.replace('#','')
-					self.list2.insertItem(row,i)
-					epnArrList[row] = epnArrList[row].replace('#','')
-				#self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-				self.list2.setCurrentRow(row)
-				file_path = home+'/Playlists/'+str(self.list1.currentItem().text())
-				if os.path.exists(file_path):
-					f = open(file_path,'w')
-					k = 0
-					for i in range(self.list2.count()):
-						#it = str(self.list2.item(i).text())
-						#it = str(it)
-						it = epnArrList[i]
-						
-						if k == 0:
-							f.write(it)
-						else:
-							f.write('\n'+it)
-						k = k+1
-					f.close()
-			
-			#self.playlistUpdate()
-		elif site == "Video":
+		
+		
+	def watchToggle(self):
+		global site,base_url,embed,epn,epn_goto,pre_opt,home,path_Local_Dir,epnArrList,opt,siteName,finalUrlFound,refererNeeded
+		if opt == "History" and (site.lower() !="video" and site.lower()!= 'music' and site.lower()!= 'playlists' and site.lower()!= 'none'):
+				row = self.list2.currentRow()
+				item = self.list2.item(row)
+				if item:
+					i = str(self.list2.item(row).text())
+					if i.startswith('#'):
+						self.mark_addons_history_list('unmark')
+					else:
+						self.mark_addons_history_list('mark')
+		elif site.lower() == "playlists":
 			row = self.list2.currentRow()
 			item = self.list2.item(row)
 			if item:
 				i = str(self.list2.item(row).text())
-				j = self.list2.item(row)
-				url1 = epnArrList[row].split('	')[1]
-				self.list2.takeItem(row)
-				
-				del j
-				if not '#' in i:
-					self.list2.insertItem(row,'#'+i)
-					self.updateVideoCount('mark',url1)
+				if i.startswith('#'):
+					self.mark_playlist('unmark')
 				else:
-					i = i.replace('#','')
-					self.list2.insertItem(row,i)
-					self.updateVideoCount('unmark',url1)
-				self.list2.setCurrentRow(row)
+					self.mark_playlist('mark')
+		elif site.lower() == "video":
+			row = self.list2.currentRow()
+			item = self.list2.item(row)
+			if item:
+				i = str(self.list2.item(row).text())
+				if i.startswith('#'):
+					self.mark_video_list('unmark')
+				else:
+					self.mark_video_list('mark')
 				
 	def search_list4_options(self):
 		global opt,site,name,base_url,name1,embed,pre_opt,bookmark,base_url_picn,base_url_summary
@@ -11511,8 +11567,9 @@ class Ui_MainWindow(object):
 					
 			k = k+1
 		self.list2.setCurrentRow(row)
+		
 	def mark_History(self):
-		global epnArrList,curR,opt,siteName
+		global epnArrList,curR,opt,siteName,site,name,home
 		file_path = ""
 		row = self.list2.currentRow()
 		if opt == "History" and site != "PlayLists":
@@ -14704,11 +14761,12 @@ class Ui_MainWindow(object):
 			self.initial_view_mode()
 	
 	def initial_view_mode(self):
-		global site
-		self.tab_5.show()
-		if site == "Music" and show_hide_player == 0:
+		global site,show_hide_player
+		
+		if site.lower() == "music" and show_hide_player == 0:
 			self.tab_5.hide()
 		else:
+			self.tab_5.show()
 			self.list1.hide()
 			self.frame.hide()
 			self.text.hide()
@@ -18345,7 +18403,11 @@ if __name__ == "__main__":
 							ui.frame.hide()
 					except:
 						show_hide_titlelist = 0
-				
+				elif "Show_Hide_Player" in i:
+					try:
+						show_hide_player = int(j)
+					except:
+						show_hide_player = 0
 				elif "Thumbnail_Size" in i:
 					j = j.replace('\n','')
 					if j:
@@ -18801,6 +18863,7 @@ if __name__ == "__main__":
 		f.write("\nShow_Hide_Cover="+str(show_hide_cover))
 		f.write("\nShow_Hide_Playlist="+str(show_hide_playlist))
 		f.write("\nShow_Hide_Titlelist="+str(show_hide_titlelist))
+		f.write("\nShow_Hide_Player="+str(show_hide_player))
 		f.write("\nDock_Option="+str(dock_opt))
 		f.write("\nPOSX="+str(MainWindow.pos().x()))
 		f.write("\nPOSY="+str(MainWindow.pos().y()))
