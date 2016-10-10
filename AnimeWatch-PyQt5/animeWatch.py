@@ -1799,10 +1799,10 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				tab_6_size_indicator.append(ui.tab_6.width())
 			ui.gridLayout.setSpacing(0)
 			
-			if mpvplayer:
-					if mpvplayer.pid() > 0:
-						mpvplayer.write(b'\n quit \n')
-						mpvplayer.kill()
+			#if mpvplayer:
+			#		if mpvplayer.pid() > 0:
+			#			mpvplayer.write(b'\n quit \n')
+			#			mpvplayer.kill()
 			if site == "Local" or site == "PlayLists" or site == "Music" or site == "Video" or site == "None":
 				
 				#self.emit(QtCore.SIGNAL('clicked()'))
@@ -1864,16 +1864,21 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					except:
 						finalUrl = finalUrl
 					finalUrl = finalUrl.replace('"','')
-					if 'youtube.com' in finalUrl:
-						ui.external_url = True
-						finalUrl = get_yt_url(finalUrl,quality).strip()
-						if '#' in finalUrl:
-							audio_url = finalUrl.split('#')[0]
-							video_url = finalUrl.split('#')[1]
-							if Player == 'mpv':
-								finalUrl = "--audio-file="+audio_url+' '+video_url
-							elif Player == 'mplayer':
-								finalUrl = '-audiofile '+audio_url+' '+video_url
+					if ui.if_file_path_exists_then_play(curR,ui.list2,True):
+						print('---line 1868---')
+					else:
+						if 'youtube.com' in finalUrl:
+							ui.external_url = True
+							finalUrl = get_yt_url(finalUrl,quality).strip()
+							if '#' in finalUrl:
+								audio_url = finalUrl.split('#')[0]
+								video_url = finalUrl.split('#')[1]
+								if Player == 'mpv':
+									finalUrl = "--audio-file="+audio_url+' '+video_url
+								elif Player == 'mplayer':
+									finalUrl = '-audiofile '+audio_url+' '+video_url
+						ui.play_file_now(finalUrl)
+					"""
 					if finalUrl.startswith('"'):
 						print('finalURL startswith .". ')
 						finalUrl = re.sub('"','',finalUrl)
@@ -1889,6 +1894,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 						print (command)
 						ui.infoPlay(command)
+					"""
 					if site == "Music":
 						print (finalUrl)
 						try:
@@ -13723,80 +13729,89 @@ class Ui_MainWindow(object):
 					os.makedirs(dir_path)
 		self.current_background = fanart
 	def musicBackground(self,val,srch):
-		global name,epnArrList,artist_name_mplayer
-		if self.list3.currentItem():
-			if str(self.list3.currentItem().text()) == "Artist":
-				music_dir_art = home+'/Music/Artist'
-				if not os.path.exists(music_dir_art):
-					os.makedirs(music_dir_art)
-				if self.list1.currentItem():
-					if srch != "Queue":
-						nm = str(self.list1.currentItem().text())
-						if '/' in nm:
-							nm = nm.replace('/','-')
-					else:
-						nm = artist_name_mplayer
-					music_dir_art_name = home+'/Music/Artist/'+nm
-					print(music_dir_art_name)
-					if not os.path.exists(music_dir_art_name):
-						os.makedirs(music_dir_art_name)
-					else:
-						art_list = os.listdir(music_dir_art_name)
-						sumr = music_dir_art_name+'/bio.txt'
-						if os.path.exists(sumr):
-							summary = open(sumr,'r').read()
-						else:
-							summary = "Not Available"
-						poster = music_dir_art_name+'/poster.jpg'
-						fan = music_dir_art_name+'/fanart.jpg'
-						thumb = music_dir_art_name+'/thumbnail.jpg'
-						if not os.path.exists(poster) and srch != "offline":	
-							#self.threadEx = ThreadingExample(name)
-							self.threadPool.append( ThreadingExample(nm) )
-							self.threadPool[len(self.threadPool)-1].finished.connect(self.finishedM)
-							#self.threadEx.start()
-							self.threadPool[len(self.threadPool)-1].start()
-						else:
-							self.videoImage(poster,thumb,fan,summary)
+		global name,epnArrList,artist_name_mplayer,site
+		
+		if self.list3.currentItem() and site.lower() == 'music':
+			if self.list3.currentItem().text().lower() == "artist":
+				artist_mode = True
 			else:
-				music_dir_art = home+'/Music/Artist'
-				print(music_dir_art,'--music-dir-art--')
-				try:
-					if srch != "Queue":
-						nm = epnArrList[val].split('	')[2]
-					else:
-						nm = artist_name_mplayer
-				except:
-					nm = ""
-				print (nm)
-				if nm:
+				artist_mode = False
+		else:
+			artist_mode = False
+			
+		if artist_mode:
+			music_dir_art = home+'/Music/Artist'
+			if not os.path.exists(music_dir_art):
+				os.makedirs(music_dir_art)
+			if self.list1.currentItem():
+				if srch != "Queue":
+					nm = str(self.list1.currentItem().text())
 					if '/' in nm:
 						nm = nm.replace('/','-')
-					music_dir_art_name = home+'/Music/Artist/'+nm
-					print(music_dir_art_name,'--music-dir-art-name--')
-					if not os.path.exists(music_dir_art_name):
-						os.makedirs(music_dir_art_name)
-						
+				else:
+					nm = artist_name_mplayer
+				music_dir_art_name = home+'/Music/Artist/'+nm
+				print(music_dir_art_name)
+				if not os.path.exists(music_dir_art_name):
+					os.makedirs(music_dir_art_name)
+				else:
+					art_list = os.listdir(music_dir_art_name)
+					sumr = music_dir_art_name+'/bio.txt'
+					if os.path.exists(sumr):
+						summary = open(sumr,'r').read()
 					else:
-						art_list = os.listdir(music_dir_art_name)
-						sumr = music_dir_art_name+'/bio.txt'
-						if os.path.exists(sumr):
-							summary = open(sumr,'r').read()
-						else:
-							summary = "Not Available"
-						poster = music_dir_art_name+'/poster.jpg'
-						fan = music_dir_art_name+'/fanart.jpg'
-						thumb = music_dir_art_name+'/thumbnail.jpg'
-						if not os.path.exists(poster) and srch != "offline" and artist_name_mplayer != "None" and artist_name_mplayer:	
-							#self.threadEx = ThreadingExample(nm)
-							#QtCore.QObject.connect(self.threadEx, QtCore.SIGNAL("finished()"),self.finishedM)
-							#self.threadEx.start()
-							self.threadPool.append( ThreadingExample(nm) )
-							self.threadPool[len(self.threadPool)-1].finished.connect(self.finishedM)
-							#self.threadEx.start()
-							self.threadPool[len(self.threadPool)-1].start()
-						else:
-							self.videoImage(poster,thumb,fan,summary)
+						summary = "Not Available"
+					poster = music_dir_art_name+'/poster.jpg'
+					fan = music_dir_art_name+'/fanart.jpg'
+					thumb = music_dir_art_name+'/thumbnail.jpg'
+					if not os.path.exists(poster) and srch != "offline":	
+						#self.threadEx = ThreadingExample(name)
+						self.threadPool.append( ThreadingExample(nm) )
+						self.threadPool[len(self.threadPool)-1].finished.connect(self.finishedM)
+						#self.threadEx.start()
+						self.threadPool[len(self.threadPool)-1].start()
+					else:
+						self.videoImage(poster,thumb,fan,summary)
+		else:
+			music_dir_art = home+'/Music/Artist'
+			print(music_dir_art,'--music-dir-art--')
+			try:
+				if srch != "Queue":
+					nm = epnArrList[val].split('	')[2]
+				else:
+					nm = artist_name_mplayer
+			except:
+				nm = ""
+			print (nm)
+			if nm:
+				if '/' in nm:
+					nm = nm.replace('/','-')
+				music_dir_art_name = home+'/Music/Artist/'+nm
+				print(music_dir_art_name,'--music-dir-art-name--')
+				if not os.path.exists(music_dir_art_name):
+					os.makedirs(music_dir_art_name)
+					
+				else:
+					art_list = os.listdir(music_dir_art_name)
+					sumr = music_dir_art_name+'/bio.txt'
+					if os.path.exists(sumr):
+						summary = open(sumr,'r').read()
+					else:
+						summary = "Not Available"
+					poster = music_dir_art_name+'/poster.jpg'
+					fan = music_dir_art_name+'/fanart.jpg'
+					thumb = music_dir_art_name+'/thumbnail.jpg'
+					if not os.path.exists(poster) and srch != "offline" and artist_name_mplayer != "None" and artist_name_mplayer:	
+						#self.threadEx = ThreadingExample(nm)
+						#QtCore.QObject.connect(self.threadEx, QtCore.SIGNAL("finished()"),self.finishedM)
+						#self.threadEx.start()
+						self.threadPool.append( ThreadingExample(nm) )
+						self.threadPool[len(self.threadPool)-1].finished.connect(self.finishedM)
+						#self.threadEx.start()
+						self.threadPool[len(self.threadPool)-1].start()
+					else:
+						self.videoImage(poster,thumb,fan,summary)
+						
 	def videoImage(self,picn,thumbnail,fanart,summary):
 		global screen_height,screen_width
 		#self.label.clear()
@@ -13912,23 +13927,29 @@ class Ui_MainWindow(object):
 				new_epn_mp4 = st.split('/')[-1]
 				file_name_mkv = st
 				file_name_mp4 = st
-			
-		print(file_name_mkv,file_name_mp4)
+		elif site.lower() == 'video' or site.lower() == 'music' or site.lower() == 'local' or site.lower() == 'none':
+			file_name_mkv = epnArrList[row].split('	')[1]
+			file_name_mp4 = epnArrList[row].split('	')[1]
+		print('function ',file_name_mkv,file_name_mp4,'function get_file_name')
 		return file_name_mp4,file_name_mkv
 		
 		
 	def play_file_now(self,file_name):
-		global Player,epn_name_in_list,mpvplayer,idw,quitReally,mplayerLength
+		global Player,epn_name_in_list,mpvplayer,idw,quitReally,mplayerLength,current_playing_file_path
 		mplayerLength = 0
 		quitReally = 'no'
 		print(file_name)
-		self.text.hide()
-		self.label.hide()
+		#if site.lower() != 'music' and show_hide_player == 1: 
+		#	self.text.hide()
+		#	self.label.hide()
+		if mpvplayer.pid() == 0:
+			self.initial_view_mode()
 		finalUrl = file_name.replace('"','')
-		self.epn_name_in_list = finalUrl.split('/')[-1]
-		self.epn_name_in_list = re.sub('.mkv|.mp4|.avi','',self.epn_name_in_list)
+		#if not finalUrl.startswith('http'):
+		#	self.epn_name_in_list = finalUrl.split('/')[-1]
+		#self.epn_name_in_list = re.sub('.mkv|.mp4|.avi','',self.epn_name_in_list)
 		finalUrl = '"'+finalUrl+'"'
-		
+		current_playing_file_path = finalUrl
 		if mpvplayer.pid() > 0:
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
@@ -13943,6 +13964,7 @@ class Ui_MainWindow(object):
 			if self.mplayer_SubTimer.isActive():
 				self.mplayer_SubTimer.stop()
 			self.mplayer_SubTimer.start(2000)
+			print('..function play_file_now gapless mode..')
 		else:
 			idw = str(int(self.tab_5.winId()))
 			if Player == 'mpv':
@@ -13950,19 +13972,45 @@ class Ui_MainWindow(object):
 			
 			else:
 				command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-			print(command)
+			print(command,'function play_file_now')
 			self.infoPlay(command)
-		
+			
+	def is_artist_exists(self,row):
+		global epnArrList
+		try:
+			arr = epnArrList[row].split('	')
+		except:
+			return False
+		artist = ''
+		if len(arr) >=3 :
+			artist = arr[2].replace('"','')
+		if artist.lower() and (artist.lower() != 'none') and not artist.startswith('http'):
+			return True
+		else:
+			return False
 	def if_file_path_exists_then_play(self,row,list_widget,play_now=None):
-		global site,downloadVideo,wget,video_local_stream
+		global site,downloadVideo,wget,video_local_stream,artist_name_mplayer
+		
 		file_path_name_mp4, file_path_name_mkv = self.get_file_name(row,list_widget)
+		try:
+			self.epn_name_in_list = list_widget.item(row).text().replace('#','')
+		except:
+			pass
+		
 		if (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local') and downloadVideo == 0 and not video_local_stream:
 			print('now--playing',file_path_name_mp4,file_path_name_mkv)
 			if play_now:
 				if os.path.exists(file_path_name_mp4):
 					self.play_file_now(file_path_name_mp4)
+					finalUrl = file_path_name_mp4
 				else:
 					self.play_file_now(file_path_name_mkv)
+					finalUrl = file_path_name_mkv
+				finalUrl = '"'+finalUrl+'"'
+				if site.lower() == 'playlists':
+					if self.is_artist_exists(row):
+						self.musicBackground(row,'get now')
+						self.updateMusicCount('count',finalUrl)
 				return True
 			else:
 				if os.path.exists(file_path_name_mp4):
@@ -13974,113 +14022,81 @@ class Ui_MainWindow(object):
 			if play_now:
 				if os.path.exists(file_path_name_mp4):
 					self.play_file_now(file_path_name_mp4)
+					finalUrl = file_path_name_mp4
 				else:
 					self.play_file_now(file_path_name_mkv)
+					finalUrl = file_path_name_mkv
 				if list_widget == self.list6:
 					txt = self.list6.item(0).text()
-					txt = txt.replace('#','')
-					for i in range(self.list2.count()):
-						new_txt = self.list2.item(i).text()
-						new_txt = new_txt.replace('#','')
-						if new_txt == txt:
-							r = i
-							break
+					r = self.get_index_list(list_widget,txt)
 					self.list2.setCurrentRow(r)
 				else:
 					r = row
+				finalUrl = '"'+finalUrl+'"'
 				self.musicBackground(r,'Search')
+				self.updateMusicCount('count',finalUrl)
 				return True
 			else:
 				if os.path.exists(file_path_name_mp4):
 					return file_path_name_mp4
 				else:
 					return file_path_name_mkv
-			
+		elif (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() == 'video' or site.lower() == 'music' or site.lower() == 'local' or site.lower() == 'none') and downloadVideo == 0 and not video_local_stream:
+			print('now--playing',file_path_name_mp4,file_path_name_mkv)
+			if play_now:
+				if os.path.exists(file_path_name_mp4):
+					self.play_file_now(file_path_name_mp4)
+					finalUrl = file_path_name_mp4
+				else:
+					self.play_file_now(file_path_name_mkv)
+					finalUrl = file_path_name_mkv
+					
+				if list_widget == self.list6:
+					txt = self.list6.item(0).text()
+					r = self.get_index_list(list_widget,txt)
+					self.list2.setCurrentRow(r)
+				else:
+					r = row
+					
+				finalUrl = finalUrl.replace('"','')
+				finalUrl = '"'+finalUrl+'"'
+				if site.lower() == "music":
+					print (finalUrl)
+					try:
+						artist_name_mplayer = epnArrList[row].split('	')[2]
+						if artist_name_mplayer.lower() == "none":
+							artist_name_mplayer = ""
+					except:
+						artist_name_mplayer = ""
+					if not 'youtube.com' in finalUrl.lower():
+						self.musicBackground(r,'Search')
+						self.updateMusicCount('count',finalUrl)
+				elif site.lower() == "video":
+					self.updateVideoCount('mark',finalUrl)
+				return True
+			else:
+				if os.path.exists(file_path_name_mp4):
+					return file_path_name_mp4
+				else:
+					return file_path_name_mkv
 		elif wget.pid() > 0 and play_now:
 			return True
 		else:
 			return False
-	def epnfound(self):
-		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded,show_hide_player,show_hide_cover
-		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path,video_local_stream
-		buffering_mplayer="no"
-		self.list4.hide()
-		self.player_play_pause.setText("Pause")
-		
-		
-		try:
 			
-			server._emitMeta("Play")
-		except:
-			pass
+	def get_index_list(self,list_widget,txt):
+		r = 0
+		txt = txt.replace('#','')
+		for i in range(self.list2.count()):
+			new_txt = self.list2.item(i).text()
+			new_txt = new_txt.replace('#','')
+			if new_txt == txt:
+				r = i
+				break
+		return r
+	def set_init_settings(self):
 		
-		row = self.list2.currentRow()
-		if self.if_file_path_exists_then_play(row,self.list2,True):
-			self.initial_view_mode()
-			return 0
-		
-		if video_local_stream:
-			if os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
-				os.remove('/tmp/AnimeWatch/player_stop.txt')
-			
-		if mpvplayer:
-			if mpvplayer.pid() > 0:
-				#mpvplayer.write('\n'+'quit'+'\n')
-				#mpvplayer.waitForReadyRead()
-				#time.sleep(2)
-				mpvplayer.kill()
-				if Player == 'mplayer':
-					if mpvplayer.pid() > 0:
-						subprocess.Popen(['killall','mplayer'])
-				mpvplayer = QtCore.QProcess()
-	
-		if epn_goto == 0 and site != "PlayLists":
-			epn = str(self.list2.currentItem().text())
-			self.epn_name_in_list = epn
-			if not epn:
-				return 0
-			
-			
-			row = self.list2.currentRow()
-			if '	' in epnArrList[row]:
-				epn = (epnArrList[row]).split('	')[1]
-			epn = epn.replace('#','')
-		
-		
-		
-		
-		if site == "PlayLists":
-			
-			row = self.list2.currentRow()
-			item = self.list2.item(row)
-			if item:
-				#line = str(self.list2.currentItem().text())
-				arr = epnArrList[row].split('	')
-				#arr[1] = '"'+arr[1]+'"'
-				
-				#if arr[2] == "NONE" or arr[2].startswith('"/') or arr[2].startswith('/'):
-				if len(arr) > 2:
-					if arr[2].startswith('http') or arr[2].startswith('"http'):
-						finalUrl = []
-						finalUrl.append(arr[1])
-						finalUrl.append(arr[2])
-						refererNeeded = True
-					else:
-						finalUrl = arr[1]
-						refererNeeded = False
-				else:
-					finalUrl = arr[1]
-					#finalUrl = finalUrl.decode('utf8')
-					refererNeeded = False
-				self.epn_name_in_list = arr[0]
-				epn = self.epn_name_in_list
-				self.playlistUpdate()
-				if 'youtube.com' in finalUrl:
-					finalUrl = get_yt_url(finalUrl,quality).strip()
-				
-		#self.goto_epn.clear()
-		#self.goto_epn.setText(epn)
-		
+		global music_arr_setting,default_arr_setting
 		if site == "Music":
 			if self.list3.currentRow() >= 0:
 				music_arr_setting[0]=self.list3.currentRow()
@@ -14099,7 +14115,60 @@ class Ui_MainWindow(object):
 							default_arr_setting[3]=self.list2.currentRow()
 				if ui.btnAddon.currentIndex() >= 0:
 					default_arr_setting[4]=ui.btnAddon.currentIndex()
-					
+	def epnfound(self):
+		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded,show_hide_player,show_hide_cover
+		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path,video_local_stream
+		buffering_mplayer="no"
+		self.list4.hide()
+		self.player_play_pause.setText("Pause")
+		
+		
+		try:
+			
+			server._emitMeta("Play")
+		except:
+			pass
+		
+		
+		
+		if video_local_stream:
+			if os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
+				os.remove('/tmp/AnimeWatch/player_stop.txt')
+			
+		#if mpvplayer.pid() > 0:
+		#	mpvplayer.kill()
+		#	if Player == 'mplayer':
+		#		if mpvplayer.pid() > 0:
+		#			subprocess.Popen(['killall','mplayer'])
+		#	mpvplayer = QtCore.QProcess()
+	
+		if epn_goto == 0 and site != "PlayLists":
+			epn = str(self.list2.currentItem().text())
+			self.epn_name_in_list = epn
+			if not epn:
+				return 0
+			
+			
+			row = self.list2.currentRow()
+			if '	' in epnArrList[row]:
+				epn = (epnArrList[row]).split('	')[1]
+			epn = epn.replace('#','')
+		
+		
+		
+		
+		
+				
+		#self.goto_epn.clear()
+		#self.goto_epn.setText(epn)
+		self.set_init_settings()
+		
+		
+		row = self.list2.currentRow()
+		if self.if_file_path_exists_then_play(row,self.list2,True):
+			self.initial_view_mode()
+			return 0
+		
 		if(site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" and finalUrlFound == False and site !="None" and site!= "Music" and site != "Video" and site!= "Local") :
 			hist_path = home+'/History/'+site+'/'+name+'/Ep.txt'
 			if (os.path.exists(hist_path) and (epn_goto == 0)) or (os.path.exists(hist_path) and bookmark == "True"):
@@ -14186,7 +14255,33 @@ class Ui_MainWindow(object):
 				#	print('final url not Available')
 				#	return 0
 				del site_var
-			
+		elif site == "PlayLists":
+			row = self.list2.currentRow()
+			item = self.list2.item(row)
+			if item:
+				#line = str(self.list2.currentItem().text())
+				arr = epnArrList[row].split('	')
+				#arr[1] = '"'+arr[1]+'"'
+				
+				#if arr[2] == "NONE" or arr[2].startswith('"/') or arr[2].startswith('/'):
+				if len(arr) > 2:
+					if arr[2].startswith('http') or arr[2].startswith('"http'):
+						finalUrl = []
+						finalUrl.append(arr[1])
+						finalUrl.append(arr[2])
+						refererNeeded = True
+					else:
+						finalUrl = arr[1]
+						refererNeeded = False
+				else:
+					finalUrl = arr[1]
+					#finalUrl = finalUrl.decode('utf8')
+					refererNeeded = False
+				self.epn_name_in_list = arr[0]
+				epn = self.epn_name_in_list
+				self.playlistUpdate()
+				if 'youtube.com' in finalUrl:
+					finalUrl = get_yt_url(finalUrl,quality).strip()
 		elif finalUrlFound == True:
 				row_num = self.list2.currentRow()
 			
@@ -15390,7 +15485,7 @@ class Ui_MainWindow(object):
 				#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 					if self.player_setLoop_var:
-						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
+						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
 						#curR = self.list2.currentRow()
@@ -15950,8 +16045,8 @@ class Ui_MainWindow(object):
 						
 						try:
 							epnShow = '"' + "Queued:  "+ new_epn + '"'
-							t1 = bytes('\n'+'show-text '+(epnShow)+'\n','utf-8')
-							t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
+							t1 = bytes('\n'+'show-text '+epnShow+'\n','utf-8')
+							t2 = bytes('\n'+"loadfile "+finalUrl+'\n','utf-8')
 							print (finalUrl,'---hello-----')
 							mpvplayer.write(t1)
 							mpvplayer.write(t2)
