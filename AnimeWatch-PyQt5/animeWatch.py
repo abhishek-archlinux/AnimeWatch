@@ -14177,6 +14177,9 @@ class Ui_MainWindow(object):
 							default_arr_setting[3]=self.list2.currentRow()
 				if ui.btnAddon.currentIndex() >= 0:
 					default_arr_setting[4]=ui.btnAddon.currentIndex()
+					
+	
+			
 	def epnfound(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,home,hdr,path_Local_Dir,epnArrList,epn_name_in_list,siteName,finalUrlFound,refererNeeded,show_hide_player,show_hide_cover
 		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path,video_local_stream
@@ -15887,6 +15890,7 @@ class Ui_MainWindow(object):
 		print (mpvplayer.pid())
 		#if quitReally == "no":
 		#	self.mpvNextEpnList()
+		
 	def infoPlay(self,command):
 		global mpvplayer,Player,site,new_epn
 		print('--line--15662--')
@@ -15901,7 +15905,32 @@ class Ui_MainWindow(object):
 		#self.tab_5.setFocus()
 		mpvplayer.finished.connect(self.finished)
 		QtCore.QTimer.singleShot(1000, partial(mpvplayer.start, command))
-		
+	
+	def adjust_thumbnail_window(self,row):
+		global thumbnail_indicator
+		if thumbnail_indicator and not self.tab_5.isHidden():
+			title_num = row + ui.list2.count()
+			if '#' in self.epn_name_in_list:
+				newTitle = self.epn_name_in_list	
+			else:
+				newTitle = '#'+self.epn_name_in_list	
+			sumry = "<html><h1>"+self.epn_name_in_list+"</h1></html>"
+			q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"
+			exec (q4)
+			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
+			exec (q3)
+			p8="ui.label_epn_"+str(title_num)+".home(True)"
+			exec (p8)
+			p8="ui.label_epn_"+str(title_num)+".deselect()"
+			exec (p8)
+			QtWidgets.QApplication.processEvents()
+			
+			p1 = "ui.label_epn_"+str(row)+".y()"
+			ht=eval(p1)
+			
+			ui.scrollArea1.verticalScrollBar().setValue(ht)
+			ui.labelFrame2.setText(self.epn_name_in_list[:20])
+	
 	def localGetInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,artist_name_mplayer
 		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,new_epn,path_Local_Dir,Player,mplayerLength,curR,epnArrList,fullscr,thumbnail_indicator,category,finalUrlFound,refererNeeded,server,current_playing_file_path,music_arr_setting,default_arr_setting,wget,idw
@@ -15919,7 +15948,10 @@ class Ui_MainWindow(object):
 		buffering_mplayer = "no"
 		#external_url = False
 		
+		
+		
 		if self.if_file_path_exists_then_play(row,self.list2,True):
+			self.adjust_thumbnail_window(row)
 			return 0
 		
 		
@@ -15963,28 +15995,8 @@ class Ui_MainWindow(object):
 				self.list2.setCurrentRow(row)
 				#if 'youtube.com' in finalUrl:
 				#	finalUrl = get_yt_url(finalUrl,quality).strip()
-		if thumbnail_indicator and not self.tab_5.isHidden():
-			title_num = row + ui.list2.count()
-			if '#' in self.epn_name_in_list:
-				newTitle = self.epn_name_in_list	
-			else:
-				newTitle = '#'+self.epn_name_in_list	
-			sumry = "<html><h1>"+self.epn_name_in_list+"</h1></html>"
-			q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"
-			exec (q4)
-			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
-			exec (q3)
-			p8="ui.label_epn_"+str(title_num)+".home(True)"
-			exec (p8)
-			p8="ui.label_epn_"+str(title_num)+".deselect()"
-			exec (p8)
-			QtWidgets.QApplication.processEvents()
-			
-			p1 = "ui.label_epn_"+str(row)+".y()"
-			ht=eval(p1)
-			
-			ui.scrollArea1.verticalScrollBar().setValue(ht)
-			ui.labelFrame2.setText(self.epn_name_in_list[:20])
+		
+		self.adjust_thumbnail_window(row)
 		
 		if site=="Local":
 			if opt == "History":
@@ -16273,7 +16285,10 @@ class Ui_MainWindow(object):
 		except:
 			pass
 		
+		
+		
 		if self.if_file_path_exists_then_play(row,self.list2,True):
+			self.adjust_thumbnail_window(row)
 			return 0
 		
 		if site != "PlayLists":
@@ -16310,27 +16325,8 @@ class Ui_MainWindow(object):
 				self.list2.setCurrentRow(row)
 				if 'youtube.com' in finalUrl:
 					finalUrl = get_yt_url(finalUrl,quality).strip()
-		if thumbnail_indicator and not self.tab_5.isHidden():
-			title_num = row + ui.list2.count()
-			if '#' in self.epn_name_in_list:
-				newTitle = self.epn_name_in_list	
-			else:
-				newTitle = '#'+self.epn_name_in_list	
-			sumry = "<html><h1>"+self.epn_name_in_list+"</h1></html>"
-			q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"
-			exec (q4)
-			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
-			exec (q3)
-			p8="ui.label_epn_"+str(title_num)+".home(True)"
-			exec (p8)
-			p8="ui.label_epn_"+str(title_num)+".deselect()"
-			exec (p8)
-			QtWidgets.QApplication.processEvents()
-			
-			p1 = "ui.label_epn_"+str(row)+".y()"
-			ht=eval(p1)
-			ui.scrollArea1.verticalScrollBar().setValue(ht)
-			ui.labelFrame2.setText(self.epn_name_in_list[:20])
+		
+		self.adjust_thumbnail_window(row)
 		
 		self.set_init_settings()
 		
@@ -17120,27 +17116,7 @@ class Ui_MainWindow(object):
 					self.list1.addItem((ti))
 		elif site == "PlayLists":
 			a = 0
-			"""
-			self.list1.clear()
-			self.list2.clear()
-			r = self.list3.currentRow()
-			item = self.list3.item(r)
-			epnArrList[:]=[]
-			if item:
-				pls = self.list3.currentItem().text()
-				file_path = home+'/Playlists/'+str(pls)
-				if os.path.exists(file_path):
-					f = open(file_path)
-					lines = f.readlines()
-					f.close()
-					for i in lines:
-						i = i.replace('\n','')
-						if i:
-							
-							epnArrList.append(i)
-							j = i.split('	')[0]
-							self.list2.addItem((j))
-			"""
+			
 		self.page_number.setText(str(self.list1.count()))
 		insidePreopt = 0
 		if opt == "History":
