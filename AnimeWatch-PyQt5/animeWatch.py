@@ -7625,6 +7625,10 @@ class Ui_MainWindow(object):
 				if video_local_stream:
 					if self.do_get_thread.isRunning():
 						print('----------stream-----pausing-----')
+						t_list = self.stream_session.get_torrents()
+						for i in t_list:
+							print(i.name(),'--removing--')
+							self.stream_session.remove_torrent(i)
 						self.stream_session.pause()
 					elif self.stream_session:
 						if not self.stream_session.is_paused():
@@ -12399,6 +12403,7 @@ class Ui_MainWindow(object):
 		if not QT_WEB_ENGINE:
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
+		self.webStyle(self.web)
 		if review_site == "Anime-Planet":
 			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
 		elif review_site == "MyAnimeList":
@@ -12416,7 +12421,7 @@ class Ui_MainWindow(object):
 		elif review_site == "Youtube":
 			if not name1:
 				name1 = 'GNU Linux FSF'
-			self.webStyle(self.web)
+			
 			if pl_list and new_url:
 				self.web.load(QUrl(new_url))
 			else:
@@ -14306,11 +14311,11 @@ class Ui_MainWindow(object):
 							f.close()
 							finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
 						else:
-							finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6)
+							finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress)
 					else:
 						#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 						#self.list6.clear()
-						finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6)
+						finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress)
 					self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 					self.torrent_handle.set_download_limit(self.torrent_download_limit)
 					#self.do_get_thread.session_signal.connect(self.session_finished)
@@ -14781,7 +14786,7 @@ class Ui_MainWindow(object):
 			self.label.hide()
 			
 	def local_torrent_open(self,tmp):
-		global local_torrent_file_path
+		global local_torrent_file_path,site
 		#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 		if not self.local_ip:
 			self.local_ip = get_lan_ip()
@@ -14804,7 +14809,7 @@ class Ui_MainWindow(object):
 				torrent_dest = local_torrent_file_path
 				print(torrent_dest,path)
 				
-				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(tmp,path,ui.list6)
+				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(tmp,path,ui.list6,ui.progress)
 				#self.handle.pause()
 				file_arr = []
 				ui.list2.clear()
@@ -14821,7 +14826,7 @@ class Ui_MainWindow(object):
 			else:
 				index = int(self.list2.currentRow())
 				
-				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.torrent_download_folder,self.stream_session,ui.list6)
+				cnt,cnt_limit = set_torrent_info(self.torrent_handle,index,self.torrent_download_folder,self.stream_session,ui.list6,ui.progress)
 				
 				self.do_get_thread = TorrentThread(self.torrent_handle,cnt,cnt_limit,self.stream_session)
 				self.do_get_thread.start()
@@ -14842,7 +14847,7 @@ class Ui_MainWindow(object):
 			torrent_dest = local_torrent_file_path
 			print(torrent_dest,index,path)
 			
-			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session,ui.list6)
+			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session,ui.list6,ui.progress)
 			
 			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 			self.torrent_handle.set_download_limit(self.torrent_download_limit)
@@ -14852,7 +14857,7 @@ class Ui_MainWindow(object):
 			
 			
 			url = 'http://'+ip+':'+str(port)+'/'
-			print(url,'-local-ip-url')
+			print(url,'-local-ip-url',site)
 			
 			return url
 				
@@ -15064,11 +15069,11 @@ class Ui_MainWindow(object):
 								f.close()
 								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
 							else:
-								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6)
+								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress)
 						else:
 							#from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info
 							#self.list6.clear()
-							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6)
+							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress)
 						self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 						self.torrent_handle.set_download_limit(self.torrent_download_limit)
 						#finalUrl = site_var.getFinalUrl(name,row,mirrorNo,quality)
@@ -16818,7 +16823,7 @@ class Ui_MainWindow(object):
 				QtWidgets.QApplication.processEvents()
 				try:
 					if video_local_stream:
-						m = site_var.getCompleteList(t_opt,ui.list6)
+						m = site_var.getCompleteList(t_opt,ui.list6,ui.progress)
 					else:
 						m = site_var.getCompleteList(t_opt,0)
 					self.text.setText('Load Complete!')

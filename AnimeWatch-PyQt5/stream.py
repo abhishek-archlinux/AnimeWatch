@@ -173,6 +173,8 @@ class ThreadServer(QtCore.QThread):
 
 class TorrentThread(QtCore.QThread):
 	session_signal = pyqtSignal(str)
+	progress_signal = pyqtSignal(str,int)
+	progress_signal_end = pyqtSignal(str)
 	def __init__(self,v1,v2,v3,v4):
 		QtCore.QThread.__init__(self)
 		self.handle = v1
@@ -180,25 +182,44 @@ class TorrentThread(QtCore.QThread):
 		self.cnt_limit = v3
 		self.session = v4
 		self.session_signal.connect(session_finished)
+		self.progress_signal.connect(print_progress)
+		self.progress_signal_end.connect(print_progress_complete)
 	def __del__(self):
 		self.wait()                        
 	
 	def run(self):
-		global ui,new_cnt,new_cnt_limit
+		global ui,new_cnt,new_cnt_limit,progress,total_size_content
 		cnt1 = self.cnt
 		cnt_limit = self.cnt_limit
 		s = self.handle.status()
+		#progress.show()
+		#progress.setFormat('hello')
+		
 		while (not self.session.is_paused()):
 			#print(self.session.is_paused())
 			s = self.handle.status()
 			
 			state_str = ['queued', 'checking', 'downloading metadata', \
-				'downloading', 'finished', 'seeding', 'allocating', 'checking fastresume']
-			print ('\r%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
-				(s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, \
-				s.num_peers, state_str[s.state]),)
-			sys.stdout.flush()
+				'DOWNLOADING', 'finished', 'seeding', 'allocating', 'checking fastresume']
+			#print ('\r%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
+			#	(s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, \
+			#	s.num_peers, state_str[s.state]),)
+			#sys.stdout.flush()
+			if not self.handle.is_seed():
+				out = str(int(s.progress*100))+'%'
+			else:
+				out = 'SEEDING'
+			out_percent = int(s.progress*100)
 			
+			#print(out)
+			TD = str(int(s.total_download/(1024*1024)))+'M'
+			TU = str(int(s.total_upload/(1024*1024)))+'M'
+			TDR = u'\u2193'+str(int(s.download_rate/1024)) + 'K' + '('+TD+')'
+			TUR = u'\u2191'+str(int(s.upload_rate/1024)) + 'K'+'('+TU+')'
+			out1 = str(out)+' '+total_size_content+' '+TDR +' '+TUR+' '+'P:'+str(s.num_peers)
+			if s.state == 1:
+				out1 = 'Checking Please Wait: '+str(out)
+			self.progress_signal.emit(out1,out_percent)
 			#print(h.have_piece(cnt))
 			if cnt1+3 < cnt_limit:
 				if self.handle.have_piece(cnt1) and self.handle.have_piece(cnt1+1):
@@ -214,11 +235,14 @@ class TorrentThread(QtCore.QThread):
 			
 			if self.handle.is_seed():
 				print('Download Complete, Entering into seeding mode')
-				break
+				#break
 			time.sleep(1)
 			
-
+		
 		print (self.handle.name(), 'complete')
+		self.progress_signal_end.emit('complete')
+		#progress.setValue(100)
+		#progress.hide()
 		#self.session_signal.emit('..Finished..')
 		
 def change_config_file(ip,port):
@@ -244,7 +268,19 @@ def get_ip():
 	print(c)
 	print(final)
 	return final
-	
+
+@pyqtSlot(str)
+def print_progress_complete(var_str):
+	global progress,ses
+	progress.setValue(100)
+	progress.hide()
+
+@pyqtSlot(str)
+def print_progress(var_str,var_int):
+	global progress
+	#if progress.value() > var_int:
+	progress.setValue(var_int)		
+	progress.setFormat(var_str)
 @pyqtSlot(str)
 def session_finished(var):
 	#from animeWatch import ui
@@ -316,8 +352,11 @@ def session_finished(var):
 				print(g)
 			
 	
-def set_torrent_info(v1,v2,v3,session,u):
-	global handle,ses,info,cnt,cnt_limit,file_name,ui
+def set_torrent_info(v1,v2,v3,session,u,p_bar):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,progress
+	progress = p_bar
+	progress.setValue(0)
+	progress.show()
 	ui = u
 	i=0
 	handle = v1
@@ -379,9 +418,12 @@ def set_torrent_info(v1,v2,v3,session,u):
 	handle.resume()
 	return cnt,cnt_limit
 		
-def get_torrent_info_magnet(v1,v3,u):
-	global handle,ses,info,cnt,cnt_limit,file_name,ui
+def get_torrent_info_magnet(v1,v3,u,p_bar):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,progress
 	ui = u
+	progress = p_bar
+	progress.setValue(0)
+	progress.show()
 	#print(v1,'------------hello----------info---')
 	sett = lt.session_settings()
 	sett.user_agent = 'qBittorrent v3.3.5'
@@ -409,9 +451,12 @@ def get_torrent_info_magnet(v1,v3,u):
 	
 	return handle,ses,info
 
-def get_torrent_info(v1,v2,v3,session,u):
-	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
+def get_torrent_info(v1,v2,v3,session,u,p_bar):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path,progress,total_size_content
 	ui = u
+	progress = p_bar
+	progress.setValue(0)
+	progress.show()
 	if not session:
 		sett = lt.session_settings()
 		sett.user_agent = 'qBittorrent v3.3.5'
@@ -423,6 +468,7 @@ def get_torrent_info(v1,v2,v3,session,u):
 		ses.set_settings(sett)
 	else:
 		ses = session
+		
 	#print(ses.get_settings())
 	
 	
@@ -449,6 +495,10 @@ def get_torrent_info(v1,v2,v3,session,u):
 	handle.set_sequential_download(True)
 	print(handle.trackers())
 	
+	print(ses.get_torrents(),'torrents_list')
+	torr_arr = ses.get_torrents()
+	for i in torr_arr:
+		print(i.name())
 	
 	i=0
 	fileIndex = int(v2)
@@ -475,6 +525,8 @@ def get_torrent_info(v1,v2,v3,session,u):
 	
 	content_length = fileStr.size
 	print(content_length,'content-length')
+	total_size_content = str(int(content_length/(1024*1024)))+'M'
+	
 	pr = info.map_file(fileIndex,0,fileStr.size)
 	print(pr.length,info.piece_length(),info.num_pieces())
 	n_pieces = pr.length / info.piece_length() + 1 

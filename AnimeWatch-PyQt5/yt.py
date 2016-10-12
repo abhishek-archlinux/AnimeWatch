@@ -61,6 +61,7 @@ def get_yt_url(url,quality):
 						
 		if not final_url.startswith('http'):
 			if quality == 'sd480p':
+				"""
 				try:
 					try:
 						audio = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','171','-g','--playlist-end','1',url])
@@ -76,6 +77,9 @@ def get_yt_url(url,quality):
 				except:
 					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
+				"""
+				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
+				final_url = str(final_url,'utf-8')
 			elif quality == 'sd':
 				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
