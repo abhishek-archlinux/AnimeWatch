@@ -5967,10 +5967,10 @@ class tab5(QtWidgets.QWidget):
 			#cycle_pause = 1 - cycle_pause
 			
 			txt = ui.player_play_pause.text()
-			if txt == 'Play':
-				ui.player_play_pause.setText("Pause")
-			elif txt == "Pause":
-				ui.player_play_pause.setText("Play")
+			if txt == ui.player_buttons['play']:
+				ui.player_play_pause.setText(ui.player_buttons['pause'])
+			elif txt == ui.player_buttons['pause']:
+				ui.player_play_pause.setText(ui.player_buttons['play'])
 				
 			buffering_mplayer = "no"
 			
@@ -6275,7 +6275,7 @@ class tab5(QtWidgets.QWidget):
 			
 			quitReally = "yes"
 			mpvplayer.write(b'\n quit \n')
-			ui.player_play_pause.setText("Play")
+			ui.player_play_pause.setText(ui.player_buttons['play'])
 			if video_local_stream:
 				f = open('/tmp/AnimeWatch/player_stop.txt','w')
 				f.close()
@@ -6726,9 +6726,9 @@ class Ui_MainWindow(object):
 		self.subtitle_track = QtWidgets.QPushButton(self.player_opt)
 		self.subtitle_track.setObjectName(_fromUtf8("subtitle_track"))
 		self.horizontalLayout_player_opt.insertWidget(3,self.subtitle_track,0)
-		self.subtitle_track.setText("Subtitle")
+		self.subtitle_track.setText("SUB")
 		
-		
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4'}
 		
 		
 		
@@ -6737,28 +6737,28 @@ class Ui_MainWindow(object):
 		self.player_loop_file = QtWidgets.QPushButton(self.player_opt)
 		self.player_loop_file.setObjectName(_fromUtf8("player_loop_file"))
 		self.horizontalLayout_player_opt.insertWidget(4,self.player_loop_file,0)
-		self.player_loop_file.setText("Lock")
-		self.player_loop_file.hide()
+		self.player_loop_file.setText(self.player_buttons['unlock'])
+		#self.player_loop_file.hide()
 		
 		self.player_stop = QtWidgets.QPushButton(self.player_opt)
 		self.player_stop.setObjectName(_fromUtf8("player_stop"))
 		self.horizontalLayout_player_opt.insertWidget(5,self.player_stop,0)
-		self.player_stop.setText("Stop")
+		self.player_stop.setText(self.player_buttons['stop'])
 		
 		self.player_play_pause = QtWidgets.QPushButton(self.player_opt)
 		self.player_play_pause.setObjectName(_fromUtf8("player_play_pause"))
 		self.horizontalLayout_player_opt.insertWidget(6,self.player_play_pause,0)
-		self.player_play_pause.setText("Play")
+		self.player_play_pause.setText(self.player_buttons['play'])
 		
 		self.player_prev = QtWidgets.QPushButton(self.player_opt)
 		self.player_prev.setObjectName(_fromUtf8("player_prev"))
 		self.horizontalLayout_player_opt.insertWidget(7,self.player_prev,0)
-		self.player_prev.setText("Prev")
+		self.player_prev.setText(self.player_buttons['prev'])
 		
 		self.player_next = QtWidgets.QPushButton(self.player_opt)
 		self.player_next.setObjectName(_fromUtf8("player_next"))
 		self.horizontalLayout_player_opt.insertWidget(8,self.player_next,0)
-		self.player_next.setText("Next")
+		self.player_next.setText(self.player_buttons['next'])
 		
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
@@ -7509,25 +7509,13 @@ class Ui_MainWindow(object):
 			self.list1.hide()
 			self.hide_btn_list1.setText("Show")
 	def subMplayer(self):
-		global audio_id,sub_id
-		#t = str(self.audio_track.text())
-		"""
-		t1 = t.split('/')[1]
-		t2 = "Audio: "+str(audio_id+1)+'/'+str(t1)
-		print t2 +'*********'
-		"""
-		#self.audio_track.setText(t2)
-		t = bytes('\n'+"switch_audio "+str(audio_id)+'\n','utf-8')
-		mpvplayer.write(t)
-		#t = str(self.subtitle_track.text())
-		"""
-		t1 = t.split('/')[1]
-		t2 = "Sub: "+str(sub_id+1)+'/'+str(t1)
-		print t2 + '**********'
-		"""
-		#self.subtitle_track.setText(t2)
-		t1 = bytes('\n'+"sub_select "+str(sub_id)+'\n','utf-8')
-		mpvplayer.write(t1)
+		global audio_id,sub_id,Player
+		if Player == 'mplayer':
+			t = bytes('\n'+"switch_audio "+str(audio_id)+'\n','utf-8')
+			mpvplayer.write(t)
+			#self.subtitle_track.setText(t2)
+			t1 = bytes('\n'+"sub_select "+str(sub_id)+'\n','utf-8')
+			mpvplayer.write(t1)
 	def osd_hide(self):
 		global mpvplayer
 		mpvplayer.write(b'\n osd 0 \n')
@@ -7636,7 +7624,7 @@ class Ui_MainWindow(object):
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
 					mpvplayer.write(b'\n quit \n')
-					self.player_play_pause.setText("Play")
+					self.player_play_pause.setText(self.player_buttons['play'])
 					if ui.tab_6.isHidden():
 						ui.tab_5.showNormal()
 						ui.tab_5.hide()
@@ -7725,38 +7713,38 @@ class Ui_MainWindow(object):
 	def playerLoopFile(self):
 		global Player
 		txt = self.player_loop_file.text()
-		if txt == "Lock":
+		if txt == self.player_buttons['unlock']:
 			self.player_setLoop_var = 1
-			self.player_loop_file.setText("unLock")
+			self.player_loop_file.setText(self.player_buttons['lock'])
 			#if Player == "mpv":
 			#	mpvplayer.write(b'\n set loop inf \n')
 			
 		else:
 			self.player_setLoop_var = 0
-			self.player_loop_file.setText("Lock")
+			self.player_loop_file.setText(self.player_buttons['unlock'])
 			#if Player == "mpv":
 			#	mpvplayer.write(b'\n set loop 1 \n')
 			
 	def playerPlayPause(self):
 		global mpvplayer
 		txt = self.player_play_pause.text() 
-		if txt == "Play":
+		if txt == self.player_buttons['play']:
 			if mpvplayer.pid() > 0:
 				if Player == "mpv":
 					mpvplayer.write(b'\n set pause no \n')
 				else:
 					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
-				self.player_play_pause.setText("Pause")
+				self.player_play_pause.setText(self.player_buttons['pause'])
 			else:
 				self.epnfound()
 			
-		elif txt == "Pause":
+		elif txt == self.player_buttons['pause']:
 			if mpvplayer.pid() > 0:
 				if Player == "mpv":
 					mpvplayer.write(b'\n set pause yes \n')
 				else:
 					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
-				self.player_play_pause.setText("Play")
+				self.player_play_pause.setText(self.player_buttons['play'])
 			else:
 				self.epnfound()
 				
@@ -11492,7 +11480,7 @@ class Ui_MainWindow(object):
 		global opt,site,name,base_url,name1,embed,pre_opt,bookmark,base_url_picn,base_url_summary
 		#self.text.show()
 		if site!= "Music":
-			self.subtitle_track.setText("Subtitle")
+			self.subtitle_track.setText("SUB")
 			self.audio_track.setText("A/V")
 		if opt == "History" or site == "Music" or site == "Video" or site == "PlayLists":
 		
@@ -14034,7 +14022,8 @@ class Ui_MainWindow(object):
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 			
 			else:
-				command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+				#command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 			print(command,'function play_file_now')
 			self.infoPlay(command)
 			
@@ -14190,7 +14179,7 @@ class Ui_MainWindow(object):
 		global mpv,mpvAlive,downloadVideo,indexQueue,Player,startPlayer,mpvplayer,new_epn,idw,home1,quitReally,buffering_mplayer,opt_movies_indicator,name,artist_name_mplayer,rfr_url,server,current_playing_file_path,music_arr_setting,default_arr_setting,local_torrent_file_path,video_local_stream
 		buffering_mplayer="no"
 		self.list4.hide()
-		self.player_play_pause.setText("Pause")
+		self.player_play_pause.setText(self.player_buttons['pause'])
 		
 		
 		try:
@@ -15418,22 +15407,10 @@ class Ui_MainWindow(object):
 	def dataReady(self,p):
 		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path,wget
-		#tt = time.process_time()
-		#print (p.readAllStandardOutput())
-		
-		#print(a)
 		try:
-			#a = str(bytes(p.readAllStandardOutput()).decode('utf-8')).strip()
-			#aaa = 1
-			#a = str(p.readAllStandardOutput(),'utf-8').strip()
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
 		except:
-			#a = p.readAllStandardOutput()
-			#print(a)
 			a = ""
-		#a = (str(p.readAllStandardOutput())).replace('\n','')
-		#print(a)
-		#a = str((p.readAllStandardOutput())).strip()
 		#el = time.process_time() - tt
 		#print(el)
 		try:
@@ -15580,7 +15557,7 @@ class Ui_MainWindow(object):
 				#if "EndOfFile:" in a:
 				#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-					if self.player_setLoop_var:
+					if self.player_setLoop_var and quitReally == 'no':
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
@@ -15638,7 +15615,7 @@ class Ui_MainWindow(object):
 				#print(a)
 				if "PAUSE" in a:
 					if buffering_mplayer != 'yes':
-						self.player_play_pause.setText("Play")
+						self.player_play_pause.setText(self.player_buttons['play'])
 						#print('set play button text = Play')
 					if MainWindow.isFullScreen() and layout_mode != "Music":
 						self.gridLayout.setSpacing(0)
@@ -15800,7 +15777,7 @@ class Ui_MainWindow(object):
 					#	curR = self.list2.currentRow()
 					#else:
 						#quitReally == "no"
-					if self.player_setLoop_var:
+					if self.player_setLoop_var and quitReally == 'no':
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
@@ -16141,7 +16118,7 @@ class Ui_MainWindow(object):
 							mpvplayer.write(t1)
 							mpvplayer.write(t2)
 							if self.external_url:
-								mpvplayer.write(b'\n set aid 1 \n')
+								#mpvplayer.write(b'\n set aid 1 \n')
 								self.external_url = False
 						except:
 							self.infoPlay(command)
@@ -16241,7 +16218,7 @@ class Ui_MainWindow(object):
 				if Player == 'mpv':
 					mpvplayer.write(t2)
 					if self.external_url:
-						mpvplayer.write(b'\n set aid 1 \n')
+						#mpvplayer.write(b'\n set aid 1 \n')
 						self.external_url = False
 				elif Player == "mplayer":
 					if not self.external_url:
@@ -18010,7 +17987,7 @@ class RightClickMenu(QtWidgets.QMenu):
 		ui.sd_hd.show()
 		ui.audio_track.show()
 		ui.subtitle_track.show()
-		ui.player_loop_file.hide()
+		#ui.player_loop_file.hide()
 		ui.list1.show()
 		ui.frame.show()
 		ui.list2.show()
@@ -18676,7 +18653,7 @@ if __name__ == "__main__":
 		ui.sd_hd.show()
 		ui.audio_track.show()
 		ui.subtitle_track.show()
-		ui.player_loop_file.hide()
+		#ui.player_loop_file.hide()
 		MainWindow.showMaximized()
 	
 	
