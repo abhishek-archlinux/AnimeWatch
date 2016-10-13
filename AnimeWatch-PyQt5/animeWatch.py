@@ -5052,7 +5052,36 @@ class QLineCustomEpn(QtWidgets.QLineEdit):
 		elif event.key() == QtCore.Qt.Key_Up:
 			ui.list5.setFocus()
 		super(QLineCustomEpn, self).keyPressEvent(event)
-			
+
+class QProgressBarCustom(QtWidgets.QProgressBar):
+	def __init__(self, parent,gui):
+		super(QProgressBarCustom, self).__init__(parent)
+		self.gui = gui
+	def mouseReleaseEvent(self, ev):
+		#def mouseDoubleClickEvent(self,ev):
+		global video_local_stream
+		if ev.button() == QtCore.Qt.LeftButton:
+			print('progressbar clicked')
+			if video_local_stream:
+				print('hello')
+				if self.gui.torrent_frame.isHidden():
+					self.gui.torrent_frame.show()
+					if self.gui.torrent_download_limit == 0:
+						down_rate = '\u221E' + ' K'
+					else:
+						down_rate = str(int(self.gui.torrent_download_limit/1024))+'K'
+					if self.gui.torrent_upload_limit == 0:
+						up_rate = '\u221E' + ' K'
+					else:
+						up_rate = str(int(self.gui.torrent_upload_limit/1024))+'K'
+					down = '\u2193 RATE: ' +down_rate
+					up = '\u2191 RATE:' +up_rate
+					self.gui.label_down_speed.setPlaceholderText(down)
+					self.gui.label_up_speed.setPlaceholderText(up)
+					#self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+					#self.torrent_handle.set_download_limit(self.torrent_download_limit)
+				else:
+					self.gui.torrent_frame.hide()
 class QtGuiQWidgetScroll(QtWidgets.QScrollArea):
 	def __init__(self, parent):
 		super(QtGuiQWidgetScroll, self).__init__(parent)
@@ -6216,9 +6245,11 @@ class tab5(QtWidgets.QWidget):
 				ui.tab_6.hide()
 				ui.goto_epn.hide()
 				ui.btn20.hide()
-				if wget:
-					if wget.pid() > 0:
-						ui.progress.hide()
+				if wget.pid() > 0 or video_local_stream:
+					ui.progress.hide()
+					if not ui.torrent_frame.isHidden():
+						ui.torrent_frame.hide()
+					
 				ui.list2.hide()
 				ui.list6.hide()
 				#ui.text.hide()
@@ -6245,11 +6276,8 @@ class tab5(QtWidgets.QWidget):
 				ui.list2.show()
 				ui.goto_epn.show()
 				ui.btn20.show()
-				#if Player == "mpv":
-				if wget:
-					if wget.pid() > 0:
-						#ui.goto_epn.hide()
-						ui.progress.show()
+				if wget.pid() > 0 or video_local_stream:
+					ui.progress.show()
 					
 				ui.frame1.show()
 				if Player == "mplayer" or Player=="mpv":
@@ -6622,7 +6650,8 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_goto_epn.setObjectName(_fromUtf8("horizontalLayout_goto_epn"))
 		#self.gridLayout.addWidget(self.goto_epn, 1, 2, 1, 1)
 		
-		self.progress = QtWidgets.QProgressBar(MainWindow)
+		#self.progress = QtWidgets.QProgressBar(MainWindow)
+		self.progress = QProgressBarCustom(MainWindow,self)
 		self.progress.setObjectName(_fromUtf8("progress"))
 		#self.gridLayout.addWidget(self.progress, 1, 3, 1, 1)
 		self.verticalLayout_50.insertWidget(3,self.progress,0)
@@ -6631,9 +6660,41 @@ class Ui_MainWindow(object):
 		self.progress.setMaximumSize(QtCore.QSize(300,16777215))
 		self.progress.setTextVisible(True)
 		self.progress.hide()
+		self.progress.setToolTip("Click for more options")
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4'}
+		
+		self.torrent_frame = QtWidgets.QFrame(MainWindow)
+		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
+		self.torrent_frame.setFrameShape(QtWidgets.QFrame.NoFrame)
+		self.torrent_frame.setFrameShadow(QtWidgets.QFrame.Raised)
+		self.torrent_frame.setObjectName(_fromUtf8("torrent_frame"))
+		self.verticalLayout_50.insertWidget(4,self.torrent_frame,0)
+		self.horizontalLayout_torrent_frame = QtWidgets.QHBoxLayout(self.torrent_frame)
+		self.horizontalLayout_torrent_frame.setContentsMargins(0,2,0,2)
+		self.horizontalLayout_torrent_frame.setSpacing(2)
+		self.horizontalLayout_torrent_frame.setObjectName(_fromUtf8("horizontalLayout_torrent_frame"))
+		self.torrent_frame.hide()
+		
+		self.label_torrent_stop = QtWidgets.QPushButton(self.torrent_frame)
+		self.label_torrent_stop.setObjectName(_fromUtf8("label_torrent_stop"))
+		self.label_torrent_stop.setText(self.player_buttons['stop'])
+		self.label_torrent_stop.setMinimumWidth(24)
+		self.horizontalLayout_torrent_frame.insertWidget(0,self.label_torrent_stop,0)
+		self.label_torrent_stop.setToolTip("Stop Torrent")
+		
+		self.label_down_speed = QtWidgets.QLineEdit(self.torrent_frame)
+		self.label_down_speed.setObjectName(_fromUtf8("label_down_speed"))
+		self.label_down_speed.setToolTip("Set Download Speed\nEnter Only Integer Values")
+		self.horizontalLayout_torrent_frame.insertWidget(1,self.label_down_speed,0)
+		#self.label_down_speed.setMaximumWidth(100)
+		self.label_up_speed = QtWidgets.QLineEdit(self.torrent_frame)
+		self.label_up_speed.setObjectName(_fromUtf8("label_up_speed"))
+		self.label_up_speed.setToolTip("Set Upload Speed\nEnter Only Integer Values")
+		self.horizontalLayout_torrent_frame.insertWidget(2,self.label_up_speed,0)
 		
 		
 		
+		#self.label_up_speed.setMaximumWidth(100)
 		
 		self.frame1 = QtWidgets.QFrame(MainWindow)
 		self.frame1.setMaximumSize(QtCore.QSize(10000, 32))
@@ -6728,7 +6789,7 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_player_opt.insertWidget(3,self.subtitle_track,0)
 		self.subtitle_track.setText("SUB")
 		
-		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4'}
+		
 		
 		
 		
@@ -7294,6 +7355,9 @@ class Ui_MainWindow(object):
 		self.btn10.currentIndexChanged['int'].connect(self.browse_epn)
 		#QtCore.QObject.connect(self.line, QtCore.SIGNAL(_fromUtf8("returnPressed()")), self.searchNew)
 		self.line.returnPressed.connect(self.searchNew)
+		self.label_down_speed.returnPressed.connect(self.set_new_download_speed)
+		self.label_up_speed.returnPressed.connect(self.set_new_upload_speed)
+		self.label_torrent_stop.clicked.connect(self.stop_torrent)
 		#QtCore.QObject.connect(self.page_number, QtCore.SIGNAL(_fromUtf8("returnPressed()")), self.gotopage)
 		self.page_number.returnPressed.connect(self.gotopage)
 		#QtCore.QObject.connect(self.btn1, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.ka)
@@ -7465,6 +7529,50 @@ class Ui_MainWindow(object):
 		self.downloadWget_cnt = 0
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
+	def hide_torrent_info(self):
+		self.torrent_frame.hide()
+		self.progress.hide()
+	def stop_torrent(self):
+		global video_local_stream
+		if video_local_stream:
+			if self.do_get_thread.isRunning():
+				print('----------stream-----pausing-----')
+				t_list = self.stream_session.get_torrents()
+				for i in t_list:
+					print(i.name(),'--removing--')
+					self.stream_session.remove_torrent(i)
+				self.stream_session.pause()
+			elif self.stream_session:
+				if not self.stream_session.is_paused():
+					self.stream_session.pause()
+			txt = 'Torrent Stopped'
+			subprocess.Popen(['notify-send',txt])
+			self.torrent_frame.hide()
+	def set_new_download_speed(self):
+		txt = self.label_down_speed.text()
+		try:
+			self.torrent_download_limit = int(txt) * 1024
+		except:
+			txt_notify = 'Please enter valid speed in KB'
+			subprocess.Popen(['notify-send',txt_notify])
+		self.label_down_speed.clear()
+		self.torrent_handle.set_download_limit(self.torrent_download_limit)
+		print(type(self.torrent_handle))
+		down = '\u2193 SET TO: ' +str(int(self.torrent_download_limit/1024))+'K'
+		self.label_down_speed.setPlaceholderText(down)
+	def set_new_upload_speed(self):
+		txt = self.label_up_speed.text()
+		try:
+			self.torrent_upload_limit = int(txt) * 1024
+		except:
+			txt_notify = 'Please enter valid speed in KB'
+			subprocess.Popen(['notify-send',txt_notify])
+		self.label_up_speed.clear()
+		self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+		print(type(self.torrent_handle))
+		up = '\u2191 SET TO: ' +str(int(self.torrent_upload_limit/1024))+'K'
+		self.label_up_speed.setPlaceholderText(up)
+		
 	def quitApp(self):
 		app.quit()
 	def queueList_return_pressed(self,r):
@@ -7610,17 +7718,7 @@ class Ui_MainWindow(object):
 	def playerStop(self):
 			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt,iconv_r_indicator,iconv_r,curR,wget,Player,show_hide_cover,show_hide_playlist,show_hide_titlelist,video_local_stream
 			if mpvplayer:
-				if video_local_stream:
-					if self.do_get_thread.isRunning():
-						print('----------stream-----pausing-----')
-						t_list = self.stream_session.get_torrents()
-						for i in t_list:
-							print(i.name(),'--removing--')
-							self.stream_session.remove_torrent(i)
-						self.stream_session.pause()
-					elif self.stream_session:
-						if not self.stream_session.is_paused():
-							self.stream_session.pause()
+				
 				if mpvplayer.pid() > 0:
 					quitReally = "yes"
 					mpvplayer.write(b'\n quit \n')
@@ -8192,10 +8290,11 @@ class Ui_MainWindow(object):
 		ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.frame1.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+		ui.torrent_frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 		#ui.progress.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 	
-	
-	
+		
+		
 		ui.btn1.setStyleSheet("""QComboBox {
 	min-height:20px;
 	max-height:63px;
@@ -8706,7 +8805,28 @@ class Ui_MainWindow(object):
 	width: 2px;
 	height: 2px;
 	}""")
+		ui.label_torrent_stop.setStyleSheet("""
+	QToolTip {
+	font : Bold 10px;
+	color: white;
+	background:rgba(157,131,131,80%)
+	}
+		""")
 		
+		ui.label_down_speed.setStyleSheet("""
+	QToolTip {
+	font : Bold 10px;
+	color: white;
+	background:rgba(157,131,131,80%)
+	}
+		""")
+		
+		ui.label_up_speed.setStyleSheet("""
+	QToolTip {
+	font : Bold 10px;
+	color: white;
+	background:rgba(157,131,131,80%)
+	}""")
 		
 
 	def setPlayerFocus(self):
@@ -18425,7 +18545,7 @@ if __name__ == "__main__":
 					j = re.sub('\n','',j)
 					j1 = j.split(':')
 					if len(j1) == 2:
-						if j1[0].lower()=='localhost':
+						if j1[0].lower()=='localhost' or not j1[0]:
 							ui.local_ip = '127.0.0.1'
 						else:
 							ui.local_ip = j1[0]
@@ -18473,7 +18593,7 @@ if __name__ == "__main__":
 				j = re.sub('\n','',j)
 				j1 = j.split(':')
 				if len(j1) == 2:
-					if j1[0].lower()=='localhost':
+					if j1[0].lower()=='localhost' or not j1[0]:
 						ui.local_ip_stream = '127.0.0.1'
 					else:
 						ui.local_ip_stream = j1[0]
