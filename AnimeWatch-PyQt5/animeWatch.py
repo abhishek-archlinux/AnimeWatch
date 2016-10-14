@@ -230,8 +230,12 @@ def ccurl(url):
 		c.setopt(c.USERAGENT, hdr)
 		f = open(picn_op,'wb')
 		c.setopt(c.WRITEDATA, f)
-		c.perform()
-		c.close()
+		try:
+			c.perform()
+			c.close()
+		except:
+			print('failure in obtaining image try again')
+			pass
 		f.close()
 	else:
 		if curl_opt == '-I':
@@ -281,10 +285,14 @@ def ccurl(url):
 			c.setopt(c.FOLLOWLOCATION, True)
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		content = getContentUnicode(content)
+		try:
+			c.perform()
+			c.close()
+			content = storage.getvalue()
+			content = getContentUnicode(content)
+		except:
+			print('curl failure try again')
+			content = ''
 		return content
 
 
@@ -3609,27 +3617,29 @@ class List2(QtWidgets.QListWidget):
 		
 		else:
 			QListWidget.dropEvent(event)
+	def init_offline_mode(self):
+		global site,wget,downloadVideo
+		if site.lower() != "Local" and site.lower() != 'video' and site.lower() != 'music':
+			if wget.pid() == 0:
+				downloadVideo = 1
+				r = self.currentRow()
+				item = self.item(r)
+				if item:
+					ui.start_offline_mode(r)
+			else:
+				if not ui.queue_url_list:
+					ui.list6.clear()
+				r = self.currentRow()
+				item = self.item(r)
+				if item:
+					ui.queue_url_list.append(r)
+					ui.list6.addItem(epnArrList[r].split('	')[0])
 	def keyPressEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
 		global site,opt,pre_opt,name,siteName,Player,total_till,video_local_stream
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Left:
 			ui.tab_5.setFocus()
 		elif event.key() == QtCore.Qt.Key_Return:
-			"""
-			if not wget:
-				curR = self.currentRow()
-				queueNo = queueNo + 1
-				mpvAlive = 0
-				ui.epnfound()
-			else:
-				if wget.pid() == 0:
-					curR = self.currentRow()
-					queueNo = queueNo + 1
-					mpvAlive = 0
-					ui.epnfound()
-				else:
-					ui.watchDirectly("/tmp/AnimeWatch/"+new_epn,'','no')
-			"""
 			curR = self.currentRow()
 			queueNo = queueNo + 1
 			mpvAlive = 0
@@ -3656,7 +3666,6 @@ class List2(QtWidgets.QListWidget):
 			else:
 				self.setCurrentRow(prev_r)
 		elif event.key() == QtCore.Qt.Key_W:
-			
 			ui.watchToggle()
 		elif event.key() == QtCore.Qt.Key_Q:
 			if site == "Music" or site == "Video" or site == "Local" or site == "PlayLists" or site == "None":
@@ -3971,23 +3980,7 @@ class List2(QtWidgets.QListWidget):
 			ui.list1.setFocus()
 		
 		elif event.key() == QtCore.Qt.Key_O:
-			#ui.goto_epn.hide()
-			#ui.progress.show()
-			if site.lower() != "Local" and site.lower() != 'video' and site.lower() != 'music':
-				if wget.pid() == 0:
-					downloadVideo = 1
-					r = self.currentRow()
-					item = self.item(r)
-					if item:
-						ui.start_offline_mode(r)
-				else:
-					if not ui.queue_url_list:
-						ui.list6.clear()
-					r = self.currentRow()
-					item = self.item(r)
-					if item:
-						ui.queue_url_list.append(r)
-						ui.list6.addItem(epnArrList[r].split('	')[0])
+			self.init_offline_mode()
 		elif event.key() == QtCore.Qt.Key_2: 
 			mirrorNo = 2
 			msg = "Mirror No. 2 Selected"
@@ -4329,7 +4322,7 @@ class List2(QtWidgets.QListWidget):
 						img_l = r + len(thumbArr)
 					j = 0
 					for i in thumbArr:
-						if (site != "Local" and site != "Video" and site != "PlayLists" and img_exists == "True" and r < img_l):
+						if (site != "Local" and site != "Video" and site != "PlayLists" and img_exists == "True" and r < img_l and r < len(epnArrList)):
 							if finalUrlFound == True:
 								if '	' in epnArrList[r]:
 									newEpn = epnArrList[r].split('	')[0]
@@ -4524,12 +4517,6 @@ class List2(QtWidgets.QListWidget):
 		#print name
 		if site == "Music":
 			menu = QtWidgets.QMenu(self)
-			
-			#submenu = QtWidgets.QMenu(menu)
-			#submenu.setTitle("Playlist Options")
-			#menu.addMenu(submenu)
-			#if bookmark == "True":
-			
 			submenuR = QtWidgets.QMenu(menu)
 			submenuR.setTitle("Add To Playlist")
 			menu.addMenu(submenuR)
@@ -4543,7 +4530,6 @@ class List2(QtWidgets.QListWidget):
 			item_m = []
 			for i in pls:
 				item_m.append(submenuR.addAction(i))
-				#item[j].triggered.connect(lambda x=i: self.triggerPlaylist(str(x)))
 			
 			submenuR.addSeparator()
 			new_pls = submenuR.addAction("Create New Playlist")
@@ -4641,23 +4627,32 @@ class List2(QtWidgets.QListWidget):
 			
 			
 			thumb = menu.addAction("Show Thumbnails")
-			try:
+			goto_web_mode = False
+			offline_mode = False
+			epn_arr = epnArrList[r].split('	')
+			if len(epn_arr) > 2:
 				url_web = epnArrList[r].split('	')[1]
-				if 'youtube.com' in url_web:
-					goto_web = menu.addAction('Open in Youtube Browser')
-				else:
-					goto_web = menu.addAction('Open in Browser')
-			except:
-				pass
+			else:
+				url_web = 'none'
+				
+			if 'youtube.com' in url_web:
+				goto_web = menu.addAction('Open in Youtube Browser')
+				goto_web_mode = True
+			
+			if site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local':
+				if ui.btn1.currentText().lower() =='addons' or url_web.startswith('http') or url_web.startswith('"http'):
+					start_offline = menu.addAction('Start In Offline Mode')
+					offline_mode = True
+					
 			fix_ord = menu.addAction("Lock Order")
 			
 			submenu = QtWidgets.QMenu(menu)
 			
 			eplist = menu.addAction("Get Episode Thumbnails(TVDB)")
 			eplistM = menu.addAction("Get Episode Thumbnails Manually(TVDB)")
-			epl = menu.addAction("Get Episode Info(TVDB)")
-			epl_m = menu.addAction("Get Episode Info Manually(TVDB)")
-			default_name = menu.addAction("Default Name")
+			#epl = menu.addAction("Get Episode Info(TVDB)")
+			#epl_m = menu.addAction("Get Episode Info Manually(TVDB)")
+			#default_name = menu.addAction("Default Name")
 			editN = menu.addAction("Edit Name")
 			remove = menu.addAction("Remove Thumbnails")
 			
@@ -4667,6 +4662,16 @@ class List2(QtWidgets.QListWidget):
 			for i in range(len(item_m)):
 				if action == item_m[i]:
 					self.triggerPlaylist(pls[i])
+			
+			if offline_mode:
+				if action == start_offline:
+					self.init_offline_mode()
+			if goto_web_mode:
+				if action == goto_web:
+					ui.goto_web_directly(url_web)
+					#txt = action.text()
+					#if txt.lower() == 'open in youtube browser':
+					
 			
 			if action == new_pls:
 				print ("creating")
@@ -4713,6 +4718,18 @@ class List2(QtWidgets.QListWidget):
 							pls_n = os.path.join(home,'Playlists',ui.list1.currentItem().text())
 							ui.update_playlist_original(pls_n)
 							self.setCurrentRow(row)
+			
+			elif action == eplistM:
+					name1 = (ui.list1.currentItem().text())
+					ui.reviewsMusic("TVDB:"+name1)
+			elif action == eplist:
+					self.find_info(0)
+			elif action == thumb:
+				ui.IconViewEpn()
+				ui.scrollArea1.setFocus()
+			elif action == fix_ord:
+				self.fix_order()
+			"""
 			elif action == default_name:
 					row = self.currentRow()
 					t = epnArrList[row]
@@ -4743,29 +4760,11 @@ class List2(QtWidgets.QListWidget):
 								epnArrList[row]=r+'	'+t.split('	')[1]
 								ui.mark_History()
 					ui.update_list2()
-			elif action == eplistM:
-					#self.find_info(1)
-					name1 = (ui.list1.currentItem().text())
-					ui.reviewsMusic("TVDB:"+name1)
-			elif action == eplist:
-					self.find_info(0)
-			elif action == epl:
-					self.find_info(2)
-			elif action == epl_m:
-					self.find_info(3)
-			elif action == thumb:
-				#if site == "Local":
-				#if site != "PlayLists":
-				ui.IconViewEpn()
-				ui.scrollArea1.setFocus()
-			elif action == fix_ord:
-				self.fix_order()
-			elif action == goto_web:
-				txt = action.text()
-				if txt.lower() == 'open in youtube browser':
-					ui.goto_web_directly(url_web)
-				else:
-					ui.reviewsWeb()
+			"""
+			#elif action == epl:
+			#		self.find_info(2)
+			#elif action == epl_m:
+			#		self.find_info(3)
 			#super(List2, self).keyPressEvent(event)
 
 class List3(QtWidgets.QListWidget):
@@ -5058,7 +5057,6 @@ class QProgressBarCustom(QtWidgets.QProgressBar):
 		super(QProgressBarCustom, self).__init__(parent)
 		self.gui = gui
 	def mouseReleaseEvent(self, ev):
-		#def mouseDoubleClickEvent(self,ev):
 		global video_local_stream
 		if ev.button() == QtCore.Qt.LeftButton:
 			print('progressbar clicked')
@@ -5066,6 +5064,9 @@ class QProgressBarCustom(QtWidgets.QProgressBar):
 				print('hello')
 				if self.gui.torrent_frame.isHidden():
 					self.gui.torrent_frame.show()
+					self.gui.label_torrent_stop.setToolTip('Stop Torrent')
+					self.gui.label_down_speed.show()
+					self.gui.label_up_speed.show()
 					if self.gui.torrent_download_limit == 0:
 						down_rate = '\u221E' + ' K'
 					else:
@@ -5078,10 +5079,17 @@ class QProgressBarCustom(QtWidgets.QProgressBar):
 					up = '\u2191 RATE:' +up_rate
 					self.gui.label_down_speed.setPlaceholderText(down)
 					self.gui.label_up_speed.setPlaceholderText(up)
-					#self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
-					#self.torrent_handle.set_download_limit(self.torrent_download_limit)
 				else:
 					self.gui.torrent_frame.hide()
+			else:
+				if self.gui.torrent_frame.isHidden():
+					self.gui.torrent_frame.show()
+					self.gui.label_down_speed.hide()
+					self.gui.label_up_speed.hide()
+					self.gui.label_torrent_stop.setToolTip('Stop Current Download')
+				else:
+					self.gui.torrent_frame.hide()
+					
 class QtGuiQWidgetScroll(QtWidgets.QScrollArea):
 	def __init__(self, parent):
 		super(QtGuiQWidgetScroll, self).__init__(parent)
@@ -6680,7 +6688,7 @@ class Ui_MainWindow(object):
 		self.label_torrent_stop.setText(self.player_buttons['stop'])
 		self.label_torrent_stop.setMinimumWidth(24)
 		self.horizontalLayout_torrent_frame.insertWidget(0,self.label_torrent_stop,0)
-		self.label_torrent_stop.setToolTip("Stop Torrent")
+		#self.label_torrent_stop.setToolTip("Stop Torrent")
 		
 		self.label_down_speed = QtWidgets.QLineEdit(self.torrent_frame)
 		self.label_down_speed.setObjectName(_fromUtf8("label_down_speed"))
@@ -6788,12 +6796,6 @@ class Ui_MainWindow(object):
 		self.subtitle_track.setObjectName(_fromUtf8("subtitle_track"))
 		self.horizontalLayout_player_opt.insertWidget(3,self.subtitle_track,0)
 		self.subtitle_track.setText("SUB")
-		
-		
-		
-		
-		
-		
 		
 		self.player_loop_file = QtWidgets.QPushButton(self.player_opt)
 		self.player_loop_file.setObjectName(_fromUtf8("player_loop_file"))
@@ -7533,7 +7535,7 @@ class Ui_MainWindow(object):
 		self.torrent_frame.hide()
 		self.progress.hide()
 	def stop_torrent(self):
-		global video_local_stream
+		global video_local_stream,wget
 		if video_local_stream:
 			if self.do_get_thread.isRunning():
 				print('----------stream-----pausing-----')
@@ -7546,6 +7548,12 @@ class Ui_MainWindow(object):
 				if not self.stream_session.is_paused():
 					self.stream_session.pause()
 			txt = 'Torrent Stopped'
+			subprocess.Popen(['notify-send',txt])
+			self.torrent_frame.hide()
+		else:
+			if wget.pid() > 0:
+				wget.kill()
+			txt = 'Stopping download'
 			subprocess.Popen(['notify-send',txt])
 			self.torrent_frame.hide()
 	def set_new_download_speed(self):
