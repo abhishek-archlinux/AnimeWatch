@@ -593,11 +593,15 @@ class MprisServer(dbus.service.Object):
 						artist = art
 						if artist.lower() == 'none':
 							artist = t.replace('#','')
+							if artist.startswith(ui.check_symbol):
+								artist = artist[1:]
 						pls = ui.list1.currentItem().text()
 						if not queue_list:
 							pls_entry = ui.list2.currentItem().text().replace('#','')+'.jpg'
 						else:
 							pls_entry = t.replace('#','')
+						if pls_entry.startswith(ui.check_symbol):
+							pls_entry = pls_entry[1:] 
 						img_place = os.path.join(home,'thumbnails','PlayLists',pls,pls_entry)
 						print(img_place,'--img--place')
 						title = re.sub('.jpg','',pls_entry)
@@ -610,6 +614,10 @@ class MprisServer(dbus.service.Object):
 						artist = art
 						title = title.replace('#','')
 						artist = artist.replace('#','')
+						if title.startswith(ui.check_symbol,''):
+							title = title[1:]
+						if artist.startswith(ui.check_symbol,''):
+							artist = artist[1:]
 						art_u = os.path.join(home,'Music','Artist',artist,'poster.jpg')
 						if os.path.exists(art_u):
 							art_url = art_u
@@ -650,6 +658,8 @@ class MprisServer(dbus.service.Object):
 				t1 = epnArrList[r].split('	')
 				title = t1[0]
 				title = title.replace('#','')
+				if title.startswith(ui.check_symbol):
+					title = title[1:]
 				artist = ui.list1.currentItem().text()
 				art_u = os.path.join(home,'thumbnails',artist,title+'.jpg')
 				if os.path.exists(art_u):
@@ -1978,10 +1988,10 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						
 			ui.mark_History()				
 			title_num = num + ui.list2.count()
-			if '#' in ui.epn_name_in_list:
+			if ui.epn_name_in_list.startswith(ui.check_symbol):
 				newTitle = ui.epn_name_in_list
 			else:
-				newTitle = '#'+ui.epn_name_in_list	
+				newTitle = ui.check_symbol+ui.epn_name_in_list	
 			sumry = "<html><h1>"+ui.epn_name_in_list+"</h1></html>"
 			q3="txt = ui.label_epn_"+str(title_num)+".text()"
 			exec (q3)
@@ -2432,9 +2442,13 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				if '	' in epnArrList[num]:
 					a = epnArrList[num].split('	')[0]
 					a = a.replace('#','')
+					if a.startswith(ui.check_symbol):
+						a = a[1:]
 					picn = os.path.join(home,'thumbnails',nm,a+'.jpg')
 				else:
 					a = (str(epnArrList[num])).replace('#','')
+					if a.startswith(ui.check_symbol):
+						a = a[1:]
 					picn = os.path.join(home,'thumbnails',nm,name+'-'+a+'.jpg')
 				if os.path.exists(picn):
 					os.remove(picn)
@@ -2446,6 +2460,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				else:
 					a = (epnArrList[num]).split('/')[-1]
 				a1 = (str(a)).replace('#','')
+				if a1.startswith(ui.check_symbol):
+					a1 = a1[1:]
 				picn = os.path.join(home,'thumbnails',nm,a1+'.jpg')
 				if os.path.exists(picn):
 					os.remove(picn)
@@ -2478,6 +2494,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				print (path)
 				a1 = a
 				a1 = a1.replace('#','')
+				if a1.startswith(ui.check_symbol):
+					a1 = a1[1:]
 				picnD = os.path.join(home,'thumbnails',name)
 				if not os.path.exists(picnD):
 					os.makedirs(picnD)
@@ -2575,6 +2593,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					else:			
 						a = ((epnArrList[num]))
 					a = a.replace('#','')
+					if a.startswith(ui.check_symbol):
+						a = a[1:]
 					#picn = home+'/thumbnails/'+name+'/'+a+'.jpg'
 					
 					picnD = os.path.join(home,'thumbnails',name)
@@ -3168,16 +3188,16 @@ class List1(QtWidgets.QListWidget):
 				#subprocess.Popen(['notify-send',note])
 				
 	def triggerBookmark(self,val):
-		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt,base_url,bookmark,status,siteName,finalUrlFound,refererNeeded
+		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt,base_url,bookmark,status,siteName,finalUrlFound,refererNeeded,video_local_stream
 		
 		if bookmark == "False":
 			self.addBookmarkList()
 		if site == "Music" or site == "Video":
 			
 			music_opt = str(ui.list3.currentItem().text())
-			tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
+			tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
 		else:
-			tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
+			tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
 		file_path = os.path.join(home,'Bookmark',val+'.txt')
 		if os.path.exists(file_path):
 			f = open(file_path,'r')
@@ -3236,7 +3256,7 @@ class List1(QtWidgets.QListWidget):
 				f.close()
 			
 	def contextMenuEvent(self, event):
-		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt,base_url,bookmark,status,posterManually,siteName,finalUrlFound,refererNeeded,original_path_name
+		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt,base_url,bookmark,status,posterManually,siteName,finalUrlFound,refererNeeded,original_path_name,video_local_stream
 		if self.currentItem():
 			name = str(ui.list1.currentItem().text())
 		
@@ -3399,24 +3419,14 @@ class List1(QtWidgets.QListWidget):
 				review7 = submenuR.addAction("Google")
 				review8 = submenuR.addAction("Youtube")
 				addBookmark = submenu.addAction("Add Bookmark")
-				#watching = submenu.addAction("Watching")
-				#completed = submenu.addAction("Completed")
-				#incomplete = submenu.addAction("Incomplete")
-				#later = submenu.addAction("Later")
-				#interesting = submenu.addAction("Interesting")
-				#music = submenu.addAction("Music Videos")
 				
-				#bookmark_array = ['bookmark','Watching','Completed','Incomplete','Later','Interesting','Music-Videos']
 				bookmark_array = ['bookmark']
 				pls = os.listdir(os.path.join(home,'Bookmark'))
 				item_m = []
 				for i in pls:
 					i = i.replace('.txt','')
 					if i not in bookmark_array:
-						#print(i)
 						item_m.append(submenu.addAction(i))
-						#receiver = lambda taskType=i: self.triggerBookmark(taskType)
-						#item.triggered.connect(receiver)
 					
 				submenu.addSeparator()
 				new_pls = submenu.addAction("Create New Bookmark Category")
@@ -3427,21 +3437,10 @@ class List1(QtWidgets.QListWidget):
 				#rmPoster = menu.addAction("Remove Poster")
 				tvdb	= menu.addAction("Find Image(TVDB)")
 				tvdbM	= menu.addAction("Find Image(TVDB Manually)")
-				#adPoster = menu.addAction("Find Image(Google)")
-				#sumry = menu.addAction("Show Summary")
-				#sumryHide = menu.addAction("Hide Summary")
-				#hideEpn = menu.addAction("Compact Layout")
-				#showEpn = menu.addAction("unCompact")
-				#hideEpn = menu.addAction("Hide Episode List")
-				#rset = menu.addAction("Reset Counter") 
-				#adImage = menu.addAction("Replace Image")
-				#rename = menu.addAction("Rename")
+				
 				cache = menu.addAction("Clear Cache")
-				#info = menu.addAction("Find Info For All")
 				del_history = menu.addAction("Delete (Only For History)")
-				#refresh = menu.addAction("Refresh Episode List")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
-				#actionSub = submenu.exec_(self.mapToGlobal(event.pos()))
 				
 				for i in range(len(item_m)):
 					if action == item_m[i]:
@@ -3619,6 +3618,7 @@ class List2(QtWidgets.QListWidget):
 			QListWidget.dropEvent(event)
 	def init_offline_mode(self):
 		global site,wget,downloadVideo
+		print(self.currentRow(),'--init--offline--')
 		if site.lower() != "Local" and site.lower() != 'video' and site.lower() != 'music':
 			if wget.pid() == 0:
 				downloadVideo = 1
@@ -3633,7 +3633,10 @@ class List2(QtWidgets.QListWidget):
 				item = self.item(r)
 				if item:
 					ui.queue_url_list.append(r)
-					ui.list6.addItem(epnArrList[r].split('	')[0])
+					txt = epnArrList[r].split('	')[0].replace('_',' ')
+					if txt.startswith('#'):
+						txt = txt.replace('#','',1)
+					ui.list6.addItem(txt)
 	def keyPressEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
 		global site,opt,pre_opt,name,siteName,Player,total_till,video_local_stream
@@ -4335,6 +4338,8 @@ class List2(QtWidgets.QListWidget):
 									newEpn = name+'-'+(epnArrList[r])
 							newEpn = str(newEpn)
 							newEpn = newEpn.replace('#','')
+							if newEpn.startswith(ui.check_symbol):
+								newEpn = newEpn[1:]
 							dest = os.path.join(home,'thumbnails',name,newEpn+'.jpg')
 							img_url= i.replace('\n','')
 							#command = "wget --user-agent="+'"'+hdr+'" '+'"'+img_url+'"'+" -O "+dest
@@ -4691,6 +4696,8 @@ class List2(QtWidgets.QListWidget):
 					else:
 						newEpn = name+'-'+(epnArrList[r])
 					newEpn = newEpn.replace('#','')
+					if newEpn.startswith(ui.check_symbol):
+						newEpn = newEpn[1:]
 					nm = (ui.list1.currentItem().text())
 					dest = os.path.join(home,"thumbnails",nm,newEpn+'.jpg')
 					if os.path.exists(dest):
@@ -5590,10 +5597,10 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 							
 				ui.mark_History()				
 				title_num = num + ui.list2.count()
-				if '#' in ui.epn_name_in_list:
+				if ui.epn_name_in_list.startswith(ui.check_symbol):
 					newTitle = ui.epn_name_in_list
 				else:
-					newTitle = '#'+ui.epn_name_in_list	
+					newTitle = ui.check_symbol+ui.epn_name_in_list	
 				sumry = "<html><h1>"+ui.epn_name_in_list+"</h1></html>"
 				q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"			
 				exec (q4)
@@ -6670,7 +6677,7 @@ class Ui_MainWindow(object):
 		self.progress.hide()
 		self.progress.setToolTip("Click for more options")
 		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4'}
-		
+		self.check_symbol = '\u2714'
 		self.torrent_frame = QtWidgets.QFrame(MainWindow)
 		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
 		self.torrent_frame.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -6692,12 +6699,12 @@ class Ui_MainWindow(object):
 		
 		self.label_down_speed = QtWidgets.QLineEdit(self.torrent_frame)
 		self.label_down_speed.setObjectName(_fromUtf8("label_down_speed"))
-		self.label_down_speed.setToolTip("Set Download Speed\nEnter Only Integer Values")
+		self.label_down_speed.setToolTip("Set Download Speed Limit For Current Session in KB\nEnter Only Integer Values")
 		self.horizontalLayout_torrent_frame.insertWidget(1,self.label_down_speed,0)
 		#self.label_down_speed.setMaximumWidth(100)
 		self.label_up_speed = QtWidgets.QLineEdit(self.torrent_frame)
 		self.label_up_speed.setObjectName(_fromUtf8("label_up_speed"))
-		self.label_up_speed.setToolTip("Set Upload Speed\nEnter Only Integer Values")
+		self.label_up_speed.setToolTip("Set Upload Speed Limit in KB for Current Session\nEnter Only Integer Values")
 		self.horizontalLayout_torrent_frame.insertWidget(2,self.label_up_speed,0)
 		
 		
@@ -7804,8 +7811,8 @@ class Ui_MainWindow(object):
 					i = i.replace('\n','')
 					if '	' in i:
 						i = i.split('	')[0]
-						if '#' in i:
-							i = '#'+i
+						if i.startswith('#'):
+							i = i.replace('#',ui.check_symbol,1)
 							self.list2.item(i).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 						else:
 							self.list2.addItem((i))			
@@ -9060,7 +9067,7 @@ class Ui_MainWindow(object):
 			
 		#self.comboBox20.setCurrentIndex(0)	
 	def display_image(self,br_cnt,br_cnt_opt):
-		global site,name,base_url,name1,embed,opt,pre_opt,mirrorNo,list1_items,list2_items,quality,row_history,home,epn,iconv_r,tab_6_size_indicator,labelGeometry,original_path_name
+		global site,name,base_url,name1,embed,opt,pre_opt,mirrorNo,list1_items,list2_items,quality,row_history,home,epn,iconv_r,tab_6_size_indicator,labelGeometry,original_path_name,video_local_stream
 		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,label_arr,hist_arr,bookmark,status,thumbnail_indicator,icon_size_arr,siteName,category,finalUrlFound,refererNeeded,epnArrList
 		browse_cnt = br_cnt
 		#if br_cnt_opt == 'image':
@@ -9107,11 +9114,18 @@ class Ui_MainWindow(object):
 						refererNeeded = True
 					else:
 						refererNeeded = False
+					if len(tmp1) >= 9:
+						if tmp1[8] == "True":
+							video_local_stream = True
+						else:
+							video_local_stream = False
 					print (finalUrlFound)
 					print (refererNeeded)
+					print (video_local_stream)
 				else:
 					refererNeeded = False
 					finalUrlFound = False
+					video_local_stream = False
 				print (site + ":"+opt)
 		
 		label_arr.append(name)
@@ -9776,6 +9790,8 @@ class Ui_MainWindow(object):
 							os.makedirs(picnD)
 						picn = os.path.join(picnD,nameEpn)+'.jpg'
 						picn = picn.replace('#','')
+						if picn.startswith(self.check_symbol):
+							picn = picn[1:]
 						path = path.replace('"','')
 						if not os.path.exists(picn) and not path.startswith('http'):
 							subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t","10",'-q','10','-s','350'])
@@ -9830,6 +9846,8 @@ class Ui_MainWindow(object):
 							#picn = picnD+'/'+nameEpn+'.jpg'
 							picn = picnD+'.jpg'
 							picn = picn.replace('#','')
+							if picn.startswith(self.check_symbol):
+								picn = picn[1:]
 							path1 = path.replace('"','')
 							if not os.path.exists(picn) and not path1.startswith('http'):
 								subprocess.call(["ffmpegthumbnailer","-i",path1,"-o",picn,"-t","10",'-q','10','-s','350'])
@@ -9875,12 +9893,15 @@ class Ui_MainWindow(object):
 							os.makedirs(picnD)
 						picn = picnD+'/'+nameEpn+'.jpg'
 						#if not os.path.exists()
-						picn = picn.replace('#','')		
+						picn = picn.replace('#','')
+						if picn.startswith(self.check_symbol):
+							picn = picn[1:]
 						print ()
 						#print picn
 				
 						
-				
+					if nameEpn.startswith('#'):
+						nameEpn = nameEpn.replace('#',self.check_symbol,1)
 					if os.path.exists(picn):
 						img = QtGui.QPixmap(picn, "1")
 						q1="self.label_epn_"+str(browse_cnt)+".setPixmap(img)"
@@ -9949,6 +9970,8 @@ class Ui_MainWindow(object):
 					else:
 						epn = self.list2.currentItem().text()
 					epn = epn.replace('#','')
+					if epn.startswith(self.check_symbol):
+						epn = epn[1:]
 				except:
 					pass
 			
@@ -10002,6 +10025,8 @@ class Ui_MainWindow(object):
 					else:
 						epn = self.list2.currentItem().text()
 					epn = epn.replace('#','')
+					if epn.startswith(self.check_symbol):
+						epn = epn[1:]
 				except:
 					pass
 			if site == "Local" or site == "Music" or site == "Video" or site == "None" or site == "PlayLists":
@@ -10848,6 +10873,8 @@ class Ui_MainWindow(object):
 						newEpn = name+'-'+(epnArrList[r])
 				newEpn = str(newEpn)
 				newEpn = newEpn.replace('#','')
+				if newEpn.startswith(self.check_symbol):
+					newEpn = newEpn[1:]
 				dest = os.path.join(home,"thumbnails",name,newEpn+'.jpg')
 				if r < len(m):
 					print(r,m[r])
@@ -11374,23 +11401,23 @@ class Ui_MainWindow(object):
 			item = self.list2.item(row)
 			if item:
 				i = str(self.list2.item(row).text())
-				if mark_val == 'mark' and i.startswith('#'):
+				if mark_val == 'mark' and i.startswith(self.check_symbol):
 					pass
-				elif mark_val == 'unmark' and not i.startswith('#'):
+				elif mark_val == 'unmark' and not i.startswith(self.check_symbol):
 					pass
-				elif mark_val == 'mark' and not i.startswith('#'):
+				elif mark_val == 'mark' and not i.startswith(self.check_symbol):
 					j = self.list2.item(row)
 					url1 = epnArrList[row].split('	')[1]
 					self.list2.takeItem(row)
 					del j
-					self.list2.insertItem(row,'#'+i)
+					self.list2.insertItem(row,self.check_symbol+i)
 					self.updateVideoCount('mark',url1)
-				elif mark_val == 'unmark' and i.startswith('#'):
+				elif mark_val == 'unmark' and i.startswith(self.check_symbol):
 					j = self.list2.item(row)
 					url1 = epnArrList[row].split('	')[1]
 					self.list2.takeItem(row)
 					del j
-					i = i.replace('#','')
+					i = i[1:]
 					self.list2.insertItem(row,i)
 					self.updateVideoCount('unmark',url1)
 				self.list2.setCurrentRow(row)
@@ -11423,23 +11450,23 @@ class Ui_MainWindow(object):
 			file_path = os.path.join(home,'Playlists',self.list1.currentItem().text())
 			if item:
 				i = str(self.list2.item(row).text())
-				if mark_val == 'mark' and i.startswith('#'):
+				if mark_val == 'mark' and i.startswith(self.check_symbol):
 					pass
-				elif mark_val == 'unmark' and not i.startswith('#'):
+				elif mark_val == 'unmark' and not i.startswith(self.check_symbol):
 					pass
-				elif mark_val == 'mark' and not i.startswith('#'):
+				elif mark_val == 'mark' and not i.startswith(self.check_symbol):
 					j = self.list2.item(row)
 					self.list2.takeItem(row)
 					del j
-					self.list2.insertItem(row,'#'+i)
+					self.list2.insertItem(row,self.check_symbol+i)
 					epnArrList[row] = '#'+epnArrList[row]
 					self.list2.setCurrentRow(row)
 					self.update_playlist_file(file_path)
-				elif mark_val == 'unmark' and i.startswith('#'):
+				elif mark_val == 'unmark' and i.startswith(self.check_symbol):
 					j = self.list2.item(row)
 					self.list2.takeItem(row)
 					del j
-					i = i.replace('#','')
+					i = i[1:]
 					self.list2.insertItem(row,i)
 					epnArrList[row] = epnArrList[row].replace('#','')
 					self.list2.setCurrentRow(row)
@@ -11477,26 +11504,23 @@ class Ui_MainWindow(object):
 						return 0
 			
 				else:
-					epn = self.list2.currentItem().text()
+					epn = epnArrList[row]
 					if site != "Local":
 						if epn.startswith('#') and mark_val == 'unmark':
-							n_epn = epn.replace('#','')
-							epn = str(epn)
+							n_epn = epn[1:]
+							epn = epn
 						elif not epn.startswith('#') and mark_val == 'mark':
-							n_epn = "#" + str(epn)
-							epn = epn.replace('#','')
-							epn = str(epn)
+							n_epn = '#' + epn
+							epn = epn
 						else:
 							return 0
 					else:
 						if epn.startswith('#') and mark_val == 'unmark':
-							n_epnt = epn.replace('#','')
+							n_epnt = epn[1:]
 							n_epn = ((epnArrList[row])).replace('#','')
-							epn = "#"+path_Local_Dir+'/'+n_epnt 
 						elif not epn.startswith('#') and mark_val == 'mark':
-							n_epnt = str(epn)
-							n_epn = "#" + epnArrList[row]
-							epn = path_Local_Dir+'/' +str(epn)
+							n_epnt = epn
+							n_epn = '#' + epnArrList[row]
 						else:
 							return 0
 						epn = n_epnt
@@ -11508,11 +11532,12 @@ class Ui_MainWindow(object):
 				self.list2.takeItem(row)
 				del j
 				
-				if txt.startswith('#') and mark_val == 'unmark':
-					self.list2.insertItem(row,txt.replace('#',''))
+				if txt.startswith(self.check_symbol) and mark_val == 'unmark':
+					txt = txt[1:]
+					self.list2.insertItem(row,txt)
 					file_change = True
-				elif not txt.startswith('#') and mark_val == 'mark':
-					self.list2.insertItem(row,'#'+txt)
+				elif not txt.startswith(self.check_symbol) and mark_val == 'mark':
+					self.list2.insertItem(row,self.check_symbol+txt)
 					file_change = True
 					
 				if os.path.exists(file_path) and file_change:
@@ -11548,8 +11573,8 @@ class Ui_MainWindow(object):
 				row = self.list2.currentRow()
 				item = self.list2.item(row)
 				if item:
-					i = str(self.list2.item(row).text())
-					if i.startswith('#'):
+					i = (self.list2.item(row).text())
+					if i.startswith(self.check_symbol):
 						self.mark_addons_history_list('unmark',row)
 					else:
 						self.mark_addons_history_list('mark',row)
@@ -11557,8 +11582,8 @@ class Ui_MainWindow(object):
 			row = self.list2.currentRow()
 			item = self.list2.item(row)
 			if item:
-				i = str(self.list2.item(row).text())
-				if i.startswith('#'):
+				i = self.list2.item(row).text()
+				if i.startswith(self.check_symbol):
 					self.mark_playlist('unmark',row)
 				else:
 					self.mark_playlist('mark',row)
@@ -11566,8 +11591,8 @@ class Ui_MainWindow(object):
 			row = self.list2.currentRow()
 			item = self.list2.item(row)
 			if item:
-				i = str(self.list2.item(row).text())
-				if i.startswith('#'):
+				i = self.list2.item(row).text()
+				if i.startswith(self.check_symbol):
 					self.mark_video_list('unmark',row)
 				else:
 					self.mark_video_list('mark',row)
@@ -11666,25 +11691,27 @@ class Ui_MainWindow(object):
 			i = i.replace('\n','')
 			if '	' in i:
 				i = i.split('	')[0]
-				if refererNeeded == True and k == len(epnArrList) - 1:
-					print ("referer")
+				i = i.replace('_',' ')
+				if i.startswith('#'):
+					i = i.replace('#',self.check_symbol,1)
+					self.list2.addItem((i))
+					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				else:
-					self.list2.addItem((i))			
-					if '#' in i:
-						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+					self.list2.addItem((i))
 			else:
 				if site == "Local" or finalUrlFound == True:
 					j = i.split('/')[-1]
-					if ('#' in i) and j:
-						j = "#" + j
+					if i.startswith('#') and j:
+						j = j.replace('#',self.check_symbol,1)
 				else:
 					j = i
-				if refererNeeded == True and k == len(epnArrList) - 1:
-					print ("referer")
-				else:
+				j = j.replace('_',' ')
+				if j.startswith('#'):
+					j = j.replace('#',self.check_symbol,1)
 					self.list2.addItem((j))	
-				if '#' in j:
 					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+				else:
+					self.list2.addItem((j))
 					
 			k = k+1
 		self.list2.setCurrentRow(row)
@@ -11878,6 +11905,8 @@ class Ui_MainWindow(object):
 					#self.text.setHtml(('<html><p class="big">'+a1+'</p></html>'))
 				#self.goto_epn.setText(a1)
 				a1 = a1.replace('#','')
+				if a1.startswith(self.check_symbol):
+					a1 = a1[1:]
 				#picn = home+'/thumbnails/'+a1+'.jpg'
 				inter = str(inter_val)+'s'
 				picnD = ''
@@ -12227,7 +12256,7 @@ class Ui_MainWindow(object):
 			self.list2.show()
 	def ka(self):
 		global site,home
-		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,list1_items,bookmark,total_till,thumbnail_indicator,genre_num,original_path_name,rfr_url,finalUrlFound,refererNeeded
+		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,list1_items,bookmark,total_till,thumbnail_indicator,genre_num,original_path_name,rfr_url,finalUrlFound,refererNeeded,video_local_stream
 		genre_num = 0
 		#total_till = 0
 		self.label.clear()
@@ -12252,6 +12281,7 @@ class Ui_MainWindow(object):
 			self.list1.clear()
 			for i in criteria:
 				self.list1.addItem(i)
+			video_local_stream = False
 		elif site == "Bookmark":
 			bookmark = "True"
 			criteria = ['All','Watching','Completed','Incomplete',"Later",'Interesting','Music-Videos']
@@ -12515,7 +12545,9 @@ class Ui_MainWindow(object):
 					#	pass
 			elif self.list2.currentItem():
 				name1 = self.list2.currentItem().text()
-			name1 = name1.replace('#','')
+			#name1 = name1.replace('#','')
+			if name1.startswith(self.check_symbol):
+				name1 = name1[1:]
 		if not QT_WEB_ENGINE:
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
@@ -12735,6 +12767,9 @@ class Ui_MainWindow(object):
 			self.list2.clear()
 			for i in m:
 				#print i
+				if i.startswith('#'):
+					i = i.replace('#',self.check_symbol,1)
+				i = i.replace('_',' ')
 				self.list2.addItem((i))
 	def searchNew(self):
 		global search,name
@@ -12834,6 +12869,7 @@ class Ui_MainWindow(object):
 			self.line.setReadOnly(True)
 			refererNeeded = False
 			#finalUrlFound = False
+			video_local_stream = False
 		elif site == "Music":
 			self.mirror_change.hide()
 			criteria = ['Playlist',"Artist",'Album','Title','Directory','Fav-Artist','Fav-Album','Fav-Directory','Last 50 Played','Last 50 Newly Added','Last 50 Most Played']
@@ -12846,6 +12882,7 @@ class Ui_MainWindow(object):
 			self.line.setReadOnly(False)
 			#self.line.setReadOnly(True)
 			refererNeeded = False
+			video_local_stream = False
 			#finalUrlFound = False
 			nm = self.line.text()
 			if nm:
@@ -12878,8 +12915,10 @@ class Ui_MainWindow(object):
 			#self.line.hide()
 			self.line.setReadOnly(True)
 			refererNeeded = False
+			video_local_stream = False
 			#finalUrlFound = False
 		elif (site == "None" and self.btn1.currentText().lower() == 'youtube') or not self.tab_2.isHidden():
+			video_local_stream = False
 			self.mirror_change.hide()
 			self.line.setPlaceholderText("Search Available")
 			self.line.setReadOnly(False)
@@ -12893,6 +12932,7 @@ class Ui_MainWindow(object):
 		elif site == "DubbedAnime" or site == "SubbedAnime":
 			#cmd = site +"()"
 			#site_var=eval(cmd)
+			video_local_stream = False
 			self.mirror_change.show()
 			module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
 			site_var = getattr(module,site)()
@@ -12924,7 +12964,7 @@ class Ui_MainWindow(object):
 	
 	def listfound(self):
 		global site,name,base_url,name1,embed,opt,pre_opt,mirrorNo,list1_items,list2_items,quality,row_history,home,epn,path_Local_Dir,bookmark,status,epnArrList,finalUrlFound,refererNeeded,audio_id,sub_id
-		global opt_movies_indicator,base_url_picn,base_url_summary,siteName,img_arr_artist,screen_height,screen_width
+		global opt_movies_indicator,base_url_picn,base_url_summary,siteName,img_arr_artist,screen_height,screen_width,video_local_stream
 		img_arr_artist[:]=[]
 		opt_movies_indicator[:]=[]
 		#audio_id = "auto"
@@ -12935,7 +12975,7 @@ class Ui_MainWindow(object):
 		picn = "No.jpg"
 		m = []
 		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
-			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+finalUrlFound+':'+refererNeeded
+			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+finalUrlFound+':'+refererNeeded+':'+video_local_stream
 			f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
 			line_a = f.readlines()
 			f.close()
@@ -12961,9 +13001,6 @@ class Ui_MainWindow(object):
 			name = tmp1[5]
 			if site=="Local":
 				name_path = name
-				
-			
-			#original_path_name.append(name)
 			
 			print (name)
 			if len(tmp1) > 6:
@@ -12975,11 +13012,18 @@ class Ui_MainWindow(object):
 					refererNeeded = True
 				else:
 					refererNeeded = False
+				if len(tmp1) >=9:
+					if tmp1[8] == "True":
+						video_local_stream = True
+					else:
+						video_local_stream = False
 				print (finalUrlFound)
 				print (refererNeeded)
+				print (video_local_stream)
 			else:
 				refererNeeded = False
 				finalUrlFound = False
+				video_local_stream = False
 			print (site + ":"+opt)
 		if (site != "SubbedAnime" and site!= "DubbedAnime" and site != "PlayLists" and site != "Music" and site != "Video" and site!="Local" and site !="None") :
 			self.list2.clear()
@@ -13122,7 +13166,7 @@ class Ui_MainWindow(object):
 						
 						img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
 						img.save(str(thumbnail))
-					picn = thumbnail
+					#picn = thumbnail
 					#picn = "/tmp/AnimeWatch/"+name+'.jpg'	
 					tmp = '"background-image: url('+fanart+')"'
 					
@@ -13190,8 +13234,8 @@ class Ui_MainWindow(object):
 						for i in epnArrList:	
 							if i and '	' not in i:
 								if site == "Local" or finalUrlFound == True:
-									if '#' in i:
-										i = '#'+i.split('/')[-1]
+									if i.startswith('#'):
+										i = self.check_symbol+i.split('/')[-1]
 									else:
 										i = i.split('/')[-1]
 								
@@ -13199,40 +13243,52 @@ class Ui_MainWindow(object):
 									print ("referer")
 								else:
 									i = i.replace('_',' ')
-									self.list2.addItem((i))
-								
-									if '#' in i:
+									if i.startswith('#'):
+										i = i.replace('#',self.check_symbol,1)
+										self.list2.addItem((i))
 										self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 										#self.list2.item(k).setForeground(QtCore.Qt.lightGray)
+									else:
+										self.list2.addItem((i))
+										
 							elif '	' in i:
 								if finalUrlFound == True and k == len(epnArrList) - 1:
 									print ("referer")
 								else:
 									i = i.split('	')[0]
 									i = i.replace('_',' ')
-									self.list2.addItem((i))
-									if '#' in i:
+									if i.startswith('#'):
+										i = i.replace('#',self.check_symbol,1)
+										self.list2.addItem((i))
 										self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 										#self.list2.item(k).setForeground(QtCore.Qt.lightGray)
+									else:
+										self.list2.addItem((i))
 							
 							k = k+1
 				else:
 					for i in m:
 							if i and '	' not in i:
 								i = i.replace('_',' ')
-								self.list2.addItem((i))
-								#r = i.replace('#','')
-								#icon_name = home+'/thumbnails/'+r+'.jpg'
-								#if os.path.exists(icon_name):
-								#	self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
-								if '#' in i:
+								if i.startswith('#'):
+									i = i.replace('#',self.check_symbol,1)
+									self.list2.addItem((i))
+									#r = i.replace('#','')
+									#icon_name = home+'/thumbnails/'+r+'.jpg'
+									#if os.path.exists(icon_name):
+									#	self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
 									self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+								else:
+									self.list2.addItem((i))
 							elif '	' in i:
 								i = i.split('	')[0]
 								i = i.replace('_',' ')
-								self.list2.addItem((i))
-								if '#' in i:
+								if i.startswith('#'):
+									i = i.replace('#',self.check_symbol,1)
+									self.list2.addItem((i))
 									self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+								else:
+									self.list2.addItem((i))
 								
 							k = k+1
 				
@@ -13484,10 +13540,13 @@ class Ui_MainWindow(object):
 					epnArrList.append(i)
 					if '	' in i:
 						i = i.split('	')[0]
-					
-					self.list2.addItem((i))
-					if '#' in i:
+					i = i.replace('_',' ')
+					if i.startswith('#'):
+						i = i.replace('#',self.check_symbol,1)
+						self.list2.addItem((i))
 						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+					else:
+						self.list2.addItem((i))
 					k = k+1
 
 		elif site == "DubbedAnime":
@@ -13528,7 +13587,7 @@ class Ui_MainWindow(object):
 					self.text.setText('Load Complete!')
 				else:
 						if os.path.exists(os.path.join(home,'History',site,siteName,name,'Ep.txt')):
-							lines = tuple(open(os.path.join(home,'History,',site,siteName,name, 'Ep.txt'), 'r'))
+							lines = tuple(open(os.path.join(home,'History',site,siteName,name, 'Ep.txt'), 'r'))
 						#with open(home+'/History/'+site+'/'+name+'/Ep.txt') as f:
 						#items = f.readlines()
 							m = []
@@ -13655,9 +13714,13 @@ class Ui_MainWindow(object):
 					epnArrList.append(i)
 					if '	' in i:
 						i = i.split('	')[0]
-					self.list2.addItem((i))
-					if '#' in i:
+					i = i.replace('_',' ')
+					if i.startswith('#'):
+						i = i.replace('#',self.check_symbol,1)
+						self.list2.addItem((i))
 						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+					else:
+						self.list2.addItem((i))
 					k = k+1
 		elif site == "Local":
 			self.list2.clear()
@@ -13841,6 +13904,9 @@ class Ui_MainWindow(object):
 						if i:	
 							epnArrList.append(i)
 							j = i.split('	')[0]
+							j = j.replace('_',' ')
+							if j.startswith('#'):
+								j = j.replace('#',self.check_symbol,1)
 							self.list2.addItem((j))
 		elif site == "Video":
 			r = self.list1.currentRow()
@@ -13887,7 +13953,10 @@ class Ui_MainWindow(object):
 					epnArrList.append((i))
 					#print i
 					i = i.split('	')[0]
-					self.list2.addItem(i.replace('_',' '))
+					i.replace('_',' ')
+					if i.startswith('#'):
+						i = i.replace('#',self.check_symbol,1)
+					self.list2.addItem(i)
 				art_n = str(self.list1.currentItem().text())
 				dir_path = os.path.join(home,'Local',art_n)
 				if os.path.exists(dir_path):
@@ -14046,8 +14115,8 @@ class Ui_MainWindow(object):
 			j = self.list2.item(row)
 			self.list2.takeItem(row)
 			del j
-			if not '#' in i:
-				self.list2.insertItem(row,'#'+i)
+			if not i.startswith(self.check_symbol):
+				self.list2.insertItem(row,self.check_symbol+i)
 				epnArrList[row] = '#'+epnArrList[row]
 			else:
 				self.list2.insertItem(row,i)	
@@ -14074,8 +14143,11 @@ class Ui_MainWindow(object):
 		file_name_mkv = ''
 		file_name_mp4 = ''
 		new_epn = list_widget.item(row).text().replace('#','')
+		if new_epn.startswith(self.check_symbol):
+			new_epn = new_epn[1:]
 		new_epn = new_epn.replace('/','-')
 		new_epn = new_epn.replace('"','')
+		new_epn = re.sub('"|.mkv|.mp4','',new_epn)
 		if new_epn.startswith('.'):
 			new_epn = new_epn[1:]
 		opt_val = self.btn1.currentText().lower()
@@ -14173,10 +14245,12 @@ class Ui_MainWindow(object):
 		
 		file_path_name_mp4, file_path_name_mkv = self.get_file_name(row,list_widget)
 		
-		if (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local') and downloadVideo == 0 and not video_local_stream:
+		if (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local') and not video_local_stream:
 			print('now--playing',file_path_name_mp4,file_path_name_mkv)
 			if play_now:
 				self.epn_name_in_list = list_widget.item(row).text().replace('#','')
+				if self.epn_name_in_list.startswith(self.check_symbol):
+					self.epn_name_in_list = self.epn_name_in_list[1:]
 				if os.path.exists(file_path_name_mp4):
 					self.play_file_now(file_path_name_mp4)
 					finalUrl = file_path_name_mp4
@@ -14196,10 +14270,12 @@ class Ui_MainWindow(object):
 					return file_path_name_mp4
 				else:
 					return file_path_name_mkv
-		elif site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist' and (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and downloadVideo == 0 and not video_local_stream:
+		elif site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist' and (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and not video_local_stream:
 			print('now--playing',file_path_name_mp4,file_path_name_mkv)
 			if play_now:
 				self.epn_name_in_list = list_widget.item(row).text().replace('#','')
+				if self.epn_name_in_list.startswith(self.check_symbol):
+					self.epn_name_in_list = self.epn_name_in_list[1:]
 				if os.path.exists(file_path_name_mp4):
 					self.play_file_now(file_path_name_mp4)
 					finalUrl = file_path_name_mp4
@@ -14221,10 +14297,12 @@ class Ui_MainWindow(object):
 					return file_path_name_mp4
 				else:
 					return file_path_name_mkv
-		elif (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() == 'video' or site.lower() == 'music' or site.lower() == 'local' or site.lower() == 'none') and downloadVideo == 0 and not video_local_stream:
+		elif (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() == 'video' or site.lower() == 'music' or site.lower() == 'local' or site.lower() == 'none') and not video_local_stream:
 			print('now--playing',file_path_name_mp4,file_path_name_mkv)
 			if play_now:
 				self.epn_name_in_list = list_widget.item(row).text().replace('#','')
+				if self.epn_name_in_list.startswith(self.check_symbol):
+					self.epn_name_in_list = self.epn_name_in_list[1:]
 				if os.path.exists(file_path_name_mp4):
 					self.play_file_now(file_path_name_mp4)
 					finalUrl = file_path_name_mp4
@@ -14271,9 +14349,13 @@ class Ui_MainWindow(object):
 	def get_index_list(self,list_widget,txt):
 		r = 0
 		txt = txt.replace('#','')
+		if txt.startswith(self.check_symbol):
+				txt = txt[1:]
 		for i in range(self.list2.count()):
 			new_txt = self.list2.item(i).text()
 			new_txt = new_txt.replace('#','')
+			if new_txt.startswith(self.check_symbol):
+				new_txt = new_txt[1:]
 			if new_txt == txt:
 				r = i
 				break
@@ -14337,10 +14419,14 @@ class Ui_MainWindow(object):
 			
 			
 			row = self.list2.currentRow()
+			
 			if '	' in epnArrList[row]:
 				epn = (epnArrList[row]).split('	')[1]
+			else:
+				epn = epnArrList[row].replace('#','')
 			epn = epn.replace('#','')
-		
+			if epn.startswith(self.check_symbol):
+				epn = epn[1:]
 		
 		
 		
@@ -14382,29 +14468,37 @@ class Ui_MainWindow(object):
 						if '	' in i:
 							i = i.replace('\n','')
 							i = i.split('	')[0]
-							
-							self.list2.addItem((i))
-							if '#' in i:
+							i = i.replace('_',' ')
+							if i.startswith('#'):
+								i = i.replace('#',self.check_symbol,1)
+								self.list2.addItem((i))
 								self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+							else:
+								self.list2.addItem((i))
 						else:
 							i = i.replace('\n','')
 							if site == "Local":
 								j = i.split('/')[-1]
-								if '#' in i:
-									j = "#" + j
+								if i.startswith('#'):
+									j = self.check_symbol + j
 							else:
 								j = i
-							self.list2.addItem((j))
-							if '#' in j:
+							j = j.replace('_',' ')
+							if j.startswith('#'):
+								j = j.replace('#',self.check_symbol,1)
+								self.list2.addItem((j))
 								self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+							else:
+								self.list2.addItem((j))
 						k = k+1
 			else:
 				i = str(self.list2.item(row).text())
+				i = i.replace('_',' ')
 				j = self.list2.item(row)
 				self.list2.takeItem(row)
 				del j
-				if not '#' in i:
-					self.list2.insertItem(row,'#'+i)
+				if not i.startswith(self.check_symbol):
+					self.list2.insertItem(row,self.check_symbol+i)
 				else:
 					self.list2.insertItem(row,i)	
 				self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
@@ -14483,10 +14577,8 @@ class Ui_MainWindow(object):
 				#final = final.decode('utf8')
 				finalUrl.append(final)
 				if refererNeeded == True:
-					if '	' in epnArrList[-1]:
-						rfr_url = epnArrList[-1].split('	')[1]
-					else:
-						rfr_url = epnArrList[-1]
+					if '	' in epnArrList[row_num]:
+						rfr_url = epnArrList[row_num].split('	')[2]
 					finalUrl.append(rfr_url)
 				if len(finalUrl) == 1:
 					finalUrl = finalUrl[0]
@@ -14522,9 +14614,12 @@ class Ui_MainWindow(object):
 						epnArrList.append(i)
 						if '	' in i:
 							i = i.split('	')[0]
-						self.list2.addItem((i))
-						if '#' in i:
-							self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+							if i.startswith('#'):
+								i = i.replace('#',self.check_symbol,1)
+								self.list2.addItem((i))
+								self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+							else:
+								self.list2.addItem((i))
 						k = k+1
 			if site == "SubbedAnime":
 				code = 6
@@ -14618,11 +14713,12 @@ class Ui_MainWindow(object):
 			#finalUrl = finalUrl.decode('utf8')
 			print (finalUrl)
 			i = str(self.list2.item(row).text())
+			i = i.replace('_',' ')
 			j = self.list2.item(row)
 			self.list2.takeItem(row)
 			del j
-			if not '#' in i:
-				self.list2.insertItem(row,'#'+i)
+			if not i.startswith(self.check_symbol):
+				self.list2.insertItem(row,self.check_symbol+i)
 			else:
 				self.list2.insertItem(row,i)	
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
@@ -14839,7 +14935,9 @@ class Ui_MainWindow(object):
 						self.list2.setFocus()
 						r = self.list2.currentRow()
 						print(r)
-						new_epn = self.list2.item(row).text().replace('#','')
+						new_epn = self.list2.item(row).text()
+						if new_epn.startswith(self.check_symbol):
+							new_epn = new_epn.replace(self.check_symbol,'',1)
 						new_epn = new_epn.replace('/','-')
 						new_epn = new_epn.replace('"','')
 						if new_epn.startswith('.'):
@@ -14985,10 +15083,13 @@ class Ui_MainWindow(object):
 		epn = str(self.list2.currentItem().text())
 		#self.epn_name_in_list = epn
 		epn = epn.replace('#','')
+		if epn.startswith(self.check_symbol):
+			epn = epn[1:]
 		row = self.list2.currentRow()
 		if '	' in epnArrList[row]:
 			epn = (epnArrList[row]).split('	')[1]
-	
+		else:
+			epn = epnArrList[row].replace('#','')
 		if site == "PlayLists":
 			
 			row = self.list2.currentRow()
@@ -15058,10 +15159,8 @@ class Ui_MainWindow(object):
 				#final = final.decode('utf8')
 				finalUrl.append(final)
 				if refererNeeded == True:
-					if '	' in epnArrList[-1]:
-						rfr_url = epnArrList[-1].split('	')[1]
-					else:
-						rfr_url = epnArrList[-1]
+					if '	' in epnArrList[row_num]:
+						rfr_url = epnArrList[row_num].split('	')[2]
 					print (rfr_url)
 					finalUrl.append(rfr_url)
 		elif site == "SubbedAnime" or site == "DubbedAnime":
@@ -15137,7 +15236,8 @@ class Ui_MainWindow(object):
 			return 0
 		if '	' in epnArrList[row]:
 			epn = (epnArrList[row]).split('	')[1]
-	
+		else:
+			epn = epnArrList[row].replace('#','')
 		if site == "PlayLists":
 			#row = self.list2.currentRow()
 			item = self.list2.item(row)
@@ -15202,7 +15302,7 @@ class Ui_MainWindow(object):
 			
 			
 		elif finalUrlFound == True:
-				row_num = self.list2.currentRow()
+				row_num = row
 			
 				final = epnArrList[row_num]
 				print (final)
@@ -15213,13 +15313,10 @@ class Ui_MainWindow(object):
 					final = final.split('	')[1]
 				else:
 					final=re.sub('#','',final)
-				#final = final.decode('utf8')
 				finalUrl.append(final)
 				if refererNeeded == True:
-					if '	' in epnArrList[-1]:
-						rfr_url = epnArrList[-1].split('	')[1]
-					else:
-						rfr_url = epnArrList[-1]
+					if '	' in epnArrList[row_num]:
+						rfr_url = epnArrList[row_num].split('	')[2]
 					print (rfr_url)
 					finalUrl.append(rfr_url)
 		elif site == "SubbedAnime" or site == "DubbedAnime":
@@ -15402,13 +15499,24 @@ class Ui_MainWindow(object):
 		global downloadVideo,site,name,hdr
 		if not self.if_file_path_exists_then_play(row,self.list2,False):
 			finalUrl = self.epn_return(row)
-			finalUrl = finalUrl.replace('"','')
+			referer = False
+			if type(finalUrl) is not list:
+				finalUrl = finalUrl.replace('"','')
+			else:
+				rfr = "--referer="+finalUrl[1]
+				print (rfr)
+				finalUrl = re.sub('#|"','',finalUrl[0])
+				print (finalUrl)
+				referer = True
+				
 			self.list2.setFocus()
 			r = self.list2.currentRow()
 			print(r)
-			new_epn = self.list2.item(row).text().replace('#','')
+			new_epn = self.list2.item(row).text()
+			if new_epn.startswith(self.check_symbol):
+				new_epn = new_epn[1:] 
 			new_epn = new_epn.replace('/','-')
-			new_epn = new_epn.replace('"','')
+			new_epn = re.sub('"|.mkv|.mp4','',new_epn)
 			if new_epn.startswith('.'):
 				new_epn = new_epn[1:]
 			if finalUrl.endswith('.mkv'):
@@ -15424,7 +15532,10 @@ class Ui_MainWindow(object):
 				os.makedirs(folder_name)
 			npn = os.path.join(folder_name,new_epn)
 			if finalUrl.startswith('http'):
-				command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+				if not referer:
+					command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+				else:
+					command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
 				print (command)
 				self.infoWget(command,0)
 		downloadVideo = 0
@@ -15490,19 +15601,30 @@ class Ui_MainWindow(object):
 					type_int = True
 					break
 				j = j+1
-			if j < len(self.queue_url_list):
+			
+			if type_int:
 				t = self.queue_url_list[j]
-			else:
-				t = 'not found'
-			if type(t) is int:
-				del self.queue_url_list[j]
+				
 				t1 = self.list6.item(j)
 				nepn = t1.text()
 				nepn = re.sub('#|"','',nepn)
 				nepn = nepn.replace('/','-')
+				nepn = re.sub('"|.mkv|.mp4','',nepn)
+				nepn = nepn.replace('_',' ')
 				self.list6.takeItem(j)
 				del t1
+				del self.queue_url_list[j]
+				print(t,'**************row------num-----------')
 				finalUrl = self.epn_return(t)
+				referer = False
+				if type(finalUrl) is not list:
+					finalUrl = finalUrl.replace('"','')
+				else:
+					rfr = "--referer="+finalUrl[1]
+					print (rfr)
+					finalUrl = re.sub('#|"','',finalUrl[0])
+					print (finalUrl)
+					referer = True
 				if self.list1.currentItem():
 					title = self.list1.currentItem().text()
 				else:
@@ -15513,7 +15635,10 @@ class Ui_MainWindow(object):
 				else:
 					npn = npn+'.mp4'
 				if finalUrl.startswith('http'):
-					command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+					if not referer:
+						command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+					else:
+						command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
 					print (command)
 					self.infoWget(command,0)
 		
@@ -16020,10 +16145,10 @@ class Ui_MainWindow(object):
 		global thumbnail_indicator
 		if thumbnail_indicator and not self.tab_5.isHidden():
 			title_num = row + ui.list2.count()
-			if '#' in self.epn_name_in_list:
-				newTitle = self.epn_name_in_list	
+			if self.epn_name_in_list.startswith(self.check_symbol):
+				newTitle = self.epn_name_in_list
 			else:
-				newTitle = '#'+self.epn_name_in_list	
+				newTitle = self.check_symbol+self.epn_name_in_list
 			sumry = "<html><h1>"+self.epn_name_in_list+"</h1></html>"
 			q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"
 			exec (q4)
@@ -16075,6 +16200,7 @@ class Ui_MainWindow(object):
 			else:
 				epn = self.list2.currentItem().text()
 				self.epn_name_in_list = str(epn)
+				epn = epnArrList[row].replace('#','')
 			if not epn:
 				return 0
 			epn = epn.replace('#','')
@@ -16116,8 +16242,8 @@ class Ui_MainWindow(object):
 				j = self.list2.item(row)
 				self.list2.takeItem(row)
 				del j
-				if not '#' in i:
-					self.list2.insertItem(row,'#'+i)
+				if not i.startswith(self.check_symbol):
+					self.list2.insertItem(row,self.check_symbol+i)
 				else:
 					self.list2.insertItem(row,i)
 				self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
@@ -16147,8 +16273,8 @@ class Ui_MainWindow(object):
 			j = self.list2.item(row)
 			self.list2.takeItem(row)
 			del j
-			if not '#' in i:
-				self.list2.insertItem(row,'#'+i)
+			if not i.startswith(self.check_symbol):
+				self.list2.insertItem(row,self.check_symbol+i)
 			else:
 				self.list2.insertItem(row,i)	
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
@@ -16408,6 +16534,7 @@ class Ui_MainWindow(object):
 			else:
 				epn = str(self.list2.currentItem().text())
 				self.epn_name_in_list = (epn)
+				epn = epnArrList[row]
 			if not epn:
 				return 0
 			epn = epn.replace('#','')
@@ -16448,8 +16575,8 @@ class Ui_MainWindow(object):
 				j = self.list2.item(row)
 				self.list2.takeItem(row)
 				del j
-				if not '#' in i:
-					self.list2.insertItem(row,'#'+i)
+				if not self.check_symbol in i:
+					self.list2.insertItem(row,self.check_symbol+i)
 				else:
 					self.list2.insertItem(row,i)
 				self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
@@ -16568,8 +16695,8 @@ class Ui_MainWindow(object):
 			j = self.list2.item(row)
 			self.list2.takeItem(row)
 			del j
-			if not '#' in i:
-				self.list2.insertItem(row,'#'+i)
+			if not i.startswith(self.check_symbol):
+				self.list2.insertItem(row,self.check_symbol+i)
 			else:
 				self.list2.insertItem(row,i)	
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
@@ -16743,6 +16870,9 @@ class Ui_MainWindow(object):
 				i = i.strip()
 				if i and '	' in i:
 					i = i.split('	')[0]
+					i = i.replace('_',' ')
+					if i.startswith('#'):
+						i = i.replace('#',self.check_symbol,1)
 					self.list2.addItem(i)
 			
 	def update_playlist(self,pls):
@@ -16766,6 +16896,9 @@ class Ui_MainWindow(object):
 				if i:
 					epnArrList.append(i)
 					j = i.split('	')[0]
+					j = j.replace('_',' ')
+					if j.startswith('#'):
+						j = j.replace('#',self.check_symbol,1)
 					self.list2.addItem((j))
 		elif os.path.exists(file_path) and self.btn1.currentText().lower() == 'playlists':
 			pl_name = file_path.split('/')[-1]
@@ -16784,6 +16917,8 @@ class Ui_MainWindow(object):
 				new_epn = lines[-1].strip()
 				epnArrList.append(new_epn)
 				new_epn_title = new_epn.split('	')[0]
+				if new_epn_title.startswith('#'):
+					new_epn_title = new_epn_title.replace('#',self.check_symbol,1)
 				self.list2.addItem(new_epn_title)
 				
 	def options(self,val):
