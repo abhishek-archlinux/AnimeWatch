@@ -1050,7 +1050,9 @@ class downloadThread(QtCore.QThread):
 	def run(self):
 		ccurl(self.url)
 		
-	
+
+
+		
 class ThreadingThumbnail(QtCore.QThread):
     
 	def __init__(self,path,picn,inter):
@@ -3659,13 +3661,15 @@ class List2(QtWidgets.QListWidget):
 		elif event.key() == QtCore.Qt.Key_Down:
 			nextr = self.currentRow() + 1
 			if nextr == self.count():
-				self.setCurrentRow(0)
+				#self.setCurrentRow(0)
+				self.setCurrentRow(self.count()-1)
 			else:
 				self.setCurrentRow(nextr)
 		elif event.key() == QtCore.Qt.Key_Up:
 			prev_r = self.currentRow() - 1
 			if self.currentRow() == 0:
-				self.setCurrentRow(self.count()-1)
+				#self.setCurrentRow(self.count()-1)
+				self.setCurrentRow(0)
 			else:
 				self.setCurrentRow(prev_r)
 		elif event.key() == QtCore.Qt.Key_W:
@@ -6752,6 +6756,7 @@ class Ui_MainWindow(object):
 		self.list1.setMaximumWidth(300)
 		#self.list1.setMaximumHeight(250)
 		self.list2.setMaximumWidth(300)
+		self.list2.setIconSize(QtCore.QSize(128,128))
 		#self.list2.setMaximumHeight(250)
 		self.frame.setMaximumWidth(300)
 		self.list4.setMaximumWidth(300)
@@ -7244,6 +7249,7 @@ class Ui_MainWindow(object):
 		self.default_background = os.path.join(home,'default.jpg')
 		self.torrent_type = 'file'
 		self.torrent_handle = ''
+		self.list_with_thumbnail = True
 		self.mpvplayer_val = QtCore.QProcess()
 		self.torrent_upload_limit = 0
 		self.torrent_download_limit = 0
@@ -7807,6 +7813,7 @@ class Ui_MainWindow(object):
 				epnArrList[:]=[]
 				epnArrList=m
 				self.list2.clear()
+				"""
 				for i in epnArrList:
 					i = i.replace('\n','')
 					if '	' in i:
@@ -7815,7 +7822,9 @@ class Ui_MainWindow(object):
 							i = i.replace('#',ui.check_symbol,1)
 							self.list2.item(i).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 						else:
-							self.list2.addItem((i))			
+							self.list2.addItem((i))	
+				"""
+				self.update_list2()
 			
 	def playerPlaylist1(self,val):
 		if val == "Shuffle":
@@ -9641,6 +9650,103 @@ class Ui_MainWindow(object):
 				
 		
 			
+	def get_thumbnail_image_path(self,row_cnt):
+		global site,epnArrList,home
+		picn = ''
+		if site == "Local" or site=="None" or site == "Music" or site == "Video":
+			if '	' in epnArrList[row_cnt]:
+				nameEpn = (epnArrList[row_cnt]).split('	')[0]
+				
+				path = ((epnArrList[row_cnt]).split('	')[1])
+			else:
+				nameEpn = (epnArrList[row_cnt]).split('/')[-1]
+				nameEpn = nameEpn
+				path = (epnArrList[row_cnt])
+			#picn = home+'/thumbnails/'+nameEpn+'.jpg'
+			if self.list1.currentItem():
+				name_t = self.list1.currentItem().text()
+			else:
+				name_t = ''
+			if self.list3.currentItem():
+				if self.list3.currentItem().text() == 'Playlist':
+					picnD = os.path.join(home,'thumbnails','PlayLists',name_t)
+				else:
+					picnD = os.path.join(home,'thumbnails',site,name_t)
+			else:
+				picnD = os.path.join(home,'thumbnails',site,name_t)
+			print(picnD,'=picnD')
+			if not os.path.exists(picnD):
+				os.makedirs(picnD)
+			picn = os.path.join(picnD,nameEpn)+'.jpg'
+			picn = picn.replace('#','')
+			if picn.startswith(self.check_symbol):
+				picn = picn[1:]
+			path = path.replace('"','')
+			
+			if site == "Music":
+				if os.path.exists(picn):
+					if os.stat(picn).st_size == 0:
+						art_n =(epnArrList[row_cnt]).split('	')[2]
+						pic = os.path.join(home,'Music','Artist',art_n,'poster.jpg')
+						if os.path.exists(pic):
+							picn = pic
+						
+		elif site == "PlayLists":
+			item = self.list2.item(row_cnt)
+			if item:
+				
+				
+				nameEpn = (epnArrList[row_cnt]).split('	')[0]
+				nameEpn = str(nameEpn)
+				path = ((epnArrList[row_cnt]).split('	')[1])
+				
+				#picn = home+'/thumbnails/'+nameEpn+'.jpg'
+				playlist_dir = os.path.join(home,'thumbnails','PlayLists')
+				if not os.path.exists(playlist_dir):
+					os.makedirs(playlist_dir)
+				pl_n = self.list1.currentItem().text()
+				playlist_name = os.path.join(playlist_dir,pl_n)
+				if not os.path.exists(playlist_name):
+					os.makedirs(playlist_name)
+				#picnD = home+'/thumbnails/'+name
+				picnD = os.path.join(playlist_name,nameEpn)
+				#if not os.path.exists(picnD):
+				#	os.makedirs(picnD)
+				#picn = picnD+'/'+nameEpn+'.jpg'
+				picn = picnD+'.jpg'
+				picn = picn.replace('#','')
+				if picn.startswith(self.check_symbol):
+					picn = picn[1:]
+				path1 = path.replace('"','')
+				
+		else:
+			if finalUrlFound == True:
+				if '	' in epnArrList[row_cnt]:
+					nameEpn = (epnArrList[row_cnt]).split('	')[0]
+				
+				else:
+					nameEpn = (epnArrList[row_cnt]).split('/')[-1]
+				nameEpn = nameEpn
+			else:
+				if '	' in epnArrList[row_cnt]:
+					nameEpn = (epnArrList[row_cnt]).split('	')[0]
+				
+				else:
+					#nameEpn = name+'-'+(epnArrList[browse_cnt]).decode('utf8')
+					nameEpn = (epnArrList[row_cnt])
+				nameEpn = nameEpn
+			#picn = home+'/thumbnails/'+nameEpn+'.jpg'
+			picnD = os.path.join(home,'thumbnails',name)
+			if not os.path.exists(picnD):
+				os.makedirs(picnD)
+			picn = picnD+'/'+nameEpn+'.jpg'
+			#if not os.path.exists()
+			picn = picn.replace('#','')
+			if picn.startswith(self.check_symbol):
+				picn = picn[1:]
+		if not picn:
+			picn = os.path.join(home,'default.jpg')
+		return picn
 		
 	def thumbnailEpn(self):
 		
@@ -11400,25 +11506,27 @@ class Ui_MainWindow(object):
 			#row = self.list2.currentRow()
 			item = self.list2.item(row)
 			if item:
-				i = str(self.list2.item(row).text())
+				i = self.list2.item(row).text()
 				if mark_val == 'mark' and i.startswith(self.check_symbol):
 					pass
 				elif mark_val == 'unmark' and not i.startswith(self.check_symbol):
 					pass
 				elif mark_val == 'mark' and not i.startswith(self.check_symbol):
-					j = self.list2.item(row)
+					#j = self.list2.item(row)
 					url1 = epnArrList[row].split('	')[1]
-					self.list2.takeItem(row)
-					del j
-					self.list2.insertItem(row,self.check_symbol+i)
+					#self.list2.takeItem(row)
+					#del j
+					#self.list2.insertItem(row,self.check_symbol+i)
+					item.setText(self.check_symbol+i)
 					self.updateVideoCount('mark',url1)
 				elif mark_val == 'unmark' and i.startswith(self.check_symbol):
-					j = self.list2.item(row)
+					#j = self.list2.item(row)
 					url1 = epnArrList[row].split('	')[1]
-					self.list2.takeItem(row)
-					del j
+					#self.list2.takeItem(row)
+					#del j
 					i = i[1:]
-					self.list2.insertItem(row,i)
+					item.setText(i)
+					#self.list2.insertItem(row,i)
 					self.updateVideoCount('unmark',url1)
 				self.list2.setCurrentRow(row)
 				
@@ -11455,19 +11563,21 @@ class Ui_MainWindow(object):
 				elif mark_val == 'unmark' and not i.startswith(self.check_symbol):
 					pass
 				elif mark_val == 'mark' and not i.startswith(self.check_symbol):
-					j = self.list2.item(row)
-					self.list2.takeItem(row)
-					del j
-					self.list2.insertItem(row,self.check_symbol+i)
+					#j = self.list2.item(row)
+					#self.list2.takeItem(row)
+					#del j
+					#self.list2.insertItem(row,self.check_symbol+i)
+					item.setText(self.check_symbol+i)
 					epnArrList[row] = '#'+epnArrList[row]
 					self.list2.setCurrentRow(row)
 					self.update_playlist_file(file_path)
 				elif mark_val == 'unmark' and i.startswith(self.check_symbol):
-					j = self.list2.item(row)
-					self.list2.takeItem(row)
-					del j
+					#j = self.list2.item(row)
+					#self.list2.takeItem(row)
+					#del j
 					i = i[1:]
-					self.list2.insertItem(row,i)
+					#self.list2.insertItem(row,i)
+					item.setText(i)
 					epnArrList[row] = epnArrList[row].replace('#','')
 					self.list2.setCurrentRow(row)
 					self.update_playlist_file(file_path)
@@ -11528,16 +11638,18 @@ class Ui_MainWindow(object):
 				file_path = self.get_local_file_ep_name()
 				
 				txt = item.text()
-				j = self.list2.item(row)
-				self.list2.takeItem(row)
-				del j
+				#j = self.list2.item(row)
+				#self.list2.takeItem(row)
+				#del j
 				
 				if txt.startswith(self.check_symbol) and mark_val == 'unmark':
 					txt = txt[1:]
-					self.list2.insertItem(row,txt)
+					#self.list2.insertItem(row,txt)
+					self.list2.item(row).setText(txt)
 					file_change = True
 				elif not txt.startswith(self.check_symbol) and mark_val == 'mark':
-					self.list2.insertItem(row,self.check_symbol+txt)
+					#self.list2.insertItem(row,self.check_symbol+txt)
+					self.list2.item(row).setText(self.check_symbol+txt)
 					file_change = True
 					
 				if os.path.exists(file_path) and file_change:
@@ -11712,7 +11824,7 @@ class Ui_MainWindow(object):
 					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				else:
 					self.list2.addItem((j))
-					
+			self.set_list_thumbnail(k)
 			k = k+1
 		self.list2.setCurrentRow(row)
 		
@@ -12765,12 +12877,15 @@ class Ui_MainWindow(object):
 		
 		
 			self.list2.clear()
+			"""
 			for i in m:
 				#print i
 				if i.startswith('#'):
 					i = i.replace('#',self.check_symbol,1)
 				i = i.replace('_',' ')
 				self.list2.addItem((i))
+			"""
+			self.update_list2()
 	def searchNew(self):
 		global search,name
 		#site = str(self.btn1.currentText())
@@ -12902,7 +13017,8 @@ class Ui_MainWindow(object):
 						epnArrList.append(str(j))
 					except:
 						epnArrList.append(j)
-					self.list2.addItem((i1))
+					#self.list2.addItem((i1))
+				self.update_list2()
 				#else:
 				#	self.list1.addItem("Not Found")
 		elif site == "Video":
@@ -13227,9 +13343,9 @@ class Ui_MainWindow(object):
 							f.close()
 				
 				
-				k = 0
+				#k = 0
 				#self.list2.setIconSize(QtCore.QSize(128,128))	
-				
+				"""
 				if epnArrList:
 						for i in epnArrList:	
 							if i and '	' not in i:
@@ -13261,6 +13377,7 @@ class Ui_MainWindow(object):
 										i = i.replace('#',self.check_symbol,1)
 										self.list2.addItem((i))
 										self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+										
 										#self.list2.item(k).setForeground(QtCore.Qt.lightGray)
 									else:
 										self.list2.addItem((i))
@@ -13291,7 +13408,7 @@ class Ui_MainWindow(object):
 									self.list2.addItem((i))
 								
 							k = k+1
-				
+				"""
 		
 		elif site == "SubbedAnime":
 			global filter_on
@@ -13538,6 +13655,7 @@ class Ui_MainWindow(object):
 				k = 0
 				for i in m:
 					epnArrList.append(i)
+					"""
 					if '	' in i:
 						i = i.split('	')[0]
 					i = i.replace('_',' ')
@@ -13548,6 +13666,7 @@ class Ui_MainWindow(object):
 					else:
 						self.list2.addItem((i))
 					k = k+1
+					"""
 
 		elif site == "DubbedAnime":
 			self.list2.clear()
@@ -13712,6 +13831,7 @@ class Ui_MainWindow(object):
 				epnArrList[:]=[]
 				for i in m:
 					epnArrList.append(i)
+					"""
 					if '	' in i:
 						i = i.split('	')[0]
 					i = i.replace('_',' ')
@@ -13722,6 +13842,7 @@ class Ui_MainWindow(object):
 					else:
 						self.list2.addItem((i))
 					k = k+1
+					"""
 		elif site == "Local":
 			self.list2.clear()
 			if self.list1.currentItem():
@@ -13822,7 +13943,7 @@ class Ui_MainWindow(object):
 						shutil.copy(picn,os.path.join(home,'History',site,name,'poster.jpg'))
 					if os.path.isfile(fanart):
 						shutil.copy(fanart,os.path.join(home,'History',site,name,'fanart.jpg'))
-				self.update_list2()
+				#self.update_list2()
 				
 				
 		elif site == "Music":
@@ -13883,12 +14004,14 @@ class Ui_MainWindow(object):
 				except:
 					epnArrList.append((i))
 				#print i
-				i = i.split('	')[0]
-				self.list2.addItem((i))
+				#i = i.split('	')[0]
+				#self.list2.addItem((i))
 			self.musicBackground(0,'offline')
 		elif site == "PlayLists":
 			#self.list1.clear()
+			
 			self.list2.clear()
+			
 			r = self.list1.currentRow()
 			item = self.list1.item(r)
 			epnArrList[:]=[]
@@ -13899,15 +14022,18 @@ class Ui_MainWindow(object):
 					f = open(file_path)
 					lines = f.readlines()
 					f.close()
+					k = 0
 					for i in lines:
 						i = i.replace('\n','')
 						if i:	
 							epnArrList.append(i)
-							j = i.split('	')[0]
-							j = j.replace('_',' ')
-							if j.startswith('#'):
-								j = j.replace('#',self.check_symbol,1)
-							self.list2.addItem((j))
+							#j = i.split('	')[0]
+							#j = j.replace('_',' ')
+							#if j.startswith('#'):
+							#	j = j.replace('#',self.check_symbol,1)
+							#self.list2.addItem((j))
+							
+						#k = k+1
 		elif site == "Video":
 			r = self.list1.currentRow()
 			item = self.list1.item(r)
@@ -13952,11 +14078,11 @@ class Ui_MainWindow(object):
 				for i in artist:
 					epnArrList.append((i))
 					#print i
-					i = i.split('	')[0]
-					i.replace('_',' ')
-					if i.startswith('#'):
-						i = i.replace('#',self.check_symbol,1)
-					self.list2.addItem(i)
+					#i = i.split('	')[0]
+					#i = i.replace('_',' ')
+					#if i.startswith('#'):
+					#	i = i.replace('#',self.check_symbol,1)
+					#self.list2.addItem(i)
 				art_n = str(self.list1.currentItem().text())
 				dir_path = os.path.join(home,'Local',art_n)
 				if os.path.exists(dir_path):
@@ -13974,6 +14100,15 @@ class Ui_MainWindow(object):
 				else:
 					os.makedirs(dir_path)
 		self.current_background = fanart
+		#self.set_list_thumbnail()
+		self.update_list2()
+	def set_list_thumbnail(self,k):
+		if self.list_with_thumbnail:
+			#for k in range(self.list2.count()):
+			icon_name = self.get_thumbnail_image_path(k)
+			if os.path.exists(icon_name):
+				self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
+					
 	def musicBackground(self,val,srch):
 		global name,epnArrList,artist_name_mplayer,site
 		
@@ -14112,14 +14247,16 @@ class Ui_MainWindow(object):
 		item = self.list2.item(row)
 		if item:
 			i = str(self.list2.item(row).text())
-			j = self.list2.item(row)
-			self.list2.takeItem(row)
-			del j
+			#j = self.list2.item(row)
+			#self.list2.takeItem(row)
+			#del j
 			if not i.startswith(self.check_symbol):
-				self.list2.insertItem(row,self.check_symbol+i)
+				#self.list2.insertItem(row,self.check_symbol+i)
+				self.list2.item(row).setText(self.check_symbol+i)
 				epnArrList[row] = '#'+epnArrList[row]
 			else:
-				self.list2.insertItem(row,i)	
+				#self.list2.insertItem(row,i)
+				self.list2.item(row).setText(i)
 			#self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
 			if self.list1.currentItem():
@@ -14445,8 +14582,10 @@ class Ui_MainWindow(object):
 		if(site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" and finalUrlFound == False and site !="None" and site!= "Music" and site != "Video" and site!= "Local") :
 			hist_path = os.path.join(home,'History',site,name,'Ep.txt')
 			if (os.path.exists(hist_path) and (epn_goto == 0)) or (os.path.exists(hist_path) and bookmark == "True"):
-					if '#' in epnArrList[row]:
+					if epnArrList[row].startswith('#'):
 						n_epn = epnArrList[row]
+						txt = n_epn.replace('#',self.check_symbol,1)
+						
 					else:
 						n_epn = '#'+epnArrList[row]
 						file_path = hist_path
@@ -14461,6 +14600,10 @@ class Ui_MainWindow(object):
 						for i in lines:
 							f.write(i)
 						f.close()
+						txt = self.check_symbol + epnArrList[row]
+					txt = txt.replace('_',' ',1)
+					self.list2.item(row).setText(txt)
+					"""
 					lines = tuple(open(hist_path, 'r'))
 					self.list2.clear()
 					k = 0
@@ -14491,16 +14634,19 @@ class Ui_MainWindow(object):
 							else:
 								self.list2.addItem((j))
 						k = k+1
+					"""
 			else:
 				i = str(self.list2.item(row).text())
 				i = i.replace('_',' ')
-				j = self.list2.item(row)
-				self.list2.takeItem(row)
-				del j
+				#j = self.list2.item(row)
+				#self.list2.takeItem(row)
+				#del j
 				if not i.startswith(self.check_symbol):
-					self.list2.insertItem(row,self.check_symbol+i)
+					#self.list2.insertItem(row,self.check_symbol+i)
+					self.list2.item(row).setText(self.check_symbol+i)
 				else:
-					self.list2.insertItem(row,i)	
+					#self.list2.insertItem(row,i)
+					self.list2.item(row).setText(i)
 				self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				self.list2.setCurrentRow(row)
 			if site != "Local":
@@ -14591,6 +14737,7 @@ class Ui_MainWindow(object):
 				if os.path.exists(file_path) and (epn_goto == 0):
 					if '#' in epnArrList[row]:
 						n_epn = epnArrList[row]
+						txt = n_epn.replace('#',self.check_symbol,1)
 					else:
 						n_epn = "#" + epnArrList[row]
 						f = open(file_path, 'r')
@@ -14605,6 +14752,10 @@ class Ui_MainWindow(object):
 						for i in lines:
 							f.write(i)
 						f.close()
+						txt = self.check_symbol + epnArrList[row]
+					txt = txt.replace('_',' ',1)
+					self.list2.item(row).setText(txt)
+					"""
 					lines = tuple(open(file_path, 'r'))
 					self.list2.clear()
 					k = 0
@@ -14621,6 +14772,7 @@ class Ui_MainWindow(object):
 							else:
 								self.list2.addItem((i))
 						k = k+1
+					"""
 			if site == "SubbedAnime":
 				code = 6
 			
@@ -14714,13 +14866,15 @@ class Ui_MainWindow(object):
 			print (finalUrl)
 			i = str(self.list2.item(row).text())
 			i = i.replace('_',' ')
-			j = self.list2.item(row)
-			self.list2.takeItem(row)
-			del j
+			#j = self.list2.item(row)
+			#self.list2.takeItem(row)
+			#del j
 			if not i.startswith(self.check_symbol):
-				self.list2.insertItem(row,self.check_symbol+i)
+				#self.list2.insertItem(row,self.check_symbol+i)
+				self.list2.item(row).setText(self.check_symbol+i)
 			else:
-				self.list2.insertItem(row,i)	
+				#self.list2.insertItem(row,i)
+				self.list2.item(row).setText(i)
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
 			
@@ -16239,13 +16393,15 @@ class Ui_MainWindow(object):
 				self.mark_History()
 			else:
 				i = str(self.list2.item(row).text())
-				j = self.list2.item(row)
-				self.list2.takeItem(row)
-				del j
+				#j = self.list2.item(row)
+				#self.list2.takeItem(row)
+				#del j
 				if not i.startswith(self.check_symbol):
-					self.list2.insertItem(row,self.check_symbol+i)
+					#self.list2.insertItem(row,self.check_symbol+i)
+					self.list2.item(row).setText(self.check_symbol+i)
 				else:
-					self.list2.insertItem(row,i)
+					#self.list2.insertItem(row,i)
+					self.list2.item(row).setText(i)
 				self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				self.list2.setCurrentRow(row)
 				
@@ -16270,13 +16426,15 @@ class Ui_MainWindow(object):
 			#finalUrl = finalUrl.decode('utf8')
 			print (finalUrl,'--line--15803--')
 			i = str(self.list2.item(row).text())
-			j = self.list2.item(row)
-			self.list2.takeItem(row)
-			del j
+			#j = self.list2.item(row)
+			#self.list2.takeItem(row)
+			#del j
 			if not i.startswith(self.check_symbol):
-				self.list2.insertItem(row,self.check_symbol+i)
+				#self.list2.insertItem(row,self.check_symbol+i)
+				self.list2.item(row).setText(self.check_symbol+i)
 			else:
-				self.list2.insertItem(row,i)	
+				#self.list2.insertItem(row,i)
+				self.list2.item(row).setText(i)
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
 			if 'youtube.com' in finalUrl.lower():
@@ -16572,13 +16730,15 @@ class Ui_MainWindow(object):
 				self.mark_History()
 			else:
 				i = str(self.list2.item(row).text())
-				j = self.list2.item(row)
-				self.list2.takeItem(row)
-				del j
+				#j = self.list2.item(row)
+				#self.list2.takeItem(row)
+				#del j
 				if not self.check_symbol in i:
-					self.list2.insertItem(row,self.check_symbol+i)
+					#self.list2.insertItem(row,self.check_symbol+i)
+					self.list2.item(row).setText(self.check_symbol+i)
 				else:
-					self.list2.insertItem(row,i)
+					#self.list2.insertItem(row,i)
+					self.list2.item(row).setText(i)
 				self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				self.list2.setCurrentRow(row)
 				
@@ -16692,13 +16852,15 @@ class Ui_MainWindow(object):
 			#finalUrl = finalUrl.decode('utf8')
 			print (finalUrl)
 			i = str(self.list2.item(row).text())
-			j = self.list2.item(row)
-			self.list2.takeItem(row)
-			del j
+			#j = self.list2.item(row)
+			#self.list2.takeItem(row)
+			#del j
 			if not i.startswith(self.check_symbol):
-				self.list2.insertItem(row,self.check_symbol+i)
+				#self.list2.insertItem(row,self.check_symbol+i)
+				self.list2.item(row).setText(self.check_symbol+i)
 			else:
-				self.list2.insertItem(row,i)	
+				#self.list2.insertItem(row,i)
+				self.list2.item(row).setText(i)
 			self.list2.item(row).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 			self.list2.setCurrentRow(row)
 			if site == "Music":
@@ -16866,6 +17028,8 @@ class Ui_MainWindow(object):
 			except:
 				print('Error processing playlist file, hence restoring original')
 				shutil.copy(abs_path,file_path)
+			self.update_list2()
+			"""
 			for i in epnArrList:
 				i = i.strip()
 				if i and '	' in i:
@@ -16874,7 +17038,7 @@ class Ui_MainWindow(object):
 					if i.startswith('#'):
 						i = i.replace('#',self.check_symbol,1)
 					self.list2.addItem(i)
-			
+			"""
 	def update_playlist(self,pls):
 		global epnArrList
 		#self.list1.clear()
@@ -16895,11 +17059,14 @@ class Ui_MainWindow(object):
 				i = i.replace('\n','')
 				if i:
 					epnArrList.append(i)
+					"""
 					j = i.split('	')[0]
 					j = j.replace('_',' ')
 					if j.startswith('#'):
 						j = j.replace('#',self.check_symbol,1)
 					self.list2.addItem((j))
+					"""
+			self.update_list2()
 		elif os.path.exists(file_path) and self.btn1.currentText().lower() == 'playlists':
 			pl_name = file_path.split('/')[-1]
 			if not self.list1.currentItem():
@@ -17303,7 +17470,8 @@ class Ui_MainWindow(object):
 					
 				for i in m:
 					epnArrList.append(str(i[1]+'	'+i[2]+'	'+i[0]))
-					self.list2.addItem((i[1]))
+					#self.list2.addItem((i[1]))
+				self.update_list2()
 		elif site == "Video":
 			video_dir = os.path.join(home,'VideoDB')
 			if not os.path.exists(video_dir):
