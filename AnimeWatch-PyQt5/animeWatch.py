@@ -1050,8 +1050,56 @@ class downloadThread(QtCore.QThread):
 	def run(self):
 		ccurl(self.url)
 		
-
-
+class updateListThread(QtCore.QThread):
+	update_list2_signal = pyqtSignal(str,int)
+	def __init__(self,e):
+		QtCore.QThread.__init__(self)
+		self.e = e
+		self.update_list2_signal.connect(update_list2_global)
+	def __del__(self):
+		self.wait()                        
+	
+	def run(self):
+		k = 0
+		for i in self.e:
+			self.update_list2_signal.emit(i,k)
+			k = k+1
+		
+@pyqtSlot(str,int)
+def update_list2_global(i,k):
+	"""
+	global site,finalUrlFound
+	i = i.strip()
+	if '	' in i:
+		i = i.split('	')[0]
+		i = i.replace('_',' ')
+		if i.startswith('#'):
+			i = i.replace('#',ui.check_symbol,1)
+			ui.list2.addItem((i))
+			ui.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		else:
+			ui.list2.addItem((i))
+	else:
+		if site == "Local" or finalUrlFound == True:
+			j = i.split('/')[-1]
+			if i.startswith('#') and j:
+				j = j.replace('#',ui.check_symbol,1)
+		else:
+			j = i
+		j = j.replace('_',' ')
+		if j.startswith('#'):
+			j = j.replace('#',ui.check_symbol,1)
+			ui.list2.addItem((j))
+			ui.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		else:
+			ui.list2.addItem((j))
+	"""
+	try:
+		icon_name = ui.get_thumbnail_image_path(k,i)
+	except:
+		icon_name = ''
+	if os.path.exists(icon_name):
+		ui.list2.item(k).setIcon(QtGui.QIcon(icon_name))
 		
 class ThreadingThumbnail(QtCore.QThread):
     
@@ -6788,6 +6836,7 @@ class Ui_MainWindow(object):
 		self.list1.setMaximumWidth(300)
 		#self.list1.setMaximumHeight(250)
 		self.list2.setMaximumWidth(300)
+		#self.list2.setIconSize(QtCore.QSize(128,128))
 		self.list2.setIconSize(QtCore.QSize(128,128))
 		#self.list2.setMaximumHeight(250)
 		self.frame.setMaximumWidth(300)
@@ -9682,18 +9731,20 @@ class Ui_MainWindow(object):
 				
 		
 			
-	def get_thumbnail_image_path(self,row_cnt):
-		global site,epnArrList,home
+	def get_thumbnail_image_path(self,row_cnt,row_string):
+		global site,epnArrList,home,name
 		picn = ''
+		title = row_string.strip()
+		path = ''
 		if site == "Local" or site=="None" or site == "Music" or site == "Video":
-			if '	' in epnArrList[row_cnt]:
-				nameEpn = (epnArrList[row_cnt]).split('	')[0]
+			if '	' in title:
+				nameEpn = title.split('	')[0]
 				
-				path = ((epnArrList[row_cnt]).split('	')[1])
+				path = title.split('	')[1]
 			else:
-				nameEpn = (epnArrList[row_cnt]).split('/')[-1]
+				nameEpn = title.split('/')[-1]
 				nameEpn = nameEpn
-				path = (epnArrList[row_cnt])
+				path = title
 			#picn = home+'/thumbnails/'+nameEpn+'.jpg'
 			if self.list1.currentItem():
 				name_t = self.list1.currentItem().text()
@@ -9718,7 +9769,7 @@ class Ui_MainWindow(object):
 			if site == "Music":
 				if os.path.exists(picn):
 					if os.stat(picn).st_size == 0:
-						art_n =(epnArrList[row_cnt]).split('	')[2]
+						art_n =title.split('	')[2]
 						pic = os.path.join(home,'Music','Artist',art_n,'poster.jpg')
 						if os.path.exists(pic):
 							picn = pic
@@ -9728,9 +9779,9 @@ class Ui_MainWindow(object):
 			if item:
 				
 				
-				nameEpn = (epnArrList[row_cnt]).split('	')[0]
+				nameEpn = title.split('	')[0]
 				nameEpn = str(nameEpn)
-				path = ((epnArrList[row_cnt]).split('	')[1])
+				path = title.split('	')[1]
 				
 				#picn = home+'/thumbnails/'+nameEpn+'.jpg'
 				playlist_dir = os.path.join(home,'thumbnails','PlayLists')
@@ -9753,19 +9804,19 @@ class Ui_MainWindow(object):
 				
 		else:
 			if finalUrlFound == True:
-				if '	' in epnArrList[row_cnt]:
-					nameEpn = (epnArrList[row_cnt]).split('	')[0]
+				if '	' in title:
+					nameEpn = title.split('	')[0]
 				
 				else:
-					nameEpn = (epnArrList[row_cnt]).split('/')[-1]
+					nameEpn = title.split('/')[-1]
 				nameEpn = nameEpn
 			else:
-				if '	' in epnArrList[row_cnt]:
-					nameEpn = (epnArrList[row_cnt]).split('	')[0]
+				if '	' in title:
+					nameEpn = title.split('	')[0]
 				
 				else:
 					#nameEpn = name+'-'+(epnArrList[browse_cnt]).decode('utf8')
-					nameEpn = (epnArrList[row_cnt])
+					nameEpn = title
 				nameEpn = nameEpn
 			#picn = home+'/thumbnails/'+nameEpn+'.jpg'
 			picnD = os.path.join(home,'thumbnails',name)
@@ -9776,8 +9827,8 @@ class Ui_MainWindow(object):
 			picn = picn.replace('#','')
 			if picn.startswith(self.check_symbol):
 				picn = picn[1:]
-		if not picn:
-			picn = os.path.join(home,'default.jpg')
+		#if not picn:
+		#	picn = os.path.join(home,'default.jpg')
 		inter = "10s"
 		if (picn and not os.path.exists(picn) and 'http' not in path) or (picn and not os.path.exists(picn) and 'http' in path and 'youtube.com' in path ):
 			path = path.replace('"','')
@@ -11868,10 +11919,14 @@ class Ui_MainWindow(object):
 				else:
 					self.list2.addItem((j))
 			if self.list_with_thumbnail:
-				self.set_list_thumbnail(k)
+				icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
+				if os.path.exists(icon_name):
+					self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
 			k = k+1
 		self.list2.setCurrentRow(row)
-		
+		#if self.list_with_thumbnail:
+		#	thread_update = updateListThread(epnArrList)
+		#	thread_update.start()
 	def mark_History(self):
 		global epnArrList,curR,opt,siteName,site,name,home
 		file_path = ""
@@ -14144,12 +14199,13 @@ class Ui_MainWindow(object):
 				else:
 					os.makedirs(dir_path)
 		self.current_background = fanart
-		#self.set_list_thumbnail()
 		self.update_list2()
+		
 	def set_list_thumbnail(self,k):
+		global epnArrList
 		if self.list_with_thumbnail:
 			#for k in range(self.list2.count()):
-			icon_name = self.get_thumbnail_image_path(k)
+			icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
 			if os.path.exists(icon_name):
 				self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
 					
