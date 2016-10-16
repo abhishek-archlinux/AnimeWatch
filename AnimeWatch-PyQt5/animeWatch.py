@@ -2568,7 +2568,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							picnD = os.path.join(home,'thumbnails',site,name_t)
 					else:
 						picnD = os.path.join(home,'thumbnails',site,name_t)
-					print(picnD,'=picnD')
+					#print(picnD,'=picnD')
 					if not os.path.exists(picnD):
 						os.makedirs(picnD)
 					picn = os.path.join(picnD,a1)+'.jpg'
@@ -3644,6 +3644,10 @@ class List2(QtWidgets.QListWidget):
 		global site,opt,pre_opt,name,siteName,Player,total_till,video_local_stream
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Left:
 			ui.tab_5.setFocus()
+		elif event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Up:
+			self.setCurrentRow(0)
+		elif event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Down:
+			self.setCurrentRow(self.count()-1)
 		elif event.key() == QtCore.Qt.Key_Return:
 			curR = self.currentRow()
 			queueNo = queueNo + 1
@@ -4529,7 +4533,15 @@ class List2(QtWidgets.QListWidget):
 			submenuR = QtWidgets.QMenu(menu)
 			submenuR.setTitle("Add To Playlist")
 			menu.addMenu(submenuR)
-			thumb = menu.addAction("Show Thumbnails")
+			
+			view_menu = QtWidgets.QMenu(menu)
+			view_menu.setTitle("View Mode")
+			menu.addMenu(view_menu)
+			
+			view_list = view_menu.addAction("List Mode (Default)")
+			view_list_thumbnail = view_menu.addAction("List With Thumbnail")
+			thumb = view_menu.addAction("Thumbnail Mode")
+			#thumb = menu.addAction("Show Thumbnails")
 			go_to = menu.addAction("Go To Last.fm")
 			fix_ord = menu.addAction("Lock Order (Playlist Only)")
 			pls = os.listdir(os.path.join(home,'Playlists'))
@@ -4557,9 +4569,16 @@ class List2(QtWidgets.QListWidget):
 					if not os.path.exists(file_path):
 						f = open(file_path,'w')
 						f.close()
+			elif action == view_list:
+				ui.list_with_thumbnail = False
+				ui.update_list2()
+			elif action == view_list_thumbnail:
+				ui.list_with_thumbnail = True
+				ui.update_list2()
 			elif action == thumb:
 				ui.IconViewEpn()
 				ui.scrollArea1.setFocus()
+			
 			elif action == go_to:
 					ui.reviewsMusic("Last.Fm")
 			elif action == fix_ord:
@@ -4622,6 +4641,14 @@ class List2(QtWidgets.QListWidget):
 			submenuR.setTitle("Add To Playlist")
 			menu.addMenu(submenuR)
 			
+			view_menu = QtWidgets.QMenu(menu)
+			view_menu.setTitle("View Mode")
+			menu.addMenu(view_menu)
+			
+			view_list = view_menu.addAction("List Mode (Default)")
+			view_list_thumbnail = view_menu.addAction("List With Thumbnail")
+			thumb = view_menu.addAction("Thumbnail Mode")
+			
 			pls = os.listdir(os.path.join(home,'Playlists'))
 			home_n = os.path.join(home,'Playlists')
 			pls = sorted(pls,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),reverse=True)
@@ -4635,7 +4662,7 @@ class List2(QtWidgets.QListWidget):
 			r = self.currentRow()
 			
 			
-			thumb = menu.addAction("Show Thumbnails")
+			#thumb = menu.addAction("Show Thumbnails")
 			goto_web_mode = False
 			offline_mode = False
 			epn_arr = epnArrList[r].split('	')
@@ -4690,7 +4717,12 @@ class List2(QtWidgets.QListWidget):
 					if not os.path.exists(file_path):
 						f = open(file_path,'w')
 						f.close()
-		
+			elif action == view_list:
+				ui.list_with_thumbnail = False
+				ui.update_list2()
+			elif action == view_list_thumbnail:
+				ui.list_with_thumbnail = True
+				ui.update_list2()
 			elif action == remove:
 				r = 0
 				for i in epnArrList:
@@ -7249,7 +7281,7 @@ class Ui_MainWindow(object):
 		self.default_background = os.path.join(home,'default.jpg')
 		self.torrent_type = 'file'
 		self.torrent_handle = ''
-		self.list_with_thumbnail = True
+		self.list_with_thumbnail = False
 		self.mpvplayer_val = QtCore.QProcess()
 		self.torrent_upload_limit = 0
 		self.torrent_download_limit = 0
@@ -9674,7 +9706,7 @@ class Ui_MainWindow(object):
 					picnD = os.path.join(home,'thumbnails',site,name_t)
 			else:
 				picnD = os.path.join(home,'thumbnails',site,name_t)
-			print(picnD,'=picnD')
+			#print(picnD,'=picnD')
 			if not os.path.exists(picnD):
 				os.makedirs(picnD)
 			picn = os.path.join(picnD,nameEpn)+'.jpg'
@@ -9717,7 +9749,7 @@ class Ui_MainWindow(object):
 				picn = picn.replace('#','')
 				if picn.startswith(self.check_symbol):
 					picn = picn[1:]
-				path1 = path.replace('"','')
+				path = path.replace('"','')
 				
 		else:
 			if finalUrlFound == True:
@@ -9746,6 +9778,17 @@ class Ui_MainWindow(object):
 				picn = picn[1:]
 		if not picn:
 			picn = os.path.join(home,'default.jpg')
+		inter = "10s"
+		if (picn and not os.path.exists(picn) and 'http' not in path) or (picn and not os.path.exists(picn) and 'http' in path and 'youtube.com' in path ):
+			path = path.replace('"','')
+			if 'http' in path and 'youtube.com' in path and '/watch?' in path:
+				path = self.create_img_url(path)
+			self.threadPoolthumb.append(ThreadingThumbnail(path,picn,inter))
+			self.threadPoolthumb[len(self.threadPoolthumb)-1].finished.connect(self.thumbnail_generated)
+			length = len(self.threadPoolthumb)
+			if length == 1:
+				if not self.threadPoolthumb[0].isRunning():
+					self.threadPoolthumb[0].start()
 		return picn
 		
 	def thumbnailEpn(self):
@@ -9891,7 +9934,7 @@ class Ui_MainWindow(object):
 								picnD = os.path.join(home,'thumbnails',site,name_t)
 						else:
 							picnD = os.path.join(home,'thumbnails',site,name_t)
-						print(picnD,'=picnD')
+						#print(picnD,'=picnD')
 						if not os.path.exists(picnD):
 							os.makedirs(picnD)
 						picn = os.path.join(picnD,nameEpn)+'.jpg'
@@ -11800,7 +11843,7 @@ class Ui_MainWindow(object):
 		self.list2.clear()
 		k = 0
 		for i in epnArrList:
-			i = i.replace('\n','')
+			i = i.strip()
 			if '	' in i:
 				i = i.split('	')[0]
 				i = i.replace('_',' ')
@@ -11824,7 +11867,8 @@ class Ui_MainWindow(object):
 					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				else:
 					self.list2.addItem((j))
-			self.set_list_thumbnail(k)
+			if self.list_with_thumbnail:
+				self.set_list_thumbnail(k)
 			k = k+1
 		self.list2.setCurrentRow(row)
 		
@@ -14119,7 +14163,7 @@ class Ui_MainWindow(object):
 				artist_mode = False
 		else:
 			artist_mode = False
-			
+		print(artist_mode,'----artist--mode---')
 		if artist_mode:
 			music_dir_art = os.path.join(home,'Music','Artist')
 			if not os.path.exists(music_dir_art):
@@ -14131,7 +14175,7 @@ class Ui_MainWindow(object):
 						nm = nm.replace('/','-')
 				else:
 					nm = artist_name_mplayer
-				music_dir_art_name = os.path.join(home,'Music','Artist'+nm)
+				music_dir_art_name = os.path.join(home,'Music','Artist',nm)
 				print(music_dir_art_name)
 				if not os.path.exists(music_dir_art_name):
 					os.makedirs(music_dir_art_name)
@@ -18374,6 +18418,7 @@ class RightClickMenu(QtWidgets.QMenu):
 	
 	def music(self):
 		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt
+		ui.list_with_thumbnail = False
 		MainWindow.hide()
 		print('Music Mode')
 		layout_mode = "Music"
@@ -18414,6 +18459,7 @@ class RightClickMenu(QtWidgets.QMenu):
 	def video(self):
 		global layout_mode,default_arr_setting,opt
 		print('default Mode')
+		#ui.list_with_thumbnail = True
 		layout_mode = "Default"
 		ui.sd_hd.show()
 		ui.audio_track.show()
@@ -18719,6 +18765,12 @@ if __name__ == "__main__":
 					cnt = ui.chk.findText(Player)
 					if cnt >=0 and cnt < ui.chk.count():
 						ui.chk.setCurrentIndex(cnt)
+				elif "List_Mode_With_Thumbnail" in i:
+					tmp_mode = re.sub('\n','',j)
+					if tmp_mode.lower() == 'true':
+						ui.list_with_thumbnail = True
+					else:
+						ui.list_with_thumbnail = False
 				elif "Site_Index" in i:
 					site_i = re.sub('\n','',j)
 					if site_i.isdigit():
@@ -19260,6 +19312,7 @@ if __name__ == "__main__":
 		f.write("\nWWidth="+str(MainWindow.width()))
 		f.write("\nLayout="+str(layout_mode))
 		f.write("\nDefault_Mode="+str(def_val))
+		f.write("\nList_Mode_With_Thumbnail="+str(ui.list_with_thumbnail))
 		f.write("\nMusic_Mode="+str(music_val))
 		
 		f.close()
