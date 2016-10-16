@@ -9822,7 +9822,7 @@ class Ui_MainWindow(object):
 			picnD = os.path.join(home,'thumbnails',name)
 			if not os.path.exists(picnD):
 				os.makedirs(picnD)
-			picn = picnD+'/'+nameEpn+'.jpg'
+			picn = os.path.join(picnD,nameEpn+'.jpg')
 			#if not os.path.exists()
 			picn = picn.replace('#','')
 			if picn.startswith(self.check_symbol):
