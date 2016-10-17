@@ -5700,7 +5700,8 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 class Btn1(QtWidgets.QComboBox):
 	def __init__(self, parent):
 		super(Btn1, self).__init__(parent)
-		
+		#self.setEditable(True)
+		#self.lineEdit().setAlignment(QtCore.Qt.AlignCenter)
 	def keyPressEvent(self, event):
 		global iconv_r
 		if event.key() == QtCore.Qt.Key_Right:
@@ -7244,7 +7245,7 @@ class Ui_MainWindow(object):
 		#self.chk.setGeometry(QtCore.QRect(20, 380, 130, 31))
 		self.comboView = QtWidgets.QComboBox(self.dockWidget_3) 
 		self.comboView.setObjectName(_fromUtf8("comboView"))
-		
+		self.comboView.hide()
 		#self.comboView.setGeometry(QtCore.QRect(20, 420, 130, 31))
 		
 		#self.btn9 = QtGui.QPushButton(self.dockWidget_3)
