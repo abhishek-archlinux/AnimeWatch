@@ -1,6 +1,6 @@
 ﻿# AnimeWatch
 
-AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for linux.
+AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer or vlc, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for GNU/linux systems.
 
 ## Index
 
@@ -124,13 +124,15 @@ From version 2.6.0-0, it's possible to use AnimeWatch player as media server. Th
 
 For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current selected file in the playlist at the address 'http://192.168.1.1:9001/play'. Next and previous files in the playlist can be accessed using url's 'http://192.168.1.1:9001/next' and 'http://192.168.1.1:9001/prev' respectively.
 
-Note: This feature won't work with streaming torrent content, since streaming torrent starts another http server process different than that of media server process mentioned in this section. You can access torrent streams from other machines or devices as per the instructions given in [Torrent Streaming](#torrent-streaming) section.
+Note: You need to use separate port number for media server and torrent streaming feature. Port number along with local IP for torrent streaming feature needs to be set in 'torrent_config.txt' (TORRENT_STREAM_IP field) and that of media server in 'other_options.txt' (LOCAL_STREAM_IP field). 
+Default Settings: 'TORRENT_STREAM_IP=127.0.0.1:8001' and 'LOCAL_STREAM_IP=127.0.0.1:9001'. In default settings one can't access local media from another computer. Users need to change default loopback address to local ip address. Users have to set local IP address and port once only. If local IP address of the media server changes dynamically next time, then the AnimeWatch application will try to find out new address automatically. If the application can't find new address then users have to manually change the config files again.
 
 ## YouTube Support
 ######[Index](#index)
 ![AnimeWatch](/Images/YT.png)
 
 This player provides a wrapper around youtube site using qtwebengine (since version 2.8.0-0). If your GNU/linux distro does not package qtwebengine, then it will fallback to qtwebkit, which is slower compared to qtwebengine for rendering web pages. Users need to install livestreamer(for watching live streams) and youtube-dl for directly playing youtube videos on this player. Ubuntu users have to install python3-livestreamer also.
+
 
 ## Addon Structure
 ######[Index](#index)
@@ -259,12 +261,14 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 1. If you've installed the Application using .deb or .pkg.tar.xz package or using PKGBUILD, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'anime-watch' or 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
 
-2. If addons are not working after some time or fanart/poster are not fetched properly, then try clearing the cache directory '/tmp/AnimeWatch/'
+2. If addons are not working after some time or fanart/poster are not fetched properly, then try clearing the cache directory '/tmp/AnimeWatch/'. If users have some problems in using qtwebengine, then try clearing cache directory for qtwebengine '~/.config/AnimeWatch/Cache/'.
 
 3. If application is crashing after certain update, then it might be possible that it may be due to incompatibility or mismatch between addons of different versions, or certain configuration issues or addition/deletion of certain addons. In such cases remove config file '~/.config/AnimeWatch/src/config.txt' manually, and then restart the application. If removing only config file doesn't work then remove both addons directory '~/.config/AnimeWatch/src/' and config file '~/.config/AnimeWatch/src/config.txt' manually, and then restart the application.
 
 4. In order to update addons manually , download or clone the github AnimeWatch directory, then go to github 'AnimeWatch-PyQt4-Stable/Plugins' directory (or AnimeWatch-PyQt5/Plugins depending upon which version you've installed) , you will find 'installPlugins.py' file there, open terminal in the directory, run the command 'python installPlugins.py' or 'python3 installPlugins.py'. It will update the addons. Or simply copy content of github 'Plugins' directory (except installPlugins.py file) into '~/.config/AnimeWatch/src/Plugins'.
 
+
+5. If the status text of the player fluctuates a lot due to frequent changes in cache text duration, while using mpv as backend, then you need to set 'cache-secs' field properly in '~/.mpv/config' file. Sample fields and their values required to be set up in '~/.mpv/config' or '~/.mplayer/config' for better performance are listed in the Documentation section. 
 
 ####Troubleshooting for common method
 
@@ -387,7 +391,7 @@ ctrl+x : show/hide Browser
 
 ctrl+z : show/hide Thumbnail mode (Thumbnail Mode is memory consuming, hence use it carefully if you have very big library collection)
 
-Escape : Hide/Show Everything
+Escape : show/hide Everything
 
 Right,Left: set focus alternate between Option column, Title column and Playlist column (If Player is not Playing Anything)
 
@@ -429,9 +433,15 @@ b : select SD480p quality
 
 w : toggle watch/unwatch
 
+o : start offline mode (If offline mode is already activated then pressing 'o' will enqueue items for offline viewing)
+
 PgUp: Move Entry UP
 
 PgDown: Move Entry Down
+
+Ctrl+Up : Move to first entry
+
+Ctrl+Down: Move to last entry
 
 ###Thumbnail Mode:
 
@@ -446,7 +456,7 @@ You can explore Right click menu of both Playlist Column and Title List Column f
 
 ###Other Things for convenience:
 
-Please Enable Vertical Scrolling of Touchpad, because there are no scrollbars in this app, because they were looking very ugly in the total setup.
+Please Enable Vertical Scrolling of Touchpad, because there are no scrollbars in this application, because they were looking very ugly in the total setup.
 
 In LXDE you can insert following command in autostart file to enable vertical scrolling
 
