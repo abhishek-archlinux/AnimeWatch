@@ -17,6 +17,13 @@ except:
 from stream import ThreadServer,TorrentThread,get_torrent_info
 import shutil
 #from hurry.filesize import size
+try:
+	from headlessBrowser import BrowseUrl
+except:
+	from headlessBrowser_webkit import BrowseUrl
+
+def cloudfare(url,quality):
+	web = BrowseUrl(url,quality)
 
 def naturallysorted(l): 
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -64,6 +71,12 @@ def ccurl(url):
 			post2 = post.split('=')[1]
 			post_data = {post1:post2}
 			postfield = urllib.parse.urlencode(post_data)
+	if os.path.exists('/tmp/AnimeWatch/nyaa.txt'):
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/nyaa.txt')
+	else:
+		print('inside ccurl')
+		cloudfare(url,'')
+		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/nyaa.txt')
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
@@ -139,7 +152,7 @@ class Nyaa():
 			criteria = ['Date','Seeders','Leechers','Downloads','History','LocalStreaming']
 			return criteria
 		
-	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui):
+	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui,progress):
 		#nm = name.rsplit('-',1)
 		#name = nm[0]
 		#name_id = nm[1]
@@ -161,7 +174,7 @@ class Nyaa():
 		#handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path)
 		#print(get_torrent_info(torrent_dest,index,path))
 		#print('---before--error---164---')
-		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui)
+		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui,progress)
 		#print('---line--error---166---')
 		torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
 		torrent_thread.start()
@@ -169,7 +182,7 @@ class Nyaa():
 		#p = subprocess.Popen(['python',home1,ip,str(port),torrent_dest,str(index),path])
 		
 		url = 'http://'+ip+':'+str(port)+'/'
-		print(url,'-local-ip-url')
+		print(url,'-local-ip-url',status)
 		if status.lower() == 'first run':
 			return url,thread_server,torrent_thread,ses,handle
 		else:
@@ -209,7 +222,7 @@ class Nyaa():
 		m = self.process_page(url)
 		return m
 		
-	def getCompleteList(self,opt,genre_num):
+	def getCompleteList(self,opt,genre_num,ui):
 		if opt == 'Date':
 			url = 'https://www.nyaa.se/?cats=1_37'
 		elif opt == 'Seeders':
@@ -218,7 +231,7 @@ class Nyaa():
 			url = 'https://www.nyaa.se/?cats=1_37&sort=3'
 		elif opt == 'Downloads':
 			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
-			
+		print(opt,url)
 		m = self.process_page(url)
 		return m
 	

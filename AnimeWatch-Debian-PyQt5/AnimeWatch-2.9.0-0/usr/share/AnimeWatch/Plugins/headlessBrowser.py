@@ -160,11 +160,13 @@ class BrowseUrl(QWebEngineView):
 			self.cookie_file = '/tmp/AnimeWatch/animeplace.txt'
 		elif 'moetube' in url:
 			self.cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
+		elif 'nyaa' in url:
+			self.cookie_file = '/tmp/AnimeWatch/nyaa.txt'
 			#if os.path.exists(self.cookie_file):
 			#	os.remove(self.cookie_file)
 		
 		
-		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url:
+		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:
 			content = ccurl(url)
 		else:
 			content = 'checking_browser'

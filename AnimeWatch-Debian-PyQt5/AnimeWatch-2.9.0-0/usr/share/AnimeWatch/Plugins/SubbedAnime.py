@@ -17,7 +17,7 @@ except:
 import time
 from base64 import b64decode
 import random
-
+import json
 
 
 
@@ -191,17 +191,19 @@ def cloudfareUrlOld(url):
 def shrink_url(url):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	if "linkshrink" in url:
+		url = url.replace('http:','https:')
 		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-I','-L',url])
 		#content = getContentUnicode(content)
 		content = ccurl(url+'#'+'-Icb'+'#'+'/tmp/AnimeWatch/link.txt')
-		print(content,'----linkshrink---------')
+		#print(content,'----linkshrink---------')
 		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-L',url])
 		#content = getContentUnicode(content)
 		content = ccurl(url+'#'+'-bc'+'#'+'/tmp/AnimeWatch/link.txt')
 		print(content,'----linkshrink---------')
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		shrink = soup.find('a',{'class':'bt'})
 		shrink_link = shrink['href']
+		shrink_link = shrink_link.replace('http:','https:')
 		f = open('/tmp/AnimeWatch/link.txt','a')
 		f.write('\nlinkshrink.net	FALSE	/	FALSE	0	s32	1')
 		f.close()
@@ -856,12 +858,18 @@ def findurl(i):
 			#content = (subprocess.check_output(['curl','-L','-A',hdr,i]))
 			content = ccurl(i)
 			#content = getContentUnicode(content)
-			soup = BeautifulSoup(content)
+			"""
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.find('div',{'class':'buttons'})
 			#link = soup.find('div',{'id':'ddl-row'})
 			#print(link
 			link1 = link.find('a')
 			found = link1['href']
+			"""
+			link1 = re.search('download_url":"https[^"]*',content)
+			link = link1.group()
+			found1 = re.search('https[^"]*',link)
+			found = found1.group()
 			return found
 	elif "mediafire" in i:
 			
@@ -960,7 +968,7 @@ def findurl(i):
 			#content = (subprocess.check_output(['curl','-L','-A',hdr,url[0]]))
 			#content = getContentUnicode(content)
 			content = ccurl(url[0])
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.find('div',{'class':'btns'})
 			#print(link
 			link1 = link.find('a')
@@ -985,7 +993,7 @@ def findurl(i):
 				else:
 					found = url
 		"""
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		link = soup.findAll('script')
 		print(link)
 		print(len(link))
@@ -1226,7 +1234,7 @@ def findurl(i):
 		#print("*********vid********kai"
 		content = ccurl(i)
 		#print(content
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		src = soup.find('source')['src']
 		
 		#content = (subprocess.check_output(['curl','-I','-L','-A',hdr,src]))
@@ -1242,7 +1250,7 @@ def findurl(i):
 			return ""
 	elif "arkvid" in i:
 		content = ccurl(i)
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		src = soup.find('source')['src']
 		if 'http' not in src:
 			src = "http:"+src
@@ -1413,8 +1421,8 @@ class SubbedAnime():
 			url = "http://www.animechiby.com/index/"
 		elif siteName == "AnimeSquare":
 			url = "http://www.masterani.me/"
-			
-			url = "http://www.masterani.me/api/anime-all"
+			#url = "http://www.masterani.me/api/anime-all"
+			url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page=1'
 		elif siteName == "Anime1":
 			url = "http://www.anime1.com/content/list/"
 		elif siteName == "AnimeAll":
@@ -1422,7 +1430,17 @@ class SubbedAnime():
 				url = "http://www.watchanimeshows.tv/movies-list/"
 			else:
 				url = "http://www.watchanimeshows.tv/anime-shows/"
-			
+		site_nm = siteName.lower()+'list.txt'
+		title_file_list = os.path.join('/tmp','AnimeWatch',site_nm)
+		if os.path.exists(title_file_list):
+			m = []
+			f =open(title_file_list,'r')
+			lines = f.readlines()
+			f.close()
+			for i in lines:
+				i = i.strip()
+				m.append(i)
+			return m
 		print(url)
 		if siteName != "AnimePlus":
 			
@@ -1456,7 +1474,7 @@ class SubbedAnime():
 			content = ccurl_cookie(url)
 		if siteName == "Anime44":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			if category == "Movies":
 				link = soup.findAll('div',{'id':'videos'})
 			else:
@@ -1493,7 +1511,7 @@ class SubbedAnime():
 			
 		elif siteName == "Animehere":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('dl')
 			for i in link:
 				j = i.findAll('a')
@@ -1507,7 +1525,7 @@ class SubbedAnime():
 
 		elif siteName == "AnimePlus":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('table',{'class':'series_index'})
 			for i in link:
 				a = i.findAll('a')
@@ -1550,7 +1568,7 @@ class SubbedAnime():
 				m = random.sample(m, len(m))	
 		elif siteName == "AnimeHQ":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('div',{'class':'serieslisted'})
 			for i in link:
 				j = i.find('a')['href']
@@ -1584,7 +1602,7 @@ class SubbedAnime():
 				m = random.sample(m, len(m))	
 		elif siteName == "AnimeBaka":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('div',{'id':'list'})
 			for i in link:
 				a = i.findAll('a')
@@ -1619,7 +1637,7 @@ class SubbedAnime():
 					if tmp :
 						m.append(tmp)
 
-			soup = BeautifulSoup(content1)
+			soup = BeautifulSoup(content1,'lxml')
 			link = soup.findAll('li')
 			for i in link:
 				j = i.findAll('a')
@@ -1630,7 +1648,7 @@ class SubbedAnime():
 			m = random.sample(m, len(m))
 		elif siteName == "AnimeMax":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('div',{'class':'box-content list'})
 			#print(link
 			for i in link:
@@ -1645,7 +1663,7 @@ class SubbedAnime():
 		
 		elif siteName == "AnimeStream":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('div',{'id':'animeList'})
 			print(link)
 			for i in link:
@@ -1659,18 +1677,45 @@ class SubbedAnime():
 		
 			m = random.sample(m, len(m))
 		elif siteName == "AnimeSquare":
+			l = json.loads(content)
+			n=l['data']
+			last_page = int(l['last_page'])
+			index = 2
+			print(n)
 			m = []
-			n = re.findall('"episode_count":[^,]*,"slug":"[^"]*"',content)
 			for i in n:
-				p = re.sub('"episode_count":|"slug":|"',"",i)
-				m.append(p)
+				title = i['title']
+				nm = i['slug']
+				ep_cnt = i['episode_count']
+				nm_app = str(ep_cnt) +','+str(nm)
+				m.append(nm_app)
+				
+			for pg in range(index,last_page+1):
+				url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page='+str(pg)
+				content = ccurl(url)
+				if 'checking_browser' in content:
+				#	 content = cloudfareUrl(url)
+					 content = ccurlM(url)
+				else:
+					f = open('/tmp/AnimeWatch/animeSquare.txt','w')
+					f.close()
+				l = json.loads(content)
+				n = l['data']
+				for i in n:
+					title = i['title']
+					nm = i['slug']
+					ep_cnt = i['episode_count']
+					nm_app = str(ep_cnt) +','+str(nm)
+					m.append(nm_app)
+				time.sleep(0.2)
+				print(pg)
+				
+				
 			
-		
-			#m = random.sample(m, len(m))
 		elif siteName == "AnimeMix":
 			m = []
 			#content = open('1.txt','r').read()
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('ul',{'class':'links'})
 			index = 0
 			for i in link :
@@ -1687,7 +1732,7 @@ class SubbedAnime():
 		elif siteName == "Anime1":
 			m = []
 			#content = open('1.txt','r').read()
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('ul',{'class':'anime-list'})
 			index = 0
 			for i in link :
@@ -1707,7 +1752,7 @@ class SubbedAnime():
 			m = []
 			#content = open('1.txt','r').read()
 			
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('ul',{'class':'animelist'})
 			#print(link
 			index = 0
@@ -1724,6 +1769,14 @@ class SubbedAnime():
 			
 			if opt == "Random":
 				m = random.sample(m, len(m))
+		if not os.path.exists(title_file_list):
+			f = open(title_file_list,'w')
+			for i in range(len(m)):
+				if i == 0:
+					f.write(m[i])
+				else:
+					f.write('\n'+m[i])
+			f.close()
 		return m
 
 	def getEpnList(self,siteName,name,embed,category):
@@ -1812,7 +1865,7 @@ class SubbedAnime():
 		else:
 			content = ccurl_cookie(url)
 		#content = ccurl(url)
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		summary = ""
 		#print(link
 		print(url)
@@ -1945,7 +1998,7 @@ class SubbedAnime():
 			m = []
 			n = []
 			
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('div',{'class':'row'})
 			for i in link:
 				j = i.findAll('p')
@@ -2001,7 +2054,7 @@ class SubbedAnime():
 			l = re.findall('http://www.animeboy.info/anime-info/[^"]*',content)
 			if l:
 				content1 = ccurl(l[0])
-			soup = BeautifulSoup(content1)
+			soup = BeautifulSoup(content1,'lxml')
 			m =[]
 			link = soup.findAll('body')
 			for i in link:
@@ -2217,7 +2270,7 @@ class SubbedAnime():
 		if (siteName == "Anime-Freak"):
 			m = re.findall(base+'[^/]*[^"]*', content)
 		elif (siteName == "Anime1"):
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('ul',{'class':'anime-list'})
 			m = []
 			k = 0 
@@ -2243,7 +2296,7 @@ class SubbedAnime():
 			m1 =[]
 			m2 =[]
 			m=[]
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('div',{'class':'toggles'})
 			for i in link:
 				j = i.findAll('a')
@@ -2269,7 +2322,7 @@ class SubbedAnime():
 				#content = (subprocess.check_output(['curl','-L','-A',self.hdr,url]))
 				#content = getContentUnicode(content)
 				content = ccurl(url)
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				link = soup.findAll('div',{'class':'post_content'})
 				m = []
 				k = 0 
@@ -2287,7 +2340,7 @@ class SubbedAnime():
 				#content = (subprocess.check_output(['curl','-L','-A',self.hdr,str(url)]))
 				#content = getContentUnicode(content)
 				content = ccurl(str(url))
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				link = []
 				link = soup.findAll('div',{'class':'su-spoiler-title'})
 				if link:
@@ -2444,7 +2497,7 @@ class SubbedAnime():
 					content = ccurl(final1)
 				m = []
 				m[:]=[]
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				link = soup.find('table')
 				table1 = str(link)
 				t_n = re.findall('<div class="title"[^#]*</table>',table1)
@@ -2586,7 +2639,7 @@ class SubbedAnime():
 				if not m:
 					m = re.findall(base + '[^"]*episode[^"]*', content)
 		elif (siteName == "AnimeHQ"):
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('li')
 			m = []
 			print(link,'---------animehq---epn')
@@ -2695,23 +2748,47 @@ class SubbedAnime():
 		m.append(summary)
 		return m
 		
-	def getNextPage(self,name,pgn):
+	def getNextPage(self,opt_val,pgn,genre_num,search_term):
 		if (pgn >= 1):
 			pgnum = str(pgn)
-			if pgn == 1:
-				url = "http://www.animenova.org/category/" + name
-			else:
-				url = "http://www.animenova.org/category/" + name + '/page/' + pgnum
-				print(url)
+			if opt_val.lower() == 'anime44':
+				if pgn == 1:
+					url = "http://www.animenova.org/category/" + name
+				else:
+					url = "http://www.animenova.org/category/" + name + '/page/' + pgnum
+					print(url)
+					content = ccurl(url)
+					m = re.findall('http://www.animenova.org/[^"]*episode[^"]*', content)
+					m = list(set(m))
+					m.sort()
+					j=0
+					for i in m:
+						i = re.sub("http://www.animenova.org/","",i)
+						m[j] = i
+						j = j+1
+			elif opt_val.lower() == 'animesquare':
+				url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page='+str(pgn)
 				content = ccurl(url)
-				m = re.findall('http://www.animenova.org/[^"]*episode[^"]*', content)
-				m = list(set(m))
-				m.sort()
-				j=0
-				for i in m:
-					i = re.sub("http://www.animenova.org/","",i)
-					m[j] = i
-					j = j+1
+				if 'checking_browser' in content:
+					content = ccurlHQ(url,'')
+				else:
+					f = open('/tmp/AnimeWatch/animeHQ.txt','w')
+					f.close()
+				
+				l = json.loads(content)
+				
+				n=l['data']
+				print(n)
+				m = []
+				for i in n:
+					title = i['title']
+					print(title)
+					nm = i['slug']
+					print(nm)
+					ep_cnt = i['episode_count']
+					print(ep_cnt)
+					nm_app = str(ep_cnt) +','+str(nm)
+					m.append(nm_app)
 			return m
 	
 	def getFinalUrl(self,siteName,name,epn,mirrorNo,category,quality):
@@ -2782,7 +2859,7 @@ class SubbedAnime():
 		if siteName == "Animegalaxy":
 				content = ccurl(url)
 				final = ""
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				if siteName == "Animeget":
 					link = soup.findAll('iframe')
 				else:
@@ -2919,7 +2996,7 @@ class SubbedAnime():
 				 
 		elif siteName == "AnimeSquare":
 			content = ccurlM(url)
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			content1 = soup.findAll('script',{'type':'text/javascript'})
 			final = ""
 			for i in content1:
@@ -3002,7 +3079,7 @@ class SubbedAnime():
 				final = findurl(url)
 			
 		elif siteName == "AnimeMix":
-			
+			shrink_link = ''
 			if "adf.acb.im" in url:
 				#shrink_link=str(cloudfare(url))
 				shrink_link=str(unshorten_url(url))
@@ -3013,7 +3090,11 @@ class SubbedAnime():
 
 			if 'linkshrink' in shrink_link:
 				shrink_link = shrink_url(str(url))
-	
+			
+			if not shrink_link:
+				shrink_link = url
+				
+			
 			if "mediafire" in shrink_link or "embedupload" in shrink_link or "solidfiles" in shrink_link or "mirrorcreator" in shrink_link or "tusfiles" in shrink_link:
 				final = findurl(shrink_link)
 			else:
@@ -3034,7 +3115,7 @@ class SubbedAnime():
 			
 		elif siteName == "AnimeStream":
 			content = ccurl(url)
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			
 			link = soup.find('div',{'id':'content'})
 			print(link)
@@ -3148,7 +3229,7 @@ class SubbedAnime():
 		elif siteName == "AnimeNet":
 			finalArr = []
 			content = ccurl(url)
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('iframe')
 			print(link)
 			for i in link:
@@ -3174,7 +3255,7 @@ class SubbedAnime():
 			final =""
 			m = []
 			link2 =[]
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.find('div',{'id':'video_inner'})
 			if link:
 				link1 = link.findAll('iframe')
@@ -3201,7 +3282,7 @@ class SubbedAnime():
 					final = findurl(link3)
 				else:
 					content = ccurl(link3)
-					soup = BeautifulSoup(content)
+					soup = BeautifulSoup(content,'lxml')
 					j = soup.find('source')
 					if j:
 						tmp = j['src']
@@ -3222,7 +3303,7 @@ class SubbedAnime():
 		
 		elif siteName == "AnimeBaka":
 			content = ccurl(url)
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			
 			final1 = re.findall('data-src="[^"]*',content)
 			final2 = re.sub('data-src="','',final1[0])
@@ -3236,14 +3317,14 @@ class SubbedAnime():
 			#content = content.decode("base64")
 			content = str(base64.b64decode(content).decode('utf-8'))
 			print(content)
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			final = soup.find('source')['src']
 			print("Beautifulsoup="+final)
 			
 		elif siteName == "Anime-Freak":
 				content = ccurl(url)
 				m = []
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				link1 = soup.find('div',{'id':'play_options'})
 				link = link1.findAll('a')
 				j = 0
@@ -3292,13 +3373,13 @@ class SubbedAnime():
 							final.append(final1)
 		elif siteName == "AnimeHQ":
 			#content = ccurl(url)
-			#soup = BeautifulSoup(content)
+			#soup = BeautifulSoup(content,'lxml')
 			
 			##content = ccurl(url)
 			#cloudfareUrl(url,'')
 			#content = open('/tmp/AnimeWatch/moetube.txt').read()
 			#print(content)
-			#soup = BeautifulSoup(content)
+			#soup = BeautifulSoup(content,'lxml')
 			
 			post = {'id':new_c,'ep':epn,'chk':'2'}
 			content = ccurlHQ('http://www.moetube.net/rui.php',post)
@@ -3417,7 +3498,7 @@ class SubbedAnime():
 					content = ccurl(url)
 				else:
 					content = ccurl_cookie(url)
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				if siteName != "Animehere":
 					link = soup.findAll('ul',{ 'class':'ver_list'})
 				else:
@@ -3467,7 +3548,7 @@ class SubbedAnime():
 									
 									else:
 										content = ccurl_cookie(url)
-									soup = BeautifulSoup(content)
+									soup = BeautifulSoup(content,'lxml')
 									if siteName != "Animehere":
 										link = soup.findAll('div',{ 'class':'vmargin'})
 										if not link:
@@ -3499,7 +3580,7 @@ class SubbedAnime():
 						
 						else:
 							content = ccurl_cookie(url)
-						soup = BeautifulSoup(content)
+						soup = BeautifulSoup(content,'lxml')
 						if siteName != "Animehere":
 							link = soup.findAll('div',{ 'class':'vmargin'})
 							if not link:
@@ -3522,7 +3603,7 @@ class SubbedAnime():
 					content = ccurl(url)
 				else:
 					content = ccurl_cookie(url)
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				if siteName == "Animehere":
 					link = soup.findAll('div',{'id':'playbox'})	
 				elif siteName == "GoodAnime":

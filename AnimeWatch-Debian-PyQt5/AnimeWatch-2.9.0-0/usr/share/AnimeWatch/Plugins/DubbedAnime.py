@@ -239,7 +239,7 @@ def findurl(url):
 	elif "vidkai" in str(url):
 		content = ccurl(url,'')
 		#print(content
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		
 		src = soup.find('source')['src']
 		if src:
@@ -579,7 +579,7 @@ class DubbedAnime():
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		
 	def getOptions(self):
-			criteria = ['Cartoon','Movies','Dubcrazy','Animetycoon','Cartoon-World','AnimeStatic','AniDub','CartoonMax']
+			criteria = ['Cartoon-World','Cartoon-World-Cartoon','Cartoon-World-Movies','Dubcrazy','Animetycoon','AniDub']
 			return criteria
 	def getContent(self,content):
 		if isinstance(content,bytes):
@@ -597,7 +597,7 @@ class DubbedAnime():
 		global qualityVideo
 		qualityVideo = quality
 		final = ''
-		if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Movies":
+		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
 				
 				url = "http://www.cartoon-world.tv/" + epn + "/"
 				
@@ -605,7 +605,7 @@ class DubbedAnime():
 				content = ccurl(url,"")
 				print(url)
 				m = []
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				link = soup.findAll('iframe')
 				print(link)
 				for i in link:
@@ -614,6 +614,7 @@ class DubbedAnime():
 				print(m)
 				length = len(m)
 				j = 1
+				final = ''
 				while (j <= length):		
 						mirrorNo = mirrorNo - 1
 						msg = "Total " + str(len(m)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
@@ -625,8 +626,12 @@ class DubbedAnime():
 						elif 'vidkai' in src:
 							final = findurl(src)
 						else:
-							final = mp4star(src)
-						if final:
+							try:
+								final = mp4star(src)
+							except:
+								pass
+						print(final,'--final--')
+						if final and final.startswith('http'):
 							break
 						j = j + 1
 						mirrorNo = j	
@@ -656,13 +661,13 @@ class DubbedAnime():
 				print(url)
 				m = []
 				n =[]
-				soup = BeautifulSoup(content)
+				soup = BeautifulSoup(content,'lxml')
 				m = re.findall('http://[^"]*embed[^"]*',content)
 				if m:
 					content = ccurl(m[0],"")
 					#n = re.findall('https://redirector[^"]*',content)
 					#print(n
-					soup = BeautifulSoup(content)
+					soup = BeautifulSoup(content,'lxml')
 					link = soup.find('video')
 					link1 = link.findAll('source')
 					for i in link1:
@@ -859,9 +864,9 @@ class DubbedAnime():
 		if siteName == "Cartoon-World":
 			
 			url = "http://www.cartoon-world.tv/anime-list/"
-		elif siteName == "Movies":
+		elif siteName == "Cartoon-World-Movies":
 				url = "http://www.cartoon-world.tv/movie-list/"
-		elif siteName == "Cartoon":
+		elif siteName == "Cartoon-World-Cartoon":
 				url = "http://www.cartoon-world.tv/cartoon-list/"
 		elif siteName == "Dubcrazy":
 			if category == "Movies":
@@ -891,9 +896,9 @@ class DubbedAnime():
 			content = ccurlNew(url)
 		else:
 			content = ccurl(url,"")
-		soup = BeautifulSoup(content)
-		if siteName == "Cartoon-World" or siteName == "Movies" or siteName == "Cartoon" or siteName == "Dubcrazy" or siteName == "Animetycoon":
-				if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Animetycoon" or siteName == "Movies":
+		soup = BeautifulSoup(content,'lxml')
+		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Movies" or siteName == "Cartoon-World-Cartoon" or siteName == "Dubcrazy" or siteName == "Animetycoon":
+				if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Animetycoon" or siteName == "Cartoon-World-Movies":
 					m = re.findall('watch/[^"]*', content)
 				else:
 					m = re.findall('view/[^"]*', content)
@@ -901,7 +906,7 @@ class DubbedAnime():
 				#m.sort()
 				j=0
 				for i in m:
-					if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Animetycoon" or siteName == "Movies":
+					if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Animetycoon" or siteName == "Cartoon-World-Movies":
 						i = re.sub("watch/","",i)
 					else:
 						i = re.sub("view/","",i)
@@ -921,7 +926,7 @@ class DubbedAnime():
 				m = []
 				if siteName == "AniDub" and category != "Movies":
 					content1 = ccurl(urlc,"")
-					soup1 = BeautifulSoup(content1)
+					soup1 = BeautifulSoup(content1,'lxml')
 					link1 = soup1.findAll('div',{'id':'ddmcc_container'})
 					link2 = soup.findAll('div',{'id':'ddmcc_container'})
 					link = link1 + link2
@@ -940,7 +945,7 @@ class DubbedAnime():
 									m.append(k[-2])
 		elif siteName == "CartoonMax":
 			m = []
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			#link = soup.findAll('div',{'class':'anime_list_body'})
 			link = soup.findAll('div',{'class':'box-content list'})
 			#print(link
@@ -956,7 +961,7 @@ class DubbedAnime():
 		return m
 	
 	def getEpnList(self,siteName,name,category):
-		if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Movies":
+		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
 			base = "http://www.cartoon-world.tv/"
 			url = base+ "watch/" + name+"/"
 		elif siteName == "Dubcrazy":
@@ -987,7 +992,7 @@ class DubbedAnime():
 		#content = subprocess.check_output(['curl','-A',hdr,url]) 
 		#else:
 		#	content = ccurl(url,"no_redir")
-		if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Movies":
+		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
 			#content = (subprocess.check_output(['curl','-A',self.hdr,url]))
 			#content = self.getContent(content)
 			content = ccurlNew(url+'#'+'-L')
@@ -1001,8 +1006,8 @@ class DubbedAnime():
 			#content = (subprocess.check_output(['curl','-A',self.hdr,url]))
 			#content = self.getContent(content)
 			content = content = ccurlNew(url+'#'+'-L')
-		soup = BeautifulSoup(content)
-		if siteName == "Cartoon-World" or siteName == "Cartoon" or siteName == "Movies":
+		soup = BeautifulSoup(content,'lxml')
+		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
 	
 				link1 = soup.findAll('div',{'class':'ani-row'})
 				print(link1)

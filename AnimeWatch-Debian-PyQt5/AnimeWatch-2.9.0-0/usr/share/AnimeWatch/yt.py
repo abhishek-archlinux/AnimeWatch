@@ -50,7 +50,7 @@ def get_yt_url(url,quality):
 		try:
 			import livestreamer as lvt
 			s = lvt.streams(url)
-			print(s)
+			#print(s)
 			if quality == 'sd':
 				final_url = s['360p'].url
 			elif quality == 'hd':
@@ -61,30 +61,34 @@ def get_yt_url(url,quality):
 						
 		if not final_url.startswith('http'):
 			if quality == 'sd480p':
+				"""
 				try:
 					try:
-						audio = subprocess.check_output(['youtube-dl','-f','171','-g',url])
+						audio = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','171','-g','--playlist-end','1',url])
 					except:
-						audio = subprocess.check_output(['youtube-dl','-f','140','-g',url])
+						audio = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','140','-g','--playlist-end','1',url])
 					try:
-						video = subprocess.check_output(['youtube-dl','-f','244','-g',url])
+						video = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','244','-g','--playlist-end','1',url])
 					except:
-						video = subprocess.check_output(['youtube-dl','-f','135','-g',url])
+						video = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','135','-g','--playlist-end','1',url])
 					audio = str(audio,'utf-8').strip()
 					video = str(video,'utf-8').strip()
 					final_url = audio+'#'+video
 				except:
-					final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
+				"""
+				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
+				final_url = str(final_url,'utf-8')
 			elif quality == 'sd':
-				final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
 			elif quality == 'hd':
 				try:
-					final_url = subprocess.check_output(['youtube-dl','-f','22','-g',url])
+					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','22','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
 				except:
-					final_url = subprocess.check_output(['youtube-dl','-f','18','-g',url])
+					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
 	except:
 		txt ='Please Update livestreamer and youtube-dl'
