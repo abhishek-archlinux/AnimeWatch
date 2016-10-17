@@ -4733,7 +4733,7 @@ class List2(QtWidgets.QListWidget):
 			submenu = QtWidgets.QMenu(menu)
 			
 			eplist = menu.addAction("Get Episode Thumbnails(TVDB)")
-			eplistM = menu.addAction("Get Episode Thumbnails Manually(TVDB)")
+			eplistM = menu.addAction("Go To TVDB")
 			#epl = menu.addAction("Get Episode Info(TVDB)")
 			#epl_m = menu.addAction("Get Episode Info Manually(TVDB)")
 			#default_name = menu.addAction("Default Name")
