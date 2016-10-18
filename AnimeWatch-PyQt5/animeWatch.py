@@ -3157,7 +3157,7 @@ class List1(QtWidgets.QListWidget):
 			#ui.tabWidget1.showFullScreen()
 		
 		elif event.key() == QtCore.Qt.Key_Return:
-			ui.list2_double_clicked()
+			ui.list1_double_clicked()
 			"""
 			ui.listfound()
 			if site == "Music" and not ui.list2.isHidden():
@@ -7476,7 +7476,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.btnWebReviews, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.reviewsWeb)
 		self.btnWebReviews.currentIndexChanged['int'].connect(self.reviewsWeb)
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("itemDoubleClicked(QListWidgetItem*)")), self.listfound)
-		self.list1.itemDoubleClicked['QListWidgetItem*'].connect(self.list2_double_clicked)
+		self.list1.itemDoubleClicked['QListWidgetItem*'].connect(self.list1_double_clicked)
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("currentRowChanged(int)")), self.history_highlight)
 		self.list1.currentRowChanged['int'].connect(self.history_highlight)
 		#QtCore.QObject.connect(self.list3, QtCore.SIGNAL(_fromUtf8("currentRowChanged(int)")), self.options_clicked)
@@ -7631,7 +7631,7 @@ class Ui_MainWindow(object):
 		self.downloadWget_cnt = 0
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
-	def list2_double_clicked(self):
+	def list1_double_clicked(self):
 		global show_hide_titlelist,show_hide_playlist,curR
 		self.listfound()
 		if site == "Music" and not ui.list2.isHidden():
@@ -19167,6 +19167,7 @@ if __name__ == "__main__":
 	if name_index >=0 and name_index < ui.list1.count():
 		ui.list1.setCurrentRow(name_index)
 		ui.list1.setFocus()
+		ui.list1_double_clicked()
 	if episode_index >=0 and episode_index < ui.list2.count():
 		ui.list2.setCurrentRow(episode_index)
 		ui.list2.setFocus()
