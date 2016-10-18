@@ -3157,6 +3157,8 @@ class List1(QtWidgets.QListWidget):
 			#ui.tabWidget1.showFullScreen()
 		
 		elif event.key() == QtCore.Qt.Key_Return:
+			ui.list2_double_clicked()
+			"""
 			ui.listfound()
 			if site == "Music" and not ui.list2.isHidden():
 				ui.list2.setFocus()
@@ -3176,6 +3178,8 @@ class List1(QtWidgets.QListWidget):
 					ui.list2.setFocus()
 					show_hide_titlelist = 0
 					show_hide_playlist = 1
+			ui.update_list2()
+			"""
 		elif event.key() == QtCore.Qt.Key_Right:
 			#ui.list_highlight()
 			ui.list2.setFocus()
@@ -7472,7 +7476,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.btnWebReviews, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.reviewsWeb)
 		self.btnWebReviews.currentIndexChanged['int'].connect(self.reviewsWeb)
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("itemDoubleClicked(QListWidgetItem*)")), self.listfound)
-		self.list1.itemDoubleClicked['QListWidgetItem*'].connect(self.listfound)
+		self.list1.itemDoubleClicked['QListWidgetItem*'].connect(self.list2_double_clicked)
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("currentRowChanged(int)")), self.history_highlight)
 		self.list1.currentRowChanged['int'].connect(self.history_highlight)
 		#QtCore.QObject.connect(self.list3, QtCore.SIGNAL(_fromUtf8("currentRowChanged(int)")), self.options_clicked)
@@ -7627,6 +7631,28 @@ class Ui_MainWindow(object):
 		self.downloadWget_cnt = 0
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
+	def list2_double_clicked(self):
+		global show_hide_titlelist,show_hide_playlist,curR
+		self.listfound()
+		if site == "Music" and not ui.list2.isHidden():
+			self.list2.setFocus()
+			self.list2.setCurrentRow(0)
+			curR = 0
+			self.epnfound()
+			self.show()
+			self.frame.show()
+			
+			self.setFocus()
+		else:
+			if ui.list2.isHidden():
+				self.list1.hide()
+				self.frame.hide()
+				self.list2.show()
+				self.goto_epn.show()
+				self.list2.setFocus()
+				show_hide_titlelist = 0
+				show_hide_playlist = 1
+		self.update_list2()
 	def hide_torrent_info(self):
 		self.torrent_frame.hide()
 		self.progress.hide()
@@ -11892,40 +11918,41 @@ class Ui_MainWindow(object):
 				epnArrList.append(i)
 	def update_list2(self):
 		global epnArrList,site,refererNeeded,finalUrlFound
-		row = self.list2.currentRow()
-		self.list2.clear()
-		k = 0
-		for i in epnArrList:
-			i = i.strip()
-			if '	' in i:
-				i = i.split('	')[0]
-				i = i.replace('_',' ')
-				if i.startswith('#'):
-					i = i.replace('#',self.check_symbol,1)
-					self.list2.addItem((i))
-					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		if not self.list2.isHidden():
+			row = self.list2.currentRow()
+			self.list2.clear()
+			k = 0
+			for i in epnArrList:
+				i = i.strip()
+				if '	' in i:
+					i = i.split('	')[0]
+					i = i.replace('_',' ')
+					if i.startswith('#'):
+						i = i.replace('#',self.check_symbol,1)
+						self.list2.addItem((i))
+						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+					else:
+						self.list2.addItem((i))
 				else:
-					self.list2.addItem((i))
-			else:
-				if site == "Local" or finalUrlFound == True:
-					j = i.split('/')[-1]
-					if i.startswith('#') and j:
+					if site == "Local" or finalUrlFound == True:
+						j = i.split('/')[-1]
+						if i.startswith('#') and j:
+							j = j.replace('#',self.check_symbol,1)
+					else:
+						j = i
+					j = j.replace('_',' ')
+					if j.startswith('#'):
 						j = j.replace('#',self.check_symbol,1)
-				else:
-					j = i
-				j = j.replace('_',' ')
-				if j.startswith('#'):
-					j = j.replace('#',self.check_symbol,1)
-					self.list2.addItem((j))	
-					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-				else:
-					self.list2.addItem((j))
-			if self.list_with_thumbnail:
-				icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
-				if os.path.exists(icon_name):
-					self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
-			k = k+1
-		self.list2.setCurrentRow(row)
+						self.list2.addItem((j))	
+						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+					else:
+						self.list2.addItem((j))
+				if self.list_with_thumbnail:
+					icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
+					if os.path.exists(icon_name):
+						self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
+				k = k+1
+			self.list2.setCurrentRow(row)
 		#if self.list_with_thumbnail:
 		#	thread_update = updateListThread(epnArrList)
 		#	thread_update.start()
