@@ -267,8 +267,11 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 4. In order to update addons manually , download or clone the github AnimeWatch directory, then go to github 'AnimeWatch-PyQt4-Stable/Plugins' directory (or AnimeWatch-PyQt5/Plugins depending upon which version you've installed) , you will find 'installPlugins.py' file there, open terminal in the directory, run the command 'python installPlugins.py' or 'python3 installPlugins.py'. It will update the addons. Or simply copy content of github 'Plugins' directory (except installPlugins.py file) into '~/.config/AnimeWatch/src/Plugins'.
 
-
 5. If the status text of the player fluctuates a lot due to frequent changes in cache text duration, while using mpv as backend, then you need to set 'cache-secs' field properly in '~/.mpv/config' file. Sample fields and their values required to be set up in '~/.mpv/config' or '~/.mplayer/config' for better performance are listed in the Documentation section. 
+
+6. Sometimes application launcher does not launch the application because of some configuration issues in .desktop file. In such cases try changing 'Terminal=True' to 'Terminal=false' in the file '/usr/share/applications/AnimeWatch.desktop'. If it does not solve the problem then open terminal and execute the command 'anime-watch' to see the error output.
+
+7. In Plsma 5.8, the application does not closes even after clicking on close button on title bar or using ALT+F4. Therefore, plasma users have to exit application by right clicking the tray icon and selecting the exit option. Tray icon remains hidden in the plasma panel, which users need to first un-hide by manually adjusting plasma tray settings. 
 
 ####Troubleshooting for common method
 
