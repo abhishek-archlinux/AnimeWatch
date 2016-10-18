@@ -73,7 +73,7 @@ except:
 	pass
 from musicArtist import musicArtist
 from yt import get_yt_url
-from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info,get_torrent_info_magnet
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
 
@@ -90,9 +90,11 @@ except:
 
 try:
 	import libtorrent as lt
+	from stream import ThreadServer,TorrentThread,get_torrent_info,set_torrent_info,get_torrent_info_magnet
 except:
-	pass
-
+	notify_txt = 'python3 bindings for libtorrent are broken\nTorrent Streaming feature will be disabled'
+	subprocess.Popen(['notify-send',notify_txt])
+	
 AW_MPRIS_BUS_NAME = 'org.mpris.MediaPlayer2.animewatch'
 MPRIS_OBJECT_PATH = '/org/mpris/MediaPlayer2'
 MPRIS_MEDIAPLAYER_INTERFACE = 'org.mpris.MediaPlayer2'
