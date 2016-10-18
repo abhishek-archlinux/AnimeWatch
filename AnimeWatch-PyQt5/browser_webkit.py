@@ -454,6 +454,9 @@ class Browser(QtWebKitWidgets.QWebView):
 		
 	def add_playlist(self,value):
 		value = value.replace('/','-')
+		value = value.replace('#','')
+		if value.startswith('.'):
+			value = value[1:]
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		new_pl = False
 		if not os.path.exists(file_path):
@@ -466,6 +469,7 @@ class Browser(QtWebKitWidgets.QWebView):
 			yt_id = i
 			title = self.playlist_dict[yt_id]
 			title = title.replace('/','-')
+			title = title.replace('#','')
 			if title.startswith('.'):
 				title = title[1:]
 			n_url = 'https://m.youtube.com/watch?v='+yt_id
@@ -492,6 +496,10 @@ class Browser(QtWebKitWidgets.QWebView):
 				pass
 		if '/' in title:
 			title = title.replace('/','-')
+		if '#' in title:
+			title = title.replace('#','')
+		if title.startswith('.'):
+			title = title[1:]
 		if 'list=' in url:
 			title = title + '-Playlist'
 		img_u = ''
