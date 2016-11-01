@@ -16426,6 +16426,7 @@ class Ui_MainWindow(object):
 	
 	def adjust_thumbnail_window(self,row):
 		global thumbnail_indicator
+		self.epn_name_in_list = self.epn_name_in_list.replace('#','')
 		if thumbnail_indicator and not self.tab_5.isHidden():
 			title_num = row + ui.list2.count()
 			if self.epn_name_in_list.startswith(self.check_symbol):
@@ -16447,7 +16448,8 @@ class Ui_MainWindow(object):
 			ht=eval(p1)
 			
 			ui.scrollArea1.verticalScrollBar().setValue(ht)
-			ui.labelFrame2.setText(self.epn_name_in_list[:20])
+			#ui.labelFrame2.setText(self.epn_name_in_list[:20])
+			ui.labelFrame2.setText(newTitle[:20])
 	
 	def localGetInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,artist_name_mplayer
