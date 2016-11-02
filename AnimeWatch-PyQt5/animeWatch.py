@@ -11918,41 +11918,46 @@ class Ui_MainWindow(object):
 				epnArrList.append(i)
 	def update_list2(self):
 		global epnArrList,site,refererNeeded,finalUrlFound
-		if not self.list2.isHidden():
-			row = self.list2.currentRow()
-			self.list2.clear()
-			k = 0
-			for i in epnArrList:
-				i = i.strip()
-				if '	' in i:
-					i = i.split('	')[0]
-					i = i.replace('_',' ')
-					if i.startswith('#'):
-						i = i.replace('#',self.check_symbol,1)
-						self.list2.addItem((i))
-						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-					else:
-						self.list2.addItem((i))
+		update_pl_thumb = True
+		if self.list2.isHidden():
+			update_pl_thumb = False
+		#if not self.scrollArea.isHidden():
+		#	update_pl_thumb = False
+		print(update_pl_thumb,'update_pl_thumb')
+		row = self.list2.currentRow()
+		self.list2.clear()
+		k = 0
+		for i in epnArrList:
+			i = i.strip()
+			if '	' in i:
+				i = i.split('	')[0]
+				i = i.replace('_',' ')
+				if i.startswith('#'):
+					i = i.replace('#',self.check_symbol,1)
+					self.list2.addItem((i))
+					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				else:
-					if site == "Local" or finalUrlFound == True:
-						j = i.split('/')[-1]
-						if i.startswith('#') and j:
-							j = j.replace('#',self.check_symbol,1)
-					else:
-						j = i
-					j = j.replace('_',' ')
-					if j.startswith('#'):
+					self.list2.addItem((i))
+			else:
+				if site == "Local" or finalUrlFound == True:
+					j = i.split('/')[-1]
+					if i.startswith('#') and j:
 						j = j.replace('#',self.check_symbol,1)
-						self.list2.addItem((j))	
-						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-					else:
-						self.list2.addItem((j))
-				if self.list_with_thumbnail:
-					icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
-					if os.path.exists(icon_name):
-						self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
-				k = k+1
-			self.list2.setCurrentRow(row)
+				else:
+					j = i
+				j = j.replace('_',' ')
+				if j.startswith('#'):
+					j = j.replace('#',self.check_symbol,1)
+					self.list2.addItem((j))	
+					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
+				else:
+					self.list2.addItem((j))
+			if self.list_with_thumbnail and update_pl_thumb:
+				icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
+				if os.path.exists(icon_name):
+					self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
+			k = k+1
+		self.list2.setCurrentRow(row)
 		#if self.list_with_thumbnail:
 		#	thread_update = updateListThread(epnArrList)
 		#	thread_update.start()
