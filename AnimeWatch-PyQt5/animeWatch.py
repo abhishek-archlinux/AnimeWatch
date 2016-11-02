@@ -4462,15 +4462,17 @@ class List2(QtWidgets.QListWidget):
 					f.write(t)
 				f.close()
 		else:
-			ui.epnfound_return()
+			finalUrl = ui.epn_return(self.currentRow())
 			t = ''
-			sumr=str(ui.epn_name_in_list)
+			#sumr=str(ui.epn_name_in_list)
+			sumr = self.item(self.currentRow()).text().replace('#','')
+			sumr = sumr.replace(ui.check_symbol,'')
 			if os.path.exists(file_path):
 				#f = open(file_path,'a')
-				if type(path_final_Url) is list:
+				if type(finalUrl) is list:
 					if finalUrlFound == True and refererNeeded == True:
-						rfr_url = path_final_Url[1]
-						sumry = str(path_final_Url[0])
+						rfr_url = finalUrl[1]
+						sumry = str(finalUrl[0])
 						#sumry = sumry.replace('"','')
 						#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
 						t = sumr+'	'+sumry+'	'+rfr_url
@@ -4490,7 +4492,7 @@ class List2(QtWidgets.QListWidget):
 				else:
 					rfr_url = "NONE"
 					
-					sumry = str(path_final_Url)
+					sumry = str(finalUrl)
 					#sumry = sumry.replace('"','')
 					#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
 					t = sumr+'	'+sumry+'	'+rfr_url
@@ -10177,7 +10179,7 @@ class Ui_MainWindow(object):
 			print ("-----------inside-------")
 			if curR == self.list2.count() - 1:
 				curR = 0
-				if site == "Music" and not self.playerPlaylist_setLoop_var:
+				if (site == "Music" and not self.playerPlaylist_setLoop_var) or (self.list2.count()==1):
 					r1 = self.list1.currentRow()
 					it1 = self.list1.item(r1)
 					if it1:
@@ -10232,7 +10234,7 @@ class Ui_MainWindow(object):
 			
 			if curR == 0:
 				curR = self.list2.count() - 1
-				if site == "Music" and not self.playerPlaylist_setLoop_var:
+				if (site == "Music" and not self.playerPlaylist_setLoop_var) or (self.list2.count() == 1):
 					r1 = self.list1.currentRow()
 					it1 = self.list1.item(r1)
 					if it1:
@@ -14736,6 +14738,8 @@ class Ui_MainWindow(object):
 						f.close()
 						txt = self.check_symbol + epnArrList[row]
 					txt = txt.replace('_',' ',1)
+					if '	' in txt:
+						txt = txt.split('	')[0]
 					self.list2.item(row).setText(txt)
 					"""
 					lines = tuple(open(hist_path, 'r'))
