@@ -15076,12 +15076,15 @@ class Ui_MainWindow(object):
 					finalUrl = str(finalUrl)
 				except:
 					finalUrl = finalUrl
-				
+				if mpvplayer.pid() > 0:
+					mpvplayer.kill()
 				if Player == "mpv":
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 					print (command)
 					self.infoPlay(command)
 				elif Player == "mplayer":
+					if mpvplayer.pid() > 0:
+						subprocess.Popen(['killall','mplayer'])
 					quitReally = "no"
 					
 					idw = str(int(self.tab_5.winId()))
@@ -15275,7 +15278,8 @@ class Ui_MainWindow(object):
 				
 		if downloadVideo == 0:
 			self.initial_view_mode()
-	
+		self.epn_name_in_list = self.epn_name_in_list.replace('#','')
+		
 	def initial_view_mode(self):
 		global site,show_hide_player
 		
@@ -15950,6 +15954,16 @@ class Ui_MainWindow(object):
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path,wget
 		try:
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
+			#print(a)
+			if 'icy info:' in a.lower() or 'icy-title:' in a.lower():
+				if 'icy info:' in a.lower():
+					song_title = re.search("'[^']*",a)
+					self.epn_name_in_list = song_title.group().replace("'",'')
+				else:
+					song_title = re.search("icy-title:[^\n]*",a)
+					self.epn_name_in_list = song_title.group().replace('icy-title:','')
+				print(self.epn_name_in_list,'--radio--song--')
+				mplayerLength = 1
 		except:
 			a = ""
 		#el = time.process_time() - tt
@@ -16040,11 +16054,18 @@ class Ui_MainWindow(object):
 							self.frame_timer.start(5000)
 							
 					t = re.findall("AV:[^)]*[)]|A:[^)]*[)]",a)
+					if not t:
+						t = re.findall("AV: [^ ]*|A: [^ ]*",a)
+					
 					if "Cache:" in a:
 						n = re.findall("Cache:[^+]*",a)
-						out = t[0] +"  "+n[0]
+						cache_val = re.search("[0-9][^s]*",n[0]).group()
+						if len(cache_val) == 1:
+							cache_val = '0'+cache_val
+						out = t[0] +"  "+cache_val+'s'
 					else:
 						out = t[0]
+					
 					if "Paused" in a and not mpv_indicator:
 						out = "(Paused) "+out
 						#self.gridLayout.setSpacing(0)
@@ -16058,12 +16079,13 @@ class Ui_MainWindow(object):
 						#	self.player_play_pause.setText("Play")
 							#print('set play button text = Play')
 					out = re.sub('AV:[^0-9]*|A:[^0-9]*','',out)
+					#print(out)
 					#l = re.findall("[(][^%]*",t[0])
 					#val = re.sub('[(]','',l[0])
 					l = re.findall("[0-9][^ ]*",out)
 					val1 = l[0].split(':')
 					val = int(val1[0])*3600+int(val1[1])*60+int(val1[2])
-					
+					#print(val)
 					if not mplayerLength:
 						#print(a,self.mpv_cnt)
 						#print(mplayerLength)
@@ -16084,7 +16106,10 @@ class Ui_MainWindow(object):
 					#self.progressEpn.setValue(val)
 					out1 = out+" ["+self.epn_name_in_list+"]"
 					self.progressEpn.setFormat((out1))
-					self.slider.setValue(val)
+					if mplayerLength == 1:
+						self.slider.setValue(0)
+					else:
+						self.slider.setValue(val)
 				if "VO:" in a or "AO:" in a or 'Stream opened successfully' in a:
 				#if "AV:" not in a:
 					t = "Loading: "+self.epn_name_in_list+" (Please Wait)"
@@ -16271,11 +16296,16 @@ class Ui_MainWindow(object):
 						l = re.sub('A:[^0-9]*','',t[0])
 						#l = int(l)
 						l =int(l)*1000
+						
 						#val = int((l/mplayerLength)*100)
 						#print val
 						#print mplayerLength
 						#self.progressEpn.setValue(int(l))
-						self.slider.setValue(int(l))
+						if mplayerLength == 1:
+							self.slider.setValue(0)
+						else:
+							self.slider.setValue(int(l))
+						
 						#out = str(int(l/60))+"/"+str(int(mplayerLength/60))+" ("+str(val)+")"
 						#out = str(datetime.timedelta(seconds=int(l))) + " / " + str(datetime.timedelta(seconds=int(mplayerLength)))+" ["+epn_name_in_list+"]"+" Cache: "+c
 						if site == "Music":
