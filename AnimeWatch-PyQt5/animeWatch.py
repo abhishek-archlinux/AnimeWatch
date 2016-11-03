@@ -7641,10 +7641,10 @@ class Ui_MainWindow(object):
 			self.list2.setCurrentRow(0)
 			curR = 0
 			self.epnfound()
-			self.show()
+			self.list1.show()
 			self.frame.show()
 			
-			self.setFocus()
+			self.list1.setFocus()
 		else:
 			if ui.list2.isHidden():
 				self.list1.hide()
