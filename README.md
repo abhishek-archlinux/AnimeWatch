@@ -438,6 +438,10 @@ w : toggle watch/unwatch
 
 o : start offline mode (If offline mode is already activated then pressing 'o' will enqueue items for offline viewing)
 
+Right: play the item but keep both playlist and title list visible
+
+Left: show title list if it's hidden
+
 PgUp: Move Entry UP
 
 PgDown: Move Entry Down
