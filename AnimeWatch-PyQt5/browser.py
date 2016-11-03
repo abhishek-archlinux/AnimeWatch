@@ -289,6 +289,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.playlist_dict = {}
 		self.get_playlist = False
 		self.playlist_name = ''
+		self.sub_url = ''
 	@pyqtSlot(str)
 	def final_found(self,final_url):
 		print(final_url,'clicked')
@@ -311,8 +312,24 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		f.write(var)
 		f.close()
 		if 'youtube.com' in self.url().url():
-		
+			self.sub_url = ''
 			self.playlist_dict = {}
+			if 'ttsurl' in var:
+				self.sub_url = ''
+				
+				tts_url = re.search('ttsurl[^,]*',var)
+				if tts_url:
+					
+					tts_url_val = tts_url.group()
+					tts_url_val = urllib.parse.unquote(tts_url_val)
+					print(tts_url_val,'----tts--url--val---')
+					tts_url_val = tts_url_val.replace('\\\\','')
+					tts_url_val = tts_url_val.replace('u0026','&')
+					tts_url_val = tts_url_val.replace('//','')
+					tts_url_val = tts_url_val.replace('\\','')
+					tts_final = tts_url_val.split(':')[1].strip().replace('"','')
+					self.sub_url = 'https://www.youtube.com'+tts_final+'&lang=en&fmt=vtt'
+					print(self.sub_url,'--sub-url--')
 					
 			soup = BeautifulSoup(var,'lxml')
 			m = soup.find('div',{'id':'player'})
@@ -327,6 +344,15 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					self.epn_name_in_list = title.text
 					self.ui.epn_name_in_list = title.text
 					#self.clicked_link(self.current_link)
+					if self.sub_url:
+						sub_name = self.epn_name_in_list+'.vtt'
+						sub_name = sub_name.replace('/','-')
+						if sub_name.startswith('.'):
+							sub_name = sub_name[1:]
+						sub_name = '/tmp/AnimeWatch/'+sub_name
+						if (not os.path.exists(sub_name)) or (os.path.exists(sub_name) and os.stat(sub_name).st_size == 0):
+							ccurl(self.sub_url+'#'+'-o'+'#'+sub_name)
+							#self.ui.mpvplayer.write()
 			print(title,self.url().url(),'--changed-title--')
 			if 'list=' in self.url().url() and 'www.youtube.com' in self.url().url():
 				
@@ -441,7 +467,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			if self.ui.mpvplayer_val.pid() > 0:
 				self.ui.mpvplayer_val.kill()
 			final_url = get_yt_url(url,self.ui.quality_val)
+			
 			if final_url:
+				
 				print(final_url,'--youtube--')
 				self.ui.watchDirectly(final_url,self.epn_name_in_list,'yes')
 				self.ui.tab_5.show()

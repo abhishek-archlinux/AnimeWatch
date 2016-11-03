@@ -7155,6 +7155,7 @@ class Ui_MainWindow(object):
 		self.default_download_location = '/tmp/AnimeWatch'
 		self.epn_name_in_list = ''
 		self.external_url = False
+		self.subtitle_new_added = False
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7649,12 +7650,29 @@ class Ui_MainWindow(object):
 						mpvplayer.write(b'\n get_property sub \n')
 						self.mplayer_OsdTimer.start(5000)
 						
-						
+						title_sub = self.epn_name_in_list.replace('/','-')
+						if title_sub.startswith('.'):
+							title_sub = title_sub[1:]
+						title_sub = '/tmp/AnimeWatch/'+title_sub+'.vtt'
+						if os.path.exists(title_sub):
+							txt = '\nsub_load '+'"'+title_sub+'"\n'
+							txt_b = bytes(txt,'utf-8')
+							print(txt_b,txt)
+							mpvplayer.write(txt_b)
 						
 					else:
 						mpvplayer.write(b'\n cycle sub \n')
 						mpvplayer.write(b'\n print-text "SUB_ID=${sid}" \n')
 						mpvplayer.write(b'\n show-text "${sid}" \n')
+						title_sub = self.epn_name_in_list.replace('/','-')
+						if title_sub.startswith('.'):
+							title_sub = title_sub[1:]
+						title_sub = '/tmp/AnimeWatch/'+title_sub+'.vtt'
+						if os.path.exists(title_sub):
+							txt = '\nsub_add '+'"'+title_sub+'" select\n'
+							txt_b = bytes(txt,'utf-8')
+							print(txt_b,txt)
+							mpvplayer.write(txt_b)
 			self.subtitle_track.setText('Sub:'+str(sub_id))
 	def playerStop(self):
 			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt,iconv_r_indicator,iconv_r,curR,wget,Player,show_hide_cover,show_hide_playlist,show_hide_titlelist,video_local_stream
@@ -15495,6 +15513,8 @@ class Ui_MainWindow(object):
 			self.epn_name_in_list = title
 		else:
 			self.epn_name_in_list = 'No Title'
+		title_sub_path = '/tmp/AnimeWatch/'+title.replace('/','-')
+		title_sub_path = title_sub_path.replace('.','-')
 		if Player=='mplayer':
 			print(mpvplayer.pid(),'=mpvplayer.pid()')
 			if (mpvplayer.pid()>0):
@@ -15535,6 +15555,10 @@ class Ui_MainWindow(object):
 					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 			else:
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+			if os.path.exists(title_sub_path):
+				if Player == 'mpv':
+					command = command+' --sub-file='+title_sub_path
+					print(command)
 		self.infoPlay(command)
 		self.tab_5.setFocus()
 		
