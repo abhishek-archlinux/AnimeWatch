@@ -1739,6 +1739,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 									ui.progress.hide()
 							ui.list2.hide()
 							ui.list6.hide()
+							ui.list1.hide()
+							ui.frame.hide()
 							#ui.text.hide()
 							#ui.label.hide()
 							#ui.tab_5.setParent(None)
@@ -3706,6 +3708,7 @@ class List2(QtWidgets.QListWidget):
 			queueNo = queueNo + 1
 			mpvAlive = 0
 			ui.epnfound()
+		
 		elif event.key() == QtCore.Qt.Key_Backspace:
 			if ui.list1.isHidden() and ui.list1.count() > 0:
 				ui.list2.hide()
@@ -4041,8 +4044,19 @@ class List2(QtWidgets.QListWidget):
 						self.setCurrentRow(row_n)
 	
 		elif event.key() == QtCore.Qt.Key_Left:
+			if ui.list1.isHidden():
+				ui.list1.show()
+				ui.frame.show()
 			ui.list1.setFocus()
-		
+		elif event.key() == QtCore.Qt.Key_Right:
+			curR = self.currentRow()
+			queueNo = queueNo + 1
+			mpvAlive = 0
+			ui.epnfound()
+			if ui.list1.isHidden():
+				ui.list1.show()
+				ui.frame.show()
+			self.setFocus()
 		elif event.key() == QtCore.Qt.Key_O:
 			self.init_offline_mode()
 		elif event.key() == QtCore.Qt.Key_2: 
@@ -4115,6 +4129,8 @@ class List2(QtWidgets.QListWidget):
 						ui.progress.hide()
 				ui.list2.hide()
 				ui.list6.hide()
+				ui.list1.hide()
+				ui.frame.hide()
 				#ui.text.hide()
 				#ui.label.hide()
 				#ui.tab_5.setParent(None)
@@ -5825,6 +5841,8 @@ class tab6(QtWidgets.QWidget):
 						ui.progress.hide()
 				ui.list2.hide()
 				ui.list6.hide()
+				ui.list1.hide()
+				ui.frame.hide()
 				#ui.text.hide()
 				#ui.label.hide()
 				#ui.tab_5.setParent(None)
@@ -6359,6 +6377,8 @@ class tab5(QtWidgets.QWidget):
 					
 				ui.list2.hide()
 				ui.list6.hide()
+				ui.list1.hide()
+				ui.frame.hide()
 				#ui.text.hide()
 				#ui.label.hide()
 				#ui.tab_5.setParent(None)
@@ -7640,7 +7660,7 @@ class Ui_MainWindow(object):
 			self.list2.setFocus()
 			self.list2.setCurrentRow(0)
 			curR = 0
-			self.epnfound()
+			#self.epnfound()
 			self.list1.show()
 			self.frame.show()
 			
@@ -11925,7 +11945,7 @@ class Ui_MainWindow(object):
 			update_pl_thumb = False
 		#if not self.scrollArea.isHidden():
 		#	update_pl_thumb = False
-		print(update_pl_thumb,'update_pl_thumb')
+		print(update_pl_thumb,'update_playlist_thumb')
 		row = self.list2.currentRow()
 		self.list2.clear()
 		k = 0
@@ -14426,7 +14446,10 @@ class Ui_MainWindow(object):
 		opt_val = self.btn1.currentText().lower()
 		
 		if site.lower() == 'playlists' or(site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
-			title = self.list1.currentItem().text()
+			try:
+				title = self.list1.currentItem().text()
+			except:
+				title = name
 		else:
 			title = name
 		
@@ -15112,7 +15135,8 @@ class Ui_MainWindow(object):
 		else:
 		
 			if downloadVideo == 0 and Player == "mpv":
-			
+				if mpvplayer.pid() > 0:
+					mpvplayer.kill()
 				if type(finalUrl) is list:
 						if finalUrlFound == True or refererNeeded == True or site=="PlayLists":	
 							if refererNeeded == True:
@@ -15151,11 +15175,15 @@ class Ui_MainWindow(object):
 					#	self.mpvNextEpnList()
 				##self.tab_5.setFocus()
 			elif downloadVideo == 0 and Player != "mpv":
+				if mpvplayer.pid() > 0:
+					mpvplayer.kill()
 				if type(finalUrl) is list:
 					if finalUrlFound == True or site=="PlayLists":
 							if refererNeeded == True:
 								rfr_url = finalUrl[1]
 								if Player == "mplayer":
+									if mpvplayer.pid() > 0:
+										subprocess.Popen(['killall','mplayer'])
 									quitReally = "no"
 									idw = str(int(self.tab_5.winId()))
 									self.tab_5.show()
@@ -15168,6 +15196,8 @@ class Ui_MainWindow(object):
 									subprocess.Popen([Player,"-referrer",rfr_url,finalUrl[0]])
 							else:
 								if Player == "mplayer":
+									if mpvplayer.pid() > 0:
+										subprocess.Popen(['killall','mplayer'])
 									quitReally = "no"
 									idw = str(int(self.tab_5.winId()))
 									self.tab_5.show()
@@ -15181,7 +15211,8 @@ class Ui_MainWindow(object):
 									subprocess.Popen([Player,final_url])
 					else:
 					
-							
+							if mpvplayer.pid() > 0:
+								subprocess.Popen(['killall','mplayer'])
 							epnShow = finalUrl[0]
 							for i in range(len(finalUrl)-1):
 								#epnShow = epnShow +' '+finalUrl[i+1]
@@ -15200,6 +15231,8 @@ class Ui_MainWindow(object):
 							finalUrl = finalUrl.replace('""','"')
 						finalUrl = str(finalUrl)
 						if Player == "mplayer":
+							if mpvplayer.pid() > 0:
+								subprocess.Popen(['killall','mplayer'])
 							quitReally = "no"
 							idw = str(int(self.tab_5.winId()))
 							self.tab_5.show()
@@ -17119,6 +17152,10 @@ class Ui_MainWindow(object):
 								command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+epnShow
 							#self.queue_url_list.pop()
 						print (command)
+						if mpvplayer.pid() > 0:
+							mpvplayer.kill()
+							if Player == 'mplayer':
+								subprocess.Popen(['killall','mplayer'])
 						self.infoPlay(command)
 			else:
 				#if '""' in finalUrl:
@@ -17150,6 +17187,9 @@ class Ui_MainWindow(object):
 						print (t2)
 						mpvplayer.write(t2)
 				else:
+					mpvplayer.kill()
+					if Player == 'mplayer':
+						subprocess.Popen(['killall','mplayer'])
 					self.infoPlay(command)
 				
 				
