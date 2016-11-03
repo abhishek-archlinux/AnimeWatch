@@ -3889,18 +3889,20 @@ class List2(QtWidgets.QListWidget):
 						j = i.replace('\n','')
 						epnArrList.append(j)
 					f.close()
+					ui.update_list2()
 					self.setCurrentRow(nRow)
-					if site != "PlayLists":
-						ui.update_list2()
-					else:
-						self.clear()
-						for i in lines:
-							i = i.replace('\n','')
-							if i:
-								if '	' in i:
-									i = i.split('	')[0]
-								self.addItem(i)
-						self.setCurrentRow(nRow)
+					
+					#if site != "PlayLists":
+					#	ui.update_list2()
+					#else:
+					#	self.clear()
+					#	for i in lines:
+					#		i = i.replace('\n','')
+					#		if i:
+					#			if '	' in i:
+					#				i = i.split('	')[0]
+					#			self.addItem(i)
+					#	self.setCurrentRow(nRow)
 			elif site=="Video":
 				r = self.currentRow()
 				item = self.item(r)
@@ -3987,19 +3989,20 @@ class List2(QtWidgets.QListWidget):
 						j = i.replace('\n','')
 						epnArrList.append(j)
 					f.close()
+					ui.update_list2()
 					self.setCurrentRow(nRow)
 					#ui.update_list2()
-					if site != "PlayLists":
-						ui.update_list2()
-					else:
-						self.clear()
-						for i in lines:
-							i = i.replace('\n','')
-							if i:
-								if '	' in i:
-									i = i.split('	')[0]
-								self.addItem(i)
-						self.setCurrentRow(nRow)
+					#if site != "PlayLists":
+					#	ui.update_list2()
+					#else:
+					#	self.clear()
+					#	for i in lines:
+					#		i = i.replace('\n','')
+					#		if i:
+					#			if '	' in i:
+					#				i = i.split('	')[0]
+					#			self.addItem(i)
+					#	self.setCurrentRow(nRow)
 			elif site=="Video":
 				r = self.currentRow()
 				item = self.item(r)
