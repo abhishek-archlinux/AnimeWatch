@@ -444,6 +444,8 @@ Left: show title list if it's hidden
 
 Return: play the item and hide title list but keep the playlist visible
 
+BackSpace: Go To title list if title list is hidden
+
 PgUp: Move Entry UP
 
 PgDown: Move Entry Down
