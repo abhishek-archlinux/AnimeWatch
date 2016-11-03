@@ -442,6 +442,8 @@ Right: play the item but keep both playlist and title list visible
 
 Left: show title list if it's hidden
 
+Return: play the item and hide title list but keep the playlist visible
+
 PgUp: Move Entry UP
 
 PgDown: Move Entry Down
