@@ -570,6 +570,9 @@ class MprisServer(dbus.service.Object):
 	@pyqtSlot(str)
 	def _emitMeta(self,info):
 		global site,epnArrList,home
+		art_url = ui.default_background
+		artist = 'AnimeWatch'
+		title = 'AnimeWatch'
 		if epnArrList and (site == "Music" or site == "PlayLists"):
 			
 			try:
@@ -588,7 +591,12 @@ class MprisServer(dbus.service.Object):
 				else:
 					t = t1[0]
 					art = t
-				
+				if 'internet-radio#' in info:
+					print(info,'---------_emitMeta--------')
+					art = info.split('#')[1]
+					t = epnArrList[ui.list2.currentRow()].split('	')[0]
+					t = t.replace('#','')
+					print(art,t)
 				if (site == 'Music' and ui.list3.currentItem()) or (site == 'PlayLists'): 
 					if (site == 'Music' and ui.list3.currentItem().text().lower() == 'playlist') or (site == 'PlayLists'):
 						
@@ -607,48 +615,25 @@ class MprisServer(dbus.service.Object):
 						img_place = os.path.join(home,'thumbnails','PlayLists',pls,pls_entry)
 						print(img_place,'--img--place')
 						title = re.sub('.jpg','',pls_entry)
+						#title = ui.epn_name_in_list
 						art_u = img_place
-						if os.path.exists(art_u):
-							art_url = art_u
-							print(art_url,'img--url--exists')
+						#if os.path.exists(art_u):
+						#	art_url = art_u
+						#	print(art_url,'img--url--exists')
 					elif site == 'Music':
 						title = t
 						artist = art
 						title = title.replace('#','')
 						artist = artist.replace('#','')
-						if title.startswith(ui.check_symbol,''):
+						if title.startswith(ui.check_symbol):
 							title = title[1:]
-						if artist.startswith(ui.check_symbol,''):
+						if artist.startswith(ui.check_symbol):
 							artist = artist[1:]
 						art_u = os.path.join(home,'Music','Artist',artist,'poster.jpg')
-						if os.path.exists(art_u):
-							art_url = art_u
-				
-				"""
-				title = t
-				artist = art
-				title = title.replace('#','')
-				artist = artist.replace('#','')
-				art_u = home+'/Music/Artist/'+artist+'/poster.jpg'
-				if os.path.exists(art_u):
-					art_url = art_u
-				else:
-					
-					print(t1,'---==--------')
-					artist = t1[1].split('/')[-2]
-					print(artist,'---==--------')
-					art_u = home+'/thumbnails/'+site+'/'+artist+'/'+title+'.jpg'
-					print(artist,art_u,'---==--------')
-					if os.path.exists(art_u):
-						art_url = art_u
-					else:
-						art_u = home+'/thumbnails/'+title+'.jpg'
-						print(artist,art_u,'---==--------')
-						if os.path.exists(art_u):
-							art_url = art_u
+						#if os.path.exists(art_u):
+						#	art_url = art_u
 					
 					
-				"""
 			except:
 				title = "AnimeWatch"
 				artist = "AnimeWatch"
@@ -659,18 +644,28 @@ class MprisServer(dbus.service.Object):
 				print(epnArrList[r])
 				t1 = epnArrList[r].split('	')
 				title = t1[0]
-				title = title.replace('#','')
 				if title.startswith(ui.check_symbol):
 					title = title[1:]
 				artist = ui.list1.currentItem().text()
 				art_u = os.path.join(home,'thumbnails',artist,title+'.jpg')
-				if os.path.exists(art_u):
-					art_url = art_u
+				if 'internet-radio#' in info:
+					print(info,'---------_emitMeta--------')
+					artist = info.split('#')[1]
+					title = epnArrList[ui.list2.currentRow()].split('	')[0]
+					print(artist,title)
+				title = title.replace('#','')
+				#if os.path.exists(art_u):
+				#	art_url = art_u
 			except:
 				title = "AnimeWatch"
 				artist = "AnimeWatch"
-		
-		
+		try:
+			r = ui.list2.currentRow()
+			art_u = ui.get_thumbnail_image_path(r,epnArrList[r])
+			if os.path.exists(art_u):
+				art_url = art_u
+		except:
+			pass
 		props = dbus.Dictionary({'Metadata': dbus.Dictionary({
 		    'xesam:artist': artist,
 		'mpris:artUrl': art_url,
@@ -720,215 +715,6 @@ class MprisServer(dbus.service.Object):
 			'The Foo object does not implement the %s interface'
 			% interface
 	)
-
-class MPRIS2Helper(object):
-	def __init__(self):
-		self.signal = QtDBus.QDBusMessage.createSignal(
-		"/org/mpris/MediaPlayer2",
-		"org.freedesktop.DBus.Properties",
-		"PropertiesChanged"
-		)
-
-	def PropertiesChanged(self, interface, property, values):
-		"""Sends PropertiesChanged signal through sessionBus.
-		Args:
-		interface: interface name
-		property: property name
-		values: current property value(s)
-		"""
-		#print ((QtDBus.QDBusMessage().arguments()))
-		#mp = QtCore.QVariantMap()
-		#mp.insert("xesam:title", "hello world")
-		#mp.insert("Metadata",values)
-		#l =[]
-		#m = QtGui.QCompleter(l)
-		#l = []
-		#m = l.toPyObject()
-		#print(values)
-		#val = values.toMap()
-		#print (val)
-		
-		#d = {'xesam:title': str("hello"),
-		#    'xesam:artist': [str("world")], 'xesam:album': str("How r u")}
-		#values = {('xesam:title'):('AnimeWatch')}
-		#lst = [interface,{property:values}]
-		self.signal.setArguments(
-		[interface,{property:values},list()]
-		)
-		
-		print (self.signal.arguments())
-		"""
-		print (self.signal.path())
-		print (self.signal.service())
-		print (self.signal.signature())
-		print (type(self.signal))
-		"""
-		QtDBus.QDBusConnection.sessionBus().send((self.signal))
-
-class MyServer(QObject):
-	pl_signal = QtCore.pyqtSignal()
-	def __init__(self):
-		QObject.__init__(self)
-		self.__dbusAdaptor = ServerAdaptor(self)
-		self.__name = 'AnimeWatch'
-		self.signal_send = MPRIS2Helper()
-		#
-		self.pl_signal.connect(self._emitMeta)
-		#ui.trigger_play.connect(self.Metadata)
-		#self.pl_signal.connect(self.Metadata)
-		
-	#def _emitted(self):
-	#	self.pl_signal.connect(self._emitMeta)
-	#	self.pl_signal.emit()
-	def _emitMeta(self):
-		global site,epnArrList
-		if epnArrList and (site == "Music" or site == "PlayLists"):
-			
-			try:
-				r = ui.list2.currentRow()
-				print(epnArrList[r])
-				t1 = epnArrList[r].split('	')
-				if len(t1) > 2:
-					t = t1[0]
-					art = t1[2]
-				else:
-					t = t1[0]
-					art = t
-			
-				d = {'xesam:title': str(t),'xesam:artist': ([art]), 'xesam:album': str("None")}
-			except:
-				d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
-		else:
-		
-			d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
-			
-		self.signal_send.PropertiesChanged("org.mpris.MediaPlayer2.Player", "Metadata", d)
-		
-	def Previous(self):
-		global mpvplayer,Player
-		#ui.epnfound()
-		
-		if mpvplayer:
-			if mpvplayer.pid() > 0:
-				print ("Previous Song")
-				ui.mpvPrevEpnList()
-				#self._emitMeta()
-				self.pl_signal.emit()
-		#return self.next_song
-	def Next(self):
-		global mpvplayer,Player
-		#ui.epnfound()
-		
-		if mpvplayer:
-			if mpvplayer.pid() > 0:
-				print ("Next Song")
-				#return self.next_song
-				ui.mpvNextEpnList()
-				#self._emitMeta()
-				self.pl_signal.emit()
-	def Stop(self):
-		global mpvplayer,Player
-		#ui.epnfound()
-		
-		if mpvplayer:
-			if mpvplayer.pid() > 0:
-				print ("Stop")
-				#return self.next_song
-				#ui.mpvNextEpnList()
-				#self._emitMeta()
-				ui.playerStop()
-	def Play(self):
-		print ("Play Song")
-		global mpvplayer,Player
-		#ui.epnfound()
-		
-		if mpvplayer:
-			if mpvplayer.pid() > 0:
-				if Player == "mpv":
-					mpvplayer.write(b'\n cycle pause \n')
-				else:
-					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
-			else:
-				ui.epnfound()
-		
-	def PlayPause(self):
-		print ("PlayPause Song")
-		#return self.next_song
-		global mpvplayer,Player
-		if mpvplayer:
-			if mpvplayer.pid() > 0:
-				if Player == "mpv":
-					mpvplayer.write(b'\n cycle pause \n')
-				else:
-					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
-			else:
-				ui.epnfound()
-	@property
-	def Identity(self):
-		return "AnimeWatch"
-	@property
-	def Metadata(self):
-		global site,epnArrList
-		#
-		print("Inside Meta")
-		if epnArrList and (site == "Music" or site == "PlayLists"):
-			try:
-				r = ui.list2.currentRow()
-				t = epnArrList[r].split('	')[0]
-				art = epnArrList[r].split('	')[2]
-				d = {'xesam:title': str(t),'xesam:artist': (str(art)), 'xesam:album': str("None")}
-			except:
-				d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
-			
-		else:
-		
-			d={'xesam:title':'AnimeWatch','xesam:artist': ["AnimeWatch"]}
-			
-		return d
-
-class ServerAdaptor(QDBusAbstractAdaptor):
-	""" This provides the DBus adaptor to the outside world"""
-	
-	Q_CLASSINFO("D-Bus Interface", "org.mpris.MediaPlayer2.Player")
-	
-	Q_CLASSINFO("D-Bus Introspection",
-		'<interface name="org.mpris.MediaPlayer2.Player">\n'
-			'<method name="Previous">\n'
-			'</method>\n'
-			'<method name="Next">\n'
-			'</method>\n'
-			'<method name="Play">\n'
-			'</method>\n'
-			'<method name="PlayPause">\n'
-			'</method>\n'
-			'<method name="Stop">\n'
-			'</method>\n'
-			'<property name="Metadata" type="a{sv}" access="read" direction="out"/>'
-		'</interface>\n')
-	
-	@pyqtProperty(str)
-	def Identity(self):
-		return self.parent().Identity
-		#return "AnimeWatch"
-	@pyqtSlot()
-	def Previous(self):
-		return self.parent().Previous()
-	@pyqtSlot()
-	def Next(self):
-		return self.parent().Next()
-	@pyqtSlot()
-	def Play(self):
-		return self.parent().Play()
-	@pyqtSlot()
-	def PlayPause(self):
-		return self.parent().PlayPause()
-	@pyqtSlot()
-	def Stop(self):
-		return self.parent().Stop()
-	@pyqtProperty("QMap<QString, QVariant>")
-	def Metadata(self):
-		
-		return self.parent().Metadata
 		
 
 class ThreadingExample(QtCore.QThread):
@@ -989,7 +775,7 @@ class ThreadingExample(QtCore.QThread):
 			print (wiki_url)
 			#content = self.ccurl(wiki_url,'')
 			content = ccurl(wiki_url)
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.find('div',{'class':'wiki-content'})
 			print (link)
 
@@ -15990,7 +15776,7 @@ class Ui_MainWindow(object):
 		QtCore.QTimer.singleShot(1000, partial(wget.start, command))
 		
 	def dataReady(self,p):
-		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode
+		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode,server
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path,wget
 		try:
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
@@ -16004,6 +15790,8 @@ class Ui_MainWindow(object):
 					self.epn_name_in_list = song_title.group().replace('icy-title:','')
 				print(self.epn_name_in_list,'--radio--song--')
 				mplayerLength = 1
+				self.epn_name_in_list = self.epn_name_in_list.strip()
+				server._emitMeta('internet-radio#'+self.epn_name_in_list)
 		except:
 			a = ""
 		#el = time.process_time() - tt
