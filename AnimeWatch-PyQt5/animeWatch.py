@@ -6076,6 +6076,8 @@ class tab5(QtWidgets.QWidget):
 				mpvplayer.write(b'\n sub_pos +1 \n')
 			else:
 				mpvplayer.write(b'\n add sub-pos +1 \n')
+		elif event.modifiers() == QtCore.Qt.ShiftModifier and event.key() == QtCore.Qt.Key_J:
+			ui.load_external_sub()
 		elif event.key() == QtCore.Qt.Key_J:
 			if Player == "mplayer":
 				if not self.mplayer_OsdTimer.isActive():
@@ -7145,6 +7147,7 @@ class Ui_MainWindow(object):
 		self.quality_val = 'sd'
 		self.current_background = os.path.join(home,'default.jpg')
 		self.default_background = os.path.join(home,'default.jpg')
+		self.yt_sub_folder = os.path.join(home,'External-Subtitle')
 		self.torrent_type = 'file'
 		self.torrent_handle = ''
 		self.list_with_thumbnail = False
@@ -7619,6 +7622,41 @@ class Ui_MainWindow(object):
 						mpvplayer.write(b'\n print-text "Audio_ID=${aid}" \n')
 						mpvplayer.write(b'\n show-text "${aid}" \n')
 			self.audio_track.setText("A:"+str(audio_id))
+			
+	def load_external_sub(self):
+		global Player,mpvplayer,sub_id
+		external_sub = False
+		sub_arr = []
+		m = os.listdir(self.yt_sub_folder)
+		new_name = self.epn_name_in_list.replace('/','-')
+		if new_name.startswith('.'):
+			new_name = new_name[1:]
+			
+		for i in m:
+			if i.startswith(new_name) and (i.endswith('.vtt') or i.endswith('.srt') or i.endswith('.ass')):
+				sub_arr.append(os.path.join(self.yt_sub_folder,i))
+				external_sub = True
+		
+		if external_sub:
+			txt_notify = 'External Subtitle Available\n Trying To Load'
+			subprocess.Popen(['notify-send',txt_notify])
+		
+		if mpvplayer.pid() > 0 and sub_arr:
+			for title_sub in sub_arr:
+				if Player == "mplayer":
+					if os.path.exists(title_sub):
+						txt = '\nsub_load '+'"'+title_sub+'"\n'
+						txt_b = bytes(txt,'utf-8')
+						print(txt_b,txt)
+						mpvplayer.write(txt_b)
+				else:
+					if os.path.exists(title_sub):
+						txt = '\nsub_add '+'"'+title_sub+'" select\n'
+						txt_b = bytes(txt,'utf-8')
+						print(txt_b,txt)
+						mpvplayer.write(txt_b)
+						
+				
 	def toggleSubtitle(self):
 			global Player,mpvplayer,sub_id
 			if mpvplayer:
@@ -7628,52 +7666,16 @@ class Ui_MainWindow(object):
 							mpvplayer.write(b'\n osd 1 \n')
 						else:
 							self.mplayer_OsdTimer.stop()
-						"""
-						txt = str(self.subtitle_track.text())
-						txt = txt.replace('Sub: ','')
-						txt1 = txt.split('/')
-						a1 = int(txt1[0])
-						a2 = int(txt1[1])
-						print a1
-						print a2
-						if a1 < a2:
-							a1 = a1+1
-						else:
-							a1 = 0
-						t = str(a1-1)
-						sub_id = a1 - 1
-						mpvplayer.write('\n'+'sub_select '+t+'\n')
-						t1 = "Sub: "+str(a1)+'/'+str(a2)
-						self.subtitle_track.setText(t1)
-						"""
+						
 						mpvplayer.write(b'\n sub_select \n')
 						mpvplayer.write(b'\n get_property sub \n')
 						self.mplayer_OsdTimer.start(5000)
-						
-						title_sub = self.epn_name_in_list.replace('/','-')
-						if title_sub.startswith('.'):
-							title_sub = title_sub[1:]
-						title_sub = '/tmp/AnimeWatch/'+title_sub+'.vtt'
-						if os.path.exists(title_sub):
-							txt = '\nsub_load '+'"'+title_sub+'"\n'
-							txt_b = bytes(txt,'utf-8')
-							print(txt_b,txt)
-							mpvplayer.write(txt_b)
-						
 					else:
 						mpvplayer.write(b'\n cycle sub \n')
 						mpvplayer.write(b'\n print-text "SUB_ID=${sid}" \n')
 						mpvplayer.write(b'\n show-text "${sid}" \n')
-						title_sub = self.epn_name_in_list.replace('/','-')
-						if title_sub.startswith('.'):
-							title_sub = title_sub[1:]
-						title_sub = '/tmp/AnimeWatch/'+title_sub+'.vtt'
-						if os.path.exists(title_sub):
-							txt = '\nsub_add '+'"'+title_sub+'" select\n'
-							txt_b = bytes(txt,'utf-8')
-							print(txt_b,txt)
-							mpvplayer.write(txt_b)
 			self.subtitle_track.setText('Sub:'+str(sub_id))
+			
 	def playerStop(self):
 			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt,iconv_r_indicator,iconv_r,curR,wget,Player,show_hide_cover,show_hide_playlist,show_hide_titlelist,video_local_stream
 			if mpvplayer:
@@ -18698,7 +18700,8 @@ if __name__ == "__main__":
 	picn = os.path.join(home,'default.jpg')
 	if not os.path.exists(picn):
 		picn_1 = '/usr/share/AnimeWatch/default.jpg'
-		shutil.copy(picn_1,picn)
+		if os.path.exists(picn_1):
+			shutil.copy(picn_1,picn)
 		
 	palette	= QtGui.QPalette()
 	palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(picn)))
@@ -18992,7 +18995,8 @@ if __name__ == "__main__":
 		f.close()
 	if not os.path.exists(os.path.join(home,"Playlists")):
 		os.makedirs(os.path.join(home,"Playlists"))
-		
+	if not os.path.exists(ui.yt_sub_folder):
+		os.makedirs(ui.yt_sub_folder)
 	if not os.path.exists(os.path.join(home,"Playlists","Default")):
 		f = open(os.path.join(home,"Playlists","Default"),"w")
 		f.close()

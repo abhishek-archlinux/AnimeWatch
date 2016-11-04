@@ -22,6 +22,8 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import subprocess
+import shutil
+import os
 
 def get_yt_url(url,quality):
 	final_url = ''
@@ -99,7 +101,7 @@ def get_yt_url(url,quality):
 	print(final_url)
 	return final_url
 
-def get_yt_sub(url,name):
+def get_yt_sub(url,name,dest_dir):
 	final_url = ''
 	url = url.replace('"','')
 	m = []
@@ -121,5 +123,25 @@ def get_yt_sub(url,name):
 			url = 'https://m.youtube.com/watch?v='+d['v']
 		except:
 			pass
-	out = '/tmp/AnimeWatch/'+name
-	subprocess.Popen(['youtube-dl','--all-sub','--skip-download','--output',out,url])
+	out = "/tmp/AnimeWatch/youtube-sub"
+	sub_name = out.split('/')[-1]
+	print(out,'---------output--------dest---------')
+	subprocess.call(['youtube-dl','--all-sub','--skip-download','--output',out,url])
+	dir_name = '/tmp/AnimeWatch/'
+	m = os.listdir(dir_name)
+	new_name = name.replace('/','-')
+	if new_name.startswith('.'):
+		new_name = new_name[1:]
+	for i in m:
+		#j = os.path.join(dir_name,i)
+		src_path = os.path.join(dir_name,i)
+		if i.startswith(sub_name) and i.endswith('.vtt') and os.stat(src_path).st_size != 0:
+			k1 = i.rsplit('.',2)[1]
+			k2 = i.rsplit('.',2)[2]
+			ext = k1+'.'+k2
+			dest_name = new_name + '.'+ ext
+			dest_path = os.path.join(dest_dir,dest_name)
+			shutil.copy(src_path,dest_path)
+			os.remove(src_path)
+			txt_notify = "External Subtitle Available\nPress Shift+J to load"
+			subprocess.Popen(['notify-send',txt_notify])
