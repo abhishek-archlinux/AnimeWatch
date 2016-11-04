@@ -471,6 +471,7 @@ class MprisServer(dbus.service.Object):
             'CanPause': True,
 	    'CanPlay': True,
              'CanControl': True,
+             'CanStop': True,
 }, signature='sv', variant_level=2)
 
 		
