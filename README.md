@@ -322,6 +322,8 @@ i : show file size
 
 j : toggle Subtitle
 
+Shift+j: If available, Load external subtitles from folder '~/.config/AnimeWatch/External-Subtitle'. (Staring name of external-subtitle file should match name in the playlist entry)
+
 k : toggle audio
 
 m : show video file name
