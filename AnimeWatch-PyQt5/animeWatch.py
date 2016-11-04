@@ -7792,17 +7792,19 @@ class Ui_MainWindow(object):
 			self.sortList()
 			
 	def playerLoopFile(self):
-		global Player
+		global Player,quitReally
 		txt = self.player_loop_file.text()
 		if txt == self.player_buttons['unlock']:
 			self.player_setLoop_var = 1
 			self.player_loop_file.setText(self.player_buttons['lock'])
+			quitReally = 'no'
 			#if Player == "mpv":
 			#	mpvplayer.write(b'\n set loop inf \n')
 			
 		else:
 			self.player_setLoop_var = 0
 			self.player_loop_file.setText(self.player_buttons['unlock'])
+			#quitReally = 'yes'
 			#if Player == "mpv":
 			#	mpvplayer.write(b'\n set loop 1 \n')
 			
@@ -14325,7 +14327,11 @@ class Ui_MainWindow(object):
 		#	self.epn_name_in_list = finalUrl.split('/')[-1]
 		#self.epn_name_in_list = re.sub('.mkv|.mp4|.avi','',self.epn_name_in_list)
 		finalUrl = '"'+finalUrl+'"'
-		current_playing_file_path = finalUrl
+		if finalUrl.startswith('"http'):
+			current_playing_file_path = finalUrl.replace('"','')
+			finalUrl = finalUrl.replace('"','')
+		else:
+			current_playing_file_path = finalUrl
 		if mpvplayer.pid() > 0:
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
@@ -14515,7 +14521,7 @@ class Ui_MainWindow(object):
 		buffering_mplayer="no"
 		self.list4.hide()
 		self.player_play_pause.setText(self.player_buttons['pause'])
-		
+		quitReally = "no"
 		
 		try:
 			
@@ -14899,7 +14905,7 @@ class Ui_MainWindow(object):
 		#f.close()
 		#g.close()
 		#h.close()
-		quitReally = "no"
+		
 		idw = str(int(self.tab_5.winId()))
 		print(self.tab_5.winId(),'----winID---',idw)
 		if site != "Music":
@@ -15136,7 +15142,10 @@ class Ui_MainWindow(object):
 		epn_goto = 0
 		if type(finalUrl) is not list:
 			self.final_playing_url = finalUrl.replace('"','')
-			current_playing_file_path = '"'+self.final_playing_url+'"'
+			if self.final_playing_url.startswith('http'):
+				current_playing_file_path = self.final_playing_url
+			else:
+				current_playing_file_path = '"'+self.final_playing_url+'"'
 		else:
 			self.final_playing_url = finalUrl[0].replace('"','')
 			if refererNeeded == True:
@@ -15530,13 +15539,18 @@ class Ui_MainWindow(object):
 		return finalUrl
 	
 	def watchDirectly(self,finalUrl,title,quit_val):
-		global site,base_url,idw,quitReally,mpvplayer,Player,epn_name_in_list,path_final_Url
+		global site,base_url,idw,quitReally,mpvplayer,Player,epn_name_in_list,path_final_Url,current_playing_file_path,curR
+		curR = 0
 		if title:
 			self.epn_name_in_list = title
 		else:
 			self.epn_name_in_list = 'No Title'
-		title_sub_path = '/tmp/AnimeWatch/'+title.replace('/','-')
-		title_sub_path = title_sub_path.replace('.','-')
+			
+		title_sub_path = title.replace('/','-')
+		if title_sub_path.startswith('.'):
+			title_sub_path = title_sub_path[1:]
+		title_sub_path = os.path.join(self.yt_sub_folder,title_sub_path+'.en.vtt')
+		
 		if Player=='mplayer':
 			print(mpvplayer.pid(),'=mpvplayer.pid()')
 			if (mpvplayer.pid()>0):
@@ -15570,6 +15584,7 @@ class Ui_MainWindow(object):
 		else:
 			finalUrl = str(finalUrl)
 			path_final_Url = finalUrl
+			current_playing_file_path = finalUrl
 			if Player == "mplayer":
 				if finalUrl.startswith('/'):
 					command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
@@ -15997,7 +16012,7 @@ class Ui_MainWindow(object):
 				#if "EndOfFile:" in a:
 				#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-					if self.player_setLoop_var and quitReally == 'no':
+					if (self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0):
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
@@ -16222,7 +16237,7 @@ class Ui_MainWindow(object):
 					#	curR = self.list2.currentRow()
 					#else:
 						#quitReally == "no"
-					if self.player_setLoop_var and quitReally == 'no':
+					if (self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0):
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
@@ -16590,7 +16605,10 @@ class Ui_MainWindow(object):
 					self.musicBackground(r,'Search')
 				elif site == "Video":
 					self.updateVideoCount('mark',finalUrl)
-				current_playing_file_path = finalUrl
+				if finalUrl.startswith('"http'):
+					current_playing_file_path = finalUrl.replace('"','')
+				else:
+					current_playing_file_path = finalUrl
 			
 	def getQueueInList(self):
 		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server,current_playing_file_path,quality
@@ -16610,6 +16628,8 @@ class Ui_MainWindow(object):
 			t = self.queue_url_list[0]
 			epnShow = '"'+t.split('	')[1]+'"'
 			self.epn_name_in_list = t.split('	')[0]
+			if self.epn_name_in_list.startswith('#'):
+				self.epn_name_in_list = self.epn_name_in_list[1:]
 			if site == "Music":
 				artist_name_mplayer = t.split('	')[2]
 				if artist_name_mplayer == "None":
@@ -16632,7 +16652,7 @@ class Ui_MainWindow(object):
 			self.list2.setCurrentRow(curR)
 			
 		
-		if '#' in epnShow or epnShow.startswith('http'):
+		if '#' in epnShow:
 			if '#' in epnShow:
 				epnShow = epnShow.replace('"','')
 				if mpvplayer.pid()>0:
@@ -16701,8 +16721,10 @@ class Ui_MainWindow(object):
 					self.musicBackground(0,'Queue')
 				elif site == "Video":
 					self.updateVideoCount('mark',epnShowN)
-				
-			current_playing_file_path = epnShow
+			if epnShow.startswith('http'):
+				current_playing_file_path = epnShow
+			else:
+				current_playing_file_path = '"'+epnShow+'"'
 		
 	def getNextInList(self):
 		global site,base_url,embed,epn,epn_goto,mirrorNo,list2_items,quality,finalUrl,curR,home,mpvplayer,buffering_mplayer,epn_name_in_list,opt_movies_indicator,audio_id,sub_id,siteName,rfr_url
@@ -17033,7 +17055,10 @@ class Ui_MainWindow(object):
 	
 		if type(finalUrl) is not list:
 			self.final_playing_url = finalUrl.replace('"','')
-			current_playing_file_path = '"'+self.final_playing_url+'"'
+			if self.final_playing_url.startswith('http'):
+				current_playing_file_path = self.final_playing_url
+			else:
+				current_playing_file_path = '"'+self.final_playing_url+'"'
 		else:
 			self.final_playing_url = finalUrl[0].replace('"','')
 			if refererNeeded == True:

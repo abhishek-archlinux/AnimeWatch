@@ -298,7 +298,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		print(final_url,'clicked')
 		if final_url:
 			print(final_url,'--youtube--')
-			self.ui.watchDirectly(final_url,self.epn_name_in_list,'yes')
+			self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 			self.ui.tab_5.show()
 			self.ui.frame1.show()
 			self.ui.tab_2.setMaximumWidth(400)
@@ -452,7 +452,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			if final_url:
 				
 				print(final_url,'--youtube--')
-				self.ui.watchDirectly(final_url,self.epn_name_in_list,'yes')
+				self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
 				self.ui.tab_2.setMaximumWidth(400)
@@ -777,7 +777,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.mpvplayer_val.kill()
 			final_url = get_yt_url(url,self.ui.quality_val)
 			if final_url:
-				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'yes')
+				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
 				self.ui.tab_2.setMaximumWidth(400)
