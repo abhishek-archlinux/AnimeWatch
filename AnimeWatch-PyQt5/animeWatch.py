@@ -6149,70 +6149,78 @@ class tab5(QtWidgets.QWidget):
 			#mpvplayer.write('\n'+'add sub-pos +1'+'\n')
 		
 			#fullscr = 1 - fullscr
-			if not MainWindow.isFullScreen():
-				ui.gridLayout.setSpacing(0)
-				ui.superGridLayout.setSpacing(0)
-				ui.gridLayout.setContentsMargins(0,0,0,0)
-				ui.superGridLayout.setContentsMargins(0,0,0,0)
-				#ui.frame1.setMaximumHeight(20)
-				ui.text.hide()
-				ui.label.hide()
-				#if site != "Music":
-				ui.frame1.hide()
-				ui.tab_6.hide()
-				ui.goto_epn.hide()
-				ui.btn20.hide()
-				if wget.pid() > 0 or video_local_stream:
-					ui.progress.hide()
-					if not ui.torrent_frame.isHidden():
-						ui.torrent_frame.hide()
+			if not MainWindow.isHidden():
+				if not MainWindow.isFullScreen():
+					ui.gridLayout.setSpacing(0)
+					ui.superGridLayout.setSpacing(0)
+					ui.gridLayout.setContentsMargins(0,0,0,0)
+					ui.superGridLayout.setContentsMargins(0,0,0,0)
+					#ui.frame1.setMaximumHeight(20)
+					ui.text.hide()
+					ui.label.hide()
+					#if site != "Music":
+					ui.frame1.hide()
+					ui.tab_6.hide()
+					ui.goto_epn.hide()
+					ui.btn20.hide()
+					if wget.pid() > 0 or video_local_stream:
+						ui.progress.hide()
+						if not ui.torrent_frame.isHidden():
+							ui.torrent_frame.hide()
+						
+					ui.list2.hide()
+					ui.list6.hide()
+					ui.list1.hide()
+					ui.frame.hide()
+					ui.dockWidget_3.hide()
+					#ui.text.hide()
+					#ui.label.hide()
+					#ui.tab_5.setParent(None)
 					
-				ui.list2.hide()
-				ui.list6.hide()
-				ui.list1.hide()
-				ui.frame.hide()
-				#ui.text.hide()
-				#ui.label.hide()
-				#ui.tab_5.setParent(None)
-				
-				#ui.tab_5.showMaximized()
-				ui.tab_5.show()
-				ui.tab_5.setFocus()
-				#ui.tab_5.showFullScreen()
-				if not ui.tab_2.isHidden():
-					ui.tab_2.hide()
-				#ui.gridLayout.showFullScreen()
-				if (Player == "mplayer" or Player=="mpv"):
-					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
-				MainWindow.showFullScreen()
-				#self.showFullScreen()
+					#ui.tab_5.showMaximized()
+					ui.tab_5.show()
+					ui.tab_5.setFocus()
+					#ui.tab_5.showFullScreen()
+					if not ui.tab_2.isHidden():
+						ui.tab_2.hide()
+					#ui.gridLayout.showFullScreen()
+					if (Player == "mplayer" or Player=="mpv"):
+						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+					MainWindow.showFullScreen()
+					#self.showFullScreen()
+				else:
+					
+					ui.gridLayout.setSpacing(10)
+					ui.superGridLayout.setSpacing(10)
+					#ui.gridLayout.setContentsMargins(10,10,10,10)
+					ui.superGridLayout.setContentsMargins(10,10,10,10)
+					ui.list2.show()
+					ui.goto_epn.show()
+					ui.btn20.show()
+					if wget.pid() > 0 or video_local_stream:
+						ui.progress.show()
+						
+					ui.frame1.show()
+					if Player == "mplayer" or Player=="mpv":
+						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+					MainWindow.showNormal()
+					MainWindow.showMaximized()
+					if total_till != 0:
+						ui.tab_6.show()
+						ui.list2.hide()
+						ui.goto_epn.hide()
+					if ui.btn1.currentText().lower() == 'youtube':
+						ui.list2.hide()
+						ui.goto_epn.hide()
+						ui.tab_2.show()
+					#ui.tab_5.showNormal()
+					#self.showNormal()
 			else:
-				
-				ui.gridLayout.setSpacing(10)
-				ui.superGridLayout.setSpacing(10)
-				#ui.gridLayout.setContentsMargins(10,10,10,10)
-				ui.superGridLayout.setContentsMargins(10,10,10,10)
-				ui.list2.show()
-				ui.goto_epn.show()
-				ui.btn20.show()
-				if wget.pid() > 0 or video_local_stream:
-					ui.progress.show()
-					
-				ui.frame1.show()
-				if Player == "mplayer" or Player=="mpv":
-					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-				MainWindow.showNormal()
-				MainWindow.showMaximized()
-				if total_till != 0:
-					ui.tab_6.show()
-					ui.list2.hide()
-					ui.goto_epn.hide()
-				if ui.btn1.currentText().lower() == 'youtube':
-					ui.list2.hide()
-					ui.goto_epn.hide()
-					ui.tab_2.show()
-				#ui.tab_5.showNormal()
-				#self.showNormal()
+				if not ui.float_window.isHidden():
+					if not ui.float_window.isFullScreen():
+						ui.float_window.showFullScreen()
+					else:
+						ui.float_window.showNormal()
 		elif event.key() == QtCore.Qt.Key_Period:
 			ui.mpvNextEpnList()
 		elif event.key() == QtCore.Qt.Key_Comma:
@@ -7035,7 +7043,16 @@ class Ui_MainWindow(object):
 		self.btn201 = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
 		self.btn201.setObjectName(_fromUtf8("btn201"))
 		#self.horizontalLayout_30.insertWidget(1,self.btn201, 0)
+		self.float_window = QtWidgets.QWidget()
+		self.float_window_layout = QtWidgets.QHBoxLayout(self.float_window)
+		self.float_window.setMinimumSize(250,200)
+		self.float_window.hide()
+		self.float_window_dim = [0,0,250,200]
 		
+		#self.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+		self.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
+		self.float_window_layout.setContentsMargins(0,0,0,0)
+		self.float_window_layout.setSpacing(0)
 		
 		self.horizontalLayout10.insertWidget(2,self.frame2, 0)
 		self.horizontalLayout_101.insertWidget(0,self.btn20, 0)
@@ -7160,6 +7177,7 @@ class Ui_MainWindow(object):
 		self.epn_name_in_list = ''
 		self.external_url = False
 		self.subtitle_new_added = False
+		self.window_frame = 'true'
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7345,7 +7363,7 @@ class Ui_MainWindow(object):
 		
 	def retranslateUi(self, MainWindow):
 		MainWindow.setWindowTitle(_translate("MainWindow", "Anime Watch", None))
-		
+		self.float_window.setWindowTitle(_translate("MainWindow", "Anime Watch", None))
 		self.line.setToolTip(_translate("MainWindow", "<html><head/><body><p>Enter Search Keyword</p></body></html>", None))
 		
 		self.backward.setText(_translate("MainWindow", "Previous", None))
@@ -18386,10 +18404,75 @@ class RightClickMenu(QtWidgets.QMenu):
 		self.hideMode.triggered.connect(self._hide_mode)
 		self.addAction(self.hideMode)
 		
+		self.detach_vid = QtWidgets.QAction("&Detach Video", self)
+		self.detach_vid.triggered.connect(self._detach_video)
+		self.addAction(self.detach_vid)
+		
+		self.remove_fr = QtWidgets.QAction("&Remove Window Frame", self)
+		self.remove_fr.triggered.connect(self._remove_frame)
+		self.addAction(self.remove_fr)
+		
 		icon = QtGui.QIcon.fromTheme("Quit")
 		exitAction = QtWidgets.QAction(icon, "&Exit", self)
 		exitAction.triggered.connect(QtWidgets.qApp.quit)
 		self.addAction(exitAction)
+		
+	def _remove_frame(self):
+		txt = self.remove_fr.text()
+		m_w = False
+		f_w = False
+		if not MainWindow.isHidden():
+			m_w = True
+		if not ui.float_window.isHidden():
+			f_w = True
+		if txt.lower() == '&remove window frame':
+			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
+			self.remove_fr.setText('&Allow Window Frame')
+			ui.window_frame = 'false'
+		else:
+			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint)
+			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowStaysOnTopHint)
+			self.remove_fr.setText('&Remove Window Frame')
+			ui.window_frame = 'true'
+		
+		
+		
+		if m_w:
+			MainWindow.show()
+		if f_w:
+			ui.float_window.show()
+		
+		ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
+		
+	def _set_window_frame(self):
+		txt = ui.window_frame
+		if txt.lower() == 'false':
+			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
+			self.remove_fr.setText('&Allow Window Frame')
+		else:
+			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint)
+			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowStaysOnTopHint)
+			self.remove_fr.setText('&Remove Window Frame')
+		MainWindow.show()
+	def _detach_video(self):
+		txt = self.detach_vid.text()
+		if txt.lower() == '&detach video':
+			self.detach_vid.setText('&Attach Video')
+			ui.float_window_layout.insertWidget(0,ui.tab_5,0)
+			ui.float_window.show()
+			MainWindow.hide()
+			self.hideMode.setText('&Show')
+			ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
+		else:
+			self.detach_vid.setText('&Detach Video')
+			ui.gridLayout.addWidget(ui.tab_5,0,1,1,1)
+			ui.float_window.hide()
+			MainWindow.show()
+			self.hideMode.setText('&Hide')
+			ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
+			
 	def _hide_mode(self):
 		#MainWindow.hide()
 		txt = (self.hideMode.text())
@@ -18744,12 +18827,31 @@ if __name__ == "__main__":
 					except:
 						pass
 					#print(old_version)
+				elif "FloatWindow" in i:
+					try:
+						j = j.replace('\n','')
+						j = j.replace('[','')
+						j = j.replace(']','')
+						j = j.replace(' ','')
+						k = j.split(',')
+						ui.float_window_dim[:] = []
+						for l in k:
+							ui.float_window_dim.append(int(l))
+						print(ui.float_window_dim)
+					except:
+						ui.float_window_dim = [0,0,250,200]
 				elif "DefaultPlayer" in i:
 					
 					Player = re.sub('\n','',j)
 					cnt = ui.chk.findText(Player)
 					if cnt >=0 and cnt < ui.chk.count():
 						ui.chk.setCurrentIndex(cnt)
+				elif "WindowFrame" in i:
+					try:
+						j = j.replace('\n','')
+						ui.window_frame = str(j)
+					except:
+						ui.window_frame = 'true'
 				elif "List_Mode_With_Thumbnail" in i:
 					tmp_mode = re.sub('\n','',j)
 					if tmp_mode.lower() == 'true':
@@ -19087,6 +19189,8 @@ if __name__ == "__main__":
 	try:
 		tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
 		tray.show()
+		if ui.window_frame == 'false':
+			tray.right_menu._set_window_frame()
 	except:
 		pass
 	
@@ -19263,6 +19367,9 @@ if __name__ == "__main__":
 	#print(MainWindow.pos().x(),MainWindow.pos().y(),'--pos--')
 	#print(MainWindow.size(),'--size--')
 	#app.deleteLater()
+	
+	ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
+	
 	if ui.list1.isHidden():
 		show_hide_titlelist = 0
 	else:
@@ -19277,6 +19384,8 @@ if __name__ == "__main__":
 		f = open(os.path.join(home,"config.txt"),"w")
 		f.write("VERSION_NUMBER="+str(ui.version_number))
 		f.write("\nDefaultPlayer="+Player)
+		f.write("\nWindowFrame="+str(ui.window_frame))
+		f.write("\nFloatWindow="+str(ui.float_window_dim))
 		if iconv_r_indicator:
 			iconv_r = iconv_r_indicator[0]
 		f.write("\nThumbnail_Size="+str(iconv_r))
