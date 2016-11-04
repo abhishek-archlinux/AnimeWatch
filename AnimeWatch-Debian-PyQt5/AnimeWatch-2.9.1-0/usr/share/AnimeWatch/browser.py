@@ -42,7 +42,7 @@ from PyQt5.QtCore import QUrl
 #from adb import NetWorkManager
 
 import time
-from yt import get_yt_url
+from yt import get_yt_url,get_yt_sub
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty)
 
@@ -289,6 +289,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.playlist_dict = {}
 		self.get_playlist = False
 		self.playlist_name = ''
+		self.sub_url = ''
+		self.yt_sub_folder = os.path.join(home,'External-Subtitle')
+		if not os.path.exists(self.yt_sub_folder):
+			os.makedirs(self.yt_sub_folder)
 	@pyqtSlot(str)
 	def final_found(self,final_url):
 		print(final_url,'clicked')
@@ -307,13 +311,28 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.page().runJavaScript("location.reload();",self.var_remove)
 	def get_html(self,var):
 		print('--got--html--')
-		f = open('/tmp/ht.html','w')
-		f.write(var)
-		f.close()
+		#f = open('/tmp/ht.html','w')
+		#f.write(var)
+		#f.close()
 		if 'youtube.com' in self.url().url():
-		
+			self.sub_url = ''
 			self.playlist_dict = {}
-					
+			"""
+			if 'ttsurl' in var:
+				self.sub_url = ''
+				tts_url = re.search('ttsurl[^,]*',var)
+				if tts_url:
+					tts_url_val = tts_url.group()
+					#tts_url_val = urllib.parse.unquote(tts_url_val)
+					print(tts_url_val,'----tts--url--val---')
+					tts_url_val = tts_url_val.replace('\\\\','')
+					tts_url_val = tts_url_val.replace('u0026','&')
+					tts_url_val = tts_url_val.replace('//','')
+					tts_url_val = tts_url_val.replace('\\','')
+					tts_final = tts_url_val.split(':')[1].strip().replace('"','')
+					self.sub_url = 'https://www.youtube.com'+tts_final+'&lang=en&fmt=vtt'
+					print(self.sub_url,'--sub-url--')
+			"""
 			soup = BeautifulSoup(var,'lxml')
 			m = soup.find('div',{'id':'player'})
 			
@@ -327,6 +346,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					self.epn_name_in_list = title.text
 					self.ui.epn_name_in_list = title.text
 					#self.clicked_link(self.current_link)
+					
 			print(title,self.url().url(),'--changed-title--')
 			if 'list=' in self.url().url() and 'www.youtube.com' in self.url().url():
 				
@@ -351,20 +371,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				if d:
 					self.playlist_dict = d
 			elif 'list=' in self.url().url():
-				"""
-				new_m = soup .findAll('div',{'class':'_mghb'})
-				arr = []
-				for i in new_m:
-					#print(i)
-					try:
-						j = i.find('img')['src']
-						j = j.split('/')[-2]
-						k = i.find('h4').text
-						l = (j,k)
-						arr.append(l)
-					except:
-						pass
-				"""
+				
 				o = soup.find('div',{'id':'content-container'})
 				m = o.findAll('img')
 				n = []
@@ -441,7 +448,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			if self.ui.mpvplayer_val.pid() > 0:
 				self.ui.mpvplayer_val.kill()
 			final_url = get_yt_url(url,self.ui.quality_val)
+			
 			if final_url:
+				
 				print(final_url,'--youtube--')
 				self.ui.watchDirectly(final_url,self.epn_name_in_list,'yes')
 				self.ui.tab_5.show()
@@ -503,6 +512,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.ui.update_playlist(file_path)
 	def add_playlist(self,value):
 		value = value.replace('/','-')
+		value = value.replace('#','')
+		if value.startswith('.'):
+			value = value[1:]
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		new_pl = False
 		if not os.path.exists(file_path):
@@ -515,6 +527,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			yt_id = i
 			title = self.playlist_dict[yt_id]
 			title = title.replace('/','-')
+			title = title.replace('#','')
 			if title.startswith('.'):
 				title = title[1:]
 			n_url = 'https://m.youtube.com/watch?v='+yt_id
@@ -532,6 +545,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		if '/' in title:
 			title = title.replace('/','-')
+		if '#' in title:
+			title = title.replace('#','')
+		if title.startswith('.'):
+			title = title[1:]
 		print(title,url,file_path)
 		if 'list=' in url:
 			title = title + '-Playlist'
@@ -613,7 +630,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					arr[:]=[]
 					arr.append('Play with AnimeWatch')
 					arr.append('Download')
-					
+					arr.append('Get Subtitle (If Available)')
 					if 'ytimg.com' in url:
 						#print(self.playlist_dict)
 						yt_id = url.split('/')[-2]
@@ -677,7 +694,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		else:
 			if 'youtube.com/watch?v=' in self.url().url():
 				self.title_page = self.title()
-				arr = ['Play with AnimeWatch','Download']
+				arr = ['Play with AnimeWatch','Download','Get Subtitle (If Available)']
 				action = []
 				menu.addSeparator()
 				
@@ -788,6 +805,11 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
 			print (command)		
 			self.ui.infoWget(command,0)
+		elif option.lower() == 'get subtitle (if available)':
+			self.ui.epn_name_in_list = self.title_page
+			print(self.ui.epn_name_in_list)
+			get_yt_sub(url,self.ui.epn_name_in_list,self.yt_sub_folder)
+			
 		elif option.lower() == 'season episode link':
 			
 			if self.site != "Music" and self.site != "PlayLists":

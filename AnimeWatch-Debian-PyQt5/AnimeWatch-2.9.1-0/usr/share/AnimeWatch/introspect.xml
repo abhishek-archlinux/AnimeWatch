@@ -57,7 +57,8 @@
     </property>
     <property type="b" name="CanPause" access="read">
     </property>
-    
+    <property type="b" name="CanStop" access="read">
+    </property>
     <property type="a{sv}" name="Metadata" access="read">
     </property>
     
