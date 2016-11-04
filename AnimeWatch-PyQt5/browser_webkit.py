@@ -42,7 +42,7 @@ from PyQt5.QtCore import QUrl
 from adb_webkit import NetWorkManager
 
 import time
-from yt import get_yt_url
+from yt import get_yt_url,get_yt_sub
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty)
 
@@ -231,7 +231,10 @@ class Browser(QtWebKitWidgets.QWebView):
 		self.get_playlist = False
 		self.playlist_name = ''
 		self.gotHtmlSignal.connect(self.got_curl_html)
-		
+		self.yt_sub_folder = os.path.join(home,'External-Subtitle')
+		if not os.path.exists(self.yt_sub_folder):
+			os.makedirs(self.yt_sub_folder)
+			
 	def link_clicked(self,link):
 		print('--link--clicked--')
 		self.current_link = link.toString()
@@ -587,6 +590,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				arr[:]=[]
 				arr.append('Play with AnimeWatch')
 				arr.append('Download')
+				arr.append('Get Subtitle (If Available)')
 				if 'ytimg.com' in url.toString():
 						print(self.playlist_dict)
 						yt_id = url.toString().split('/')[-2]
@@ -706,6 +710,12 @@ class Browser(QtWebKitWidgets.QWebView):
 			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
 			print (command)		
 			self.ui.infoWget(command,0)
+			
+		elif option.lower() == 'get subtitle (if available)':
+			self.ui.epn_name_in_list = self.title_page
+			print(self.ui.epn_name_in_list)
+			get_yt_sub(url.toString(),self.ui.epn_name_in_list,self.yt_sub_folder)
+			
 		elif option.lower() == 'season episode link':
 			if self.site != "Music" and self.site != "PlayLists":
 				self.ui.getTvdbEpnInfo(url.toString())
