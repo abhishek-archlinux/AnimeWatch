@@ -20,7 +20,8 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 """
 
-
+from PyQt5 import QtCore
+from functools import partial
 import subprocess
 import shutil
 import os
@@ -48,20 +49,7 @@ def get_yt_url(url,quality):
 		except:
 			pass
 	try:
-		"""
-		try:
-			import livestreamer as lvt
-			s = lvt.streams(url)
-			#print(s)
-			if quality == 'sd':
-				final_url = s['360p'].url
-			elif quality == 'hd':
-				final_url = s['720p'].url
-		except:
-			final_url = ''
-		"""
-						
-		#if not final_url.startswith('http'):
+		
 		if quality == 'sd480p':
 			"""
 			try:
@@ -102,6 +90,9 @@ def get_yt_url(url,quality):
 	return final_url
 
 def get_yt_sub(url,name,dest_dir):
+	global name_epn, dest_dir_sub
+	name_epn = name
+	dest_dir_sub = dest_dir
 	final_url = ''
 	url = url.replace('"','')
 	m = []
@@ -123,15 +114,46 @@ def get_yt_sub(url,name,dest_dir):
 			url = 'https://m.youtube.com/watch?v='+d['v']
 		except:
 			pass
+	
 	out = "/tmp/AnimeWatch/youtube-sub"
 	sub_name = out.split('/')[-1]
 	print(out,'---------output--------dest---------')
-	subprocess.call(['youtube-dl','--all-sub','--skip-download','--output',out,url])
+	#subprocess.call(['youtube-dl','--all-sub','--skip-download','--output',out,url])
+	command = "youtube-dl --all-sub --skip-download --output "+out+" "+url
+	
+	
+	yt_sub_process = QtCore.QProcess()
+	yt_sub_process.started.connect(yt_sub_started)
+	yt_sub_process.readyReadStandardOutput.connect(partial(yt_sub_dataReady,yt_sub_process))
+	#self.tab_5.setFocus()
+	yt_sub_process.finished.connect(yt_sub_finished)
+	QtCore.QTimer.singleShot(1000, partial(yt_sub_process.start, command))
+
+def yt_sub_started():
+	print('Getting Sub')
+	txt_notify = "Trying To Get External Subtitles Please Wait!"
+	subprocess.Popen(['notify-send',txt_notify])
+	
+def yt_sub_dataReady(p):
+	try:
+		a = str(p.readAllStandardOutput(),'utf-8').strip()
+		print(a)
+	except:
+		pass
+		
+def yt_sub_finished():
+	global name_epn,dest_dir_sub
+	name = name_epn
+	dest_dir = dest_dir_sub
+	sub_name = 'youtube-sub'
+	print(name,dest_dir)
 	dir_name = '/tmp/AnimeWatch/'
 	m = os.listdir(dir_name)
 	new_name = name.replace('/','-')
 	if new_name.startswith('.'):
 		new_name = new_name[1:]
+	sub_avail = False
+	sub_ext = ''
 	for i in m:
 		#j = os.path.join(dir_name,i)
 		src_path = os.path.join(dir_name,i)
@@ -139,9 +161,15 @@ def get_yt_sub(url,name,dest_dir):
 			k1 = i.rsplit('.',2)[1]
 			k2 = i.rsplit('.',2)[2]
 			ext = k1+'.'+k2
+			sub_ext = ext+','+sub_ext
 			dest_name = new_name + '.'+ ext
 			dest_path = os.path.join(dest_dir,dest_name)
 			shutil.copy(src_path,dest_path)
 			os.remove(src_path)
-			txt_notify = "External Subtitle Available\nPress Shift+J to load"
-			subprocess.Popen(['notify-send',txt_notify])
+			sub_avail = True
+	if sub_avail:
+		txt_notify = "External Subtitle "+ sub_ext+" Available\nPress Shift+J to load"
+		subprocess.Popen(['notify-send',txt_notify])
+	else:
+		txt_notify = "No Subtitle Found"
+		subprocess.Popen(['notify-send',txt_notify])

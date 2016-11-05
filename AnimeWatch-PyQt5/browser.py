@@ -38,7 +38,6 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView
 	
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl
-
 #from adb import NetWorkManager
 
 import time
@@ -219,10 +218,14 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 			pass
 		if block:
 			info.block(True)
+			
+
+	
 class Browser(QtWebEngineWidgets.QWebEngineView):
 	urlSignal = pyqtSignal(str)
 	gotHtmlSignal = pyqtSignal(str,str,str)
 	playlist_obtained_signal = pyqtSignal(str)
+	#yt_sub_signal = pyqtSignal(str,str,str)
 	def __init__(self,ui,home,screen_width,quality,site,epnArrList):
 		super(Browser, self).__init__()
 		
@@ -291,8 +294,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.playlist_name = ''
 		self.sub_url = ''
 		self.yt_sub_folder = os.path.join(home,'External-Subtitle')
+		#self.yt_sub_signal.connect(get_yt_sub_thread)
 		if not os.path.exists(self.yt_sub_folder):
 			os.makedirs(self.yt_sub_folder)
+		
 	@pyqtSlot(str)
 	def final_found(self,final_url):
 		print(final_url,'clicked')
@@ -808,7 +813,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif option.lower() == 'get subtitle (if available)':
 			self.ui.epn_name_in_list = self.title_page
 			print(self.ui.epn_name_in_list)
+			#self.yt_sub_signal.emit(url,self.ui.epn_name_in_list,self.yt_sub_folder)
 			get_yt_sub(url,self.ui.epn_name_in_list,self.yt_sub_folder)
+			
 			
 		elif option.lower() == 'season episode link':
 			
