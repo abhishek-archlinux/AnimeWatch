@@ -32,7 +32,7 @@ import subprocess
 import os.path
 from subprocess import check_output
 from bs4 import BeautifulSoup
-
+from functools import partial
 from PyQt5 import QtWebKitWidgets
 from PyQt5.QtWebKitWidgets import QWebView,QWebPage
 	
@@ -262,7 +262,8 @@ class Browser(QtWebKitWidgets.QWebView):
 			#self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.innerHtml='';")
 			self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);")
 			self.wait_player = True
-			self.clicked_link(self.current_link)
+			#self.clicked_link(self.current_link)
+			QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
 			self.timer.start(1000)
 	
 	def player_wait(self):
@@ -300,7 +301,6 @@ class Browser(QtWebKitWidgets.QWebView):
 				if self.current_link.startswith("https://m.youtube.com/watch?v=") or self.current_link.startswith("https://www.youtube.com/watch?v="):
 					self.epn_name_in_list = title.text
 					self.ui.epn_name_in_list = title.text
-					#self.clicked_link(self.current_link)
 					#url = soup.find('meta',{'property':'og:url'})
 					print(title.text,self.url().toString(),'--changed-title--')
 					
@@ -401,8 +401,8 @@ class Browser(QtWebKitWidgets.QWebView):
 				#self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.innerHtml='';")
 				self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);")
 				self.wait_player = True
-				self.clicked_link(self.current_link)
-				#asyncio.get_event_loop().run_until_complete(self.clicked_link(self.current_link))
+				#self.clicked_link(self.current_link)
+				QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
 				self.timer.start(1000)
 				
 				

@@ -7195,6 +7195,7 @@ class Ui_MainWindow(object):
 		self.external_url = False
 		self.subtitle_new_added = False
 		self.window_frame = 'true'
+		self.update_proc = QtCore.QProcess()
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -11055,15 +11056,16 @@ class Ui_MainWindow(object):
 						art_dir = os.path.join(path_name,nm)
 						if not os.path.exists(art_dir):
 							os.makedirs(art_dir)
-						tmp_file = '/tmp/AnimeWatch/'+nm+'.txt'
-						if os.path.exists(tmp_file) and not img_arr_artist:
-							f = open(tmp_file,'r')
-							lines = f.readlines()
-							f.close()
-							for i in lines:
-								i = i.replace('\n','')
-								if i:
-									img_arr_artist.append(i)
+						#tmp_file = '/tmp/AnimeWatch/'+nm+'.txt'
+						#if os.path.exists(tmp_file) and not img_arr_artist:
+						#	f = open(tmp_file,'r')
+						#	lines = f.readlines()
+						#	f.close()
+						#	for i in lines:
+						#		i = i.replace('\n','')
+						#		if i:
+						#			img_arr_artist.append(i)
+						img_arr_artist[:]=[]
 						if not img_arr_artist:
 							ma = musicArtist()
 							if not nav:
@@ -11809,6 +11811,9 @@ class Ui_MainWindow(object):
 			for i in lines:
 				i = i.replace('\n','')
 				epnArrList.append(i)
+	
+	
+	
 	def update_list2(self):
 		global epnArrList,site,refererNeeded,finalUrlFound
 		update_pl_thumb = True
@@ -14308,7 +14313,10 @@ class Ui_MainWindow(object):
 		global name,site,epnArrList
 		file_name_mkv = ''
 		file_name_mp4 = ''
-		new_epn = list_widget.item(row).text().replace('#','')
+		if list_widget.item(row):
+			new_epn = list_widget.item(row).text().replace('#','')
+		else:
+			new_epn = ''
 		if new_epn.startswith(self.check_symbol):
 			new_epn = new_epn[1:]
 		new_epn = new_epn.replace('/','-')
@@ -14318,14 +14326,21 @@ class Ui_MainWindow(object):
 			new_epn = new_epn[1:]
 		opt_val = self.btn1.currentText().lower()
 		
-		if site.lower() == 'playlists' or(site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
-			try:
-				title = self.list1.currentItem().text()
-			except:
+		try:
+			if site.lower() == 'playlists' or(site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist'):
+				try:
+					title = self.list1.currentItem().text()
+				except:
+					title = name
+			else:
 				title = name
-		else:
-			title = name
-		
+		except:
+			title = epnArrList[row].split('	')[0]
+			file_name_mkv = epnArrList[row].split('	')[1]
+			file_name_mp4 = epnArrList[row].split('	')[1]
+			print('function ',file_name_mkv,file_name_mp4,'function get_file_name')
+			return file_name_mp4,file_name_mkv
+			
 		if site.lower() != 'video' and site.lower() != 'music' and site.lower() != 'local' and site.lower() != 'playlists' and site.lower() != 'none':
 			new_epn_mkv = new_epn+'.mkv'
 			new_epn_mp4 = new_epn+'.mp4'
@@ -14443,37 +14458,41 @@ class Ui_MainWindow(object):
 					return file_path_name_mp4
 				else:
 					return file_path_name_mkv
-		elif site.lower() == 'music' and self.list3.currentItem().text().lower() == 'playlist' and (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and not video_local_stream:
-			print('now--playing',file_path_name_mp4,file_path_name_mkv)
-			if play_now:
-				self.epn_name_in_list = list_widget.item(row).text().replace('#','')
-				if self.epn_name_in_list.startswith(self.check_symbol):
-					self.epn_name_in_list = self.epn_name_in_list[1:]
-				if os.path.exists(file_path_name_mp4):
-					self.play_file_now(file_path_name_mp4)
-					finalUrl = file_path_name_mp4
+		elif site.lower() == 'music' and self.list3.currentItem() and (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and not video_local_stream:
+			if self.list3.currentItem().text().lower() == 'playlist':
+				print('now--playing',file_path_name_mp4,file_path_name_mkv)
+				if play_now:
+					self.epn_name_in_list = list_widget.item(row).text().replace('#','')
+					if self.epn_name_in_list.startswith(self.check_symbol):
+						self.epn_name_in_list = self.epn_name_in_list[1:]
+					if os.path.exists(file_path_name_mp4):
+						self.play_file_now(file_path_name_mp4)
+						finalUrl = file_path_name_mp4
+					else:
+						self.play_file_now(file_path_name_mkv)
+						finalUrl = file_path_name_mkv
+					if list_widget == self.list6:
+						txt = self.list6.item(0).text()
+						r = self.get_index_list(list_widget,txt)
+						self.list2.setCurrentRow(r)
+					else:
+						r = row
+					finalUrl = '"'+finalUrl+'"'
+					self.musicBackground(r,'Search')
+					self.updateMusicCount('count',finalUrl)
+					return True
 				else:
-					self.play_file_now(file_path_name_mkv)
-					finalUrl = file_path_name_mkv
-				if list_widget == self.list6:
-					txt = self.list6.item(0).text()
-					r = self.get_index_list(list_widget,txt)
-					self.list2.setCurrentRow(r)
-				else:
-					r = row
-				finalUrl = '"'+finalUrl+'"'
-				self.musicBackground(r,'Search')
-				self.updateMusicCount('count',finalUrl)
-				return True
-			else:
-				if os.path.exists(file_path_name_mp4):
-					return file_path_name_mp4
-				else:
-					return file_path_name_mkv
+					if os.path.exists(file_path_name_mp4):
+						return file_path_name_mp4
+					else:
+						return file_path_name_mkv
 		elif (os.path.exists(file_path_name_mp4) or os.path.exists(file_path_name_mkv)) and (site.lower() == 'video' or site.lower() == 'music' or site.lower() == 'local' or site.lower() == 'none') and not video_local_stream:
 			print('now--playing',file_path_name_mp4,file_path_name_mkv)
 			if play_now:
-				self.epn_name_in_list = list_widget.item(row).text().replace('#','')
+				if list_widget.item(row):
+					self.epn_name_in_list = list_widget.item(row).text().replace('#','')
+				
+					
 				if self.epn_name_in_list.startswith(self.check_symbol):
 					self.epn_name_in_list = self.epn_name_in_list[1:]
 				if os.path.exists(file_path_name_mp4):
@@ -17578,7 +17597,10 @@ class Ui_MainWindow(object):
 			elif not update_start:
 				self.text.setText('Wait..Checking New Files')
 				QtWidgets.QApplication.processEvents()
-				self.updateOnStartMusicDB(music_db,music_file,music_file_bak)
+				#self.updateOnStartMusicDB(music_db,music_file,music_file_bak)
+				self.update_proc.started.connect(self.update_proc_started)
+				self.update_proc.finished.connect(self.update_proc_finished)
+				QtCore.QTimer.singleShot(1000, partial(self.updateOnStartMusicDB,music_db,music_file,music_file_bak))
 				#music_thread = MusicUpdateThread(music_db,music_file,music_file_bak)
 				#music_thread.start()
 				#time.sleep(0.5)
@@ -17776,6 +17798,16 @@ class Ui_MainWindow(object):
 				self.list2.show()
 				self.goto_epn.show()
 				show_hide_playlist = 1
+	
+	
+	def update_proc_started(self):
+		print('checking music for new files')
+		
+	def update_proc_finished(self):
+		print("checking for new music finished")
+		
+	
+		
 	
 	def importVideoDir(self):
 		global home
@@ -18216,6 +18248,7 @@ class Ui_MainWindow(object):
 		conn.commit()
 		conn.close()
 		return rows
+	
 	def updateMusicCount(self,qType,qVal):
 		global home
 		qVal = qVal.replace('"','')

@@ -32,7 +32,7 @@ import subprocess
 import os.path
 from subprocess import check_output
 from bs4 import BeautifulSoup
-
+from functools import partial
 from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 	
@@ -297,6 +297,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		#self.yt_sub_signal.connect(get_yt_sub_thread)
 		if not os.path.exists(self.yt_sub_folder):
 			os.makedirs(self.yt_sub_folder)
+		self.yt_process = QtCore.QProcess()
+		self.yt_process.started.connect(self.yt_process_started)
+		self.yt_process.finished.connect(self.yt_process_finished)
 		
 	@pyqtSlot(str)
 	def final_found(self,final_url):
@@ -350,7 +353,6 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				if self.current_link.startswith("https://m.youtube.com/watch?v=") or self.current_link.startswith("https://www.youtube.com/watch?v="):
 					self.epn_name_in_list = title.text
 					self.ui.epn_name_in_list = title.text
-					#self.clicked_link(self.current_link)
 					
 			print(title,self.url().url(),'--changed-title--')
 			if 'list=' in self.url().url() and 'www.youtube.com' in self.url().url():
@@ -436,13 +438,17 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.page().runJavaScript("var element = document.getElementById('player');element.innerHtml='';",self.var_remove)
 				#self.page().runJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);",self.var_remove)
 				self.wait_player = True
-				self.clicked_link(self.current_link)
-				#asyncio.get_event_loop().run_until_complete(self.clicked_link(self.current_link))
+				##self.clicked_link(self.current_link)
+				QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
 				self.timer.start(1000)
 				
 				
 		#print(self.url_arr)
-	
+	def yt_process_started(self):
+		print('yt_process_started')
+	def yt_process_finished(self):
+		print('yt_process_started')
+		
 	def clicked_link(self,link):
 		
 		final_url = ''
@@ -461,6 +467,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
 				self.ui.tab_2.setMaximumWidth(400)
+				
 	def custom_links(self,q_url):
 		url = q_url
 		self.hoveredLink = url
