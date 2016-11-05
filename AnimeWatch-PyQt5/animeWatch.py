@@ -6325,7 +6325,7 @@ class tab5(QtWidgets.QWidget):
 				ui.goto_epn.hide()
 				ui.list1.hide()
 				ui.frame.hide()
-	
+			
 		#super(List2, self).keyPressEvent(event)
 	
 
@@ -7043,11 +7043,13 @@ class Ui_MainWindow(object):
 		self.btn201 = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
 		self.btn201.setObjectName(_fromUtf8("btn201"))
 		#self.horizontalLayout_30.insertWidget(1,self.btn201, 0)
-		self.float_window = QtWidgets.QWidget()
+		self.float_window = QtWidgets.QLabel()
 		self.float_window_layout = QtWidgets.QHBoxLayout(self.float_window)
 		self.float_window.setMinimumSize(250,200)
 		self.float_window.hide()
 		self.float_window_dim = [0,0,250,200]
+		self.float_window.setScaledContents(True)
+		self.float_window.setObjectName(_fromUtf8("float_window"))
 		
 		#self.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
 		self.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
@@ -10024,7 +10026,7 @@ class Ui_MainWindow(object):
 		self.epnfound()
 	
 	def mpvNextEpnList(self):
-		global mpvplayer,epn,curR,Player,epnArrList,site
+		global mpvplayer,epn,curR,Player,epnArrList,site,current_playing_file_path
 		
 		if mpvplayer.pid() > 0:
 			print ("-----------inside-------")
@@ -10057,6 +10059,14 @@ class Ui_MainWindow(object):
 					pass
 			
 			if site == "Local" or site == "Music" or site == "Video" or site == "None" or site == "PlayLists":
+				if (current_playing_file_path.startswith('http') or current_playing_file_path.startswith('"http')):
+					mpvplayer.kill()
+					if Player == 'mplayer':
+						if mpvplayer.pid() > 0:
+							subprocess.Popen(['killall','mplayer'])
+					del mpvplayer
+					mpvplayer = QtCore.QProcess()
+					
 				if len(self.queue_url_list)>0:
 					self.getQueueInList()
 				else:
@@ -14223,6 +14233,8 @@ class Ui_MainWindow(object):
 
 			img = QtGui.QPixmap(picn, "1")
 			self.label.setPixmap(img)
+			if not self.float_window.isHidden():
+				self.float_window.setPixmap(img)
 		self.text.clear()
 		if summary:
 			#self.text.clear()
@@ -14535,12 +14547,12 @@ class Ui_MainWindow(object):
 			if os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
 				os.remove('/tmp/AnimeWatch/player_stop.txt')
 			
-		#if mpvplayer.pid() > 0:
-		#	mpvplayer.kill()
-		#	if Player == 'mplayer':
-		#		if mpvplayer.pid() > 0:
-		#			subprocess.Popen(['killall','mplayer'])
-		#	mpvplayer = QtCore.QProcess()
+		if mpvplayer.pid() > 0 and (current_playing_file_path.startswith('http') or current_playing_file_path.startswith('"http')):
+			mpvplayer.kill()
+			if Player == 'mplayer':
+				if mpvplayer.pid() > 0:
+					subprocess.Popen(['killall','mplayer'])
+			mpvplayer = QtCore.QProcess()
 	
 		if epn_goto == 0 and site != "PlayLists" and downloadVideo == 0:
 			epn = (self.list2.currentItem().text())
@@ -16609,7 +16621,47 @@ class Ui_MainWindow(object):
 					current_playing_file_path = finalUrl.replace('"','')
 				else:
 					current_playing_file_path = finalUrl
+			else:
+				if Player == "mplayer":
+					if audio_id == "auto":
+						audio_id = "0"
+					if sub_id == "auto":
+						sub_id = "0"
+					command1 = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
+					try:
+						command = str(command1,'utf-8')
+						#command = command.encode('utf-8')
+					except:
+						command = command1
+					
+				elif Player == "mpv":
+					command1 = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
+					try:
+						command = str(command1,'utf-8')
+						#command = command.encode('utf-8')
+					except:
+						command = command1
+				
+					
+				self.infoPlay(command)
 			
+				print ("mpv=" + str(mpvplayer.pid()))
+				if site == "Music":
+					try:
+						artist_name_mplayer = epnArrList[row].split('	')[2]
+						if artist_name_mplayer == "None":
+							artist_name_mplayer = ""
+					except:
+						artist_name_mplayer = ""
+					self.updateMusicCount('count',finalUrl)
+					r = self.list2.currentRow()
+					self.musicBackground(r,'Search')
+				elif site == "Video":
+					self.updateVideoCount('mark',finalUrl)
+				if finalUrl.startswith('"http'):
+					current_playing_file_path = finalUrl.replace('"','')
+				else:
+					current_playing_file_path = finalUrl
 	def getQueueInList(self):
 		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server,current_playing_file_path,quality
 		try:
@@ -18488,16 +18540,18 @@ class RightClickMenu(QtWidgets.QMenu):
 			self.detach_vid.setText('&Attach Video')
 			ui.float_window_layout.insertWidget(0,ui.tab_5,0)
 			ui.float_window.show()
+			ui.tab_5.show()
 			MainWindow.hide()
 			self.hideMode.setText('&Show')
 			ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
 		else:
 			self.detach_vid.setText('&Detach Video')
 			ui.gridLayout.addWidget(ui.tab_5,0,1,1,1)
+			ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
 			ui.float_window.hide()
 			MainWindow.show()
 			self.hideMode.setText('&Hide')
-			ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
+			
 			
 	def _hide_mode(self):
 		#MainWindow.hide()
