@@ -14722,7 +14722,7 @@ class Ui_MainWindow(object):
 				#print (cmd)
 				#self.text.setText('Loading..Please Wait!')
 				self.progressEpn.setFormat('Wait..')
-				QtWidgets.QApplication.processEvents()
+				#QtWidgets.QApplication.processEvents()
 				#try:
 				if video_local_stream:
 					if self.thread_server.isRunning():
@@ -16926,7 +16926,7 @@ class Ui_MainWindow(object):
 				except:
 					return 0
 				self.progressEpn.setFormat('Wait..')
-				QtWidgets.QApplication.processEvents()
+				#QtWidgets.QApplication.processEvents()
 				try:
 					if video_local_stream:
 						if self.thread_server.isRunning():
