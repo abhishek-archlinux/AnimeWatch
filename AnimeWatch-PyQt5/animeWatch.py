@@ -14715,7 +14715,10 @@ class Ui_MainWindow(object):
 				#cmd = site +"()"
 				#site_var=eval(cmd)
 				module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				site_var = getattr(module,site)()
+				try:
+					site_var = getattr(module,site)()
+				except:
+					return 0
 				#print (cmd)
 				#self.text.setText('Loading..Please Wait!')
 				self.progressEpn.setFormat('Wait..')
