@@ -240,9 +240,13 @@ class BrowserPage(QWebEnginePage):
 		l = self._getTime(l)
 		print(l)
 		
-		if 'kisscartoon' in self.url or 'kissasian' in self.url:
+		if 'kissanime' in self.url:
 			self._writeCookies(l)
-			if 'ASP.NET_SessionId' in l:
+			if ('idtz' in l) :
+				self.cookie_signal.emit("Cookie Found")
+		elif 'kisscartoon' in self.url:
+			self._writeCookies(l)
+			if ('ASP.NET_SessionId' in l) :
 				self.cookie_signal.emit("Cookie Found")
 		else :
 			#print(l)
@@ -278,13 +282,16 @@ class BrowserPage(QWebEnginePage):
 		cfc = ''
 		cfd = ''
 		asp = ''
+		idt = ''
 		if 'cf_clearance' in i:
 			cfc = self.cookie_split(i)
 		elif '__cfduid' in i:
 			cfd = self.cookie_split(i)
 		elif 'ASP.NET_SessionId' in i:
 			asp = self.cookie_split(i)
-		if cfc or cfd or asp:
+		elif 'idtz' in i:
+			idt = self.cookie_split(i)
+		if cfc or cfd or asp or idt:
 			str1 = ''
 			#print(cfc)
 			#print(cfd)
@@ -296,6 +303,8 @@ class BrowserPage(QWebEnginePage):
 				str1 = cfd['domain']+'	'+cfd['HttpOnly']+'	'+cfd['path']+'	'+'FALSE'+'	'+cfd['expiry']+'	'+'__cfduid'+'	'+cfd['__cfduid']
 			if asp:
 				str1 = asp['domain']+'	'+'FALSE'+'	'+asp['path']+'	'+'FALSE'+'	'+str(0)+'	'+'ASP.NET_SessionId'+'	'+asp['ASP.NET_SessionId']
+			if idt:
+				str1 = idt['domain']+'	'+'FALSE'+'	'+idt['path']+'	'+'FALSE'+'	'+str(0)+'	'+'idtz'+'	'+idt['idtz']
 				
 			if not os.path.exists('/tmp/AnimeWatch/cloud_cookie.txt'):
 				f = open('/tmp/AnimeWatch/cloud_cookie.txt','w')

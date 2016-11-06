@@ -32,13 +32,12 @@ import subprocess
 import os.path
 from subprocess import check_output
 from bs4 import BeautifulSoup
-
+from functools import partial
 from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 	
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl
-
 #from adb import NetWorkManager
 
 import time
@@ -219,10 +218,14 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 			pass
 		if block:
 			info.block(True)
+			
+
+	
 class Browser(QtWebEngineWidgets.QWebEngineView):
 	urlSignal = pyqtSignal(str)
 	gotHtmlSignal = pyqtSignal(str,str,str)
 	playlist_obtained_signal = pyqtSignal(str)
+	#yt_sub_signal = pyqtSignal(str,str,str)
 	def __init__(self,ui,home,screen_width,quality,site,epnArrList):
 		super(Browser, self).__init__()
 		
@@ -291,14 +294,19 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.playlist_name = ''
 		self.sub_url = ''
 		self.yt_sub_folder = os.path.join(home,'External-Subtitle')
+		#self.yt_sub_signal.connect(get_yt_sub_thread)
 		if not os.path.exists(self.yt_sub_folder):
 			os.makedirs(self.yt_sub_folder)
+		self.yt_process = QtCore.QProcess()
+		self.yt_process.started.connect(self.yt_process_started)
+		self.yt_process.finished.connect(self.yt_process_finished)
+		
 	@pyqtSlot(str)
 	def final_found(self,final_url):
 		print(final_url,'clicked')
 		if final_url:
 			print(final_url,'--youtube--')
-			self.ui.watchDirectly(final_url,self.epn_name_in_list,'yes')
+			self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 			self.ui.tab_5.show()
 			self.ui.frame1.show()
 			self.ui.tab_2.setMaximumWidth(400)
@@ -345,7 +353,6 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				if self.current_link.startswith("https://m.youtube.com/watch?v=") or self.current_link.startswith("https://www.youtube.com/watch?v="):
 					self.epn_name_in_list = title.text
 					self.ui.epn_name_in_list = title.text
-					#self.clicked_link(self.current_link)
 					
 			print(title,self.url().url(),'--changed-title--')
 			if 'list=' in self.url().url() and 'www.youtube.com' in self.url().url():
@@ -431,13 +438,17 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.page().runJavaScript("var element = document.getElementById('player');element.innerHtml='';",self.var_remove)
 				#self.page().runJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);",self.var_remove)
 				self.wait_player = True
-				self.clicked_link(self.current_link)
-				#asyncio.get_event_loop().run_until_complete(self.clicked_link(self.current_link))
+				##self.clicked_link(self.current_link)
+				QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
 				self.timer.start(1000)
 				
 				
 		#print(self.url_arr)
-	
+	def yt_process_started(self):
+		print('yt_process_started')
+	def yt_process_finished(self):
+		print('yt_process_started')
+		
 	def clicked_link(self,link):
 		
 		final_url = ''
@@ -452,10 +463,11 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			if final_url:
 				
 				print(final_url,'--youtube--')
-				self.ui.watchDirectly(final_url,self.epn_name_in_list,'yes')
+				self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
 				self.ui.tab_2.setMaximumWidth(400)
+				
 	def custom_links(self,q_url):
 		url = q_url
 		self.hoveredLink = url
@@ -777,7 +789,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.mpvplayer_val.kill()
 			final_url = get_yt_url(url,self.ui.quality_val)
 			if final_url:
-				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'yes')
+				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
 				self.ui.tab_2.setMaximumWidth(400)
@@ -808,7 +820,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif option.lower() == 'get subtitle (if available)':
 			self.ui.epn_name_in_list = self.title_page
 			print(self.ui.epn_name_in_list)
+			#self.yt_sub_signal.emit(url,self.ui.epn_name_in_list,self.yt_sub_folder)
 			get_yt_sub(url,self.ui.epn_name_in_list,self.yt_sub_folder)
+			
 			
 		elif option.lower() == 'season episode link':
 			
