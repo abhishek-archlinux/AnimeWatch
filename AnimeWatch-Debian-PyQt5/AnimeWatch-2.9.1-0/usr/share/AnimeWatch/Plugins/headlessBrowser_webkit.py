@@ -256,6 +256,7 @@ class BrowserPage(QWebPage):
 		
 		
 		listCookies = self.networkAccessManager().cookieJar().allCookies()
+		#print(listCookies)
 		n = []
 		m = ''
 		o = ''
@@ -281,6 +282,8 @@ class BrowserPage(QWebPage):
 		cfc=''
 		cfd =''
 		asp = ''
+		idt = ''
+		test_idt = ''
 		clr = False
 		for i in n:
 			if 'cf_clearance' in i:
@@ -294,6 +297,9 @@ class BrowserPage(QWebPage):
 					cfd = self.cookie_split(i)
 				elif 'ASP.NET_SessionId' in i:
 					asp = self.cookie_split(i)
+				elif 'idtz' in i:
+					idt = self.cookie_split(i)
+				
 		if cfc and cfd:
 			#print(cfc)
 			#print(cfd)
@@ -304,6 +310,12 @@ class BrowserPage(QWebPage):
 				str3 = asp['domain']+'	'+'FALSE'+'	'+asp['path']+'	'+'FALSE'+'	'+asp['expiry']+'	'+'ASP.NET_SessionId'+'	'+asp['ASP.NET_SessionId']
 			else:
 				str3 = ''
+			if idt:
+				str3 = idt['domain']+'	'+'FALSE'+'	'+idt['path']+'	'+'FALSE'+'	'+idt['expiry']+'	'+'idtz'+'	'+idt['idtz']
+			else:
+				str3 = ''
+			if 'kissasian' in self.url:
+				str3 = 'kissasian.com	FALSE	/	FALSE	0		__test'
 			
 			if not os.path.exists('/tmp/AnimeWatch'):
 				os.makedirs('/tmp/AnimeWatch')

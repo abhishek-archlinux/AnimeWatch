@@ -14722,7 +14722,7 @@ class Ui_MainWindow(object):
 				#print (cmd)
 				#self.text.setText('Loading..Please Wait!')
 				self.progressEpn.setFormat('Wait..')
-				QtWidgets.QApplication.processEvents()
+				#QtWidgets.QApplication.processEvents()
 				#try:
 				if video_local_stream:
 					if self.thread_server.isRunning():
@@ -16921,9 +16921,12 @@ class Ui_MainWindow(object):
 				#cmd = site +"()"
 				#site_var=eval(cmd)
 				module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				site_var = getattr(module,site)()
+				try:
+					site_var = getattr(module,site)()
+				except:
+					return 0
 				self.progressEpn.setFormat('Wait..')
-				QtWidgets.QApplication.processEvents()
+				#QtWidgets.QApplication.processEvents()
 				try:
 					if video_local_stream:
 						if self.thread_server.isRunning():

@@ -150,8 +150,10 @@ class BrowseUrl(QWebEngineView):
 			self.cookie_file = '/tmp/AnimeWatch/kcookie.txt'
 		elif 'kisscartoon' in url:
 			self.cookie_file = '/tmp/AnimeWatch/kcookieC.txt'
+			
 		elif 'kissasian' in url:
 			self.cookie_file = '/tmp/AnimeWatch/kcookieD.txt'
+			
 		elif 'masterani' in url:
 			self.cookie_file = '/tmp/AnimeWatch/animeSquare.txt'
 		elif 'animeget' in url:
@@ -185,8 +187,11 @@ class BrowseUrl(QWebEngineView):
 				print('wait Clouflare ')
 				time.sleep(1)
 				cnt = cnt+1
-				
-
+			if 'kissasian' in url:
+				str3 = '\nkissasian.com	FALSE	/	FALSE	0		__test'
+				f = open(self.cookie_file,'a')
+				f.write(str3)
+				f.close()
 			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kisscartoon' in url or 'kissasian' in url):
 				cnt = 0
 				while(not os.path.exists(lnk_file) and cnt < 30):
