@@ -7065,7 +7065,10 @@ class Ui_MainWindow(object):
 		self.float_window_dim = [0,0,250,200]
 		self.float_window.setScaledContents(True)
 		self.float_window.setObjectName(_fromUtf8("float_window"))
-		
+		try:
+			self.float_window.setWindowIcon(icon)
+		except:
+			pass
 		#self.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
 		self.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowStaysOnTopHint)
 		self.float_window_layout.setContentsMargins(0,0,0,0)
@@ -7380,8 +7383,10 @@ class Ui_MainWindow(object):
 		#self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
 		
 	def retranslateUi(self, MainWindow):
-		MainWindow.setWindowTitle(_translate("MainWindow", "Anime Watch", None))
-		self.float_window.setWindowTitle(_translate("MainWindow", "Anime Watch", None))
+		#MainWindow.setWindowTitle(_translate("MainWindow", "Anime Watch", None))
+		#self.float_window.setWindowTitle(_translate("MainWindow", "Anime Watch", None))
+		MainWindow.setWindowTitle("AnimeWatch")
+		self.float_window.setWindowTitle("AnimeWatch")
 		self.line.setToolTip(_translate("MainWindow", "<html><head/><body><p>Enter Search Keyword</p></body></html>", None))
 		
 		self.backward.setText(_translate("MainWindow", "Previous", None))
@@ -18588,7 +18593,7 @@ class RightClickMenu(QtWidgets.QMenu):
 		if f_w:
 			ui.float_window.show()
 		
-		ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
+		#ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
 		
 	def _set_window_frame(self):
 		txt = ui.window_frame
