@@ -166,29 +166,11 @@ def change_config_file(ip,port):
 	f.write(content)
 	f.close()
 
-def progressBar(cmd):
-	MainWindow = QtWidgets.QWidget()
-	progress = QtWidgets.QProgressDialog("Please Wait", "Cancel", 0, 100, MainWindow)
-	progress.setWindowModality(QtCore.Qt.WindowModal)
-	progress.setAutoReset(True)
-	progress.setAutoClose(True)
-	progress.setMinimum(0)
-	progress.setMaximum(100)
-	progress.resize(300,100)
-	progress.setWindowTitle("Loading, Please Wait!")
-	progress.show()
-	progress.setValue(0)
-	#content = cmd
-	#print content
-	#content = ccurl(cmd,"")
-	content = subprocess.check_output(cmd)
-	content = getContentUnicode(content)
-	progress.setValue(100)
-	progress.hide()
-	#print content
-	
-	return content
-
+def set_mainwindow_palette(fanart):
+	if os.path.isfile(fanart):
+		palette	= QtGui.QPalette()
+		palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
+		MainWindow.setPalette(palette)
 
 
 
@@ -570,7 +552,7 @@ class MprisServer(dbus.service.Object):
 
 	@pyqtSlot(str)
 	def _emitMeta(self,info):
-		global site,epnArrList,home
+		global site,epnArrList,home,tray
 		art_url = ui.default_background
 		artist = 'AnimeWatch'
 		title = 'AnimeWatch'
@@ -667,9 +649,27 @@ class MprisServer(dbus.service.Object):
 				art_url = art_u
 		except:
 			pass
+		
+		
+		
+		art_url_name = '256px.'+art_url.split('/')[-1]
+		#thumbnail = '/tmp/AnimeWatch/'+art_url_name+''
+		path_thumb = art_url.rsplit('/',1)[0]
+		abs_path_thumb = os.path.join(path_thumb,art_url_name)
+		if not os.path.exists(abs_path_thumb):
+			basewidth = 256
+			img = Image.open(str(art_url))
+			wpercent = (basewidth / float(img.size[0]))
+			#hsize = int((float(img.size[1]) * float(wpercent)))
+			hsize = 256
+			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+			img.save(str(abs_path_thumb))
+		
+			
+		
 		props = dbus.Dictionary({'Metadata': dbus.Dictionary({
 		    'xesam:artist': artist,
-		'mpris:artUrl': art_url,
+		'mpris:artUrl': abs_path_thumb,
 		    
 		    'xesam:title': title,
 		}, signature='sv')}, signature='sv')
@@ -678,8 +678,10 @@ class MprisServer(dbus.service.Object):
 		self.PropertiesChanged(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
 				       props, [])
 
-	
-
+		q4 = 'tray.right_menu.setStyleSheet("""QMenu{font: bold 10px;background:rgba(0,0,0,60%);border:rgba(0,0,0,60%);width: 256px; height: 256px;color:white; background-image:url("'+abs_path_thumb+'");};QMenu:item:active {background:rgba(0,0,0,20%);color: yellow;};QMenu:item:inactive {background:rgba(0,0,0,40%);color: red;}""")'
+		exec (q4)
+		tray.right_menu.name_title.setText(title)
+		tray.right_menu.name_title1.setText(artist)
 
 	@dbus.service.method(dbus.INTROSPECTABLE_IFACE,
 				 in_signature='', out_signature='s')
@@ -4435,9 +4437,19 @@ class List2(QtWidgets.QListWidget):
 						f = open(file_path,'w')
 						f.close()
 			elif action == view_list:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+				QListWidget:item {height: 30px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = False
 				ui.update_list2()
 			elif action == view_list_thumbnail:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+				QListWidget:item {height: 128px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = True
 				ui.update_list2()
 			elif action == thumb:
@@ -4583,9 +4595,19 @@ class List2(QtWidgets.QListWidget):
 						f = open(file_path,'w')
 						f.close()
 			elif action == view_list:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+				QListWidget:item {height: 30px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = False
 				ui.update_list2()
 			elif action == view_list_thumbnail:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+				QListWidget:item {height: 128px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = True
 				ui.update_list2()
 			elif action == remove:
@@ -4637,42 +4659,8 @@ class List2(QtWidgets.QListWidget):
 				ui.scrollArea1.setFocus()
 			elif action == fix_ord:
 				self.fix_order()
-			"""
-			elif action == default_name:
-					row = self.currentRow()
-					t = epnArrList[row]
-					
-					if site == "Video":
-						video_db = os.path.join(home,'VideoDB','Video.db')
-						conn = sqlite3.connect(video_db)
-						cur = conn.cursor()
-						txt = t.split('	')[1]
-						qr = 'Select FileName From Video Where Path="'+txt+'"'
-						cur.execute(qr)
-						r = cur.fetchall()
-						nm = r[0][0]
-						di = t.split('	',1)
-						epnArrList[row]=nm+'	'+di[1]
-						qr = 'Update Video Set EP_NAME=? Where Path=?'
-						cur.execute(qr,(nm,txt))
-						conn.commit()
-						conn.close()
-					else:
-						if '	' in t:
-							if site != "Local" or site != "Music" or site != "None" or site != "PlayLists":
-								r = t.split('	')[1]
-								epnArrList[row]=r+'	'+t.split('	')[1]
-								ui.mark_History()
-							elif site == "Local":
-								r = (t.split('	')[1]).split('/')[-1]
-								epnArrList[row]=r+'	'+t.split('	')[1]
-								ui.mark_History()
-					ui.update_list2()
-			"""
-			#elif action == epl:
-			#		self.find_info(2)
-			#elif action == epl_m:
-			#		self.find_info(3)
+			
+			
 			#super(List2, self).keyPressEvent(event)
 
 class List3(QtWidgets.QListWidget):
@@ -7488,6 +7476,22 @@ class Ui_MainWindow(object):
 		self.downloadWget_cnt = 0
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
+	def create_new_image_pixel(self,art_url,pixel):
+		art_url_name = str(pixel)+'px.'+art_url.split('/')[-1]
+		#thumbnail = '/tmp/AnimeWatch/'+art_url_name+''
+		path_thumb = art_url.rsplit('/',1)[0]
+		abs_path_thumb = os.path.join(path_thumb,art_url_name)
+		try:
+			if not os.path.exists(abs_path_thumb) and os.path.exists(art_url):
+				basewidth = pixel
+				img = Image.open(str(art_url))
+				wpercent = (basewidth / float(img.size[0]))
+				hsize = int((float(img.size[1]) * float(wpercent)))
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(str(abs_path_thumb))
+		except:
+			abs_path_thumb = self.default_background
+		return abs_path_thumb
 	def list1_double_clicked(self):
 		global show_hide_titlelist,show_hide_playlist,curR
 		self.listfound()
@@ -8421,7 +8425,11 @@ class Ui_MainWindow(object):
 		ui.list1.setStyleSheet("""QListWidget{
 		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
 		}
-	
+		
+		QListWidget:item {
+		height: 20px;
+		
+		}
 	
 		QListWidget:item:selected:active {
 		background:rgba(0,0,0,20%);
@@ -8557,27 +8565,27 @@ class Ui_MainWindow(object):
 	
 		""")
 		
-		ui.list2.setStyleSheet("""QListWidget{
-		font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: violet;
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		""")
+		if self.list_with_thumbnail:
+			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+			QListWidget:item {height: 128px;}
+			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+			QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+		else:
+			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+			QListWidget:item {height: 30px;}
+			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+			QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 		
 		ui.list3.setStyleSheet("""QListWidget{
 		font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
 		}
-	
+		
+		QListWidget:item {
+		height: 20px;
+		
+		}
 	
 		QListWidget:item:selected:active {
 		background:rgba(0,0,0,20%);
@@ -9692,8 +9700,10 @@ class Ui_MainWindow(object):
 				
 				nameEpn = title.split('	')[0]
 				nameEpn = str(nameEpn)
-				path = title.split('	')[1]
-				
+				try:
+					path = title.split('	')[1]
+				except:
+					return ''
 				#picn = home+'/thumbnails/'+nameEpn+'.jpg'
 				playlist_dir = os.path.join(home,'thumbnails','PlayLists')
 				if not os.path.exists(playlist_dir):
@@ -11855,15 +11865,24 @@ class Ui_MainWindow(object):
 					self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
 				else:
 					self.list2.addItem((j))
-			if self.list_with_thumbnail and update_pl_thumb:
-				icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
-				if os.path.exists(icon_name):
-					self.list2.item(k).setIcon(QtGui.QIcon(icon_name))
+			#if self.list_with_thumbnail and update_pl_thumb:
+			#	icon_name = self.get_thumbnail_image_path(k,epnArrList[k])
+			#	icon_new_pixel = self.create_new_image_pixel(icon_name,128)
+			#	if os.path.exists(icon_new_pixel):
+			#		self.list2.item(k).setIcon(QtGui.QIcon(icon_new_pixel))
 			k = k+1
 		self.list2.setCurrentRow(row)
+		QtCore.QTimer.singleShot(100, partial(self.set_icon_list2,epnArrList,self.list_with_thumbnail,update_pl_thumb))
 		#if self.list_with_thumbnail:
 		#	thread_update = updateListThread(epnArrList)
 		#	thread_update.start()
+	def set_icon_list2(self,epnArr,list_thumb,update_pl):
+		for k in range(len(epnArr)):
+			if list_thumb and update_pl:
+				icon_name = self.get_thumbnail_image_path(k,epnArr[k])
+				icon_new_pixel = self.create_new_image_pixel(icon_name,128)
+				if os.path.exists(icon_new_pixel):
+					self.list2.item(k).setIcon(QtGui.QIcon(icon_new_pixel))
 	def mark_History(self):
 		global epnArrList,curR,opt,siteName,site,name,home
 		file_path = ""
@@ -12894,13 +12913,10 @@ class Ui_MainWindow(object):
 				tmp = '"background-image: url('+fanart+')"'
 				
 				tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-				if os.path.isfile(fanart):
+				
+				QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
 				
 				
-					#MainWindow.setStyleSheet("background-image: url("+fanart+");border:rgba(0,0,0,30%);")
-					palette	= QtGui.QPalette()
-					palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
-					MainWindow.setPalette(palette)
 		
 				#self.dockWidget_3.hide()
 			
@@ -13323,12 +13339,8 @@ class Ui_MainWindow(object):
 					tmp = '"background-image: url('+fanart+')"'
 					
 					tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-					if os.path.isfile(fanart):
-				
-						
-						palette	= QtGui.QPalette()
-						palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
-						MainWindow.setPalette(palette)
+					QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
+					
 			
 					#self.dockWidget_3.hide()
 			
@@ -13618,12 +13630,7 @@ class Ui_MainWindow(object):
 					tmp = '"background-image: url('+fanart+')"'
 					
 					tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-					if os.path.isfile(fanart):
-		
-						#MainWindow.setStyleSheet("background-image: url("+fanart+");border:rgba(0,0,0,30%);")
-						palette	= QtGui.QPalette()
-						palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
-						MainWindow.setPalette(palette)
+					QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
 	
 	
 	
@@ -13804,12 +13811,7 @@ class Ui_MainWindow(object):
 					tmp = '"background-image: url('+fanart+')"'
 					
 					tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-					if os.path.isfile(fanart):
-				
-						#MainWindow.setStyleSheet("background-image: url("+fanart+");border:rgba(0,0,0,30%);")
-						palette	= QtGui.QPalette()
-						palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
-						MainWindow.setPalette(palette)
+					QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
 			
 			
 			
@@ -14262,13 +14264,8 @@ class Ui_MainWindow(object):
 			tmp = '"background-image: url('+fanart+')"'
 			
 			tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-			if os.path.isfile(fanart):
-
-				#MainWindow.setStyleSheet("background-image: url("+fanart+");border:rgba(0,0,0,30%);")
-				palette	= QtGui.QPalette()
-				palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
-				MainWindow.setPalette(palette)
-				self.current_background = fanart
+			QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
+			
 			#self.dockWidget_3.hide()
 
 			img = QtGui.QPixmap(picn, "1")
@@ -18542,36 +18539,87 @@ class Ui_MainWindow(object):
 class RightClickMenu(QtWidgets.QMenu):
 	def __init__(self,pos_x,pos_y,w_wdt,w_ht,parent=None):
 		QtWidgets.QMenu.__init__(self, "File", parent)
-
+		global epnArrList
 		self.pos_x = pos_x
 		self.pos_y = pos_y
 		self.w_wdt = w_wdt
 		self.w_ht = w_ht
+		#self.info_action.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);icon-size:32px;height:512px;QMenu::item { height: 42px; margin: 0px; }")
 		
-		musicMode = QtWidgets.QAction("&Music Mode", self)
-		musicMode.triggered.connect(self.music)
-		self.addAction(musicMode)
 		
-		videoMode = QtWidgets.QAction("&Default Mode", self)
-		videoMode.triggered.connect(self.video)
-		self.addAction(videoMode)
+		
+		self.musicMode = QtWidgets.QAction("&Music Mode", self)
+		self.musicMode.triggered.connect(self.music)
+		self.addAction(self.musicMode)
+		self.musicMode.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		
+		self.videoMode = QtWidgets.QAction("&Default Mode", self)
+		self.videoMode.triggered.connect(self.video)
+		self.addAction(self.videoMode)
+		self.videoMode.setFont(QtGui.QFont('SansSerif', 10,italic=True))
 		
 		self.hideMode = QtWidgets.QAction("&Hide", self)
 		self.hideMode.triggered.connect(self._hide_mode)
 		self.addAction(self.hideMode)
+		self.hideMode.setFont(QtGui.QFont('SansSerif', 10,italic=True))
 		
 		self.detach_vid = QtWidgets.QAction("&Detach Video", self)
 		self.detach_vid.triggered.connect(self._detach_video)
 		self.addAction(self.detach_vid)
+		self.detach_vid.setFont(QtGui.QFont('SansSerif', 10,italic=True))
 		
 		self.remove_fr = QtWidgets.QAction("&Remove Window Frame", self)
 		self.remove_fr.triggered.connect(self._remove_frame)
 		self.addAction(self.remove_fr)
+		self.remove_fr.setFont(QtGui.QFont('SansSerif', 10,italic=True))
 		
 		icon = QtGui.QIcon.fromTheme("Quit")
-		exitAction = QtWidgets.QAction(icon, "&Exit", self)
-		exitAction.triggered.connect(QtWidgets.qApp.quit)
-		self.addAction(exitAction)
+		self.exitAction = QtWidgets.QAction(icon, "&Exit", self)
+		self.exitAction.triggered.connect(QtWidgets.qApp.quit)
+		self.addAction(self.exitAction)
+		self.exitAction.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		
+		try:
+			nm = '&'+ui.list2.currentItem().text().replace(ui.check_symbol,'')
+		except:
+			nm = ''
+			
+		icon = QtGui.QIcon.fromTheme("Quit")
+		self.name_title = QtWidgets.QAction(icon,nm, self)
+		self.name_title.triggered.connect(self.info_action_icon)
+		self.addAction(self.name_title)
+		self.name_title.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		
+		self.name_title1 = QtWidgets.QAction(icon,nm, self)
+		self.name_title1.triggered.connect(self.info_action_icon)
+		self.addAction(self.name_title1)
+		self.name_title1.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		
+		try:
+			epn_r = epnArrList[ui.list2.currentRow()].replace('#','')
+		except:
+			epn_r = 'Nothing is Playing'
+			
+		
+			
+		icon = ui.get_thumbnail_image_path(ui.list2.currentRow(),epn_r)
+		
+		if os.path.exists(icon):
+			icon_ = QtGui.QIcon(icon)
+			#icon_.setIconSize(QtCore.QSize(128,128))
+			
+			
+			self.info_action = QtWidgets.QAction(icon_,'', self)
+			self.info_action.triggered.connect(self.info_action_icon)
+			#self.addAction(self.info_action)
+			#self.info_action.setIconText(nm)
+			#self.info_action.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		
+		#q4 = 'self.setStyleSheet("""QMenu{font: bold 32px;height: 350px; width: 350px; color:white; background-image:url("'+icon+'");}""")'
+		#exec (q4)
+		
+	def info_action_icon(self):
+		print('hello')
 		
 	def _remove_frame(self):
 		txt = self.remove_fr.text()
@@ -18760,7 +18808,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 				self.right_menu.hideMode.setText('&Show')
 if __name__ == "__main__":
 	import sys
-	global hdr,name,pgn,genre_num,site,name,epn,base_url,name1,embed,epn_goto,list1_items,opt,mirrorNo,mpv,queueNo,playMpv,mpvAlive,pre_opt,insidePreopt,posterManually,labelGeometry
+	global hdr,name,pgn,genre_num,site,name,epn,base_url,name1,embed,epn_goto,list1_items,opt,mirrorNo,mpv,queueNo,playMpv,mpvAlive,pre_opt,insidePreopt,posterManually,labelGeometry,tray
 	global downloadVideo,list2_items,quality,indexQueue,Player,startPlayer,rfr_url,category,fullscr,mpvplayer,curR,idw,idwMain,home,home1,player_focus,fullscrT,artist_name_mplayer
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
@@ -18944,11 +18992,9 @@ if __name__ == "__main__":
 		picn_1 = '/usr/share/AnimeWatch/default.jpg'
 		if os.path.exists(picn_1):
 			shutil.copy(picn_1,picn)
-		
-	palette	= QtGui.QPalette()
-	palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(picn)))
+			
+	QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,picn))
 	
-	MainWindow.setPalette(palette)
 	ui.buttonStyle()
 	
 	if not os.path.exists(os.path.join(home,'src','Plugins')):
@@ -19014,7 +19060,17 @@ if __name__ == "__main__":
 					tmp_mode = re.sub('\n','',j)
 					if tmp_mode.lower() == 'true':
 						ui.list_with_thumbnail = True
+						ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+				QListWidget:item {height: 128px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 					else:
+						ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+				QListWidget:item {height: 30px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 						ui.list_with_thumbnail = False
 				elif "Site_Index" in i:
 					site_i = re.sub('\n','',j)
@@ -19344,13 +19400,13 @@ if __name__ == "__main__":
 	#app.installEventFilter(myFilter)
 	#gc.disable()
 	#tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
-	try:
-		tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
-		tray.show()
-		if ui.window_frame == 'false':
-			tray.right_menu._set_window_frame()
-	except:
-		pass
+	#try:
+	tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
+	tray.show()
+	if ui.window_frame == 'false':
+		tray.right_menu._set_window_frame()
+	#except:
+	#	pass
 	
 	if layout_mode == "Music":
 		try:
