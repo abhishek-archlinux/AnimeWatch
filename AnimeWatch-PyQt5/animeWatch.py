@@ -3012,8 +3012,11 @@ class List1(QtWidgets.QListWidget):
 				if opt != "History":
 					ui.listfound()
 				if site == "Music" or site == "Video":
-					music_opt = str(ui.list3.currentItem().text())
-					tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
+					if ui.list3.currentItem():
+						music_opt = str(ui.list3.currentItem().text())
+						tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
+					else:
+						return 0
 				else:
 					tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
 				file_path = os.path.join(home,'Bookmark','bookmark.txt')
@@ -3043,11 +3046,17 @@ class List1(QtWidgets.QListWidget):
 		if bookmark == "False":
 			self.addBookmarkList()
 		if site == "Music" or site == "Video":
+			if ui.list3.currentItem():
+				music_opt = str(ui.list3.currentItem().text())
+				tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
+			else:
+				return 0
 			
-			music_opt = str(ui.list3.currentItem().text())
-			tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
 		else:
-			tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
+			if ui.list1.currentItem():
+				tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
+			else:
+				return 0
 		file_path = os.path.join(home,'Bookmark',val+'.txt')
 		if os.path.exists(file_path):
 			f = open(file_path,'r')
@@ -3106,10 +3115,11 @@ class List1(QtWidgets.QListWidget):
 				f.close()
 			
 	def contextMenuEvent(self, event):
-		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt,base_url,bookmark,status,posterManually,siteName,finalUrlFound,refererNeeded,original_path_name,video_local_stream
-		if self.currentItem():
-			name = str(ui.list1.currentItem().text())
-		
+			global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt,base_url,bookmark,status,posterManually,siteName,finalUrlFound,refererNeeded,original_path_name,video_local_stream
+			if self.currentItem():
+				name = str(ui.list1.currentItem().text())
+			else:
+				name = ''
 			#print name
 			if site == "Music":
 				menu = QtWidgets.QMenu(self)
@@ -3187,11 +3197,12 @@ class List1(QtWidgets.QListWidget):
 					ui.reviewsMusic("Last.Fm")
 				elif action == thumbnail:
 					if site == "Local" or bookmark == "True" or opt == "History" or site == "Video" or site == "Music":
-						if (ui.list3.currentItem().text())=="Artist":
-							ui.scrollArea.setFocus()
-							ui.lock_process = True
-							ui.IconView()
-							ui.lock_process = False
+						if ui.list3.currentItem():
+							if (ui.list3.currentItem().text())=="Artist":
+								ui.scrollArea.setFocus()
+								ui.lock_process = True
+								ui.IconView()
+								ui.lock_process = False
 				elif action == delInfo or action == delPosters or action == default:
 					if (ui.list3.currentItem()):
 						if str(ui.list3.currentItem().text()) == "Artist":
@@ -3361,16 +3372,16 @@ class List1(QtWidgets.QListWidget):
 					ui.btnWebReviews.setCurrentIndex(8)
 					ui.reviewsWeb()
 				elif action == tvdb:
-					ui.posterfound("")
-					r = self.currentRow()
-					
-					ui.copyImg()
-					ui.copySummary()
-					#ui.copyFanart()
+					if self.currentItem():
+						ui.posterfound("")
+						r = self.currentRow()
+						
+						ui.copyImg()
+						ui.copySummary()
+						#ui.copyFanart()
 				elif action == history:
 					ui.setPreOpt()
 				elif action == tvdbM:
-					
 					ui.reviewsMusic("TVDB:"+name)
 class List2(QtWidgets.QListWidget):
 	def __init__(self, parent):
@@ -3421,48 +3432,48 @@ class List2(QtWidgets.QListWidget):
 								if os.path.exists(os.path.join(home,'History',site,name,'Ep.txt')):
 									file_path = os.path.join(home,'History',site,name,'Ep.txt')
 				
-					
-							f = open(file_path,'r')
-							l = f.readlines()
-							f.close()
-							lines = []
-							for i in l:
-								i = i.replace('\n','')
-								lines.append(i)
-								
-							if n > itemR:
-								t = lines[itemR]
-								i = itemR
-								while(i < n):
-									lines[i] = lines[i+1]
-									i = i+1
-								lines[n] = t
-							else:
-								i = itemR
-								t = lines[itemR]
-								while(i > n):
-									lines[i] = lines[i-1]
-									i = i -1
-								lines[n]=t
-							j = 0
-							length = len(lines)
-							epnArrList[:]=[]
-							f = open(file_path,'w')
-							for i in lines:
-								epnArrList.append(i)
-								if j == length - 1:
-									f.write(i)
+							if os.path.exists(file_path):
+								f = open(file_path,'r')
+								l = f.readlines()
+								f.close()
+								lines = []
+								for i in l:
+									i = i.replace('\n','')
+									lines.append(i)
+									
+								if n > itemR:
+									t = lines[itemR]
+									i = itemR
+									while(i < n):
+										lines[i] = lines[i+1]
+										i = i+1
+									lines[n] = t
 								else:
-									f.write(i+'\n')
-								j = j+1
-							f.close()
-							self.clear()
-							if site != "PlayLists":
-								ui.update_list2()
-							else:
+									i = itemR
+									t = lines[itemR]
+									while(i > n):
+										lines[i] = lines[i-1]
+										i = i -1
+									lines[n]=t
+								j = 0
+								length = len(lines)
+								epnArrList[:]=[]
+								f = open(file_path,'w')
 								for i in lines:
-									self.addItem(i)
-							self.setCurrentRow(n)
+									epnArrList.append(i)
+									if j == length - 1:
+										f.write(i)
+									else:
+										f.write(i+'\n')
+									j = j+1
+								f.close()
+								self.clear()
+								if site != "PlayLists":
+									ui.update_list2()
+								else:
+									for i in lines:
+										self.addItem(i)
+								self.setCurrentRow(n)
 		
 		else:
 			QListWidget.dropEvent(event)
@@ -3557,7 +3568,8 @@ class List2(QtWidgets.QListWidget):
 					txt = ui.list6.item(0).text()
 					if txt.startswith('Queue Empty:'):
 						ui.list6.clear()
-				ui.list6.addItem(self.currentItem().text()+':'+str(self.currentRow()))
+				if self.currentItem():
+					ui.list6.addItem(self.currentItem().text()+':'+str(self.currentRow()))
 			else:
 				if not ui.queue_url_list:
 					ui.list6.clear()
@@ -3601,36 +3613,43 @@ class List2(QtWidgets.QListWidget):
 						ui.update_list2()
 					else:
 						pass
-			elif site == "PlayLists" or (site == "Music" and ui.list3.currentItem().text()=="Playlist"):
-				pls = ''
-				if site == "Music":
-					r = ui.list1.currentRow()
-					if ui.list1.item(r):
-						pls = str(ui.list1.item(r).text())
-				else:
-					if ui.list1.currentItem():
-						pls = ui.list1.currentItem().text()
-				if pls:
-					file_path = os.path.join(home,'Playlists',pls)
-					row = self.currentRow()
-					item = self.item(row)
-					#epnArrList[:]=[]
-					if item and os.path.exists(file_path):
-						
-						self.takeItem(row)
-						
-						del item
-						del epnArrList[row]
-						f = open(file_path,'w')
-						j = 0
-						for i in range(self.count()):
-							fname = epnArrList[i]
-							if j == 0:
-								f.write(fname)
-							else:
-								f.write('\n'+fname)
-							j = j+1
-						f.close()
+			elif site == "PlayLists" or (site == "Music" and ui.list3.currentItem()):
+				go_next = True
+				if site == 'Music' and ui.list3.currentItem():
+					if ui.list3.currentItem().text()=="Playlist":
+						go_next = True
+					else:
+						go_next = False
+				if go_next:
+					pls = ''
+					if site == "Music":
+						r = ui.list1.currentRow()
+						if ui.list1.item(r):
+							pls = str(ui.list1.item(r).text())
+					else:
+						if ui.list1.currentItem():
+							pls = ui.list1.currentItem().text()
+					if pls:
+						file_path = os.path.join(home,'Playlists',pls)
+						row = self.currentRow()
+						item = self.item(row)
+						#epnArrList[:]=[]
+						if item and os.path.exists(file_path):
+							
+							self.takeItem(row)
+							
+							del item
+							del epnArrList[row]
+							f = open(file_path,'w')
+							j = 0
+							for i in range(self.count()):
+								fname = epnArrList[i]
+								if j == 0:
+									f.write(fname)
+								else:
+									f.write('\n'+fname)
+								j = j+1
+							f.close()
 		#elif event.key() == QtCore.Qt.Key_Q: 
 		#	startPlayer = "No"
 		#	ui.epnfound()
@@ -3653,11 +3672,15 @@ class List2(QtWidgets.QListWidget):
 					if os.path.exists(os.path.join(home,'History',site,siteName,name,'Ep.txt')):
 						file_path = os.path.join(home,'History',site,siteName,name,'Ep.txt')
 				elif site == "PlayLists" or site=="Music":
+						pls = ''
 						if site == "PlayLists":
-							pls = ui.list1.currentItem().text()
+							if ui.list1.currentItem():
+								pls = ui.list1.currentItem().text()
 						else:
-							pls = ui.list1.currentItem().text()
-						file_path = os.path.join(home,'Playlists',pls)
+							if ui.list1.currentItem():
+								pls = ui.list1.currentItem().text()
+						if pls:
+							file_path = os.path.join(home,'Playlists',pls)
 				else:
 					if os.path.exists(os.path.join(home,'History',site,name,'Ep.txt')):
 						file_path = os.path.join(home,'History',site,name,'Ep.txt')
@@ -4340,55 +4363,68 @@ class List2(QtWidgets.QListWidget):
 					
 					conn.commit()
 					conn.close()
-			elif site == "Music" and ui.list1.currentItem().text() == "Playlist":
-					pls = ui.list1.currentItem().text()
-					file_path = os.path.join(home,'Playlists',pls)
-					abs_path='/tmp/AnimeWatch/tmp.txt'
-					print(file_path,'--file-path--')
-					writing_failed = False
-					if os.path.exists(file_path):
-						f = open(abs_path,'w')
-						for i in range(len(epnArrList)):
-							j = epnArrList[i].replace('\n','')
-							if i == len(epnArrList)-1:
-								j = j
-							else:
-								j = (j+'\n')
-							print (j,'---order---')
-							f.write(j)
-							
-							
-						f.close()
-						if not writing_failed:
-							move(abs_path, file_path)
+			elif site == "Music" and ui.list3.currentItem():
+					go_next = True
+					if ui.list3.currentItem().text() == "Playlist":
+						go_next = True
+					else:
+						go_next = False
+					if go_next:
+						pls = ''
+						file_path = ''
+						if ui.list1.currentItem():
+							pls = ui.list1.currentItem().text()
+						if pls:
+							file_path = os.path.join(home,'Playlists',pls)
+						if os.path.exists(file_path):
+							abs_path='/tmp/AnimeWatch/tmp.txt'
+							print(file_path,'--file-path--')
+							writing_failed = False
+							if os.path.exists(file_path):
+								f = open(abs_path,'w')
+								for i in range(len(epnArrList)):
+									j = epnArrList[i].replace('\n','')
+									if i == len(epnArrList)-1:
+										j = j
+									else:
+										j = (j+'\n')
+									print (j,'---order---')
+									f.write(j)
+									
+									
+								f.close()
+								if not writing_failed:
+									move(abs_path, file_path)
 			elif (opt == "History" or site =="PlayLists") and row > 0 and site!="Video":
 					file_path = ""
 					
 					if site == "PlayLists":
-							pls = ui.list1.currentItem().text()
-							file_path = os.path.join(home,'Playlists',pls)
+							if ui.list1.currentItem():
+								pls = ui.list1.currentItem().text()
+								file_path = os.path.join(home,'Playlists',pls)
 					elif site == "Local":
 						if os.path.exists(os.path.join(home,'History',site,name,'Ep.txt')):
 							file_path = os.path.join(home,'History',site,name,'Ep.txt')
 					#ui.replace_lineByIndex(file_path,'','',row)
-					abs_path='/tmp/AnimeWatch/tmp.txt'
-					print(file_path,'--file-path--')
-					writing_failed = False
 					if os.path.exists(file_path):
-						f = open(abs_path,'w')
-						for i in range(len(epnArrList)):
-							j = epnArrList[i].replace('\n','')
-							if i == len(epnArrList)-1:
-								j = j
-							else:
-								j = (j+'\n')
-							print (j,'---order---')
-							f.write(j)
-							
-							
-						f.close()
-						if not writing_failed:
-							move(abs_path, file_path)
+						abs_path='/tmp/AnimeWatch/tmp.txt'
+						print(file_path,'--file-path--')
+						writing_failed = False
+						if os.path.exists(file_path):
+							f = open(abs_path,'w')
+							for i in range(len(epnArrList)):
+								j = epnArrList[i].replace('\n','')
+								if i == len(epnArrList)-1:
+									j = j
+								else:
+									j = (j+'\n')
+								print (j,'---order---')
+								f.write(j)
+								
+								
+							f.close()
+							if not writing_failed:
+								move(abs_path, file_path)
 			
 						
 	def contextMenuEvent(self, event):
@@ -4542,9 +4578,12 @@ class List2(QtWidgets.QListWidget):
 			#thumb = menu.addAction("Show Thumbnails")
 			goto_web_mode = False
 			offline_mode = False
-			epn_arr = epnArrList[r].split('	')
-			if len(epn_arr) > 2:
-				url_web = epnArrList[r].split('	')[1]
+			if epnArrList and self.currentItem():
+				epn_arr = epnArrList[r].split('	')
+				if len(epn_arr) > 2:
+					url_web = epnArrList[r].split('	')[1]
+				else:
+					url_web = 'none'
 			else:
 				url_web = 'none'
 				
@@ -4572,9 +4611,10 @@ class List2(QtWidgets.QListWidget):
 			
 			action = menu.exec_(self.mapToGlobal(event.pos()))
 			
-			for i in range(len(item_m)):
-				if action == item_m[i]:
-					self.triggerPlaylist(pls[i])
+			if self.currentItem():
+				for i in range(len(item_m)):
+					if action == item_m[i]:
+						self.triggerPlaylist(pls[i])
 			
 			if offline_mode:
 				if action == start_offline:
@@ -4621,10 +4661,11 @@ class List2(QtWidgets.QListWidget):
 					newEpn = newEpn.replace('#','')
 					if newEpn.startswith(ui.check_symbol):
 						newEpn = newEpn[1:]
-					nm = (ui.list1.currentItem().text())
-					dest = os.path.join(home,"thumbnails",nm,newEpn+'.jpg')
-					if os.path.exists(dest):
-						os.remove(dest)
+					if ui.list1.currentItem():
+						nm = (ui.list1.currentItem().text())
+						dest = os.path.join(home,"thumbnails",nm,newEpn+'.jpg')
+						if os.path.exists(dest):
+							os.remove(dest)
 					r = r+1
 			elif action == editN and not ui.list1.isHidden():
 				row = self.currentRow()
@@ -4650,15 +4691,19 @@ class List2(QtWidgets.QListWidget):
 							self.setCurrentRow(row)
 			
 			elif action == eplistM:
+				if ui.list1.currentItem():
 					name1 = (ui.list1.currentItem().text())
 					ui.reviewsMusic("TVDB:"+name1)
 			elif action == eplist:
+				if self.currentItem():
 					self.find_info(0)
 			elif action == thumb:
-				ui.IconViewEpn()
-				ui.scrollArea1.setFocus()
+				if self.currentItem():
+					ui.IconViewEpn()
+					ui.scrollArea1.setFocus()
 			elif action == fix_ord:
-				self.fix_order()
+				if self.currentItem():
+					self.fix_order()
 			
 			
 			#super(List2, self).keyPressEvent(event)
@@ -7489,8 +7534,29 @@ class Ui_MainWindow(object):
 				hsize = int((float(img.size[1]) * float(wpercent)))
 				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
 				img.save(str(abs_path_thumb))
+			elif not os.path.exists(art_url):
+				art_url_name = str(pixel)+'px.'+self.default_background.split('/')[-1]
+				path_thumb = self.default_background.rsplit('/',1)[0]
+				abs_path_thumb = os.path.join(path_thumb,art_url_name)
+				if not os.path.exists(abs_path_thumb) and os.path.exists(self.default_background):
+					basewidth = pixel
+					img = Image.open(str(self.default_background))
+					wpercent = (basewidth / float(img.size[0]))
+					hsize = int((float(img.size[1]) * float(wpercent)))
+					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+					img.save(str(abs_path_thumb))
 		except:
-			abs_path_thumb = self.default_background
+			art_url_name = str(pixel)+'px.'+self.default_background.split('/')[-1]
+			path_thumb = self.default_background.rsplit('/',1)[0]
+			abs_path_thumb = os.path.join(path_thumb,art_url_name)
+			if not os.path.exists(abs_path_thumb) and os.path.exists(self.default_background):
+				basewidth = pixel
+				img = Image.open(str(self.default_background))
+				wpercent = (basewidth / float(img.size[0]))
+				hsize = int((float(img.size[1]) * float(wpercent)))
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(str(abs_path_thumb))
+			
 		return abs_path_thumb
 	def list1_double_clicked(self):
 		global show_hide_titlelist,show_hide_playlist,curR
@@ -8427,7 +8493,7 @@ class Ui_MainWindow(object):
 		}
 		
 		QListWidget:item {
-		height: 20px;
+		height: 30px;
 		
 		}
 	
@@ -11882,7 +11948,11 @@ class Ui_MainWindow(object):
 				icon_name = self.get_thumbnail_image_path(k,epnArr[k])
 				icon_new_pixel = self.create_new_image_pixel(icon_name,128)
 				if os.path.exists(icon_new_pixel):
-					self.list2.item(k).setIcon(QtGui.QIcon(icon_new_pixel))
+					try:
+						self.list2.item(k).setIcon(QtGui.QIcon(icon_new_pixel))
+					except:
+						pass
+				
 	def mark_History(self):
 		global epnArrList,curR,opt,siteName,site,name,home
 		file_path = ""
@@ -11919,8 +11989,11 @@ class Ui_MainWindow(object):
 		
 	def deleteHistory(self):
 		global opt,site,name,pre_opt,home,bookmark,base_url,embed,status,siteName,original_path_name,video_local_stream
-		epn = self.list1.currentItem().text()
-		row = self.list1.currentRow()
+		if self.list1.currentItem():
+			epn = self.list1.currentItem().text()
+			row = self.list1.currentRow()
+		else:
+			return 0
 		nepn = str(epn) + "\n"
 		replc = ""
 	
