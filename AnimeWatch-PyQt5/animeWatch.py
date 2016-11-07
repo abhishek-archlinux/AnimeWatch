@@ -678,11 +678,28 @@ class MprisServer(dbus.service.Object):
 		self.PropertiesChanged(MPRIS_MEDIAPLAYER_PLAYER_INTERFACE,
 				       props, [])
 
-		q4 = 'tray.right_menu.setStyleSheet("""QMenu{font: bold 10px;background:rgba(0,0,0,60%);border:rgba(0,0,0,60%);width: 256px; height: 256px;color:white; background-image:url("'+abs_path_thumb+'");};QMenu:item:active {background:rgba(0,0,0,20%);color: yellow;};QMenu:item:inactive {background:rgba(0,0,0,40%);color: red;}""")'
-		exec (q4)
-		tray.right_menu.name_title.setText(title)
-		tray.right_menu.name_title1.setText(artist)
-
+		#q4 = 'tray.right_menu.setStyleSheet("""QMenu{font: bold 280px;background:rgba(0,0,0,60%);border:rgba(0,0,0,60%);width: 350px; height: 300px;color:white; background-image:url("'+abs_path_thumb+'");}""")'
+		#exec (q4)
+		if title == artist:
+			if len(title) > 38:
+				title = title[:36]+'..'
+				artist = '..'+artist[36:]
+			else:
+				artist = ''
+		else:
+			if len(title) > 38:
+				title = title[:36]+'..'
+			if len(artist) > 38:
+				artist = artist[:36]+'..'
+		tray.right_menu.title.setText(title)
+		tray.right_menu.title1.setText(artist)
+		if os.path.isfile(abs_path_thumb):
+			img = QtGui.QPixmap(abs_path_thumb, "1")
+			tray.right_menu.l.setPixmap(img)
+		#if os.path.isfile(abs_path_thumb):
+		#	palette	= QtGui.QPalette()
+		#	palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(abs_path_thumb)))
+		#	tray.right_menu.setPalette(palette)
 	@dbus.service.method(dbus.INTROSPECTABLE_IFACE,
 				 in_signature='', out_signature='s')
 	def Introspect(self):
@@ -6636,7 +6653,7 @@ class Ui_MainWindow(object):
 		self.progress.setTextVisible(True)
 		self.progress.hide()
 		self.progress.setToolTip("Click for more options")
-		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4'}
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127'}
 		self.check_symbol = '\u2714'
 		self.torrent_frame = QtWidgets.QFrame(MainWindow)
 		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
@@ -7231,6 +7248,9 @@ class Ui_MainWindow(object):
 		self.external_url = False
 		self.subtitle_new_added = False
 		self.window_frame = 'true'
+		self.float_window_open = False
+		self.music_mode_dim = [0,0,900,350]
+		self.music_mode_dim_show = False
 		self.update_proc = QtCore.QProcess()
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7326,7 +7346,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.player_prev, QtCore.SIGNAL(_fromUtf8("clicked()")),self.mpvPrevEpnList)
 		self.player_prev.clicked.connect(self.mpvPrevEpnList)
 		self.player_play_pause.clicked.connect(self.playerPlayPause)
-		self.player_loop_file.clicked.connect(self.playerLoopFile)
+		self.player_loop_file.clicked.connect(lambda x=0: self.playerLoopFile(self.player_loop_file))
 		#QtCore.QObject.connect(self.player_next, QtCore.SIGNAL(_fromUtf8("clicked()")),self.mpvNextEpnList)
 		self.player_next.clicked.connect(self.mpvNextEpnList)
 		#QtCore.QObject.connect(self.mirror_change, QtCore.SIGNAL(_fromUtf8("clicked()")),self.mirrorChange)
@@ -7891,12 +7911,14 @@ class Ui_MainWindow(object):
 		else:
 			self.sortList()
 			
-	def playerLoopFile(self):
-		global Player,quitReally
-		txt = self.player_loop_file.text()
+	def playerLoopFile(self,loop_widget):
+		global Player,quitReally,tray
+		txt = loop_widget.text()
+		#txt = self.player_loop_file.text()
 		if txt == self.player_buttons['unlock']:
 			self.player_setLoop_var = 1
 			self.player_loop_file.setText(self.player_buttons['lock'])
+			tray.right_menu.lock.setText(self.player_buttons['lock'])
 			quitReally = 'no'
 			#if Player == "mpv":
 			#	mpvplayer.write(b'\n set loop inf \n')
@@ -7904,12 +7926,13 @@ class Ui_MainWindow(object):
 		else:
 			self.player_setLoop_var = 0
 			self.player_loop_file.setText(self.player_buttons['unlock'])
+			tray.right_menu.lock.setText(self.player_buttons['unlock'])
 			#quitReally = 'yes'
 			#if Player == "mpv":
 			#	mpvplayer.write(b'\n set loop 1 \n')
 			
 	def playerPlayPause(self):
-		global mpvplayer
+		global mpvplayer,curR
 		txt = self.player_play_pause.text() 
 		if txt == self.player_buttons['play']:
 			if mpvplayer.pid() > 0:
@@ -7919,8 +7942,10 @@ class Ui_MainWindow(object):
 					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
 				self.player_play_pause.setText(self.player_buttons['pause'])
 			else:
-				self.epnfound()
-			
+				
+				if self.list2.currentItem():
+					curR = self.list2.currentRow()
+					self.epnfound()
 		elif txt == self.player_buttons['pause']:
 			if mpvplayer.pid() > 0:
 				if Player == "mpv":
@@ -7929,8 +7954,10 @@ class Ui_MainWindow(object):
 					mpvplayer.write(b'\n pausing_toggle osd_show_progression \n')
 				self.player_play_pause.setText(self.player_buttons['play'])
 			else:
-				self.epnfound()
 				
+				if self.list2.currentItem():
+					curR = self.list2.currentRow()
+					self.epnfound()
 		
 					
 	def playerPlaylist(self,val):
@@ -18620,52 +18647,191 @@ class RightClickMenu(QtWidgets.QMenu):
 		#self.info_action.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);icon-size:32px;height:512px;QMenu::item { height: 42px; margin: 0px; }")
 		
 		
+		self.wid = QtWidgets.QWidget(self)
+		self.wid.setMinimumSize(250,200)
+		self.lay = QtWidgets.QVBoxLayout(self.wid)
+		#self.lay.insertWidget(0,self.wid,0)
+		
+		self.l = QtWidgets.QLabel(self.wid)
+		self.l.setMaximumSize(QtCore.QSize(280, 250))
+		self.l.setMinimumSize(QtCore.QSize(280, 250))
+		#self.label.setMinimumSize(QtCore.QSize(300, 250))
+		self.l.setText(_fromUtf8(""))
+		self.l.setScaledContents(True)
+		self.l.setObjectName(_fromUtf8("l_label"))
+		
+		
+		self.title = QtWidgets.QLineEdit(self.wid)
+		self.title1 = QtWidgets.QLineEdit(self.wid)
+		self.title.setAlignment(QtCore.Qt.AlignCenter)
+		self.title1.setAlignment(QtCore.Qt.AlignCenter)
+		
+		self.f = QtWidgets.QFrame(self.wid)
+		self.horiz = QtWidgets.QHBoxLayout(self.f)
+		
+		self.p = QtWidgets.QPushButton(self.wid)
+		self.p.setText(ui.player_buttons['play'])
+		self.p.clicked.connect(self.info_action_icon)
+		
+		
+		
+		self.pr = QtWidgets.QPushButton(self.wid)
+		self.pr.setText(ui.player_buttons['prev'])
+		self.pr.clicked.connect(ui.mpvPrevEpnList)
+		
+		
+		self.ne = QtWidgets.QPushButton(self.wid)
+		self.ne.setText(ui.player_buttons['next'])
+		self.ne.clicked.connect(ui.mpvNextEpnList)
+		
+		self.st = QtWidgets.QPushButton(self.wid)
+		self.st.setText(ui.player_buttons['stop'])
+		self.st.clicked.connect(ui.playerStop)
+		
+		self.qt = QtWidgets.QPushButton(self.wid)
+		self.qt.setText(ui.player_buttons['quit'])
+		self.qt.clicked.connect(QtWidgets.qApp.quit)
+		self.qt.setToolTip('Quit Player')
+		
+		self.lock = QtWidgets.QPushButton(self.wid)
+		self.lock.setText(ui.player_buttons['unlock'])
+		self.lock.clicked.connect(lambda x=0: ui.playerLoopFile(self.lock))
+		
+		
+		self.fr = QtWidgets.QFrame(self.wid)
+		self.horiz_fr = QtWidgets.QHBoxLayout(self.fr)
+		self.m_mode = QtWidgets.QPushButton(self.wid)
+		self.m_mode.setText('Music Mode')
+		self.m_mode.clicked.connect(self.music)
+		self.v_mode = QtWidgets.QPushButton(self.wid)
+		self.v_mode.setText('Video Mode')
+		self.v_mode.clicked.connect(self.video)
+		self.h_mode = QtWidgets.QPushButton(self.wid)
+		self.h_mode.setText('Hide')
+		self.h_mode.clicked.connect(self._hide_mode)
+		self.h_mode.setMaximumWidth(32)
+		self.d_vid = QtWidgets.QPushButton(self.wid)
+		self.d_vid.setText('Detach Video')
+		self.d_vid.clicked.connect(self._detach_video)
+		
+		self.fr_ = QtWidgets.QFrame(self.wid)
+		self.horiz_fr_ = QtWidgets.QHBoxLayout(self.fr_)
+		self.frameless_mode = QtWidgets.QPushButton(self.wid)
+		if ui.window_frame == 'true':
+			self.frameless_mode.setText('Remove Window Frame')
+		else:
+			self.frameless_mode.setText('Allow Window Frame')
+		self.frameless_mode.clicked.connect(self._remove_frame)
+		#QtCore.Qt.FramelessWindowHint 
+		
+		self.horiz.insertWidget(1,self.pr,0)
+		self.horiz.insertWidget(2,self.ne,0)
+		self.horiz.insertWidget(3,self.p,0)
+		self.horiz.insertWidget(4,self.st,0)
+		self.horiz.insertWidget(5,self.lock,0)
+		self.horiz.insertWidget(6,self.qt,0)
+		
+		self.horiz_fr.insertWidget(0,self.h_mode,0)
+		self.horiz_fr.insertWidget(1,self.m_mode,0)
+		self.horiz_fr.insertWidget(2,self.v_mode,0)
+		self.horiz_fr.insertWidget(3,self.d_vid,0)
+		
+		self.horiz_fr_.insertWidget(0,self.frameless_mode,0)
+		
+		
+		self.lay.insertWidget(0,self.fr,0)
+		self.lay.insertWidget(1,self.f,0)
+		self.lay.insertWidget(2,self.l,0)
+		self.lay.insertWidget(3,self.title,0)
+		self.lay.insertWidget(4,self.title1,0)
+		self.lay.insertWidget(5,self.fr_,0)
+		
+		
+		
+		self.f.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
+		self.fr.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
+		self.fr_.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
+		self.title.setStyleSheet("font:bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
+		self.title1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
+		
+		self.horiz.setSpacing(0)
+		self.horiz.setContentsMargins(0,0,0,0)
+		self.horiz_fr.setSpacing(0)
+		self.horiz_fr.setContentsMargins(0,0,0,0)
+		self.horiz_fr_.setSpacing(0)
+		self.horiz_fr_.setContentsMargins(0,0,0,0)
+		self.lay.setSpacing(0)
+		self.lay.setContentsMargins(0,0,0,0)
+		
+		
+		"""
+		self.musicM = QtWidgets.QAction(self.wid)
+		#self.musicM.triggered.connect(self.info_action_icon)
+		#self.addAction(self.musicMode)
+		#self.musicM.setFont(QtGui.QFont('SansSerif', 10,italic=False))
+		self.addAction(self.musicM)
 		
 		self.musicMode = QtWidgets.QAction("&Music Mode", self)
 		self.musicMode.triggered.connect(self.music)
-		self.addAction(self.musicMode)
-		self.musicMode.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		#self.addAction(self.musicMode)
+		self.musicMode.setFont(QtGui.QFont('SansSerif', 10,italic=False))
 		
 		self.videoMode = QtWidgets.QAction("&Default Mode", self)
 		self.videoMode.triggered.connect(self.video)
-		self.addAction(self.videoMode)
-		self.videoMode.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		#self.addAction(self.videoMode)
+		self.videoMode.setFont(QtGui.QFont('SansSerif', 10,italic=False))
 		
 		self.hideMode = QtWidgets.QAction("&Hide", self)
 		self.hideMode.triggered.connect(self._hide_mode)
-		self.addAction(self.hideMode)
-		self.hideMode.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		#self.addAction(self.hideMode)
+		self.hideMode.setFont(QtGui.QFont('SansSerif', 10,italic=False))
 		
 		self.detach_vid = QtWidgets.QAction("&Detach Video", self)
 		self.detach_vid.triggered.connect(self._detach_video)
-		self.addAction(self.detach_vid)
-		self.detach_vid.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		#self.addAction(self.detach_vid)
+		self.detach_vid.setFont(QtGui.QFont('SansSerif', 10,italic=False))
 		
 		self.remove_fr = QtWidgets.QAction("&Remove Window Frame", self)
 		self.remove_fr.triggered.connect(self._remove_frame)
-		self.addAction(self.remove_fr)
-		self.remove_fr.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		#self.addAction(self.remove_fr)
+		self.remove_fr.setFont(QtGui.QFont('SansSerif', 10,italic=False))
 		
-		icon = QtGui.QIcon.fromTheme("Quit")
-		self.exitAction = QtWidgets.QAction(icon, "&Exit", self)
-		self.exitAction.triggered.connect(QtWidgets.qApp.quit)
-		self.addAction(self.exitAction)
-		self.exitAction.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		
+		
+		
+		#self.empty_menu_arr = []
+		#for i in range(0,10):
+		#	self.empty_menu_arr.append(QtWidgets.QAction("", self))
+		#	self.empty_menu_arr[i].triggered.connect(self.info_action_icon)
+		#	self.empty_menu_arr[i].setFont(QtGui.QFont('SansSerif', 10,italic=False))
+		
+		
+		
+		#for i in range(len(self.empty_menu_arr)):
+		#	self.addAction(self.empty_menu_arr[i])
+		
+		#action_arr = [self.musicMode,self.videoMode,self.hideMode,self.detach_vid,self.remove_fr]
+		#submenuR = QtWidgets.QMenu(self)
+		#submenuR.setTitle("Menu")
+		#self.addMenu(submenuR)
+		#for i in action_arr:
+		#	submenuR.addAction(i)
 		
 		try:
 			nm = '&'+ui.list2.currentItem().text().replace(ui.check_symbol,'')
 		except:
 			nm = ''
 			
-		icon = QtGui.QIcon.fromTheme("Quit")
-		self.name_title = QtWidgets.QAction(icon,nm, self)
+		
+		self.name_title = QtWidgets.QAction(nm, self)
 		self.name_title.triggered.connect(self.info_action_icon)
-		self.addAction(self.name_title)
+		#self.addAction(self.name_title)
 		self.name_title.setFont(QtGui.QFont('SansSerif', 10,italic=True))
 		
-		self.name_title1 = QtWidgets.QAction(icon,nm, self)
+		
+		self.name_title1 = QtWidgets.QAction(nm, self)
 		self.name_title1.triggered.connect(self.info_action_icon)
-		self.addAction(self.name_title1)
+		#self.addAction(self.name_title1)
 		self.name_title1.setFont(QtGui.QFont('SansSerif', 10,italic=True))
 		
 		try:
@@ -18679,38 +18845,42 @@ class RightClickMenu(QtWidgets.QMenu):
 		
 		if os.path.exists(icon):
 			icon_ = QtGui.QIcon(icon)
-			#icon_.setIconSize(QtCore.QSize(128,128))
-			
-			
 			self.info_action = QtWidgets.QAction(icon_,'', self)
 			self.info_action.triggered.connect(self.info_action_icon)
 			#self.addAction(self.info_action)
 			#self.info_action.setIconText(nm)
 			#self.info_action.setFont(QtGui.QFont('SansSerif', 10,italic=True))
+		"""
+		q4 = 'self.setStyleSheet("""QMenu{font: bold 12px;height: 340px; width: 280px; color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;background-image:url("'+ui.default_background+'");}""")'
+		exec (q4)
 		
-		#q4 = 'self.setStyleSheet("""QMenu{font: bold 32px;height: 350px; width: 350px; color:white; background-image:url("'+icon+'");}""")'
-		#exec (q4)
-		
+			
+		#icon = QtGui.QIcon.fromTheme("Quit")
+		#self.exitAction = QtWidgets.QAction(icon, "&Exit", self)
+		#self.exitAction.triggered.connect(QtWidgets.qApp.quit)
+		#self.addAction(self.exitAction)
+		#self.exitAction.setFont(QtGui.QFont('SansSerif', 10,italic=False))
+	
 	def info_action_icon(self):
-		print('hello')
-		
+		print('hello',ui.music_mode_dim,ui.music_mode_dim_show)
+		ui.playerPlayPause()
 	def _remove_frame(self):
-		txt = self.remove_fr.text()
+		txt = self.frameless_mode.text()
 		m_w = False
 		f_w = False
 		if not MainWindow.isHidden():
 			m_w = True
 		if not ui.float_window.isHidden():
 			f_w = True
-		if txt.lower() == '&remove window frame':
+		if txt.lower() == 'remove window frame':
 			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
 			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
-			self.remove_fr.setText('&Allow Window Frame')
+			self.frameless_mode.setText('Allow Window Frame')
 			ui.window_frame = 'false'
 		else:
 			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint)
 			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowStaysOnTopHint)
-			self.remove_fr.setText('&Remove Window Frame')
+			self.frameless_mode.setText('Remove Window Frame')
 			ui.window_frame = 'true'
 		
 		
@@ -18727,43 +18897,47 @@ class RightClickMenu(QtWidgets.QMenu):
 		if txt.lower() == 'false':
 			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
 			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowStaysOnTopHint)
-			self.remove_fr.setText('&Allow Window Frame')
+			#self.frameless_mode.setText('Allow Window Frame')
 		else:
 			MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint)
 			ui.float_window.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowTitleHint | QtCore.Qt.WindowStaysOnTopHint)
-			self.remove_fr.setText('&Remove Window Frame')
+			#self.frameless_mode.setText('Remove Window Frame')
 		MainWindow.show()
 	def _detach_video(self):
-		txt = self.detach_vid.text()
-		if txt.lower() == '&detach video':
-			self.detach_vid.setText('&Attach Video')
+		txt = self.d_vid.text()
+		ui.float_window_open = True
+		if txt.lower() == 'detach video':
+			self.d_vid.setText('Attach Video')
 			ui.float_window_layout.insertWidget(0,ui.tab_5,0)
 			ui.float_window.show()
 			ui.tab_5.show()
 			MainWindow.hide()
-			self.hideMode.setText('&Show')
+			self.h_mode.setText('Show')
 			ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
 		else:
-			self.detach_vid.setText('&Detach Video')
+			self.d_vid.setText('Detach Video')
 			ui.gridLayout.addWidget(ui.tab_5,0,1,1,1)
 			ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
 			ui.float_window.hide()
 			MainWindow.show()
-			self.hideMode.setText('&Hide')
+			self.h_mode.setText('Hide')
 			
 			
 	def _hide_mode(self):
 		#MainWindow.hide()
-		txt = (self.hideMode.text())
-		if txt == '&Hide':
+		#txt = (self.hideMode.text())
+		txt = self.h_mode.text()
+		if txt == 'Hide':
 			MainWindow.hide()
-			self.hideMode.setText('&Show')
-		elif txt == '&Show':
+			#self.hideMode.setText('&Show')
+			self.h_mode.setText('Show')
+		elif txt == 'Show':
 			MainWindow.show()
-			self.hideMode.setText('&Hide')
+			self.h_mode.setText('Hide')
 	
 	def music(self):
 		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt
+		ui.music_mode_dim_show = True
 		ui.list_with_thumbnail = False
 		MainWindow.hide()
 		print('Music Mode')
@@ -18772,8 +18946,12 @@ class RightClickMenu(QtWidgets.QMenu):
 		self.w_wdt = 900
 		self.w_ht = 350
 		#MainWindow.setGeometry(self.pos_x,self.pos_y,self.w_wdt,self.w_ht)
-		MainWindow.showNormal()
-		MainWindow.resize(900,350)
+		#MainWindow.showNormal()
+		print(ui.music_mode_dim,'--music--mode--')
+		#if not ui.music_mode_dim_show:
+		MainWindow.setGeometry(ui.music_mode_dim[0],ui.music_mode_dim[1],ui.music_mode_dim[2],ui.music_mode_dim[3])
+		MainWindow.show()
+		#MainWindow.resize(900,350)
 		#MainWindow.updateGeometry()
 		#QtGui.QApplication.processEvents()
 		ui.text.show()
@@ -18805,7 +18983,11 @@ class RightClickMenu(QtWidgets.QMenu):
 	def video(self):
 		global layout_mode,default_arr_setting,opt
 		print('default Mode')
+		if ui.music_mode_dim_show:
+			ui.music_mode_dim = [MainWindow.pos().x(),MainWindow.pos().y(),MainWindow.width(),MainWindow.height()]
+		print(ui.music_mode_dim,'--video--mode--')
 		#ui.list_with_thumbnail = True
+		ui.music_mode_dim_show = False
 		layout_mode = "Default"
 		ui.sd_hd.show()
 		ui.audio_track.show()
@@ -18875,10 +19057,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 			
 			if MainWindow.isHidden():
 				MainWindow.show()
-				self.right_menu.hideMode.setText('&Hide')
+				self.right_menu.h_mode.setText('Hide')
 			else:
 				MainWindow.hide()
-				self.right_menu.hideMode.setText('&Show')
+				self.right_menu.h_mode.setText('Show')
 if __name__ == "__main__":
 	import sys
 	global hdr,name,pgn,genre_num,site,name,epn,base_url,name1,embed,epn_goto,list1_items,opt,mirrorNo,mpv,queueNo,playMpv,mpvAlive,pre_opt,insidePreopt,posterManually,labelGeometry,tray
@@ -19117,6 +19299,19 @@ if __name__ == "__main__":
 						print(ui.float_window_dim)
 					except:
 						ui.float_window_dim = [0,0,250,200]
+				elif "MusicWindowDim" in i:
+					try:
+						j = j.replace('\n','')
+						j = j.replace('[','')
+						j = j.replace(']','')
+						j = j.replace(' ','')
+						k = j.split(',')
+						ui.music_mode_dim[:] = []
+						for l in k:
+							ui.music_mode_dim.append(int(l))
+						print(ui.music_mode_dim,'--music--mode--dimension--set--')
+					except:
+						ui.music_mode_dim = [0,0,900,350]
 				elif "DefaultPlayer" in i:
 					
 					Player = re.sub('\n','',j)
@@ -19129,6 +19324,16 @@ if __name__ == "__main__":
 						ui.window_frame = str(j)
 					except:
 						ui.window_frame = 'true'
+				elif "MusicModeDimShow" in i:
+					try:
+						j = j.replace('\n','')
+						val_m = str(j)
+					except:
+						val_m = 'False'
+					if val_m.lower() == 'true':
+						ui.music_mode_dim_show = True
+					else:
+						ui.music_mode_dim_show = False
 				elif "List_Mode_With_Thumbnail" in i:
 					tmp_mode = re.sub('\n','',j)
 					if tmp_mode.lower() == 'true':
@@ -19654,9 +19859,10 @@ if __name__ == "__main__":
 	#print(MainWindow.pos().x(),MainWindow.pos().y(),'--pos--')
 	#print(MainWindow.size(),'--size--')
 	#app.deleteLater()
-	
-	ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
-	
+	if ui.float_window_open:
+		ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
+	if ui.music_mode_dim_show:
+		ui.music_mode_dim = [MainWindow.pos().x(),MainWindow.pos().y(),MainWindow.width(),MainWindow.height()]
 	if ui.list1.isHidden():
 		show_hide_titlelist = 0
 	else:
@@ -19673,6 +19879,8 @@ if __name__ == "__main__":
 		f.write("\nDefaultPlayer="+Player)
 		f.write("\nWindowFrame="+str(ui.window_frame))
 		f.write("\nFloatWindow="+str(ui.float_window_dim))
+		f.write("\nMusicWindowDim="+str(ui.music_mode_dim))
+		f.write("\nMusicModeDimShow="+str(ui.music_mode_dim_show))
 		if iconv_r_indicator:
 			iconv_r = iconv_r_indicator[0]
 		f.write("\nThumbnail_Size="+str(iconv_r))
