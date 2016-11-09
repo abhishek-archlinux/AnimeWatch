@@ -1,0 +1,23 @@
+1. Copy AnimeWatch-PyQt5 folder of the parent directory in this current working directory.
+
+2. Rename AnimeWatch-PyQt5 folder to AnimeWatch_PyQt5.
+
+3. Open Terminal in the current directory and execute 'python setup.py sdist'
+
+4. Now 'dist' folder will be created and source distribution package will be built in it.
+
+5. Go to dist folder and install the package using 'sudo pip3' command. It will install most of the python based dependencies and install the package.
+
+7. Dependencies which needs to be installed manually for this Application to work correctly.
+
+	1. PyQt5 (if it can't be installed via pip3, most important depndency)
+	2. mpv
+	3. mplayer
+	4. sqlite3
+	5. ffmpegthumbnailer
+	6. curl
+	7. wget
+	8. libnotify
+	9. libtorrent
+
+6. Once the package is installed alongwith all the dependencies, open the terminal and run command 'animewatch' to open the application.
