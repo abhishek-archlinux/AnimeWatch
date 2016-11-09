@@ -19,32 +19,36 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 
 """
+import os
+import sys
 
-
+BASEDIR = os.path.abspath(__file__).rsplit('/',1)[0]
+print(BASEDIR,os.getcwd())
+sys.path.append(BASEDIR)
 
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets
-import sys
+
 import urllib
 import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re
 import subprocess
-import os.path
+
 from subprocess import check_output
 from bs4 import BeautifulSoup
 
 try:
 	from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
 	from PyQt5.QtWebEngineWidgets import QWebEngineView
-	from browser import Browser
 	from adb import NetWorkManager
+	from browser import Browser
 	QT_WEB_ENGINE = True
 except:
 	from PyQt5 import QtWebKitWidgets
 	from PyQt5.QtWebKitWidgets import QWebView
-	from browser_webkit import Browser
 	from adb_webkit import NetWorkManager
+	from browser_webkit import Browser
 	QT_WEB_ENGINE = False
 	
 from PyQt5.QtCore import QUrl
@@ -212,8 +216,12 @@ def ccurl(url):
 	if curl_opt == '-o':
 		c.setopt(c.FOLLOWLOCATION, True)
 		c.setopt(c.USERAGENT, hdr)
-		f = open(picn_op,'wb')
-		c.setopt(c.WRITEDATA, f)
+		try:
+			f = open(picn_op,'wb')
+			c.setopt(c.WRITEDATA, f)
+		except:
+			return 0
+		
 		try:
 			c.perform()
 			c.close()
@@ -6403,13 +6411,17 @@ except AttributeError:
 
 class Ui_MainWindow(object):
 	def setupUi(self, MainWindow):
+		global BASEDIR
 		MainWindow.setObjectName(_fromUtf8("MainWindow"))
-		MainWindow.resize(875, 600)
+		#MainWindow.resize(875, 600)
 		
-		try:
-			icon = QtGui.QIcon('/usr/share/AnimeWatch/tray.png')
-		except:
-			icon = QtGui.QIcon.fromTheme(_fromUtf8(""))
+		icon_path = os.path.join(BASEDIR,'tray.png')
+		if not os.path.exists(icon_path):
+			icon_path = '/usr/share/AnimeWatch/tray.png'
+		if os.path.exists(icon_path):
+			icon = QtGui.QIcon(icon_path)
+		else:
+			icon = QtGui.QIcon("")
 		MainWindow.setWindowIcon(icon)
 		self.superTab = QtWidgets.QWidget(MainWindow)
 		self.superTab.setObjectName(_fromUtf8("superTab"))
@@ -8351,8 +8363,8 @@ class Ui_MainWindow(object):
 		}
 		""")
 	def buttonStyle(self):
-		global home
-		png_home = os.path.join(home,'src','1.png')
+		global home,BASEDIR
+		png_home = os.path.join(BASEDIR,'1.png')
 		ui.dockWidget_3.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 				
 				
@@ -11937,7 +11949,10 @@ class Ui_MainWindow(object):
 			#		self.list2.item(k).setIcon(QtGui.QIcon(icon_new_pixel))
 			k = k+1
 		self.list2.setCurrentRow(row)
-		QtCore.QTimer.singleShot(100, partial(self.set_icon_list2,epnArrList,self.list_with_thumbnail,update_pl_thumb))
+		if self.list2.count() < 30:
+			QtCore.QTimer.singleShot(10, partial(self.set_icon_list2,epnArrList,self.list_with_thumbnail,update_pl_thumb))
+		else:
+			QtCore.QTimer.singleShot(100, partial(self.set_icon_list2,epnArrList,self.list_with_thumbnail,update_pl_thumb))
 		#if self.list_with_thumbnail:
 		#	thread_update = updateListThread(epnArrList)
 		#	thread_update.start()
@@ -12628,6 +12643,7 @@ class Ui_MainWindow(object):
 		if not QT_WEB_ENGINE:
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
+		self.webStyle(self.web)
 		if site == "Music":
 			if str(self.list3.currentItem().text())=="Artist":
 				nam1 = str(self.list1.currentItem().text())
@@ -12663,6 +12679,7 @@ class Ui_MainWindow(object):
 		if not QT_WEB_ENGINE:
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
+		self.webStyle(self.web)
 		if review_site == "Anime-Planet":
 			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
 		elif review_site == "MyAnimeList":
@@ -12847,6 +12864,7 @@ class Ui_MainWindow(object):
 		if not QT_WEB_ENGINE:
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
+		self.webStyle(self.web)
 		if review_site == "Anime-Planet":
 			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
 		elif review_site == "MyAnimeList":
@@ -13040,7 +13058,7 @@ class Ui_MainWindow(object):
 		
 		print(site,self.btn1.currentText().lower())
 		
-		if site not in site_arr:
+		if site and (site not in site_arr):
 			print (site)
 			#cmd = site +"()"
 			#site_var=eval(cmd)
@@ -15976,7 +15994,7 @@ class Ui_MainWindow(object):
 		QtCore.QTimer.singleShot(1000, partial(wget.start, command))
 		
 	def dataReady(self,p):
-		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode,server,new_tray_widget
+		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode,server,new_tray_widget,video_local_stream
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path,wget
 		try:
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
@@ -16303,8 +16321,9 @@ class Ui_MainWindow(object):
 							t = ""
 						
 						if buffering_mplayer == "yes":
+							print(video_local_stream,'--video--local--stream--')
 							out = "(Paused Caching..Wait 5s) " + t+" Cache: "+c
-							if not self.mplayer_timer.isActive():
+							if (not self.mplayer_timer.isActive()) and (not video_local_stream):
 								self.mplayer_timer.start(5000)
 							#buffering_mplayer = "no"
 						else:
@@ -16351,8 +16370,9 @@ class Ui_MainWindow(object):
 							
 						if not new_tray_widget.isHidden():
 							new_tray_widget.update_signal.emit(out_time)
-					if cache_empty == "yes" and (site != "Local" or site != "Music" or site != "Video"):
+					if (cache_empty == "yes") and (site != "Local" or site != "Music" or site != "Video"):
 						#mpvplayer.write('\n'+'get_property stream_length'+'\n')
+						print('---nop--error--pausing---')
 						mpvplayer.write(b'\n pause \n')
 						cache_empty = "no"
 						buffering_mplayer = "yes"
@@ -19008,14 +19028,15 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 			new_tray_widget.setGeometry(x,y,280,340)
 			"""
 			
-if __name__ == "__main__":
-	import sys
-	global hdr,name,pgn,genre_num,site,name,epn,base_url,name1,embed,epn_goto,list1_items,opt,mirrorNo,mpv,queueNo,playMpv,mpvAlive,pre_opt,insidePreopt,posterManually,labelGeometry,tray,new_tray_widget
+def main():
+	global ui,MainWindow,tray,hdr,name,pgn,genre_num,site,name,epn,base_url,name1,embed,epn_goto,list1_items,opt,mirrorNo,mpv,queueNo,playMpv,mpvAlive,pre_opt,insidePreopt,posterManually,labelGeometry,tray,new_tray_widget
 	global downloadVideo,list2_items,quality,indexQueue,Player,startPlayer,rfr_url,category,fullscr,mpvplayer,curR,idw,idwMain,home,home1,player_focus,fullscrT,artist_name_mplayer
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
 	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path,wait_player
+	
+	
 	wait_player = False
 	local_torrent_file_path = ''
 	path_final_Url = ''
@@ -19178,20 +19199,23 @@ if __name__ == "__main__":
 	if not os.path.exists(home):
 		os.makedirs(home)
 	if not os.path.exists(os.path.join(home,'src')):
-		os.makedirs(os.path.join(home,'src'))
-		if os.path.exists('/usr/share/AnimeWatch/input.conf'):
-			shutil.copy('/usr/share/AnimeWatch/input.conf',home+'/src/input.conf')
-		if os.path.exists('/usr/share/AnimeWatch/1.png'):
-			shutil.copy('/usr/share/AnimeWatch/1.png',home+'/src/1.png')
-		if os.path.exists('/usr/share/AnimeWatch/default.html'):
-			shutil.copy('/usr/share/AnimeWatch/default.html',home+'/src/default.html')
-		if os.path.exists('/usr/share/AnimeWatch/introspect.xml'):
-			shutil.copy('/usr/share/AnimeWatch/introspect.xml',home+'/src/introspect.xml')
-		if os.path.exists('/usr/share/AnimeWatch/tray.png'):
-			shutil.copy('/usr/share/AnimeWatch/tray.png',home+'/src/tray.png')
+		src_new = os.path.join(home,'src')
+		os.makedirs(src_new)
+		input_conf = os.path.join(BASEDIR,'input.conf')
+		if os.path.exists(input_conf):
+			shutil.copy(input_conf,os.path.join(src_new,'input.conf'))
+		png_n = os.path.join(BASEDIR,'1.png')
+		if os.path.exists(png_n):
+			shutil.copy(png_n,os.path.join(src_new,'1.png'))
+		introspect_xml = os.path.join(BASEDIR,'introspect.xml')
+		if os.path.exists(introspect_xml):
+			shutil.copy(introspect_xml,os.path.join(src_new,'introspect.xml'))
+		tray_png = os.path.join(BASEDIR,'tray.png')
+		if os.path.exists(tray_png):
+			shutil.copy(tray_png, os.path.join(src_new,'tray.png'))
 	picn = os.path.join(home,'default.jpg')
 	if not os.path.exists(picn):
-		picn_1 = '/usr/share/AnimeWatch/default.jpg'
+		picn_1 = os.path.join(BASEDIR,'default.jpg')
 		if os.path.exists(picn_1):
 			shutil.copy(picn_1,picn)
 			
@@ -19203,12 +19227,14 @@ if __name__ == "__main__":
 		os.makedirs(os.path.join(home,'src','Plugins'))
 		sys.path.append(os.path.join(home,'src','Plugins'))
 		plugin_Dir = os.path.join(home,'src','Plugins')
-		s_dir = '/usr/share/AnimeWatch/Plugins'
+		s_dir = os.path.join(BASEDIR,'Plugins')
+		if not os.path.exists(s_dir):
+			s_dir = os.path.join(BASEDIR,'plugins')
 		if os.path.exists(s_dir):
 			m_tmp = os.listdir(s_dir)
 			for i in m_tmp:
-				k = s_dir+'/'+i
-				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
+				k = os.path.join(s_dir,i)
+				if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py" and i != '__init__':
 					shutil.copy(k,plugin_Dir)
 					print ("addons loading....")
 						
@@ -19512,11 +19538,11 @@ if __name__ == "__main__":
 		os.makedirs('/tmp/AnimeWatch')
 	if not os.path.exists(home):
 		os.makedirs(home)
-		#sys.path.append(home)
 	if os.path.exists(os.path.join(home,'src')):
 		os.chdir(os.path.join(home,'src'))
-		sys.path.append(os.path.join(home,'src'))
-	
+		#sys.path.append(os.path.join(home,'src'))
+	else:
+		os.chdir(BASEDIR)
 	if not os.path.exists(os.path.join(home,"History")):
 		os.makedirs(os.path.join(home,"History"))
 	if not os.path.exists(os.path.join(home,"thumbnails")):
@@ -19543,8 +19569,8 @@ if __name__ == "__main__":
 		f = open(os.path.join(home,"Playlists","Default"),"w")
 		f.close()
 	
-	if os.path.exists('/usr/share/AnimeWatch'):
-		sys.path.append('/usr/share/AnimeWatch')
+	#if os.path.exists('/usr/share/AnimeWatch'):
+	#	sys.path.append('/usr/share/AnimeWatch')
 	
 	if os.path.exists(os.path.join(home,'src','Plugins')):
 		sys.path.append(os.path.join(home,'src','Plugins'))
@@ -19553,12 +19579,14 @@ if __name__ == "__main__":
 		if ui.version_number > old_version:
 			print(ui.version_number,'>',old_version)
 			plugin_Dir = os.path.join(home,'src','Plugins')
-			s_dir = '/usr/share/AnimeWatch/Plugins'
+			s_dir = os.path.join(BASEDIR,'Plugins')
+			if not os.path.exists(s_dir):
+				s_dir = os.path.join(BASEDIR,'plugins')
 			if os.path.exists(s_dir):
 				m_tmp = os.listdir(s_dir)
 				for i in m_tmp:
-					k = s_dir+'/'+i
-					if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py":
+					k = os.path.join(s_dir,i)
+					if os.path.isfile(k) and i != "install.py" and i != "installPlugins.py" and i != '__init__':
 						shutil.copy(k,plugin_Dir)
 						print('Addons loading ....')
 		
@@ -19567,7 +19595,7 @@ if __name__ == "__main__":
 		for i in m:
 			if i.endswith('.py'):
 				i = i.replace('.py','')
-				if i != 'headlessBrowser' and i != 'headlessEngine' and i!='stream' and i!='local_ip' and i!= 'headlessBrowser_webkit' and i!='installPlugins':
+				if i != 'headlessBrowser' and i != 'headlessEngine' and i!='stream' and i!='local_ip' and i!= 'headlessBrowser_webkit' and i!='installPlugins' and i != '__init__':
 					addons_option_arr.append(i)
 	
 	
@@ -19861,4 +19889,5 @@ if __name__ == "__main__":
 	del app
 	sys.exit(ret)
 	
-
+if __name__ == "__main__":
+	main()
