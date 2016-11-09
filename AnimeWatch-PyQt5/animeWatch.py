@@ -6624,7 +6624,7 @@ class Ui_MainWindow(object):
 		self.progress.setTextVisible(True)
 		self.progress.hide()
 		self.progress.setToolTip("Click for more options")
-		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127'}
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022'}
 		self.check_symbol = '\u2714'
 		self.torrent_frame = QtWidgets.QFrame(MainWindow)
 		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
@@ -18605,7 +18605,10 @@ class Ui_MainWindow(object):
 		return list(set(m_files))
 		
 	def music_mode_layout(self):
-		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt,new_tray_widget
+		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt,new_tray_widget,tray
+		if not self.float_window.isHidden():
+			tray.right_menu._detach_video()
+			
 		ui.music_mode_dim_show = True
 		ui.list_with_thumbnail = False
 		
@@ -18642,7 +18645,9 @@ class Ui_MainWindow(object):
 			ui.list2.setFocus()
 		
 	def video_mode_layout(self):
-		global layout_mode,default_arr_setting,opt,new_tray_widget
+		global layout_mode,default_arr_setting,opt,new_tray_widget,tray
+		if not self.float_window.isHidden():
+			tray.right_menu._detach_video()
 		print('default Mode')
 		if ui.music_mode_dim_show:
 			ui.music_mode_dim = [MainWindow.pos().x(),MainWindow.pos().y(),MainWindow.width(),MainWindow.height()]
@@ -18703,7 +18708,7 @@ class FloatWindowWidget(QtWidgets.QWidget):
 	update_signal = pyqtSignal(str)
 	def __init__(self):
 		QtWidgets.QWidget.__init__(self)
-		global epnArrList
+		global epnArrList,tray
 		self.update_signal.connect(self.update_progress)
 		self.remove_toolbar = True
 		#self.setMaximumHeight(200)
@@ -18752,6 +18757,11 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.st.setText(ui.player_buttons['stop'])
 		self.st.clicked.connect(ui.playerStop)
 		
+		self.attach = QtWidgets.QPushButton(self)
+		self.attach.setText(ui.player_buttons['attach'])
+		self.attach.clicked.connect(tray.right_menu._detach_video)
+		self.attach.setToolTip('Attach Video')
+		
 		self.qt = QtWidgets.QPushButton(self)
 		self.qt.setText(ui.player_buttons['quit'])
 		self.qt.clicked.connect(QtWidgets.qApp.quit)
@@ -18772,7 +18782,8 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.horiz.insertWidget(3,self.p,0)
 		self.horiz.insertWidget(4,self.st,0)
 		self.horiz.insertWidget(5,self.lock,0)
-		self.horiz.insertWidget(6,self.qt,0)
+		self.horiz.insertWidget(6,self.attach,0)
+		self.horiz.insertWidget(7,self.qt,0)
 		
 		
 		
@@ -18783,8 +18794,8 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.lay.insertWidget(4,self.title1,0)
 		
 		
-		self.horiz.setSpacing(2)
-		self.horiz.setContentsMargins(2,2,2,2)
+		self.horiz.setSpacing(0)
+		self.horiz.setContentsMargins(0,0,0,0)
 		self.lay.setSpacing(0)
 		self.lay.setContentsMargins(0,0,0,0)		
 		
@@ -18794,10 +18805,11 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		ui.float_window_layout.insertWidget(0,self,0)
 		self.hide()
 		
-		self.f.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
-		self.title.setStyleSheet("font:bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
-		self.title1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
-		self.progress.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
+		self.f.setStyleSheet("font: bold 15px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:25px;")
+		#
+		self.title.setStyleSheet("font:bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
+		self.title1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
+		self.progress.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
 		
 	def lock_toolbar(self):
 		txt = self.h_mode.text()
@@ -18877,7 +18889,6 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 	def info_action_icon(self):
 		print('clicked empty')
 	def _remove_frame(self):
-		global new_tray_widget
 		txt = self.frameless_mode.text()
 		m_w = False
 		f_w = False
@@ -18911,7 +18922,7 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			ui.float_window.show()
 			ui.tab_5.show()
 			MainWindow.hide()
-			self.h_mode.setText('Show')
+			self.h_mode.setText('&Hide')
 			ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
 			ui.list2.setFlow(QtWidgets.QListWidget.LeftToRight)
 			ui.list2.setMaximumWidth(16777215)
@@ -18922,20 +18933,26 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			ui.float_window_dim = [ui.float_window.pos().x(),ui.float_window.pos().y(),ui.float_window.width(),ui.float_window.height()]
 			ui.float_window.hide()
 			MainWindow.show()
-			self.h_mode.setText('Hide')
+			self.h_mode.setText('&Hide')
 			ui.list2.setFlow(QtWidgets.QListWidget.TopToBottom)
 			ui.list2.setMaximumWidth(300)
 			ui.verticalLayout_50.insertWidget(0,ui.list2,0)
 			
 	def _hide_mode(self):
-		global new_tray_widget,layout_mode
 		txt = self.h_mode.text()
-		if txt == '&Hide':
-			MainWindow.hide()
+		if not ui.float_window.isHidden():
+			ui.float_window.hide()
 			self.h_mode.setText('&Show')
-		elif txt == '&Show':
-			MainWindow.show()
+		elif self.d_vid.text().lower() == '&attach video':
+			ui.float_window.show()
 			self.h_mode.setText('&Hide')
+		else:
+			if txt == '&Hide':
+				MainWindow.hide()
+				self.h_mode.setText('&Show')
+			elif txt == '&Show':
+				MainWindow.show()
+				self.h_mode.setText('&Hide')
 			
 class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 	def __init__(self,parent=None):
@@ -18963,14 +18980,20 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 		print(pos)
 	
 	def onTrayIconActivated(self, reason):
-		global fullscreen,new_tray_widget,screen_width,screen_height,layout_mode
 		if reason == QtWidgets.QSystemTrayIcon.Trigger:
-			if MainWindow.isHidden():
-				MainWindow.show()
+			if not ui.float_window.isHidden():
+				ui.float_window.hide()
 				self.right_menu.h_mode.setText('&Show')
-			else:
-				MainWindow.hide()
+			elif self.right_menu.d_vid.text().lower() == '&attach video':
+				ui.float_window.show()
 				self.right_menu.h_mode.setText('&Hide')
+			else:
+				if MainWindow.isHidden():
+					MainWindow.show()
+					self.right_menu.h_mode.setText('&Show')
+				else:
+					MainWindow.hide()
+					self.right_menu.h_mode.setText('&Hide')
 			"""
 			geom = self.geometry()
 			x = geom.x()
@@ -19603,15 +19626,12 @@ if __name__ == "__main__":
 	#gc.disable()
 	#tray = SystemTrayIcon(pos_x,pos_y,w_wdt,w_ht)
 	#try:
-	new_tray_widget = FloatWindowWidget()
+	
 	platform_name = os.getenv('DESKTOP_SESSION')
-	#print(platform_name)
-	if 'ubuntu' in platform_name or 'plasma' in platform_name:
-		tray = SystemAppIndicator()
-	else:
-		#tray = SystemTrayIcon()
-		tray = SystemAppIndicator()
+	print(platform_name)
+	tray = SystemAppIndicator()
 	tray.show()
+	new_tray_widget = FloatWindowWidget()
 	if ui.window_frame == 'false':
 		ui._set_window_frame()
 	#except:

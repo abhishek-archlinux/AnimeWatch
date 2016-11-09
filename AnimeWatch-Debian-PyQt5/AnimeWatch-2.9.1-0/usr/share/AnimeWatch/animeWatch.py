@@ -5758,6 +5758,8 @@ class tab5(QtWidgets.QWidget):
 		#print pos.y()
 		if not ui.float_window.isHidden() and new_tray_widget.remove_toolbar:
 			if not self.float_timer.isActive():
+				wid_height = int(ui.float_window.height()/3)
+				new_tray_widget.setMaximumHeight(wid_height)
 				new_tray_widget.show()
 				print('--float--timer--')
 				self.float_timer.start(5000)
@@ -6698,6 +6700,7 @@ class Ui_MainWindow(object):
 		self.list1.setMaximumWidth(300)
 		#self.list1.setMaximumHeight(250)
 		self.list2.setMaximumWidth(300)
+		#self.list2.setWordWrap(True)
 		#self.list2.setIconSize(QtCore.QSize(128,128))
 		self.list2.setIconSize(QtCore.QSize(128,128))
 		#self.list2.setMaximumHeight(250)
@@ -15294,7 +15297,8 @@ class Ui_MainWindow(object):
 		global site,show_hide_player
 		
 		if site.lower() == "music" and show_hide_player == 0:
-			self.tab_5.hide()
+			if self.float_window.isHidden():
+				self.tab_5.hide()
 		else:
 			self.tab_5.show()
 			self.list1.hide()
@@ -15972,7 +15976,7 @@ class Ui_MainWindow(object):
 		QtCore.QTimer.singleShot(1000, partial(wget.start, command))
 		
 	def dataReady(self,p):
-		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode,server
+		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode,server,new_tray_widget
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path,wget
 		try:
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
@@ -16103,6 +16107,8 @@ class Ui_MainWindow(object):
 						#	self.player_play_pause.setText("Play")
 							#print('set play button text = Play')
 					out = re.sub('AV:[^0-9]*|A:[^0-9]*','',out)
+					if not new_tray_widget.isHidden():
+						new_tray_widget.update_signal.emit(out)
 					#print(out)
 					#l = re.findall("[(][^%]*",t[0])
 					#val = re.sub('[(]','',l[0])
@@ -16335,10 +16341,16 @@ class Ui_MainWindow(object):
 						#out = str(int(l/60))+"/"+str(int(mplayerLength/60))+" ("+str(val)+")"
 						#out = str(datetime.timedelta(seconds=int(l))) + " / " + str(datetime.timedelta(seconds=int(mplayerLength)))+" ["+epn_name_in_list+"]"+" Cache: "+c
 						if site == "Music":
-							out = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))+" ["+self.epn_name_in_list+'('+artist_name_mplayer+')' +"]"
+							out_time = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))
+							
+							out = out_time + " ["+self.epn_name_in_list+'('+artist_name_mplayer+')' +"]"
 						else:
-							out = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))+" ["+self.epn_name_in_list+"]"
-					
+							out_time = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))
+							
+							out = out_time + " ["+self.epn_name_in_list+"]"
+							
+						if not new_tray_widget.isHidden():
+							new_tray_widget.update_signal.emit(out_time)
 					if cache_empty == "yes" and (site != "Local" or site != "Music" or site != "Video"):
 						#mpvplayer.write('\n'+'get_property stream_length'+'\n')
 						mpvplayer.write(b'\n pause \n')
@@ -18688,12 +18700,13 @@ class Ui_MainWindow(object):
 			
 		
 class FloatWindowWidget(QtWidgets.QWidget):
+	update_signal = pyqtSignal(str)
 	def __init__(self):
 		QtWidgets.QWidget.__init__(self)
 		global epnArrList
-		
+		self.update_signal.connect(self.update_progress)
 		self.remove_toolbar = True
-		self.setMaximumHeight(100)
+		#self.setMaximumHeight(200)
 		#self.wid = QtWidgets.QWidget(self)
 		#self.wid.setMaximumSize(280,340)
 		#self.wid.setMinimumSize(280,340)
@@ -18711,6 +18724,9 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.title1 = QtWidgets.QLineEdit(self)
 		self.title.setAlignment(QtCore.Qt.AlignCenter)
 		self.title1.setAlignment(QtCore.Qt.AlignCenter)
+		
+		self.progress = QtWidgets.QLineEdit(self)
+		self.progress.setAlignment(QtCore.Qt.AlignCenter)
 		
 		self.f = QtWidgets.QFrame(self)
 		self.f.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -18762,8 +18778,9 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		
 		self.lay.insertWidget(0,self.f,0)
 		#self.lay.insertWidget(3,self.l,0)
-		self.lay.insertWidget(1,self.title,0)
-		self.lay.insertWidget(2,self.title1,0)
+		self.lay.insertWidget(2,self.progress,0)
+		self.lay.insertWidget(3,self.title,0)
+		self.lay.insertWidget(4,self.title1,0)
 		
 		
 		self.horiz.setSpacing(2)
@@ -18780,7 +18797,8 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.f.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
 		self.title.setStyleSheet("font:bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
 		self.title1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
-	
+		self.progress.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:20px;")
+		
 	def lock_toolbar(self):
 		txt = self.h_mode.text()
 		if txt == '--':
@@ -18796,6 +18814,11 @@ class FloatWindowWidget(QtWidgets.QWidget):
 			self.h_mode.setToolTip('Keep Toolbar')
 			self.remove_toolbar = True
 			ui.tab_5.float_timer.start(1000)
+			
+	@pyqtSlot(str)
+	def update_progress(self,var):
+		self.progress.setText(var)
+		
 class RightClickMenuIndicator(QtWidgets.QMenu):
 	def __init__(self,parent=None):
 		QtWidgets.QMenu.__init__(self, "File", parent)
@@ -18890,6 +18913,9 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			MainWindow.hide()
 			self.h_mode.setText('Show')
 			ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
+			ui.list2.setFlow(QtWidgets.QListWidget.LeftToRight)
+			ui.list2.setMaximumWidth(16777215)
+			new_tray_widget.lay.insertWidget(1,ui.list2,0)
 		else:
 			self.d_vid.setText('&Detach Video')
 			ui.gridLayout.addWidget(ui.tab_5,0,1,1,1)
@@ -18897,6 +18923,9 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			ui.float_window.hide()
 			MainWindow.show()
 			self.h_mode.setText('Hide')
+			ui.list2.setFlow(QtWidgets.QListWidget.TopToBottom)
+			ui.list2.setMaximumWidth(300)
+			ui.verticalLayout_50.insertWidget(0,ui.list2,0)
 			
 	def _hide_mode(self):
 		global new_tray_widget,layout_mode
