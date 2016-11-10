@@ -3369,7 +3369,9 @@ class List2(QtWidgets.QListWidget):
 		self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
 		self.downloadWget = []
 		self.downloadWget_cnt = 0
-		
+		#self.setViewMode(QtWidgets.QListWidget.IconMode)
+		#self.setIconSize(QtCore.QSize(200,200))
+		#self.setResizeMode(QtWidgets.QListWidget.Adjust)
 	#def mouseMoveEvent(self,event):
 	#ui.dockWidget_3.hide()
 	#if not self.hasFocus():
@@ -3840,19 +3842,34 @@ class List2(QtWidgets.QListWidget):
 						self.setCurrentRow(row_n)
 	
 		elif event.key() == QtCore.Qt.Key_Left:
-			if ui.list1.isHidden():
-				ui.list1.show()
-				ui.frame.show()
-			ui.list1.setFocus()
+			if ui.float_window.isHidden():
+				if ui.list1.isHidden():
+					ui.list1.show()
+					ui.frame.show()
+				ui.list1.setFocus()
+			else:
+				prev_r = self.currentRow() - 1
+				if self.currentRow() == 0:
+					self.setCurrentRow(0)
+				else:
+					self.setCurrentRow(prev_r)
+			
 		elif event.key() == QtCore.Qt.Key_Right:
-			curR = self.currentRow()
-			queueNo = queueNo + 1
-			mpvAlive = 0
-			ui.epnfound()
-			if ui.list1.isHidden():
-				ui.list1.show()
-				ui.frame.show()
-			self.setFocus()
+			if ui.float_window.isHidden():
+				curR = self.currentRow()
+				queueNo = queueNo + 1
+				mpvAlive = 0
+				ui.epnfound()
+				if ui.list1.isHidden():
+					ui.list1.show()
+					ui.frame.show()
+				self.setFocus()
+			else:
+				nextr = self.currentRow() + 1
+				if nextr == self.count():
+					self.setCurrentRow(self.count()-1)
+				else:
+					self.setCurrentRow(nextr)
 		elif event.key() == QtCore.Qt.Key_O:
 			self.init_offline_mode()
 		elif event.key() == QtCore.Qt.Key_2: 
@@ -14455,8 +14472,14 @@ class Ui_MainWindow(object):
 				file_name_mkv = st
 				file_name_mp4 = st
 		elif site.lower() == 'video' or site.lower() == 'music' or site.lower() == 'local' or site.lower() == 'none':
-			file_name_mkv = epnArrList[row].split('	')[1]
-			file_name_mp4 = epnArrList[row].split('	')[1]
+			if not self.queue_url_list:
+				file_name_mkv = epnArrList[row].split('	')[1]
+				file_name_mp4 = epnArrList[row].split('	')[1]
+			else:
+				queue_split = self.queue_url_list[row].split('	')
+				if len(queue_split) > 1:
+					file_name_mkv = queue_split[1]
+					file_name_mp4 = queue_split[1]
 		print('function ',file_name_mkv,file_name_mp4,'function get_file_name')
 		return file_name_mp4,file_name_mkv
 		
@@ -16828,7 +16851,7 @@ class Ui_MainWindow(object):
 			server._emitMeta("queue"+'#'+t1)
 		except:
 			pass
-		
+		print(self.list6.item(0).text(),self.queue_url_list)
 		if self.if_file_path_exists_then_play(0,self.list6,True):
 			del self.queue_url_list[0]
 			self.list6.takeItem(0)
@@ -18934,6 +18957,7 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			ui.float_window.show()
 			
 	def _detach_video(self):
+		global new_tray_widget
 		txt = self.d_vid.text()
 		ui.float_window_open = True
 		if txt.lower() == '&detach video':
