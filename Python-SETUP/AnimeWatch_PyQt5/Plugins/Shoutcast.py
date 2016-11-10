@@ -283,7 +283,7 @@ class Shoutcast():
 			station_url = str(m[0])
 		file_arr.append(name+'	'+station_url+'	'+'NONE')
 		file_arr.append('No.jpg')
-		file_arr.append('Not Available')
+		file_arr.append('Summary Not Available')
 		return file_arr
 
 	def getNextPage(self,opt,pgn,genre_num,name):

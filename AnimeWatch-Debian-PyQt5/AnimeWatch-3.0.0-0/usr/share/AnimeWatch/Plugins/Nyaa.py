@@ -257,7 +257,7 @@ class Nyaa():
 			file_arr.append(file_path)
 		
 		file_arr.append('No.jpg')
-		file_arr.append('Not Available')
+		file_arr.append('Summary Not Available')
 		return file_arr
 
 	def getNextPage(self,opt,pgn,genre_num,name):
