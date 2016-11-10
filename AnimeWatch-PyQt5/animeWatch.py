@@ -3840,19 +3840,33 @@ class List2(QtWidgets.QListWidget):
 						self.setCurrentRow(row_n)
 	
 		elif event.key() == QtCore.Qt.Key_Left:
-			if ui.list1.isHidden():
-				ui.list1.show()
-				ui.frame.show()
-			ui.list1.setFocus()
+			if ui.float_window.isHidden():
+				if ui.list1.isHidden():
+					ui.list1.show()
+					ui.frame.show()
+				ui.list1.setFocus()
+			else:
+				prev_r = self.currentRow() - 1
+				if self.currentRow() == 0:
+					self.setCurrentRow(0)
+				else:
+					self.setCurrentRow(prev_r)
 		elif event.key() == QtCore.Qt.Key_Right:
-			curR = self.currentRow()
-			queueNo = queueNo + 1
-			mpvAlive = 0
-			ui.epnfound()
-			if ui.list1.isHidden():
-				ui.list1.show()
-				ui.frame.show()
-			self.setFocus()
+			if ui.float_window.isHidden():
+				curR = self.currentRow()
+				queueNo = queueNo + 1
+				mpvAlive = 0
+				ui.epnfound()
+				if ui.list1.isHidden():
+					ui.list1.show()
+					ui.frame.show()
+				self.setFocus()
+			else:
+				nextr = self.currentRow() + 1
+				if nextr == self.count():
+					self.setCurrentRow(self.count()-1)
+				else:
+					self.setCurrentRow(nextr)
 		elif event.key() == QtCore.Qt.Key_O:
 			self.init_offline_mode()
 		elif event.key() == QtCore.Qt.Key_2: 
