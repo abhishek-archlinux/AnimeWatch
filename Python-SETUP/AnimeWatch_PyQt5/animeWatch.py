@@ -14472,8 +14472,14 @@ class Ui_MainWindow(object):
 				file_name_mkv = st
 				file_name_mp4 = st
 		elif site.lower() == 'video' or site.lower() == 'music' or site.lower() == 'local' or site.lower() == 'none':
-			file_name_mkv = epnArrList[row].split('	')[1]
-			file_name_mp4 = epnArrList[row].split('	')[1]
+			if not self.queue_url_list:
+				file_name_mkv = epnArrList[row].split('	')[1]
+				file_name_mp4 = epnArrList[row].split('	')[1]
+			else:
+				queue_split = self.queue_url_list[row].split('	')
+				if len(queue_split) > 1:
+					file_name_mkv = queue_split[1]
+					file_name_mp4 = queue_split[1]
 		print('function ',file_name_mkv,file_name_mp4,'function get_file_name')
 		return file_name_mp4,file_name_mkv
 		
@@ -16845,7 +16851,7 @@ class Ui_MainWindow(object):
 			server._emitMeta("queue"+'#'+t1)
 		except:
 			pass
-		
+		print(self.list6.item(0).text(),self.queue_url_list)
 		if self.if_file_path_exists_then_play(0,self.list6,True):
 			del self.queue_url_list[0]
 			self.list6.takeItem(0)
@@ -18951,6 +18957,7 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			ui.float_window.show()
 			
 	def _detach_video(self):
+		global new_tray_widget
 		txt = self.d_vid.text()
 		ui.float_window_open = True
 		if txt.lower() == '&detach video':
