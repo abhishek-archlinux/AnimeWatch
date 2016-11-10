@@ -3369,7 +3369,9 @@ class List2(QtWidgets.QListWidget):
 		self.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
 		self.downloadWget = []
 		self.downloadWget_cnt = 0
-		
+		#self.setViewMode(QtWidgets.QListWidget.IconMode)
+		#self.setIconSize(QtCore.QSize(200,200))
+		#self.setResizeMode(QtWidgets.QListWidget.Adjust)
 	#def mouseMoveEvent(self,event):
 	#ui.dockWidget_3.hide()
 	#if not self.hasFocus():
@@ -3851,6 +3853,7 @@ class List2(QtWidgets.QListWidget):
 					self.setCurrentRow(0)
 				else:
 					self.setCurrentRow(prev_r)
+			
 		elif event.key() == QtCore.Qt.Key_Right:
 			if ui.float_window.isHidden():
 				curR = self.currentRow()
