@@ -16851,7 +16851,7 @@ class Ui_MainWindow(object):
 			server._emitMeta("queue"+'#'+t1)
 		except:
 			pass
-		print(self.list6.item(0).text(),self.queue_url_list)
+		#print(self.list6.item(0).text(),self.queue_url_list)
 		if self.if_file_path_exists_then_play(0,self.list6,True):
 			del self.queue_url_list[0]
 			self.list6.takeItem(0)
