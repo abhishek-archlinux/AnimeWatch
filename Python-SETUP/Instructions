@@ -10,11 +10,12 @@
 
 	1. mpv
 	2. mplayer
-	3. sqlite3
+	3. wget
 	4. ffmpegthumbnailer
 	5. curl
-	6. wget
+	6. sqlite3
 	7. libnotify
 	8. libtorrent
+	9. taglib
 
 6. Once the package is installed alongwith all the dependencies, open the terminal and run command 'animewatch' to open the application.
