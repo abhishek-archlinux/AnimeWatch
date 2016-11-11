@@ -706,7 +706,8 @@ class Browser(QtWebKitWidgets.QWebView):
 			if os.path.exists(self.ui.default_download_location):
 				title = os.path.join(self.ui.default_download_location,title)
 			else:
-				title = '/tmp/AnimeWatch/'+title
+				title = os.path.join(self.ui.tmp_download_folder,title)
+				#title = '/tmp/AnimeWatch/'+title
 			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
 			print (command)		
 			self.ui.infoWget(command,0)
@@ -714,7 +715,7 @@ class Browser(QtWebKitWidgets.QWebView):
 		elif option.lower() == 'get subtitle (if available)':
 			self.ui.epn_name_in_list = self.title_page
 			print(self.ui.epn_name_in_list)
-			get_yt_sub(url.toString(),self.ui.epn_name_in_list,self.yt_sub_folder)
+			get_yt_sub(url.toString(),self.ui.epn_name_in_list,self.yt_sub_folder,self.ui.tmp_download_folder)
 			
 		elif option.lower() == 'season episode link':
 			if self.site != "Music" and self.site != "PlayLists":
@@ -765,9 +766,11 @@ class Browser(QtWebKitWidgets.QWebView):
 						name1 = name.split('@')[-1]
 					else:
 						name1 = name
-					thumb = '/tmp/AnimeWatch/'+name1+'.jpg'
+					thumb = os.path.join(self.ui.tmp_download_folder,name1+'.jpg')
+					#thumb = '/tmp/AnimeWatch/'+name1+'.jpg'
 				else:
-					thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
+					#thumb = '/tmp/AnimeWatch/'+name+'.jpg'
 				ccurl(final+'#'+'-o'+'#'+thumb)
 			else:
 				if self.site == "Music" and (option == "Download As Fanart" or option == "Download As Cover"):
@@ -797,8 +800,8 @@ class Browser(QtWebKitWidgets.QWebView):
 						
 					if '/' in name:
 						name = name.replace('/','-')
-						
-					thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
+					#thumb = '/tmp/AnimeWatch/'+name+'.jpg'
 					try:
 						if final.startswith('http'):
 							ccurl(final+'#'+'-o'+'#'+thumb)

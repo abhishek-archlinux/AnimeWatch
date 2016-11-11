@@ -23,52 +23,9 @@ try:
 except:
 	from headlessBrowser_webkit import BrowseUrl
 	
-def cloudfare(url,quality):
-	web = BrowseUrl(url,quality)
-def cloudfareOld():
-			home1 = expanduser("~")
-			#home1 = "/usr/local/share"
-			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
-			os_name = platform.platform()
-			print(os_name.lower())
-			if 'arch' in os_name.lower():
-				temp = progressBar(["phantomjs", pluginDir+"/ka.js","https://kissanime.to"])
-			elif 'ubuntu-14.04' in os_name.lower():
-				temp = progressBar(["phantomjs", pluginDir+"/ka.js","http://kissanime.to"])
-			else:
-				temp = progressBar(["phantomjs", pluginDir+"/ka.js","https://kissanime.to"])
-			if isinstance(temp,bytes):
-				print("I'm byte")
-				try:
-					temp = str((temp).decode('utf-8'))
-				except:
-					temp = str(temp)
-			else:
-				print(type(temp))
-				temp = str(temp)
-				print("I'm unicode")
-			print(temp)
-			p = re.findall('{[^}]*}',temp)
-			for i in p:
-				if "_cfduid" in i:
-					cfd = i
-				elif "cf_clearance" in i:
-					cfc = i
+def cloudfare(url,quality,cookie):
+	web = BrowseUrl(url,quality,cookie)
 
-			n = re.findall('value": "[^"]*|expiry": [^,]*',cfc)
-			e = re.findall('value": "[^"]*|expiry": [^,]*',cfd)
-			j = 0
-			for i in n:
-				n[j] = re.sub('value": "|expiry": ',"",i)
-				j = j+1
-			j = 0
-			for i in e:
-				e[j] = re.sub('value": "|expiry": ',"",i)
-				j = j+1
-			cookiefile = ".kissanime.to	TRUE	/	FALSE	"+str(e[0])+"	__cfduid	" + str(e[1]) + "\n" + ".kissanime.to	TRUE	/	FALSE	"+str(n[0])+"	cf_clearance	" + str(n[1] + "\n" + "kissanime.to	FALSE	/	FALSE	0	usingFlashV1	true")
-			f = open('/tmp/AnimeWatch/kcookie.txt', 'w')
-			f.write(cookiefile)
-			f.close()
 def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -82,7 +39,7 @@ def getContentUnicode(content):
 		print("I'm unicode")
 	return content
 def ccurl(url):
-	global hdr
+	global hdr,tmp_working_dir
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
@@ -97,13 +54,13 @@ def ccurl(url):
 		if curl_opt == '-o':
 			picn_op = nUrl.split('#')[2]
 			
-			
-	if os.path.exists('/tmp/AnimeWatch/kcookie.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookie.txt')
+	cookie_file = os.path.join(tmp_working_dir,'kcookie.txt')
+	if os.path.exists(cookie_file):
+		c.setopt(c.COOKIEFILE, cookie_file)
 	else:
 		print('inside ccurl')
-		cloudfare(url,'')
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookie.txt')
+		cloudfare(url,'',cookie_file)
+		c.setopt(c.COOKIEFILE, cookie_file)
 	url = str(url)
 	try:
 		c.setopt(c.URL, url)
@@ -161,17 +118,20 @@ def replace_all(text, di):
 
 
 class KissAnime():
-	def __init__(self):
+	def __init__(self,tmp):
+		global tmp_working_dir
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		
+		self.tmp_dir = tmp
+		tmp_working_dir = tmp
+		self.cookie_file = os.path.join(tmp,'kcookie.txt')
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
 			
 	def ccurlN(self,content,url):
 		if 'checking_browser' in content:
-			if os.path.exists('/tmp/AnimeWatch/kcookie.txt'):
-				os.remove('/tmp/AnimeWatch/kcookie.txt')
+			if os.path.exists(self.cookie_file):
+				os.remove(self.cookie_file)
 			content = ccurl(url)
 		return content
 		
@@ -200,9 +160,9 @@ class KissAnime():
 		content = self.ccurlN(content,url)
 		
 			
-		f = open('/tmp/AnimeWatch/1.txt','w')
-		f.write(content)
-		f.close()
+		#f = open('/tmp/AnimeWatch/1.txt','w')
+		#f.write(content)
+		#f.close()
 		epl = re.findall('/Anime/' + name + '[^"]*["?"]id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
@@ -214,6 +174,7 @@ class KissAnime():
 			#jpgn = img[0].split('/')[-1]
 			#print('Pic Name=' + jpgn
 			picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			print(picn)
 			if img:
 				#img[0]=img[0].replace('kissanime.com','kissanime.to')
@@ -222,7 +183,8 @@ class KissAnime():
 				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookie.txt','-A',self.hdr,'-o',picn,img[0]])
 				ccurl(img[0]+'#'+'-o'+'#'+picn)
 		except:
-			picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			picn = os.path.join(self.tmp_dir,name+'.jpg')
 		j = 0
 		for i in epl:
 			i = re.sub('/Anime/' + name + '/', '', i)
@@ -257,7 +219,7 @@ class KissAnime():
 			summary = re.sub('\r','',summary)
 			summary = re.sub('\n\n','\n',summary)
 		except:
-			summary = 'Not Available'
+			summary = 'Summary Not Available'
 		print(summary)
 		print(picn)
 		epl=naturallysorted(epl)  

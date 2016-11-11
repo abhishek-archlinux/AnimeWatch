@@ -813,7 +813,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			if os.path.exists(self.ui.default_download_location):
 				title = os.path.join(self.ui.default_download_location,title)
 			else:
-				title = '/tmp/AnimeWatch/'+title
+				#title = '/tmp/AnimeWatch/'+title
+				title = os.path.join(self.ui.tmp_download_folder,title)
 			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
 			print (command)		
 			self.ui.infoWget(command,0)
@@ -821,7 +822,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.ui.epn_name_in_list = self.title_page
 			print(self.ui.epn_name_in_list)
 			#self.yt_sub_signal.emit(url,self.ui.epn_name_in_list,self.yt_sub_folder)
-			get_yt_sub(url,self.ui.epn_name_in_list,self.yt_sub_folder)
+			get_yt_sub(url,self.ui.epn_name_in_list,self.yt_sub_folder,self.ui.tmp_download_folder)
 			
 			
 		elif option.lower() == 'season episode link':
@@ -880,9 +881,11 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 						name1 = name.split('@')[-1]
 					else:
 						name1 = name
-					thumb = '/tmp/AnimeWatch/'+name1+'.jpg'
+					#thumb = '/tmp/AnimeWatch/'+name1+'.jpg'
+					thumb = os.path.join(self.ui.tmp_download_folder,name1+'.jpg')
 				else:
-					thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+					#thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
 				#subprocess.call(["curl",'-A',self.hdr,'-L',"-o",thumb,final])
 				ccurl(final+'#'+'-o'+'#'+thumb)
 			else:
@@ -912,7 +915,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 						final = ''
 					if '/' in name:
 						name = name.replace('/','-')
-					thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+					#thumb = '/tmp/AnimeWatch/'+name+'.jpg'
+					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
 					try:
 						if final.startswith('http'):
 							ccurl(final+'#'+'-o'+'#'+thumb)

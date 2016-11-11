@@ -89,10 +89,11 @@ def get_yt_url(url,quality):
 	print(final_url)
 	return final_url
 
-def get_yt_sub(url,name,dest_dir):
-	global name_epn, dest_dir_sub
+def get_yt_sub(url,name,dest_dir,tmp_dir):
+	global name_epn, dest_dir_sub,tmp_dir_sub
 	name_epn = name
 	dest_dir_sub = dest_dir
+	tmp_dir_sub = tmp_dir
 	final_url = ''
 	url = url.replace('"','')
 	m = []
@@ -115,8 +116,10 @@ def get_yt_sub(url,name,dest_dir):
 		except:
 			pass
 	
-	out = "/tmp/AnimeWatch/youtube-sub"
-	sub_name = out.split('/')[-1]
+	#out = "/tmp/AnimeWatch/youtube-sub"
+	out = os.path.join(tmp_dir_sub,'youtube-sub')
+	#sub_name = out.split('/')[-1]
+	sub_name = os.path.basename(out)
 	print(out,'---------output--------dest---------')
 	#subprocess.call(['youtube-dl','--all-sub','--skip-download','--output',out,url])
 	command = "youtube-dl --all-sub --skip-download --output "+out+" "+url
@@ -142,12 +145,13 @@ def yt_sub_dataReady(p):
 		pass
 		
 def yt_sub_finished():
-	global name_epn,dest_dir_sub
+	global name_epn,dest_dir_sub,tmp_dir_sub
 	name = name_epn
 	dest_dir = dest_dir_sub
 	sub_name = 'youtube-sub'
 	print(name,dest_dir)
-	dir_name = '/tmp/AnimeWatch/'
+	#dir_name = '/tmp/AnimeWatch/'
+	dir_name = tmp_dir_sub
 	m = os.listdir(dir_name)
 	new_name = name.replace('/','-')
 	if new_name.startswith('.'):

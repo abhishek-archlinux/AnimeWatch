@@ -575,9 +575,9 @@ def uploadcrazy(url):
 	
 	
 class DubbedAnime():
-	def __init__(self):
+	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		
+		self.tmp_dir = tmp
 	def getOptions(self):
 			criteria = ['Cartoon-World','Cartoon-World-Cartoon','Cartoon-World-Movies','Dubcrazy','Animetycoon','AniDub']
 			return criteria
@@ -1020,7 +1020,8 @@ class DubbedAnime():
 						img = "http://www.cartoon-world.tv"+img2[0]
 						print(img)
 					
-					picn = "/tmp/AnimeWatch/"+name+'.jpg'
+					#picn = "/tmp/AnimeWatch/"+name+'.jpg'
+					picn = os.path.join(self.tmp_dir,name+'.jpg')
 					if not os.path.isfile(picn) and img:
 						#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img])
 						ccurlNew(img+'#'+'-o'+'#'+picn)
@@ -1086,7 +1087,8 @@ class DubbedAnime():
 					if img1:
 						img.append(img1['src'])
 					
-			picn = "/tmp/AnimeWatch/" + name + ".jpg"
+			#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			if not os.path.isfile(picn) and img:
 				#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
 				ccurlNew(img[0]+'#'+'-o'+'#'+picn)
@@ -1106,7 +1108,8 @@ class DubbedAnime():
 				except:
 					img = re.findall('//[^"]*posters/[^"]*.jpg',content)
 					img[0] = "http:" + img[0]
-				picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				picn = os.path.join(self.tmp_dir,name+'.jpg')
 				if not os.path.isfile(picn):
 					#subprocess.call(["curl","-L","-o",picn,img[0]])
 					ccurlNew(img[0]+'#'+'-o'+'#'+picn)
@@ -1146,8 +1149,8 @@ class DubbedAnime():
 					
 				print(img)
 				
-				picn = "/tmp/AnimeWatch/" + name + ".jpg"
-				
+				#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				picn = os.path.join(self.tmp_dir,name+'.jpg')
 				try:
 					if not os.path.isfile(picn):
 						ccurlNew(img[0]+'#'+'-o'+'#'+picn)
@@ -1167,7 +1170,8 @@ class DubbedAnime():
 				
 				img = "http://www.dubbedanimeonline.pw/images/" + name+".jpg"
 				print(img)
-				picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				picn = os.path.join(self.tmp_dir,name+'.jpg')
 				if not os.path.isfile(picn):
 					#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img])
 					ccurlNew(img+'#'+'-o'+'#'+picn)

@@ -134,6 +134,8 @@ class BrowserPage(QWebEnginePage):
 		super(BrowserPage, self).__init__()
 		print('hello')
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.cookie_file = c_file
+		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
 		x = ''
 		self.m = self.profile().cookieStore()
 		self.profile().setHttpUserAgent(self.hdr)
@@ -144,8 +146,8 @@ class BrowserPage(QWebEnginePage):
 		p.netS.connect(lambda y = x : self.urlMedia(y))
 		self.profile().setRequestInterceptor(p)
 		#self.profile().clearHttpCache()
-		self.profile().setCachePath('/tmp/AnimeWatch')
-		self.profile().setPersistentStoragePath('/tmp/AnimeWatch')
+		self.profile().setCachePath(self.tmp_dir)
+		self.profile().setPersistentStoragePath(self.tmp_dir)
 		self.url = url
 		z = ''
 		#self.val_signal.connect(lambda y = z : self.val_found(y))
@@ -156,7 +158,8 @@ class BrowserPage(QWebEnginePage):
 		self.quality = quality
 		self.val = m_val
 		self.add_cookie = add_cookie
-		self.cookie_file = c_file
+		
+		
 		if not self.add_cookie:
 			self.m.deleteAllCookies()
 			self.set_cookie(self.cookie_file)
@@ -175,11 +178,12 @@ class BrowserPage(QWebEnginePage):
 		print("end")
 	@pyqtSlot(str)
 	def urlMedia(self,info):
-		if os.path.exists('/tmp/AnimeWatch/lnk.txt'):
-			os.remove('/tmp/AnimeWatch/lnk.txt')
+		lnk = os.path.join(self.tmp_dir,'lnk.txt')
+		if os.path.exists(lnk):
+			os.remove(lnk)
 		print('*******')
 		print(info)
-		f = open('/tmp/AnimeWatch/lnk.txt','w')
+		f = open(lnk,'w')
 		f.write(info)
 		f.close()
 		self.media_signal.emit(info)
@@ -305,12 +309,12 @@ class BrowserPage(QWebEnginePage):
 				str1 = asp['domain']+'	'+'FALSE'+'	'+asp['path']+'	'+'FALSE'+'	'+str(0)+'	'+'ASP.NET_SessionId'+'	'+asp['ASP.NET_SessionId']
 			if idt:
 				str1 = idt['domain']+'	'+'FALSE'+'	'+idt['path']+'	'+'FALSE'+'	'+str(0)+'	'+'idtz'+'	'+idt['idtz']
-				
-			if not os.path.exists('/tmp/AnimeWatch/cloud_cookie.txt'):
-				f = open('/tmp/AnimeWatch/cloud_cookie.txt','w')
+			cc = os.path.join(self.tmp_dir,'cloud_cookie.txt')
+			if not os.path.exists(cc):
+				f = open(cc,'w')
 				f.write(str1)
 			else:
-				f = open('/tmp/AnimeWatch/cloud_cookie.txt','a')
+				f = open(cc,'a')
 				f.write('\n'+str1)
 			#print('written--cloud_cookie--------------')
 			f.close()
@@ -355,7 +359,7 @@ class BrowserPage(QWebEnginePage):
 	def htm_src(self,x):
 		html = x
 		if 'var glink = ' in html:
-			c_f = '/tmp/AnimeWatch/cloud_cookie.txt'
+			c_f = os.path.join(self.tmp_dir,'cloud_cookie.txt')
 			if os.path.exists(c_f):
 				f = open(c_f,'a')
 			else:
@@ -423,12 +427,9 @@ class BrowseUrlT(QWebEngineView):
 		self.cnt = 0
 		self.cookie_file = cookie
 		self.Browse(self.url)
+		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
 		
 	def Browse(self,url):
-		
-		
-		
-		
 		
 		if os.path.exists(self.cookie_file):
 			content = ccurl(url+'#'+'-b'+'#'+self.cookie_file)
@@ -486,7 +487,7 @@ class BrowseUrlT(QWebEngineView):
 		self.add_cookie = False
 		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url):
 			print('Cookie Obtained, now link finding')
-			f = open('/tmp/AnimeWatch/tmp_cookie','w')
+			f = open(os.path.join(self.tmp_dir,'tmp_cookie'),'w')
 			f.write('Cookie Obtained, now link finding')
 			f.close()
 			
@@ -494,7 +495,7 @@ class BrowseUrlT(QWebEngineView):
 			#self.setHtml('<html>Link Resolved</html>')
 		else:
 			self.setHtml('<html>cookie Obtained</html>')
-		c_f = '/tmp/AnimeWatch/cloud_cookie.txt'
+		c_f = os.path.join(self.tmp_dir,'cloud_cookie.txt')
 		if os.path.exists(c_f):
 			content = open(c_f).read()
 			f = open(self.cookie_file,'w')

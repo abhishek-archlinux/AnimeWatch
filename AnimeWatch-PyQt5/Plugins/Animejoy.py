@@ -127,8 +127,9 @@ def replace_all(text, di):
 
 
 class Animejoy():
-	def __init__(self):
+	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.tmp_dir = tmp
 	def getOptions(self):
 			criteria = ['Random','History','List']
 			return criteria
@@ -216,7 +217,9 @@ class Animejoy():
 			summary = i.text
 			#summary = re.sub("\n","",summary)
 		if not summary:
-			summary = "No Summary"
+			summary = "Summary Not Available"
+		else:
+			summary = summary.strip()
 		for i in link1:
 			if 'src' in str(i):
 				j = i['src']
@@ -224,7 +227,8 @@ class Animejoy():
 					img = j
 					img = img.replace('animejoy.tv','anime-joy.tv')
 					print(img)
-		picn = "/tmp/" + name + ".jpg"
+		#picn = "/tmp/" + name + ".jpg"
+		picn = os.path.join(self.tmp_dir,name+'.jpg')
 		try:
 			if not os.path.isfile(picn) and img:
 				#subprocess.call(["curl","-o",picn,img])

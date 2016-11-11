@@ -74,140 +74,35 @@ def unshorten_url(url):
 			shrink_link = url
 		return shrink_link
 
-def cloudfare(url):
-			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
-			home1 = os.path.expanduser("~")
-			#home1 = "/usr/local/share"
-			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
-			if not os.path.isfile('/tmp/AnimeWatch/klm.txt'):
-					temp = subprocess.check_output(["phantomjs", pluginDir+"/ac.js",url])
-					temp = getContentUnicode(temp)
-					#print(temp
-					p = re.findall('{[^}]*}',temp)
-					for i in p:
-						if "_cfduid" in i:
-							cfd = i
-						elif "cf_clearance" in i:
-							cfc = i
-		
-					n = re.findall('value": "[^"]*|expiry": [^,]*',cfc)
-					e = re.findall('value": "[^"]*|expiry": [^,]*',cfd)
-					j = 0
-					for i in n:
-						n[j] = re.sub('value": "|expiry": ',"",i)
-						j = j+1
-					j = 0
-					for i in e:
-						e[j] = re.sub('value": "|expiry": ',"",i)
-						j = j+1
-					#print(n
-					cookiefile = ".acb.im	TRUE	/	FALSE	"+str(e[0])+"	__cfduid	" + str(e[1]) + "\n" + ".acb.im	TRUE	/	FALSE	"+str(n[0])+"	cf_clearance	" + str(n[1])
-					#print(cookiefile
-					f = open('/tmp/AnimeWatch/klm.txt', 'w')
-					f.write(cookiefile)
-					f.close()
-					cfc_val = n[1]
-					cfd_val = e[1]
-					#print(cfc_val
-					#print(cfd_val
-		
-			content = (subprocess.check_output(["curl","-b","/tmp/AnimeWatch/klm.txt",'-A',hdr,url]))
-			content = getContentUnicode(content)
-			#print(content
-			try:
-				
-				html = content
-				ysmm = re.findall(r"var ysmm =.*\;?", html)
-
-				if len(ysmm) > 0:
-					str_code = re.sub(r'var ysmm \= \'|\'\;', '', ysmm[0])
-					j = 0
-					l = ''
-					r = ''
-					for i in str_code:
-						if j < len(str_code):
-							l = l + str_code[j]
-						
-						j = j+2
-					j = len(str_code) - 1
-					for i in str_code:
-						if j >=0 :
-							r = r + str_code[j]
-						
-						j = j-2
-
-					final_decode_url = b64decode(l.encode() + r.encode())[2:].decode()
-
-					if re.search(r'go\.php\?u\=', final_decode_url):
-						final_decode_url = b64decode(re.sub(r'(.*?)u=', '',final_decode_url)).decode()
-			
-					print(final_decode_url)
-					return final_decode_url
-				
-				else:
-					return url
-
-			except Exception as e:
-				return url
 
 
-def cloudfareUrl(url,quality):
-	web = BrowseUrl(url,quality)
-def cloudfareUrlOld(url):
-			hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
-			home1 = os.path.expanduser("~")
-			#home1 = "/usr/local/share"
-			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
-			temp = subprocess.check_output(["phantomjs", pluginDir+"/ma.js",url])
-			temp = getContentUnicode(temp)
-			#print(temp
-			p = re.findall('{[^}]*}',temp)
-			for i in p:
-				if "_cfduid" in i:
-					cfd = i
-				elif "cf_clearance" in i:
-					cfc = i
 
-			n = re.findall('value": "[^"]*|expiry": [^,]*',cfc)
-			e = re.findall('value": "[^"]*|expiry": [^,]*',cfd)
-			j = 0
-			for i in n:
-				n[j] = re.sub('value": "|expiry": ',"",i)
-				j = j+1
-			j = 0
-			for i in e:
-				e[j] = re.sub('value": "|expiry": ',"",i)
-				j = j+1
-			#print(n
-			cookiefile = ".masterani.me	TRUE	/	FALSE	"+str(e[0])+"	__cfduid	" + str(e[1]) + "\n" + ".masterani.me	TRUE	/	FALSE	"+str(n[0])+"	cf_clearance	" + str(n[1])
-			print(cookiefile)
-			f = open('/tmp/AnimeWatch/animeSquare.txt', 'w')
-			f.write(cookiefile)
-			f.close()
-			cfc_val = n[1]
-			cfd_val = e[1]
+def cloudfareUrl(url,quality,c):
+	web = BrowseUrl(url,quality,c)
+
 			
 	
-def shrink_url(url):
+def shrink_url(url,tmp_dir):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	if "linkshrink" in url:
 		url = url.replace('http:','https:')
 		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-I','-L',url])
 		#content = getContentUnicode(content)
-		content = ccurl(url+'#'+'-Icb'+'#'+'/tmp/AnimeWatch/link.txt')
+		link_txt = os.path.join(tmp_dir,'link.txt')
+		content = ccurl(url+'#'+'-Icb'+'#'+link_txt)
 		#print(content,'----linkshrink---------')
 		#content = subprocess.check_output(['curl','-c','/tmp/AnimeWatch/link.txt','-b','/tmp/AnimeWatch/link.txt','-L',url])
 		#content = getContentUnicode(content)
-		content = ccurl(url+'#'+'-bc'+'#'+'/tmp/AnimeWatch/link.txt')
+		content = ccurl(url+'#'+'-bc'+'#'+link_txt)
 		print(content,'----linkshrink---------')
 		soup = BeautifulSoup(content,'lxml')
 		shrink = soup.find('a',{'class':'bt'})
 		shrink_link = shrink['href']
 		shrink_link = shrink_link.replace('http:','https:')
-		f = open('/tmp/AnimeWatch/link.txt','a')
+		f = open(link_txt,'a')
 		f.write('\nlinkshrink.net	FALSE	/	FALSE	0	s32	1')
 		f.close()
-		content = ccurl(shrink_link+'#'+'-Ieb'+'#'+'/tmp/AnimeWatch/link.txt'+'#'+url)
+		content = ccurl(shrink_link+'#'+'-Ieb'+'#'+link_txt+'#'+url)
 		m = re.findall('Location: [^\n]*', content)
 		#print(m
 		if m:
@@ -371,26 +266,14 @@ def ccurl(url):
 		content = storage.getvalue()
 		content = getContentUnicode(content)
 		return content
-def ccurlPhantom(url):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
-	
-	home1 = os.path.expanduser("~")
-	pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
-	try:
-		content = subprocess.check_output(["phantomjs", pluginDir+"/phantom1.js",url])
-		content = getContentUnicode(content)
-	except:
-		content = ccurl(url)
-	
-	return content
 
-def ccurl_setcookie(url):
+def ccurl_setcookie(url,cookie):
 	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
-	c.setopt(c.COOKIEJAR, '/tmp/AnimeWatch/cookie.txt')
+	c.setopt(c.COOKIEJAR, cookie)
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
@@ -402,13 +285,13 @@ def ccurl_setcookie(url):
 	
 	return (content)
 
-def ccurl_cookie(url):
+def ccurl_cookie(url,cookie):
 	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
-	c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/cookie.txt')
+	c.setopt(c.COOKIEFILE, cookie)
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
@@ -420,18 +303,18 @@ def ccurl_cookie(url):
 	
 	return (content)
 	
-def ccurlM(url):
+def ccurlM(url,cookie):
 	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
-	if os.path.exists('/tmp/AnimeWatch/animeSquare.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeSquare.txt')
+	if os.path.exists(cookie):
+		c.setopt(c.COOKIEFILE, cookie)
 	else:
 		print('inside ccurlM')
-		cloudfareUrl('http://www.masterani.me/','')
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeSquare.txt')
+		cloudfareUrl('http://www.masterani.me/','',cookie)
+		c.setopt(c.COOKIEFILE, cookie)
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
@@ -443,18 +326,18 @@ def ccurlM(url):
 	
 	return (content)
 	
-def ccurlHQ(url,post):
+def ccurlHQ(url,cookie,post=None):
 	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
-	if os.path.exists('/tmp/AnimeWatch/animeHQ.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeHQ.txt')
+	if os.path.exists(cookie):
+		c.setopt(c.COOKIEFILE, cookie)
 	else:
-		print('inside ccurlM')
-		cloudfareUrl('http://moetube.net/explore','')
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeHQ.txt')
+		print('inside ccurlHQ')
+		cloudfareUrl('http://moetube.net/explore','',cookie)
+		c.setopt(c.COOKIEFILE, cookie)
 	if post:
 		post_data = post
 		post_d = urllib.parse.urlencode(post_data)
@@ -471,17 +354,17 @@ def ccurlHQ(url,post):
 	
 	return (content)
 
-def ccurlGet(url):
+def ccurlGet(url,cookie):
 	
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
 	c = pycurl.Curl()
 	
-	if os.path.exists('/tmp/AnimeWatch/animeget.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeget.txt')
+	if os.path.exists(cookie):
+		c.setopt(c.COOKIEFILE, cookie)
 	else:
 		print('inside ccurlGet')
-		cloudfareUrl('http://www.animeget.io/','')
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/animeget.txt')
+		cloudfareUrl('http://www.animeget.io/','',cookie)
+		c.setopt(c.COOKIEFILE, cookie)
 	
 	curl_opt = ''
 	picn_op = ''
@@ -1045,68 +928,7 @@ def findurl(i):
 			final = ""
 			content = ccurl(i)
 			final = mp4starUrl(content,'myvidstream')
-			"""
-			soup = BeautifulSoup(content,'lxml')
-			link = soup.findAll('script',{'type':'text/javascript'})
-			for i in link:
-				if 'myvidstream' in i.text:
-					#print(i.text)
-					packed = i.text
-					break
-			if packed:
-				val = packer.unpack(packed)
-				print(val)
-				soup = BeautifulSoup(val,'lxml')
-				m = (re.search('file[^)]*',val)).group()
-				print(m)
-				if m:
-					n = re.search("http[^']*",m).group()
-					if n:
-						print(n)
-						final = n
-						final = re.sub(' |"','',final)
-						final = re.sub("'",'',final)
-						fi = final.split('\\')
-						if fi:
-							final = fi[0]
-			"""
-			"""
-			link = re.findall('eval[(][^"]*.split',content)
-			print(len(link))
-			req = str(link[1])
-			print(req)
-			m = re.findall('/[a-z]/[^/]/[a-z]',req)
-			print(m)
-			if m:
-				l = m[0].split('/')
-				num = l[2]
-				print(num)
-			i = req.split('|')
-			k = 0
-			for j in i:
-				if "video" == str(j):
-					flv = i[k+1]
-					if not flv:
-						flv = i[k+2]
-					if "srv" in flv:
-						server = flv
-					elif "flvplayer" == flv:
-						server = ""
-					else:
-						server = flv
-				if 'mp4' == str(j) or "flv" == str(j):
-					icode = i[k+1]
-				k = k+1 
-			print(str(num))
-			print(icode)
-			if not server:
-				#final = "http://myvidstream.net/files/"+num+"/"+icode+"/video.mp4?start=0"
-				final = "http://myvidstream.net:182/d/"+icode+"/video.mp4?start=0"
-			else:
-				#final = "http://"+server+".myvidstream.net/files/"+num+"/"+icode+"/video.mp4?start=0"
-				final = "http://"+server+".myvidstream.net:182/d/"+icode+"/video.mp4"
-			print(final)
-			"""
+			
 			return final
 	elif "mp4upload" in i:
 			content = ccurl(i)
@@ -1174,60 +996,7 @@ def findurl(i):
 					print(found)
 				else:
 					found = url1
-			"""
-			if found:
-				content = ccurl(found)
-				m = re.findall('value="[^"]*',content)
 			
-				value = re.sub('value="',"",m[0])
-				#print(value
-				
-				content = ccurlPost(found,value)
-			else:
-				content = ccurl(i)
-	
-				m = re.findall('value="[^"]*',content)
-			
-				value = re.sub('value="',"",m[0])
-				#print(value
-				
-				content = ccurlPost(i,value)
-				
-			#print(content
-			#m = re.findall('https[^"]*googleusercontent[^"]*',content)
-			if 'mp4star' in i:
-				m = re.findall('https[^"]*redirector[^"]*',content)
-			else:
-				m = re.findall("file: 'http[^']*",content)
-				n = []
-				for i in m:
-					i = i.replace("file: '",'')
-					n.append(i)
-				m[:]=[]
-				m = n
-			print(m)
-			if m:
-				#content = ccurl(m[0],"")
-				if qualityVideo == "sd":
-					#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[0]]))
-					content = ccurl(m[0]+'#'+'-I')
-				else:
-					#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[-1]]))
-					content = ccurl(m[-1]+'#'+'-I')
-				#content = getContentUnicode(content)
-				if "Location:" in content:
-					m = re.findall('Location: [^\n]*',content)
-					found = re.sub('Location: |\r','',m[-1])
-					print(found)
-			else:
-				url1 = mp4starUrl(content,'mp4star')
-				print(url1,'**********')
-				content = ccurl(url1+'#'+'-I')
-				if "Location:" in content:
-					m = re.findall('Location: [^\n]*',content)
-					found = re.sub('Location: |\r','',m[-1])
-					print(found)
-			"""
 			url = str(urllib.parse.unquote(found))
 			return url
 	elif "vidkai" in i:
@@ -1361,9 +1130,9 @@ def findurl(i):
 				return found
 	
 class SubbedAnime():
-	def __init__(self):
+	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		
+		self.tmp_dir = tmp
 	def getOptions(self):
 			criteria = ['Anime1','Anime44','AnimePlus','AnimeWow','Animehere','GoodAnime','AnimeNet','AnimeStream','Animefun','Animegalaxy','Animebox','Anime-Freak','AnimeBaka','AnimeHQ','AnimeSquare','Animeget','AnimeMax','AnimeAll','AnimeMix']
 			return criteria
@@ -1382,6 +1151,7 @@ class SubbedAnime():
 			url = "http://www.chia-anime.tv/index/"
 		elif siteName == "Animeget":
 			url = "http://www.animeget.io/full-anime-list/"
+			self.cookie_file = os.path.join(self.tmp_dir,'animeget.txt')
 		elif siteName == "Animehere":
 			if category == "Movies":
 				url = "http://www.animehere.com/anime-movie.html"
@@ -1392,7 +1162,8 @@ class SubbedAnime():
 				url = "http://www.animeplus.tv/anime-movies"
 			else:
 				url = "http://www.animeplus.tv/anime-show-list"
-			tmp_content = ccurl_setcookie(url)
+			self.cookie_file = os.path.join(self.tmp_dir,'cookie_plus.txt')
+			tmp_content = ccurl_setcookie(url,self.cookie_file)
 		elif siteName == "AnimeWow":
 			if category == "Movies":
 				url = "http://www.animewow.org/movies"
@@ -1402,6 +1173,7 @@ class SubbedAnime():
 			url = "http://www.animebox.tv/category"
 		elif siteName == "AnimeHQ":
 			url = "http://moetube.net/explore"
+			self.cookie_file = os.path.join(self.tmp_dir,'animehq.txt')
 		elif siteName == "GoodAnime":
 			url = "http://www.goodanime.net/new-anime-list"
 		elif siteName == "Anime-Freak":
@@ -1423,6 +1195,7 @@ class SubbedAnime():
 			url = "http://www.masterani.me/"
 			#url = "http://www.masterani.me/api/anime-all"
 			url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page=1'
+			self.cookie_file = os.path.join(self.tmp_dir,'animeSquare.txt')
 		elif siteName == "Anime1":
 			url = "http://www.anime1.com/content/list/"
 		elif siteName == "AnimeAll":
@@ -1431,7 +1204,7 @@ class SubbedAnime():
 			else:
 				url = "http://www.watchanimeshows.tv/anime-shows/"
 		site_nm = siteName.lower()+'list.txt'
-		title_file_list = os.path.join('/tmp','AnimeWatch',site_nm)
+		title_file_list = os.path.join(self.tmp_dir,site_nm)
 		if os.path.exists(title_file_list):
 			m = []
 			f =open(title_file_list,'r')
@@ -1451,9 +1224,9 @@ class SubbedAnime():
 				content = ccurl(url)
 				if 'checking_browser' in content:
 				#	 content = cloudfareUrl(url)
-					 content = ccurlM(url)
+					 content = ccurlM(url,self.cookie_file)
 				else:
-					f = open('/tmp/AnimeWatch/animeSquare.txt','w')
+					f = open(self.cookie_file,'w')
 					f.close()
 			elif siteName == "AnimeHQ":
 				#	hdrs = {'user-agent':self.hdr}
@@ -1461,17 +1234,17 @@ class SubbedAnime():
 				#	content = req.text
 				content = ccurl(url)
 				if 'checking_browser' in content:
-					content = ccurlHQ(url,'')
+					content = ccurlHQ(url,self.cookie_file)
 				else:
-					f = open('/tmp/AnimeWatch/animeHQ.txt','w')
+					f = open(self.cookie_file,'w')
 					f.close()
 			elif siteName == "Animeget":
-				content = ccurlGet(url)
+				content = ccurlGet(url,self.cookie_file)
 				
 			else:
 				content = ccurl(url)
 		else:
-			content = ccurl_cookie(url)
+			content = ccurl_cookie(url,self.cookie_file)
 		if siteName == "Anime44":
 			m = []
 			soup = BeautifulSoup(content,'lxml')
@@ -1695,9 +1468,9 @@ class SubbedAnime():
 				content = ccurl(url)
 				if 'checking_browser' in content:
 				#	 content = cloudfareUrl(url)
-					 content = ccurlM(url)
+					 content = ccurlM(url,self.cookie_file)
 				else:
-					f = open('/tmp/AnimeWatch/animeSquare.txt','w')
+					f = open(self.cookie_file,'w')
 					f.close()
 				l = json.loads(content)
 				n = l['data']
@@ -1834,6 +1607,7 @@ class SubbedAnime():
 			epncnt = name.split(',',1)[0]
 			url = "http://www.masterani.me/anime/info/" + name1 
 			base = "http://www.masterani.me/anime/"
+			#self.cookie_file = os.path.join(self.tmp_dir,'animeSquare.txt')
 			print(url)
 		elif siteName == "AnimeMix":
 			if embed == 0:
@@ -1855,15 +1629,15 @@ class SubbedAnime():
 			if siteName == "AnimeMix" and embed == 2:
 				content = "<html>Hello World</html>"
 			elif siteName == "AnimeSquare":
-				content = ccurlM(url)
+				content = ccurlM(url,self.cookie_file)
 			elif siteName == "AnimeHQ":
-				content = ccurlHQ(url,'')
+				content = ccurlHQ(url,self.cookie_file)
 			elif siteName == "Animeget":
-				content = ccurlGet(url)
+				content = ccurlGet(url,self.cookie_file)
 			else:
 				content = ccurl(url)
 		else:
-			content = ccurl_cookie(url)
+			content = ccurl_cookie(url,self.cookie_file)
 		#content = ccurl(url)
 		soup = BeautifulSoup(content,'lxml')
 		summary = ""
@@ -2111,8 +1885,8 @@ class SubbedAnime():
 					image = link1['src']
 					img.append(image)
 				print(img,'---------------img-------------')
-				picn = "/tmp/AnimeWatch/" + name + ".jpg"
-				
+				#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+				picn = os.path.join(self.tmp_dir,name+'.jpg')
 				if not img:
 					link = soup.findAll('meta')
 					print(link,'-------------LinkMeta-----------')
@@ -2246,7 +2020,8 @@ class SubbedAnime():
 			#if img[0] != "No.jpg":
 			#jpgn = img[0].split("/")[-1]
 			#print("Pic Name=" + jpgn
-			picn = "/tmp/AnimeWatch/" + name + ".jpg"
+			#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			if not img:
 				img[0] = "No.jpg"
 				picn = "No.jpg"
@@ -2257,7 +2032,7 @@ class SubbedAnime():
 				print(img[0])
 				#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
 				if siteName == "Animeget":
-					ccurlGet(img[0]+'#'+'-o'+'#'+picn)
+					ccurlGet(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 				else:
 					ccurl(img[0]+'#'+'-o'+'#'+picn)
 			else:
@@ -2472,7 +2247,7 @@ class SubbedAnime():
 						final1= forward_link
 						print(final1)
 					elif "mt0.org" in forward_link:
-						final1= shrink_url(forward_link)
+						final1= shrink_url(forward_link,self.tmp_dir)
 						print(final1)
 					else:
 			
@@ -2612,7 +2387,7 @@ class SubbedAnime():
 				if li:
 					li1 = 'http://www.animeget.io'+li[0]
 					print(li1)
-					content1 = ccurlGet(li1)
+					content1 = ccurlGet(li1,self.cookie_file)
 					soup1 = BeautifulSoup(content1,'lxml')
 					link = soup1.findAll('a')
 			elif siteName == "Animegalaxy":
@@ -2770,9 +2545,9 @@ class SubbedAnime():
 				url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page='+str(pgn)
 				content = ccurl(url)
 				if 'checking_browser' in content:
-					content = ccurlHQ(url,'')
+					content = ccurlHQ(url,self.cookie_file)
 				else:
-					f = open('/tmp/AnimeWatch/animeHQ.txt','w')
+					f = open(self.cookie_file,'w')
 					f.close()
 				
 				l = json.loads(content)
@@ -2806,7 +2581,7 @@ class SubbedAnime():
 			url = "http://www.animeplus.tv/" + epn
 			if not os.path.isfile('/tmp/AnimeWatch/cookie.txt'):
 					#subprocess.call(["curl","-A",self.hdr,"-c","/tmp/AnimeWatch/cookie.txt","-I","http://www.animeplus.tv"])
-					ccurl_setcookie('http://www.animeplus.tv/')
+					ccurl_setcookie('http://www.animeplus.tv/',self.cookie_file)
 					#content = ccurl_cookie(url)
 		elif siteName == "AnimeWow":
 			url = "http://www.animewow.org/" + epn
@@ -2900,7 +2675,7 @@ class SubbedAnime():
 						if final2:
 							final = findurl(final2[0])
 		elif siteName == "Animeget":
-			content = ccurlGet(url)
+			content = ccurlGet(url,self.cookie_file)
 			m = re.findall('/download[^"]id[^"]*',content)
 			print(m)
 			if m:
@@ -2995,7 +2770,7 @@ class SubbedAnime():
 				final = findurl(str(m[mirrorNo]))
 				 
 		elif siteName == "AnimeSquare":
-			content = ccurlM(url)
+			content = ccurlM(url,self.cookie_file)
 			soup = BeautifulSoup(content,'lxml')
 			content1 = soup.findAll('script',{'type':'text/javascript'})
 			final = ""
@@ -3086,10 +2861,10 @@ class SubbedAnime():
 			elif "q.gs" in url:
 				shrink_link=str(unshorten_url(url))
 			else:
-				shrink_link = shrink_url(str(url))
+				shrink_link = shrink_url(str(url),self.tmp_dir)
 
 			if 'linkshrink' in shrink_link:
-				shrink_link = shrink_url(str(url))
+				shrink_link = shrink_url(str(url),self.tmp_dir)
 			
 			if not shrink_link:
 				shrink_link = url
@@ -3382,7 +3157,7 @@ class SubbedAnime():
 			#soup = BeautifulSoup(content,'lxml')
 			
 			post = {'id':new_c,'ep':epn,'chk':'2'}
-			content = ccurlHQ('http://www.moetube.net/rui.php',post)
+			content = ccurlHQ('http://www.moetube.net/rui.php',self.cookie_file,post)
 			print(content)
 			#final = content
 			glink = content.split('/')[-1]
@@ -3497,7 +3272,7 @@ class SubbedAnime():
 				if siteName != "AnimePlus":
 					content = ccurl(url)
 				else:
-					content = ccurl_cookie(url)
+					content = ccurl_cookie(url,self.cookie_file)
 				soup = BeautifulSoup(content,'lxml')
 				if siteName != "Animehere":
 					link = soup.findAll('ul',{ 'class':'ver_list'})
@@ -3547,7 +3322,7 @@ class SubbedAnime():
 										content = ccurl(url)
 									
 									else:
-										content = ccurl_cookie(url)
+										content = ccurl_cookie(url,self.cookie_file)
 									soup = BeautifulSoup(content,'lxml')
 									if siteName != "Animehere":
 										link = soup.findAll('div',{ 'class':'vmargin'})
@@ -3579,7 +3354,7 @@ class SubbedAnime():
 							content = ccurl(url)
 						
 						else:
-							content = ccurl_cookie(url)
+							content = ccurl_cookie(url,self.cookie_file)
 						soup = BeautifulSoup(content,'lxml')
 						if siteName != "Animehere":
 							link = soup.findAll('div',{ 'class':'vmargin'})
@@ -3602,7 +3377,7 @@ class SubbedAnime():
 				if siteName != "AnimePlus":
 					content = ccurl(url)
 				else:
-					content = ccurl_cookie(url)
+					content = ccurl_cookie(url,self.cookie_file)
 				soup = BeautifulSoup(content,'lxml')
 				if siteName == "Animehere":
 					link = soup.findAll('div',{'id':'playbox'})	

@@ -21,51 +21,9 @@ try:
 	from headlessBrowser import BrowseUrl
 except:
 	from headlessBrowser_webkit import BrowseUrl
-def cloudfare(url,quality):
-	web = BrowseUrl(url,quality)
-def cloudfareOld():
-			home1 = expanduser("~")
-			#home1 = "/usr/local/share"
-			pluginDir = home1+"/.config/AnimeWatch/src/Plugins"
-			temp = progressBar(["phantomjs", pluginDir+"/kac.js","http://kisscartoon.me"])
-			if isinstance(temp,bytes):
-				print("I'm byte")
-				try:
-					temp = str((temp).decode('utf-8'))
-				except:
-					temp = str(temp)
-			else:
-				print(type(temp))
-				temp = str(temp)
-				print("I'm unicode")
-			print(temp)
-			p = re.findall('{[^}]*}',temp)
-			for i in p:
-				if "_cfduid" in i:
-					cfd = i
-				elif "cf_clearance" in i:
-					cfc = i
-				elif "ASP.NET" in i:
-					asp = i
-			n = re.findall('value": "[^"]*|expiry": [^,]*',cfc)
-			e = re.findall('value": "[^"]*|expiry": [^,]*',cfd)
-			a = re.findall('value": "[^"]*|expiry": [^,]*',asp)
-			j = 0
-			for i in n:
-				n[j] = re.sub('value": "|expiry": ',"",i)
-				j = j+1
-			j = 0
-			for i in e:
-				e[j] = re.sub('value": "|expiry": ',"",i)
-				j = j+1
-			j = 0
-			for i in a:
-				a[j] = re.sub('value": "|expiry": ',"",i)
-				j = j+1
-			cookiefile = ".kisscartoon.me	TRUE	/	FALSE	"+str(e[0])+"	__cfduid	" + str(e[1]) + "\n" + "kisscartoon.me	FALSE	/	FALSE	0	ASP.NET_SessionId	"+str(a[0])+"\n"+".kisscartoon.me	TRUE	/	FALSE	"+str(n[0])+"	cf_clearance	" + str(n[1])
-			f = open('/tmp/AnimeWatch/kcookieC.txt', 'w')
-			f.write(cookiefile)
-			f.close()
+def cloudfare(url,quality,c):
+	web = BrowseUrl(url,quality,c)
+
 def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -79,7 +37,7 @@ def getContentUnicode(content):
 		print("I'm unicode")
 	return content
 def ccurl(url):
-	global hdr
+	global hdr,tmp_working_dir
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
@@ -94,13 +52,13 @@ def ccurl(url):
 		if curl_opt == '-o':
 			picn_op = nUrl.split('#')[2]
 			
-			
+	cookie_file = os.path.join(tmp_working_dir,'kcookieC.txt')
 	if os.path.exists('/tmp/AnimeWatch/kcookieC.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieC.txt')
+		c.setopt(c.COOKIEFILE, cookie_file)
 	else:
 		print('inside ccurl')
-		cloudfare(url,'')
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/kcookieC.txt')
+		cloudfare(url,'',cookie_file)
+		c.setopt(c.COOKIEFILE, cookie_file)
 	url = str(url)
 	try:
 		c.setopt(c.URL, url)
@@ -156,17 +114,20 @@ def replace_all(text, di):
 
 
 class KissCartoon():
-	def __init__(self):
+	def __init__(self,tmp):
+		global tmp_working_dir
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		
+		tmp_working_dir = tmp
+		self.tmp_dir = tmp
+		self.cookie_file = os.path.join(tmp,'kcookieC.txt')
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
 			
 	def ccurlN(self,content,url):
 		if 'checking_browser' in content:
-			if os.path.exists('/tmp/AnimeWatch/kcookieC.txt'):
-				os.remove('/tmp/AnimeWatch/kcookieC.txt')
+			if os.path.exists(self.cookie_file):
+				os.remove(self.cookie_file)
 			content = ccurl(url)
 		return content
 		
@@ -192,9 +153,9 @@ class KissCartoon():
 		print(url)
 		content = ccurl(url)
 		content = self.ccurlN(content,url)
-		f = open('/tmp/AnimeWatch/1.txt','w')
-		f.write(content)
-		f.close()
+		#f = open('/tmp/AnimeWatch/1.txt','w')
+		#f.write(content)
+		#f.close()
 		epl = re.findall('/Cartoon/' + name + '[^"]*["?"]id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
@@ -205,7 +166,8 @@ class KissCartoon():
 			print(img)
 			#jpgn = img[0].split('/')[-1]
 			#print('Pic Name=' + jpgn
-			picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			print(picn)
 			if img:
 				#img[0]=img[0].replace('kissanime.com','kissanime.to')
@@ -214,7 +176,8 @@ class KissCartoon():
 				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieC.txt','-A',self.hdr,'-o',picn,img[0]])
 				ccurl(img[0]+'#'+'-o'+'#'+picn)
 		except:
-			picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			picn = os.path.join(self.tmp_dir,name+'.jpg')
 		j = 0
 		for i in epl:
 			i = re.sub('/Cartoon/' + name + '/', '', i)
@@ -250,7 +213,7 @@ class KissCartoon():
 			summary = re.sub('\r','',summary)
 			summary = re.sub('\n\n','\n',summary)
 		except:
-			summary = 'Not Available'
+			summary = 'Summary Not Available'
 		print(summary)
 		print(picn)
 		epl=naturallysorted(epl)  
@@ -285,12 +248,12 @@ class KissCartoon():
 		sd = ''
 		hd = ''
 		sd480 = ''
-		lnk_file = '/tmp/AnimeWatch/lnk.txt'
+		lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
 		if os.path.exists(lnk_file):
 			os.remove(lnk_file)
 			
 		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-		cloudfare(url,quality)
+		cloudfare(url,quality,self.cookie_file)
 		
 		
 		

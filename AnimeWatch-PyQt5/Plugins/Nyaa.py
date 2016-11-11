@@ -22,8 +22,8 @@ try:
 except:
 	from headlessBrowser_webkit import BrowseUrl
 
-def cloudfare(url,quality):
-	web = BrowseUrl(url,quality)
+def cloudfare(url,quality,nyaa_c):
+	web = BrowseUrl(url,quality,nyaa_c)
 
 def naturallysorted(l): 
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -44,7 +44,7 @@ def getContentUnicode(content):
 	return content
 	
 def ccurl(url):
-	global hdr
+	global hdr,tmp_working_dir
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	print(url)
 	c = pycurl.Curl()
@@ -71,12 +71,13 @@ def ccurl(url):
 			post2 = post.split('=')[1]
 			post_data = {post1:post2}
 			postfield = urllib.parse.urlencode(post_data)
-	if os.path.exists('/tmp/AnimeWatch/nyaa.txt'):
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/nyaa.txt')
+	nyaa_c = os.path.join(tmp_working_dir,'nyaa.txt')
+	if os.path.exists(nyaa_c):
+		c.setopt(c.COOKIEFILE, nyaa_c)
 	else:
 		print('inside ccurl')
-		cloudfare(url,'')
-		c.setopt(c.COOKIEFILE, '/tmp/AnimeWatch/nyaa.txt')
+		cloudfare(url,'',nyaa_c)
+		c.setopt(c.COOKIEFILE, nyaa_c)
 	url = str(url)
 	c.setopt(c.URL, url)
 	storage = BytesIO()
@@ -146,16 +147,19 @@ def replace_all(text, di):
 
 
 class Nyaa():
-	def __init__(self):
+	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.tmp_dir = tmp
 	def getOptions(self):
 			criteria = ['Date','Seeders','Leechers','Downloads','History','LocalStreaming']
 			return criteria
 		
-	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui,progress):
+	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui,progress,tmp_dir):
 		#nm = name.rsplit('-',1)
 		#name = nm[0]
 		#name_id = nm[1]
+		global tmp_working_dir
+		tmp_working_dir = tmp_dir
 		index = int(epn)
 		ip_n = local_ip.rsplit(':',1)
 		ip = ip_n[0]
@@ -166,15 +170,19 @@ class Nyaa():
 			#ses = set_torrent_session()
 		path = path_folder
 		
-		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
-		torrent_dest = home+name+'.torrent'
+		#home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
+		#torrent_dest = home+name+'.torrent'
+		
+		home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History','Nyaa')
+		torrent_dest = os.path.join(home,name+'.torrent')
+		
 		#home1 = os.path.expanduser('~')+'/.config/AnimeWatch/src/Plugins/stream.py'
 		print(torrent_dest,index,path)
 		
 		#handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path)
 		#print(get_torrent_info(torrent_dest,index,path))
 		#print('---before--error---164---')
-		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui,progress)
+		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui,progress,tmp_dir)
 		#print('---line--error---166---')
 		torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
 		torrent_thread.start()
@@ -222,7 +230,9 @@ class Nyaa():
 		m = self.process_page(url)
 		return m
 		
-	def getCompleteList(self,opt,genre_num,ui):
+	def getCompleteList(self,opt,genre_num,ui,tmp_dir):
+		global tmp_working_dir
+		tmp_working_dir = tmp_dir
 		if opt == 'Date':
 			url = 'https://www.nyaa.se/?cats=1_37'
 		elif opt == 'Seeders':
@@ -242,8 +252,12 @@ class Nyaa():
 		url = "https://www.nyaa.se/?page=download&tid=" + name_id
 		print(url)
 		summary = ""
-		home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
-		torrent_dest = home+name+'.torrent'
+		#home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Nyaa/'
+		#torrent_dest = home+name+'.torrent'
+		
+		home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History','Nyaa')
+		torrent_dest = os.path.join(home,name+'.torrent')
+		
 		if not os.path.exists(torrent_dest):
 			ccurl(url+'#'+'-o'+'#'+torrent_dest)
 		
@@ -251,9 +265,9 @@ class Nyaa():
 		file_arr = []
 		for f in info.files():
 			file_path = f.path
-			if '/' in f.path:
-				file_path = file_path.split('/')[-1]
-				
+			#if '/' in f.path:
+			#	file_path = file_path.split('/')[-1]
+			file_path = os.path.basename(file_path)	
 			file_arr.append(file_path)
 		
 		file_arr.append('No.jpg')

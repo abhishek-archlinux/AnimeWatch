@@ -249,9 +249,3 @@ class musicArtist():
 		print (len(img))
 		img.append(wiki)
 		return img
-		#f = open('/tmp/AnimeWatch/'+name+'-bio.txt','w')
-		#f.write(wiki.encode('utf-8'))
-		#f.close()
-		#thumb = '/tmp/AnimeWatch/'+name+'.jpg'
-		#url = img[0]
-		#subprocess.call(["curl","-o",thumb,url])

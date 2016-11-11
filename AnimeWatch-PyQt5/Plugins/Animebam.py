@@ -144,8 +144,9 @@ def ccurl(url):
 
 
 class Animebam():
-	def __init__(self):
+	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.tmp_dir = tmp
 	def getOptions(self):
 			criteria = ['List','Random','History']
 			return criteria
@@ -254,7 +255,8 @@ class Animebam():
 		"""
 		print(img)
 		
-		picn = "/tmp/AnimeWatch/" + name + ".jpg"
+		#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+		picn = os.path.join(self.tmp_dir,name+'.jpg')
 		try:
 			if not os.path.isfile(picn):
 				#subprocess.call(["curl",'-L','-A',self.hdr,'-o',picn,img[0]])

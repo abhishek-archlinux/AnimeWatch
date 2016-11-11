@@ -38,10 +38,12 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	
 		
 	def do_GET(self):
-		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
+		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path,tmp_dir_folder
 		print(handle,ses,info)
-		if os.path.exists('/tmp/AnimeWatch/row.txt'):
-			content = open('/tmp/AnimeWatch/row.txt').read()
+		tmp_file = os.path.join(tmp_dir_folder,'row.txt')
+		tmp_pl_file = os.path.join(tmp_dir_folder,'player_stop.txt')
+		if os.path.exists(tmp_file):
+			content = open(tmp_file).read()
 			try:
 				fileIndex = int(content)
 				i = 0
@@ -83,7 +85,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				cnt = pr.piece
 				cnt_limit = pr.piece+n_pieces
 				cnt1 = cnt
-				file_name = torrent_download_path +'/'+ fileStr.path
+				file_name = os.path.join(torrent_download_path,fileStr.path)
 			except:
 				pass
 		self.send_response(200)
@@ -96,10 +98,11 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		
 		length = info.piece_length()
 		if not os.path.exists(file_name):
-			if '/' in file_name:
-				dir_name = file_name.rsplit('/',1)[0]
-				if not os.path.exists(dir_name):
-					os.makedirs(dir_name)
+			#if '/' in file_name:
+			#	dir_name = file_name.rsplit('/',1)[0]
+			dir_name,sub_file = os.path.split(file_name)
+			if not os.path.exists(dir_name):
+				os.makedirs(dir_name)
 			f = open(file_name,'wb')
 			f.close()
 		
@@ -127,15 +130,15 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					handle.piece_priority(i,7)
 					handle.piece_priority(i+1,7)
 				time.sleep(2)
-				if ses.is_paused() or os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
+				if ses.is_paused() or os.path.exists(tmp_pl_file):
 					break
 		
 		
 		f.close()
-		if os.path.exists('/tmp/AnimeWatch/player_stop.txt'):
-			os.remove('/tmp/AnimeWatch/player_stop.txt')
-		if os.path.exists('/tmp/AnimeWatch/row.txt'):
-			os.remove('/tmp/AnimeWatch/row.txt')
+		if os.path.exists(tmp_pl_file):
+			os.remove(tmp_pl_file)
+		if os.path.exists(tmp_file):
+			os.remove(tmp_file)
 		return 0
 		
 	
@@ -346,15 +349,16 @@ def session_finished(var):
 			
 			
 			g = fileStr.path
-			if '/' in g:
-				print(g.split('/')[-1])
-			else:
-				print(g)
-			
+			#if '/' in g:
+			#	print(g.split('/')[-1])
+			#else:
+			#	print(g)
+			g = os.path.basename(g)
 	
-def set_torrent_info(v1,v2,v3,session,u,p_bar):
-	global handle,ses,info,cnt,cnt_limit,file_name,ui,progress
+def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,progress,tmp_dir_folder
 	progress = p_bar
+	tmp_dir_folder = tmp_dir
 	progress.setValue(0)
 	progress.show()
 	ui = u
@@ -373,7 +377,7 @@ def set_torrent_info(v1,v2,v3,session,u,p_bar):
 		i += 1
 		
 	print (fileStr.path)
-	file_name = path+'/'+fileStr.path
+	file_name = os.path.join(path,fileStr.path)
 	file_arr =[]
 	for f in info.files():
 		file_arr.append(f.path)
@@ -418,10 +422,11 @@ def set_torrent_info(v1,v2,v3,session,u,p_bar):
 	handle.resume()
 	return cnt,cnt_limit
 		
-def get_torrent_info_magnet(v1,v3,u,p_bar):
-	global handle,ses,info,cnt,cnt_limit,file_name,ui,progress
+def get_torrent_info_magnet(v1,v3,u,p_bar,tmp_dir):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,progress,tmp_dir_folder
 	ui = u
 	progress = p_bar
+	tmp_dir_folder = tmp_dir
 	progress.setValue(0)
 	progress.show()
 	#print(v1,'------------hello----------info---')
@@ -451,10 +456,11 @@ def get_torrent_info_magnet(v1,v3,u,p_bar):
 	
 	return handle,ses,info
 
-def get_torrent_info(v1,v2,v3,session,u,p_bar):
-	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path,progress,total_size_content
+def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path,progress,total_size_content,tmp_dir_folder
 	ui = u
 	progress = p_bar
+	tmp_dir_folder = tmp_dir
 	progress.setValue(0)
 	progress.show()
 	if not session:
@@ -511,7 +517,7 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar):
 		i += 1
 	
 	print (fileStr.path)
-	file_name = v3+'/'+fileStr.path
+	file_name = os.path.join(v3,fileStr.path)
 	torrent_download_path = v3
 	file_arr =[]
 	for f in info.files():
