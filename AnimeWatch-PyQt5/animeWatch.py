@@ -80,7 +80,7 @@ from functools import partial
 import weakref
 import datetime
 import socket
-import fcntl
+#import fcntl
 import struct
 from PyQt5.QtWidgets import QInputDialog
 import sqlite3
@@ -142,7 +142,7 @@ def replace_line(file_path, pattern, subst):
 	remove(file_path)
 	#Move new file
 	move(abs_path, file_path)
-
+"""
 def get_interface_ip(ifname):
 
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -159,7 +159,7 @@ def get_lan_ip_old():
 			except:
 				pass
 	return ip
-
+"""
 def get_lan_ip():
 	a = subprocess.check_output(['ip','addr','show'])
 	b = str(a,'utf-8')
@@ -892,10 +892,17 @@ class MainWindowWidget(QtWidgets.QWidget):
 	def mouseMoveEvent(self,event):
 		global site
 		pos = event.pos()
+		
 		#print(pos)
 		if pos.x() >= 0 and pos.x()<=10:
 			ui.dockWidget_3.show()
 			ui.btn1.setFocus()
+		elif pos.x() > 200 and ui.auto_hide_dock:
+			ui.dockWidget_3.hide()
+			if not ui.list1.isHidden():
+				ui.list1.setFocus()
+			elif not ui.list2.isHidden():
+				ui.list2.setFocus()
 		elif MainWindow.isFullScreen() and not ui.tab_5.isHidden():
 			ht = self.height()
 			#print "height="+str(ht)
@@ -1105,7 +1112,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		global mpvplayer,Player,wget,cycle_pause,cache_empty,buffering_mplayer,total_till,curR,cur_label_num,iconv_r_indicator,total_seek
 		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,quitReally,pause_indicator,iconv_r,tab_6_size_indicator
 		if mpvplayer:
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 					#self.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
 					if tab_6_size_indicator:
 						tab_6_size_indicator.pop()
@@ -1442,7 +1449,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							#ui.gridLayout.setContentsMargins(10,10,10,10)
 							ui.superGridLayout.setContentsMargins(10,10,10,10)
 							if wget:
-								if wget.pid() > 0:
+								if wget.processId() > 0:
 									ui.goto_epn.hide()
 									ui.progress.show()
 				
@@ -1492,7 +1499,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							#ui.btn20.hide()
 							ui.frame2.hide()
 							if wget:
-								if wget.pid() > 0:
+								if wget.processId() > 0:
 									ui.progress.hide()
 							ui.list2.hide()
 							ui.list6.hide()
@@ -1548,7 +1555,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							ui.horizontalLayout10.setContentsMargins(10,10,10,10)
 							ui.horizontalLayout10.setSpacing(10)
 							if wget:
-								if wget.pid() > 0:
+								if wget.processId() > 0:
 									ui.goto_epn.hide()
 									ui.progress.show()
 					
@@ -1628,7 +1635,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			ui.gridLayout.setSpacing(0)
 			
 			#if mpvplayer:
-			#		if mpvplayer.pid() > 0:
+			#		if mpvplayer.processId() > 0:
 			#			mpvplayer.write(b'\n quit \n')
 			#			mpvplayer.kill()
 			if site == "Local" or site == "PlayLists" or site == "Music" or site == "Video" or site == "None":
@@ -1980,7 +1987,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		elif action == watch:
 			#if site=="Local":
 				if mpvplayer:
-					if mpvplayer.pid()>0:
+					if mpvplayer.processId()>0:
 						mpvplayer.kill()
 						ui.tab_5.hide()
 						ui.tab_6.setMaximumSize(10000,10000)
@@ -2108,7 +2115,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		elif action == watch1:
 			#if site=="Local":
 				if mpvplayer:
-					if mpvplayer.pid()>0:
+					if mpvplayer.processId()>0:
 						mpvplayer.kill()
 						ui.tab_5.hide()
 						ui.tab_6.setMaximumSize(10000,10000)
@@ -2240,7 +2247,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		elif action == stop:
 			quitReally = "yes"
 			if mpvplayer:
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					mpvplayer.write(b'\n quit \n')
 		elif action == new_pls:
 			print ("creating")
@@ -2503,7 +2510,7 @@ class MySlider(QtWidgets.QSlider):
 		
 		if mpvplayer:
 			
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 				if Player== "mpv":
 					var = bytes('\n'+"seek "+str(new_val)+" absolute"+'\n','utf-8')
 					mpvplayer.write(var)
@@ -3497,7 +3504,7 @@ class List2(QtWidgets.QListWidget):
 		global site,wget,downloadVideo
 		print(self.currentRow(),'--init--offline--')
 		if site.lower() != "Local" and site.lower() != 'video' and site.lower() != 'music':
-			if wget.pid() == 0:
+			if wget.processId() == 0:
 				downloadVideo = 1
 				r = self.currentRow()
 				item = self.item(r)
@@ -3975,7 +3982,7 @@ class List2(QtWidgets.QListWidget):
 				ui.goto_epn.hide()
 				ui.btn20.hide()
 				if wget:
-					if wget.pid() > 0:
+					if wget.processId() > 0:
 						ui.progress.hide()
 				ui.list2.hide()
 				ui.list6.hide()
@@ -4006,7 +4013,7 @@ class List2(QtWidgets.QListWidget):
 				ui.btn20.show()
 				#if Player == "mpv":
 				if wget:
-					if wget.pid() > 0:
+					if wget.processId() > 0:
 						ui.goto_epn.hide()
 						ui.progress.show()
 					
@@ -5348,7 +5355,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 		if not mpvplayer:
 			mpvRunning = "False"
 		if  mpvplayer:
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 				mpvRunning = "True"
 				#if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Right:
 				#	super(QtGuiQWidgetScroll1, self).keyPressEvent(event)
@@ -5457,7 +5464,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 					tab_6_size_indicator.append(ui.tab_6.width())
 				ui.gridLayout.setSpacing(0)
 				if mpvplayer:
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						mpvplayer.write(b'\n quit \n')
 						mpvplayer.kill()
 				if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site=='None':
@@ -5538,7 +5545,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 						
 						quitReally = "no"
 						if mpvplayer:
-							if mpvplayer.pid() > 0:
+							if mpvplayer.processId() > 0:
 								mpvplayer.write(b'\n quit \n')
 								mpvplayer.kill()
 						num = ui.list2.currentRow()
@@ -5712,7 +5719,7 @@ class tab6(QtWidgets.QWidget):
 				#ui.btn20.hide()
 				#ui.frame2.hide()
 				if wget:
-					if wget.pid() > 0:
+					if wget.processId() > 0:
 						ui.progress.hide()
 				ui.list2.hide()
 				ui.list6.hide()
@@ -5756,7 +5763,7 @@ class tab6(QtWidgets.QWidget):
 				ui.horizontalLayout10.setContentsMargins(10,10,10,10)
 				ui.horizontalLayout10.setSpacing(10)
 				if wget:
-					if wget.pid() > 0:
+					if wget.processId() > 0:
 						ui.goto_epn.hide()
 						ui.progress.show()
 					
@@ -6240,7 +6247,7 @@ class tab5(QtWidgets.QWidget):
 					ui.tab_6.hide()
 					ui.goto_epn.hide()
 					ui.btn20.hide()
-					if wget.pid() > 0 or video_local_stream:
+					if wget.processId() > 0 or video_local_stream:
 						ui.progress.hide()
 						if not ui.torrent_frame.isHidden():
 							ui.torrent_frame.hide()
@@ -6274,7 +6281,7 @@ class tab5(QtWidgets.QWidget):
 					ui.list2.show()
 					ui.goto_epn.show()
 					ui.btn20.show()
-					if wget.pid() > 0 or video_local_stream:
+					if wget.processId() > 0 or video_local_stream:
 						ui.progress.show()
 						
 					ui.frame1.show()
@@ -6382,7 +6389,7 @@ class tab5(QtWidgets.QWidget):
 				ui.scrollArea1.verticalScrollBar().setValue(ht)
 				"""
 			if wget:
-				if wget.pid() > 0:
+				if wget.processId() > 0:
 					#ui.goto_epn.hide()
 					ui.progress.show()
 		
@@ -6706,6 +6713,9 @@ class Ui_MainWindow(object):
 		
 		
 		#self.label_up_speed.setMaximumWidth(100)
+		
+		
+		
 		
 		self.frame1 = QtWidgets.QFrame(MainWindow)
 		self.frame1.setMaximumSize(QtCore.QSize(10000, 32))
@@ -7191,6 +7201,12 @@ class Ui_MainWindow(object):
 		#self.btn9.hide()
 		#self.btn9.setMaximumSize(QtCore.QSize(200, 16777215))
 		#####################################################
+		self.close_frame = QtWidgets.QFrame(MainWindow)
+		self.close_frame.setFrameShape(QtWidgets.QFrame.NoFrame)
+		self.close_frame.setFrameShadow(QtWidgets.QFrame.Raised)
+		self.horiz_close_frame = QtWidgets.QHBoxLayout(self.close_frame)
+		self.horiz_close_frame.setSpacing(0)
+		self.horiz_close_frame.setContentsMargins(0,0,0,0)
 		self.scrollArea.setWidget(self.scrollAreaWidgetContents)
 		self.horizontalLayout10.addWidget(self.scrollArea)
 		self.scrollArea1.setWidget(self.scrollAreaWidgetContents1)
@@ -7198,6 +7214,21 @@ class Ui_MainWindow(object):
 		self.btn4 = QtWidgets.QPushButton(self.dockWidgetContents_3)
 		self.btn4.setObjectName(_fromUtf8("btn4"))
 		self.btn4.setMinimumHeight(30)
+		self.btn4.setText('--')
+		self.btn4.setToolTip('Auto-Hide On/Off')
+		self.btn4.clicked.connect(self.close_frame_btn)
+		self.auto_hide_dock = True
+		
+		self.btn_quit = QtWidgets.QPushButton(self.dockWidgetContents_3)
+		self.btn_quit.setObjectName(_fromUtf8("btn_quit"))
+		self.btn_quit.setMinimumHeight(30)
+		self.btn_quit.setText(self.player_buttons['quit'])
+		self.btn_quit.setToolTip('Quit')
+		self.btn_quit.clicked.connect(QtWidgets.qApp.quit)
+		#self.close_frame.setMaximumHeight(30)
+		
+		self.horiz_close_frame.insertWidget(1,self.btn4,0)
+		self.horiz_close_frame.insertWidget(0,self.btn_quit,0)
 		
 		self.btnHistory = QtWidgets.QPushButton(self.dockWidgetContents_3)
 		self.btnHistory.setObjectName(_fromUtf8("btnHistory"))
@@ -7211,7 +7242,8 @@ class Ui_MainWindow(object):
 		self.VerticalLayoutLabel_Dock3.insertWidget(5,self.btn3,0)
 		self.VerticalLayoutLabel_Dock3.insertWidget(6,self.chk,0)
 		self.VerticalLayoutLabel_Dock3.insertWidget(7,self.comboView,0)
-		self.VerticalLayoutLabel_Dock3.insertWidget(8,self.btn4,0)
+		self.VerticalLayoutLabel_Dock3.insertWidget(8,self.close_frame,0)
+		
 		self.btn3.setMinimumHeight(30)
 		self.line.setMinimumHeight(30)
 		self.btn1.setMinimumHeight(30)
@@ -7440,7 +7472,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.btnHistory, QtCore.SIGNAL(_fromUtf8("clicked()")), self.setPreOpt)
 		self.btnHistory.clicked.connect(self.setPreOpt)
 		#QtCore.QObject.connect(self.btn4, QtCore.SIGNAL(_fromUtf8("clicked()")), self.dockWidget_3.hide)
-		self.btn4.clicked.connect(self.dockWidget_3.hide)
+		#self.btn4.clicked.connect(self.dockWidget_3.hide)
 		#QtCore.QObject.connect(self.chk, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.preview)
 		self.chk.currentIndexChanged['int'].connect(self.preview)
 		
@@ -7468,7 +7500,7 @@ class Ui_MainWindow(object):
 		self.filter_btn.setText(_translate("MainWindow", "Filter", None))
 		#self.hide_btn_list1.setText(_translate("MainWindow", "Hide", None))
 		#self.btn9.setText(_translate("MainWindow", "GO", None))
-		self.btn4.setText(_translate("MainWindow", "Hide", None))
+		#self.btn4.setText(_translate("MainWindow", "Hide", None))
 		self.btnHistory.setText(_translate("MainWindow", "History", None))
 		self.go_opt.setText(_translate("MainWindow", "Go", None))
 		self.go_page.setToolTip(_translate("MainWindow", "<html><head/><body><p>Filter or Search</p></body></html>", None))
@@ -7564,7 +7596,16 @@ class Ui_MainWindow(object):
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
 		self.mpv_thumbnail_lock = False
-		
+	def close_frame_btn(self):
+		txt = self.btn4.text()
+		if txt == '--':
+			self.btn4.setText('+')
+			#self.btn4.setToolTip('Auto Hide Off')
+			self.auto_hide_dock = False
+		else:
+			self.btn4.setText('--')
+			#self.btn4.setToolTip('Auto Hide On')
+			self.auto_hide_dock = True
 	def generate_thumbnail_method(self,picn,interval,path):
 		global Player
 		path = path.replace('"','')
@@ -7680,7 +7721,7 @@ class Ui_MainWindow(object):
 			subprocess.Popen(['notify-send',txt])
 			self.torrent_frame.hide()
 		else:
-			if wget.pid() > 0:
+			if wget.processId() > 0:
 				wget.kill()
 			txt = 'Stopping download'
 			subprocess.Popen(['notify-send',txt])
@@ -7782,7 +7823,7 @@ class Ui_MainWindow(object):
 	def toggleAudio(self):
 			global Player,mpvplayer,audio_id
 			if mpvplayer:
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					if Player == "mplayer":
 						if not self.mplayer_OsdTimer.isActive():
 							mpvplayer.write(b'\n osd 1 \n')
@@ -7823,7 +7864,7 @@ class Ui_MainWindow(object):
 			txt_notify = 'External Subtitle Available\n Trying To Load'
 			subprocess.Popen(['notify-send',txt_notify])
 		
-		if mpvplayer.pid() > 0 and sub_arr:
+		if mpvplayer.processId() > 0 and sub_arr:
 			for title_sub in sub_arr:
 				if Player == "mplayer":
 					if os.path.exists(title_sub):
@@ -7842,7 +7883,7 @@ class Ui_MainWindow(object):
 	def toggleSubtitle(self):
 			global Player,mpvplayer,sub_id
 			if mpvplayer:
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					if Player == "mplayer":
 						if not self.mplayer_OsdTimer.isActive():
 							mpvplayer.write(b'\n osd 1 \n')
@@ -7862,7 +7903,7 @@ class Ui_MainWindow(object):
 			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt,iconv_r_indicator,iconv_r,curR,wget,Player,show_hide_cover,show_hide_playlist,show_hide_titlelist,video_local_stream
 			if mpvplayer:
 				
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					quitReally = "yes"
 					mpvplayer.write(b'\n quit \n')
 					self.player_play_pause.setText(self.player_buttons['play'])
@@ -7914,7 +7955,7 @@ class Ui_MainWindow(object):
 						ui.scrollArea1.verticalScrollBar().setValue(((curR+1)/iconv_r)*h+((curR+1)/iconv_r)*10)
 						print ("hello tab_6")
 					if wget:
-						if wget.pid() > 0:
+						if wget.processId() > 0:
 							ui.goto_epn.hide()
 							ui.progress.show()
 					if MainWindow.isFullScreen():
@@ -7978,7 +8019,7 @@ class Ui_MainWindow(object):
 		global mpvplayer,curR
 		txt = self.player_play_pause.text() 
 		if txt == self.player_buttons['play']:
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 				if Player == "mpv":
 					mpvplayer.write(b'\n set pause no \n')
 				else:
@@ -7990,7 +8031,7 @@ class Ui_MainWindow(object):
 					curR = self.list2.currentRow()
 					self.epnfound()
 		elif txt == self.player_buttons['pause']:
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 				if Player == "mpv":
 					mpvplayer.write(b'\n set pause yes \n')
 				else:
@@ -8131,7 +8172,7 @@ class Ui_MainWindow(object):
 					shutil.copy(self.current_background,self.default_background)
 		elif val == "Show/Hide Web Browser":
 			if self.tab_2.isHidden():
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					self.tab_2.show()
 				else:
 					self.showHideBrowser()
@@ -8315,7 +8356,7 @@ class Ui_MainWindow(object):
 	def adjustVideoScreen(self,value):
 		global mpvplayer,cur_label_num,fullscr
 		if mpvplayer:
-			if mpvplayer.pid()>0 and fullscr != 1: 
+			if mpvplayer.processId()>0 and fullscr != 1: 
 				w = float(800)
 				h = float((9*w)/16)
 				
@@ -8364,8 +8405,8 @@ class Ui_MainWindow(object):
 			#self.browserView()
 			"""
 			print(total_till,2*self.list1.count()-1,'--prev-thumbnail--')
-			if mpvplayer.pid() > 0:
-				print(mpvplayer.pid(),'--prev-thumb--')
+			if mpvplayer.processId() > 0:
+				print(mpvplayer.processId(),'--prev-thumb--')
 				iconv_r = 1
 				self.next_page('not_deleted')
 				QtWidgets.QApplication.processEvents()
@@ -9464,7 +9505,7 @@ class Ui_MainWindow(object):
 				w = float((self.tab_6.width()-60)/iconv_r)
 				h = float((9*w)/16)
 				if self.tab_5.isHidden() and mpvplayer:
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
 							l= (tab_6_size_indicator[0]-60)/iconv_r
 						else:
@@ -9581,7 +9622,7 @@ class Ui_MainWindow(object):
 				w = float((self.tab_6.width()-60)/iconv_r)
 				h = float((9*w)/16)
 				if self.tab_5.isHidden() and mpvplayer:
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
 							l= (tab_6_size_indicator[0]-60)/iconv_r
 						else:
@@ -9694,7 +9735,7 @@ class Ui_MainWindow(object):
 				w = float((self.tab_6.width()-60)/iconv_r)
 				h = float((9*w)/16)
 				if self.tab_5.isHidden() and mpvplayer:
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
 							l= (tab_6_size_indicator[0]-60)/iconv_r
 						else:
@@ -9920,7 +9961,7 @@ class Ui_MainWindow(object):
 				w = float((self.tab_6.width()-60)/iconv_r)
 				h = float((9*w)/16)
 				if self.tab_5.isHidden() and mpvplayer:
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
 							l= (tab_6_size_indicator[0]-60)/iconv_r
 						else:
@@ -10209,7 +10250,7 @@ class Ui_MainWindow(object):
 	def mpvNextEpnList(self):
 		global mpvplayer,epn,curR,Player,epnArrList,site,current_playing_file_path
 		
-		if mpvplayer.pid() > 0:
+		if mpvplayer.processId() > 0:
 			print ("-----------inside-------")
 			if curR == self.list2.count() - 1:
 				curR = 0
@@ -10243,7 +10284,7 @@ class Ui_MainWindow(object):
 				if (current_playing_file_path.startswith('http') or current_playing_file_path.startswith('"http')):
 					mpvplayer.kill()
 					if Player == 'mplayer':
-						if mpvplayer.pid() > 0:
+						if mpvplayer.processId() > 0:
 							subprocess.Popen(['killall','mplayer'])
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
@@ -10263,7 +10304,7 @@ class Ui_MainWindow(object):
 					subprocess.call(['killall','mplayer'])
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
-					print (mpvplayer.pid(),'--mpvnext---')
+					print (mpvplayer.processId(),'--mpvnext---')
 					
 					self.getNextInList()
 	
@@ -10271,7 +10312,7 @@ class Ui_MainWindow(object):
 		#global mpvplayer,epn,curR
 		global mpvplayer,epn,curR,Player,epnArrList,site,current_playing_file_path
 		
-		if mpvplayer.pid() > 0:
+		if mpvplayer.processId() > 0:
 			print ("inside")
 			
 			if curR == 0:
@@ -10305,7 +10346,7 @@ class Ui_MainWindow(object):
 				if (current_playing_file_path.startswith('http') or current_playing_file_path.startswith('"http')):
 					mpvplayer.kill()
 					if Player == 'mplayer':
-						if mpvplayer.pid() > 0:
+						if mpvplayer.processId() > 0:
 							subprocess.Popen(['killall','mplayer'])
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
@@ -10325,7 +10366,7 @@ class Ui_MainWindow(object):
 					subprocess.call(['killall','mplayer'])
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
-					print (mpvplayer.pid(),'--mpvnext---')
+					print (mpvplayer.processId(),'--mpvnext---')
 					
 					self.getNextInList()
 			
@@ -10405,7 +10446,7 @@ class Ui_MainWindow(object):
 		self.goto_epn.show()
 		view_layout = "List"
 		if mpvplayer:
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 				self.text.hide()
 				self.label.hide()
 				self.list1.hide()
@@ -10435,7 +10476,7 @@ class Ui_MainWindow(object):
 		self.goto_epn.show()
 	def webHide(self):
 		global mpvplayer
-		if mpvplayer.pid() > 0:
+		if mpvplayer.processId() > 0:
 			self.tab_2.hide()
 		else:
 			self.showHideBrowser()
@@ -10580,7 +10621,7 @@ class Ui_MainWindow(object):
 			self.goto_epn.hide()
 			self.dockWidget_3.hide()
 			if mpvplayer:
-				if mpvplayer.pid()>0:
+				if mpvplayer.processId()>0:
 					self.tab_5.show()
 					self.frame1.show()
 					iconv_r = 1
@@ -10590,7 +10631,7 @@ class Ui_MainWindow(object):
 			self.thumbnailEpn()
 			self.tab_2.hide()
 			if mpvplayer:
-				if mpvplayer.pid()>0:
+				if mpvplayer.processId()>0:
 					self.scrollArea1.verticalScrollBar().setValue((curR+1)*200+(curR+1)*10)
 				else:
 					self.scrollArea1.verticalScrollBar().setValue(((num+1)/4)*200+((num+1)/4)*10)
@@ -12349,7 +12390,7 @@ class Ui_MainWindow(object):
 		global embed, playMpv,Player,mpvplayer
 		Player = str(self.chk.currentText())
 		if mpvplayer:
-			if mpvplayer.pid()>0 and self.tab_2.isHidden():
+			if mpvplayer.processId()>0 and self.tab_2.isHidden():
 				mpvplayer.kill()
 				self.epnfound()
 		
@@ -12614,6 +12655,9 @@ class Ui_MainWindow(object):
 		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name,list1_items,bookmark,total_till,thumbnail_indicator,genre_num,original_path_name,rfr_url,finalUrlFound,refererNeeded,video_local_stream
 		genre_num = 0
 		#total_till = 0
+		if self.site_var:
+			del self.site_var
+			self.site_var = ''
 		self.label.clear()
 		self.text.clear()
 		original_path_name[:]=[]
@@ -12669,6 +12713,14 @@ class Ui_MainWindow(object):
 			site = 'None'
 			self.btnAddon.show()
 			site = self.btnAddon.currentText()
+			if self.site_var:
+				del self.site_var
+				self.site_var = ''
+			print(type(self.site_var),site,'--addon-changed--')
+			plugin_path = os.path.join(home,'src','Plugins',site+'.py')
+			if os.path.exists(plugin_path):
+				module = imp.load_source(site,plugin_path)
+			self.site_var = getattr(module,site)(TMPDIR)
 			bookmark = "False"
 			if not os.path.exists(os.path.join(home,"History",site)):
 				os.makedirs(os.path.join(home,"History",site))
@@ -13399,6 +13451,9 @@ class Ui_MainWindow(object):
 			if (site != "PlayLists" and site != "Music" and site != "Video" and site!="Local" and site !="None"):
 				plugin_path = os.path.join(home,'src','Plugins',site+'.py')
 				if os.path.exists(plugin_path):
+					if self.site_var:
+						del self.site_var
+						self.site_var = ''
 					module = imp.load_source(site,plugin_path)
 					self.site_var = getattr(module,site)(TMPDIR)
 				else:
@@ -14536,7 +14591,7 @@ class Ui_MainWindow(object):
 		#if site.lower() != 'music' and show_hide_player == 1: 
 		#	self.text.hide()
 		#	self.label.hide()
-		if mpvplayer.pid() == 0:
+		if mpvplayer.processId() == 0:
 			self.initial_view_mode()
 		finalUrl = file_name.replace('"','')
 		#if not finalUrl.startswith('http'):
@@ -14548,7 +14603,7 @@ class Ui_MainWindow(object):
 			finalUrl = finalUrl.replace('"','')
 		else:
 			current_playing_file_path = finalUrl
-		if mpvplayer.pid() > 0:
+		if mpvplayer.processId() > 0:
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
 				t1 = bytes('\n'+'show_text '+epnShow+'\n','utf-8')
@@ -14692,7 +14747,7 @@ class Ui_MainWindow(object):
 					return file_path_name_mp4
 				else:
 					return file_path_name_mkv
-		elif wget.pid() > 0 and play_now:
+		elif wget.processId() > 0 and play_now:
 			return True
 		else:
 			return False
@@ -14756,10 +14811,10 @@ class Ui_MainWindow(object):
 			if os.path.exists(tmp_pl):
 				os.remove(tmp_pl)
 			
-		if mpvplayer.pid() > 0 and (current_playing_file_path.startswith('http') or current_playing_file_path.startswith('"http')):
+		if mpvplayer.processId() > 0 and (current_playing_file_path.startswith('http') or current_playing_file_path.startswith('"http')):
 			mpvplayer.kill()
 			if Player == 'mplayer':
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					subprocess.Popen(['killall','mplayer'])
 			mpvplayer = QtCore.QProcess()
 	
@@ -15109,12 +15164,12 @@ class Ui_MainWindow(object):
 			#if '""' in finalUrl:
 			finalUrl = finalUrl.replace('"','')
 			if '#' in finalUrl:
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
 				video_url = finalUrl.split('#')[-1]
 				audio_url = finalUrl.split('#')[0]
 				if Player == 'mplayer':
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						subprocess.Popen(['killall','mplayer'])
 					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
 				else:
@@ -15126,14 +15181,14 @@ class Ui_MainWindow(object):
 					finalUrl = str(finalUrl)
 				except:
 					finalUrl = finalUrl
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
 				if Player == "mpv":
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 					print (command)
 					self.infoPlay(command)
 				elif Player == "mplayer":
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						subprocess.Popen(['killall','mplayer'])
 					quitReally = "no"
 					
@@ -15158,7 +15213,7 @@ class Ui_MainWindow(object):
 		else:
 		
 			if downloadVideo == 0 and Player == "mpv":
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
 				if type(finalUrl) is list:
 						if finalUrlFound == True or refererNeeded == True or site=="PlayLists":	
@@ -15198,14 +15253,14 @@ class Ui_MainWindow(object):
 					#	self.mpvNextEpnList()
 				##self.tab_5.setFocus()
 			elif downloadVideo == 0 and Player != "mpv":
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
 				if type(finalUrl) is list:
 					if finalUrlFound == True or site=="PlayLists":
 							if refererNeeded == True:
 								rfr_url = finalUrl[1]
 								if Player == "mplayer":
-									if mpvplayer.pid() > 0:
+									if mpvplayer.processId() > 0:
 										subprocess.Popen(['killall','mplayer'])
 									quitReally = "no"
 									idw = str(int(self.tab_5.winId()))
@@ -15219,7 +15274,7 @@ class Ui_MainWindow(object):
 									subprocess.Popen([Player,"-referrer",rfr_url,finalUrl[0]])
 							else:
 								if Player == "mplayer":
-									if mpvplayer.pid() > 0:
+									if mpvplayer.processId() > 0:
 										subprocess.Popen(['killall','mplayer'])
 									quitReally = "no"
 									idw = str(int(self.tab_5.winId()))
@@ -15234,7 +15289,7 @@ class Ui_MainWindow(object):
 									subprocess.Popen([Player,final_url])
 					else:
 					
-							if mpvplayer.pid() > 0:
+							if mpvplayer.processId() > 0:
 								subprocess.Popen(['killall','mplayer'])
 							epnShow = finalUrl[0]
 							for i in range(len(finalUrl)-1):
@@ -15254,7 +15309,7 @@ class Ui_MainWindow(object):
 							finalUrl = finalUrl.replace('""','"')
 						finalUrl = str(finalUrl)
 						if Player == "mplayer":
-							if mpvplayer.pid() > 0:
+							if mpvplayer.processId() > 0:
 								subprocess.Popen(['killall','mplayer'])
 							quitReally = "no"
 							idw = str(int(self.tab_5.winId()))
@@ -15732,18 +15787,18 @@ class Ui_MainWindow(object):
 		title_sub_path = os.path.join(self.yt_sub_folder,title_sub_path+'.en.vtt')
 		
 		if Player=='mplayer':
-			print(mpvplayer.pid(),'=mpvplayer.pid()')
-			if (mpvplayer.pid()>0):
+			print(mpvplayer.processId(),'=mpvplayer.processId()')
+			if (mpvplayer.processId()>0):
 				mpvplayer.kill()
 				time.sleep(1)
-				if mpvplayer.pid() > 0:
-					print(mpvplayer.pid(),'=mpvplayer.pid()')
+				if mpvplayer.processId() > 0:
+					print(mpvplayer.processId(),'=mpvplayer.processId()')
 					try:
 						subprocess.Popen(['killall','mplayer'])
 					except:
 						pass
-		print(mpvplayer.pid(),'=mpvplayer.pid()')
-		if mpvplayer.pid() > 0:
+		print(mpvplayer.processId(),'=mpvplayer.processId()')
+		if mpvplayer.processId() > 0:
 			mpvplayer.kill()
 		quitReally = quit_val
 		
@@ -16245,12 +16300,12 @@ class Ui_MainWindow(object):
 							exec (q3)
 							QtWidgets.QApplication.processEvents()
 						if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
-							if len(self.queue_url_list)>0 and wget.pid() == 0:
+							if len(self.queue_url_list)>0 and wget.processId() == 0:
 								self.getQueueInList()
 							else:
 								self.localGetInList()
 						else:
-							if len(self.queue_url_list)>0 and wget.pid() == 0:
+							if len(self.queue_url_list)>0 and wget.processId() == 0:
 								self.getQueueInList()
 							else:
 								self.getNextInList()
@@ -16470,12 +16525,12 @@ class Ui_MainWindow(object):
 					#mpvplayer.waitForReadyRead()
 					if quitReally == "no":
 						if site == "Local" or site == "Video" or site == "Music" or site == "PlayLists" or site == "None":
-							if len(self.queue_url_list)>0 and wget.pid() == 0:
+							if len(self.queue_url_list)>0 and wget.processId() == 0:
 								self.getQueueInList()
 							else:
 								self.localGetInList()
 						else:
-							if len(self.queue_url_list)>0 and wget.pid() == 0:
+							if len(self.queue_url_list)>0 and wget.processId() == 0:
 								self.getQueueInList()
 							else:
 								self.getNextInList()
@@ -16503,7 +16558,7 @@ class Ui_MainWindow(object):
 			exec(q3)
 			QtWidgets.QApplication.processEvents()
 		print ("Process Started")
-		print (mpvplayer.pid())
+		print (mpvplayer.processId())
 		mpv_start =[]
 		mpv_start[:]=[]
 		t = "Loading: "+self.epn_name_in_list+" (Please Wait)"
@@ -16529,14 +16584,14 @@ class Ui_MainWindow(object):
 		self.progressEpn.setValue(0)
 		self.slider.setValue(0)
 		self.progressEpn.setFormat("")
-		print (mpvplayer.pid())
+		print (mpvplayer.processId())
 		#if quitReally == "no":
 		#	self.mpvNextEpnList()
 		
 	def infoPlay(self,command):
 		global mpvplayer,Player,site,new_epn
 		print('--line--15662--')
-		if mpvplayer.pid()>0:
+		if mpvplayer.processId()>0:
 			mpvplayer.kill()
 		print('--line--15666--')
 		mpvplayer = QtCore.QProcess()
@@ -16713,16 +16768,16 @@ class Ui_MainWindow(object):
 					elif Player == 'mplayer':
 						finalUrl = '-audiofile '+audio_url+' '+video_url
 				if Player == 'mplayer':
-					if mpvplayer.pid()>0:
+					if mpvplayer.processId()>0:
 						mpvplayer.kill()
-						if mpvplayer.pid() > 0:
+						if mpvplayer.processId() > 0:
 							subprocess.Popen(['killall','mplayer'])
 					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 				else:
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
-					if mpvplayer.pid()>0:
+					if mpvplayer.processId()>0:
 						mpvplayer.kill()
-						if mpvplayer.pid() > 0:
+						if mpvplayer.processId() > 0:
 							subprocess.Popen(['killall','mpv'])
 					print('---*******-------line 15849--')
 				self.infoPlay(command)
@@ -16734,7 +16789,7 @@ class Ui_MainWindow(object):
 			except:
 				finalUrl = finalUrl
 				
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 				if Player == "mplayer":
 					if audio_id == "auto":
 						audio_id = "0"
@@ -16763,7 +16818,7 @@ class Ui_MainWindow(object):
 						#	self.infoPlay(command)
 					else:
 						mpvplayer.write(b'\n quit \n')
-						if mpvplayer.pid() > 0:
+						if mpvplayer.processId() > 0:
 							subprocess.Popen(['killall','mplayer'])
 						self.infoPlay(command)
 						self.external_url = False
@@ -16775,7 +16830,7 @@ class Ui_MainWindow(object):
 					except:
 						command = command1
 				
-					if mpvplayer.pid()>0:
+					if mpvplayer.processId()>0:
 						
 						try:
 							epnShow = '"' + "Queued:  "+ new_epn + '"'
@@ -16792,7 +16847,7 @@ class Ui_MainWindow(object):
 					else:
 						self.infoPlay(command)
 			
-				print ("mpv=" + str(mpvplayer.pid()))
+				print ("mpv=" + str(mpvplayer.processId()))
 				if site == "Music":
 					try:
 						artist_name_mplayer = epnArrList[row].split('	')[2]
@@ -16833,7 +16888,7 @@ class Ui_MainWindow(object):
 					
 				self.infoPlay(command)
 			
-				print ("mpv=" + str(mpvplayer.pid()))
+				print ("mpv=" + str(mpvplayer.processId()))
 				if site == "Music":
 					try:
 						artist_name_mplayer = epnArrList[row].split('	')[2]
@@ -16895,7 +16950,7 @@ class Ui_MainWindow(object):
 		if '#' in epnShow:
 			if '#' in epnShow:
 				epnShow = epnShow.replace('"','')
-				if mpvplayer.pid()>0:
+				if mpvplayer.processId()>0:
 					mpvplayer.kill()
 				video_url = epnShow.split('#')[-1]
 				audio_url = epnShow.split('#')[0]
@@ -16906,12 +16961,12 @@ class Ui_MainWindow(object):
 			else:
 				finalUrl = epnShow
 			if Player == 'mplayer':
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					subprocess.Popen(['killall','mplayer'])
 				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 			else:
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
-				if mpvplayer.pid() > 0:
+				if mpvplayer.processId() > 0:
 					subprocess.Popen(['killall','mpv'])
 			self.infoPlay(command)
 		else:
@@ -16921,7 +16976,7 @@ class Ui_MainWindow(object):
 					command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+epnShowN
 			elif Player == "mpv":
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+epnShowN
-			if mpvplayer.pid() > 0:
+			if mpvplayer.processId() > 0:
 				epnShow = '"'+epnShow.replace('"','')+'"'
 				if epnShow.startswith('"http'):
 					epnShow = epnShow.replace('"','')
@@ -16940,7 +16995,7 @@ class Ui_MainWindow(object):
 						self.mplayer_SubTimer.start(2000)
 					else:
 						mpvplayer.write(b'\n quit \n')
-						if mpvplayer.pid() > 0:
+						if mpvplayer.processId() > 0:
 							subprocess.Popen(['killall','mplayer'])
 						self.infoPlay(command)
 						self.external_url = False
@@ -17189,9 +17244,9 @@ class Ui_MainWindow(object):
 				command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
 			elif Player == "mpv":
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
-			print ("mpv=" + str(mpvplayer.pid()))
+			print ("mpv=" + str(mpvplayer.processId()))
 			print (command)
-			if mpvplayer.pid() > 0 :
+			if mpvplayer.processId() > 0 :
 				self.infoPlay(command)
 			else:
 				print ("hello")
@@ -17200,7 +17255,7 @@ class Ui_MainWindow(object):
 		else:
 			if type(finalUrl) is list:
 				if mpvplayer:
-					if mpvplayer.pid() > 0:
+					if mpvplayer.processId() > 0:
 						if refererNeeded == "True":
 							finalUrl.pop()
 						epnShow = '"'+finalUrl[0]+'"'
@@ -17249,7 +17304,7 @@ class Ui_MainWindow(object):
 								command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+epnShow
 							#self.queue_url_list.pop()
 						print (command)
-						if mpvplayer.pid() > 0:
+						if mpvplayer.processId() > 0:
 							mpvplayer.kill()
 							if Player == 'mplayer':
 								subprocess.Popen(['killall','mplayer'])
@@ -17270,10 +17325,10 @@ class Ui_MainWindow(object):
 					command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" -sid "+sub_id+" -aid "+audio_id+" "+finalUrl
 				elif Player == "mpv":
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+sub_id+" -aid "+audio_id+" "+finalUrl
-				print ("mpv=" + str(mpvplayer.pid()))
+				print ("mpv=" + str(mpvplayer.processId()))
 				print(Player,'---------state----'+str(mpvplayer.state()))
-				if mpvplayer.pid() > 0:
-					#if mpvplayer.pid()>0:
+				if mpvplayer.processId() > 0:
+					#if mpvplayer.processId()>0:
 					if Player == "mplayer" or Player == "mpv":
 						finalUrl = finalUrl.replace('"','')
 						epnShow = '"'+finalUrl+'"'
@@ -19903,7 +19958,7 @@ def main():
 		f.write("\nMusic_Mode="+str(music_val))
 		
 		f.close()
-	if mpvplayer.pid()>0:
+	if mpvplayer.processId()>0:
 		mpvplayer.kill()
 	if os.path.exists(TMPDIR):
 		shutil.rmtree(TMPDIR)

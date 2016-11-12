@@ -456,7 +456,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.epn_name_in_list = self.title_page
 		print(url,'clicked_link')
 		if 'youtube.com/watch?v=' in url:
-			if self.ui.mpvplayer_val.pid() > 0:
+			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
 			final_url = get_yt_url(url,self.ui.quality_val)
 			
@@ -785,7 +785,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			final_url = ''
 			self.ui.epn_name_in_list = self.title_page
 			print(self.ui.epn_name_in_list)
-			if self.ui.mpvplayer_val.pid() > 0:
+			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
 			final_url = get_yt_url(url,self.ui.quality_val)
 			if final_url:
