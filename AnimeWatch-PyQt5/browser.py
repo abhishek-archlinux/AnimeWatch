@@ -29,6 +29,7 @@ import pycurl
 from io import StringIO,BytesIO
 import re
 import subprocess
+import os
 import os.path
 from subprocess import check_output
 from bs4 import BeautifulSoup
@@ -41,7 +42,7 @@ from PyQt5.QtCore import QUrl
 #from adb import NetWorkManager
 
 import time
-from yt import get_yt_url,get_yt_sub
+from yt import get_yt_url,get_yt_sub,send_notification
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty)
 
@@ -801,7 +802,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif option.lower() == 'download':
 			if self.ui.quality_val == 'sd480p':
 				txt = "Video can't be saved in 480p, Saving in either HD or SD"
-				subprocess.Popen(['notify-send',txt])
+				#subprocess.Popen(['notify-send',txt])
+				send_notification(txt)
 				quality = 'hd'
 			else:
 				quality = self.ui.quality_val

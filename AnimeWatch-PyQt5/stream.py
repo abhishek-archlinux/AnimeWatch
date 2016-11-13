@@ -32,6 +32,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 import os
 import subprocess,re
+from yt import send_notification
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	
@@ -163,10 +164,12 @@ class ThreadServer(QtCore.QThread):
 			httpd = ThreadedHTTPServer(server_address, testHTTPServer_RequestHandler)
 		except:
 			txt = 'Your local IP changed..or port is blocked\n..Trying to find new IP'
-			subprocess.Popen(['notify-send',txt])
+			#subprocess.Popen(['notify-send',txt])
+			send_notification(txt)
 			self.ip = get_ip()
 			txt = 'Your New Address is '+self.ip + '\n Please restart the player'
-			subprocess.Popen(['notify-send',txt])
+			#subprocess.Popen(['notify-send',txt])
+			send_notification(txt)
 			change_config_file(self.ip,self.port)
 			server_address = (self.ip,self.port)
 			httpd = ThreadedHTTPServer(server_address, testHTTPServer_RequestHandler)

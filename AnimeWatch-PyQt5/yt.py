@@ -26,6 +26,10 @@ import subprocess
 import shutil
 import os
 
+def send_notification(txt):
+	if os.name == 'posix':
+		subprocess.Popen(['notify-send',txt])
+
 def get_yt_url(url,quality):
 	final_url = ''
 	url = url.replace('"','')
@@ -82,7 +86,8 @@ def get_yt_url(url,quality):
 				final_url = str(final_url,'utf-8')
 	except:
 		txt ='Please Update livestreamer and youtube-dl'
-		subprocess.Popen(['notify-send',txt])
+		#subprocess.Popen(['notify-send',txt])
+		send_notification(txt)
 		final_url = ''
 		
 		
@@ -135,7 +140,8 @@ def get_yt_sub(url,name,dest_dir,tmp_dir):
 def yt_sub_started():
 	print('Getting Sub')
 	txt_notify = "Trying To Get External Subtitles Please Wait!"
-	subprocess.Popen(['notify-send',txt_notify])
+	#subprocess.Popen(['notify-send',txt_notify])
+	send_notification(txt_notify)
 	
 def yt_sub_dataReady(p):
 	try:
@@ -158,6 +164,7 @@ def yt_sub_finished():
 		new_name = new_name[1:]
 	sub_avail = False
 	sub_ext = ''
+	txt_notify = 'No Subtitle Found'
 	for i in m:
 		#j = os.path.join(dir_name,i)
 		src_path = os.path.join(dir_name,i)
@@ -173,7 +180,5 @@ def yt_sub_finished():
 			sub_avail = True
 	if sub_avail:
 		txt_notify = "External Subtitle "+ sub_ext+" Available\nPress Shift+J to load"
-		subprocess.Popen(['notify-send',txt_notify])
-	else:
-		txt_notify = "No Subtitle Found"
-		subprocess.Popen(['notify-send',txt_notify])
+		
+	send_notification(txt_notify)

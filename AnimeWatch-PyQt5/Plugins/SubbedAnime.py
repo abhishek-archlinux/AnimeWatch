@@ -8,6 +8,7 @@ import subprocess
 from subprocess import check_output
 import random
 from bs4 import BeautifulSoup
+import os
 import os.path
 import base64
 try:
@@ -18,7 +19,7 @@ import time
 from base64 import b64decode
 import random
 import json
-
+from yt import send_notification
 
 
 def getContentUnicode(content):
@@ -2757,7 +2758,8 @@ class SubbedAnime():
 			if mirrorNo == 0:
 				for i in range(len(m)):
 					msg = "Total " + str(len(m)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
-					subprocess.Popen(["notify-send",msg]) 
+					#subprocess.Popen(["notify-send",msg]) 
+					send_notification(msg)
 					final = findurl(str(m[i]))
 					print(i)
 					print(final)
@@ -2766,7 +2768,8 @@ class SubbedAnime():
 						break
 			else:
 				msg = "Total " + str(len(m)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
-				subprocess.Popen(["notify-send",msg])
+				#subprocess.Popen(["notify-send",msg])
+				send_notification(msg)
 				final = findurl(str(m[mirrorNo]))
 				 
 		elif siteName == "AnimeSquare":
@@ -2829,12 +2832,13 @@ class SubbedAnime():
 				quality = 'sd'
 			print(url)
 			msg = "Total " + str(len(sd_arr)) + " SD Mirrors And \n"+ str(len(hd_arr)) + " HD Mirrors+\n"+'Selecting '+str(quality) + " Mirror No. " + str(mirrorNo)
-			subprocess.Popen(["notify-send",msg]) 
-			
+			#subprocess.Popen(["notify-send",msg]) 
+			send_notification(msg)
 			if mirrorNo == 1:
 				for i in range(len(final_sd_hd_arr)):
 					msg = 'Selecting '+str(quality) + " Mirror No. " + str(i+1)
-					subprocess.Popen(["notify-send",msg]) 
+					#subprocess.Popen(["notify-send",msg]) 
+					send_notification(msg)
 					url = final_sd_hd_arr[i]
 					if 'mp4upload' in url and not url.endswith('.html'):
 						url = url+'.html'
@@ -2972,8 +2976,8 @@ class SubbedAnime():
 			
 				
 			msg = "Total " + str(final_cnt) + " Quality Video Available "+final_quality+" Selecting "+str(quality) + " Quality"
-			subprocess.Popen(["notify-send",msg]) 
-			
+			#subprocess.Popen(["notify-send",msg]) 
+			send_notification(msg)
 			if quality == "sd":
 				final_q = sd
 			elif quality == 'sd480p':
@@ -3232,8 +3236,8 @@ class SubbedAnime():
 			
 				
 			msg = "Total " + str(final_cnt) + " Quality Video Available "+final_quality+" Selecting "+str(quality) + " Quality"
-			subprocess.Popen(["notify-send",msg]) 
-			
+			#subprocess.Popen(["notify-send",msg]) 
+			send_notification(msg)
 			if quality == 'sd':
 				link1 = sd
 			elif quality == "sd480p":
@@ -3399,7 +3403,8 @@ class SubbedAnime():
 					mirrorNo = mirrorNo - 1
 					print(arr)
 					msg = "Total " + str(len(arr)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
-					subprocess.Popen(["notify-send",msg]) 
+					#subprocess.Popen(["notify-send",msg])
+					send_notification(msg) 
 					final = findurl(arr[mirrorNo])
 					if final:
 						break

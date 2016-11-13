@@ -8,8 +8,9 @@ import subprocess
 from subprocess import check_output
 import random
 from bs4 import BeautifulSoup  
+import os
 import os.path
-
+from yt import send_notification
 
 def naturallysorted(l):
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -618,7 +619,8 @@ class DubbedAnime():
 				while (j <= length):		
 						mirrorNo = mirrorNo - 1
 						msg = "Total " + str(len(m)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
-						subprocess.Popen(["notify-send",msg])
+						#subprocess.Popen(["notify-send",msg])
+						send_notification(msg)
 						src = m[mirrorNo]
 						print(src)
 						if 'vidcrazy' in src or 'uploadcrazy' in src:
@@ -831,8 +833,8 @@ class DubbedAnime():
 				final_quality = final_quality + 'HD '
 				
 			msg = "Total " + str(final_cnt) + " Quality Video Available "+final_quality+" Selecting "+str(quality) + " Quality"
-			subprocess.Popen(["notify-send",msg])
-			
+			#subprocess.Popen(["notify-send",msg])
+			send_notification(msg)
 			if quality == "sd":
 				final_q = sd
 			elif quality == 'sd480p':
