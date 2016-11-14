@@ -204,12 +204,12 @@ class Animejoy():
 			m = random.sample(m, len(m))
 		return m
 	
-	def getEpnList(self,name,opt):
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		url = "http://anime-joy.tv/watch/" + name
 		print(url)
 		summary = ""
 		content = ccurl(url)
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		link = soup.findAll('div', { "class" : 'ozet' })
 		link1 = soup.findAll('img')
 		img=""
@@ -219,7 +219,15 @@ class Animejoy():
 		if not summary:
 			summary = "Summary Not Available"
 		else:
-			summary = summary.strip()
+			m = re.findall(r'\\n',summary)
+			print(m)
+			n = re.findall(r'\\t',summary)
+			for i in m:
+				summary = summary.replace(i,'')
+			for i in n:
+				summary = summary.replace(i,'')
+			print(summary)
+			
 		for i in link1:
 			if 'src' in str(i):
 				j = i['src']
@@ -242,7 +250,8 @@ class Animejoy():
 			m[j] = i
 			j = j + 1
 		m=naturallysorted(m)  
-		m.append(picn)
-		m.append(summary)
-		return m
+		#m.append(picn)
+		#m.append(summary)
+		record_history = True
+		return (m,summary,picn,record_history,depth_list)
 

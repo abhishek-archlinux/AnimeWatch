@@ -152,7 +152,7 @@ class KissAnime():
 				j = j + 1
 
 			return m
-	def getEpnList(self,name,opt):
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		
 		url = 'https://kissanime.to/Anime/' + name
 		print(url)
@@ -192,7 +192,7 @@ class KissAnime():
 			j = j + 1
 
 		
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		summary = ""
 		summary1 = ""
 		try:
@@ -220,12 +220,14 @@ class KissAnime():
 			summary = re.sub('\n\n','\n',summary)
 		except:
 			summary = 'Summary Not Available'
-		print(summary)
-		print(picn)
+		#print(summary)
+		#print(picn)
 		epl=naturallysorted(epl)  
-		epl.append(picn)
-		epl.append(summary)
-		return epl
+		#epl.append(picn)
+		#epl.append(summary)
+		record_history = True
+		display_list = True
+		return (epl,summary,picn,record_history,depth_list)
 	def urlResolve(self,txt):
 		m =[]
 
@@ -261,7 +263,7 @@ class KissAnime():
 		
 		
 		#print (content)
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		#f = open('/tmp/AnimeWatch/k.txt','w')
 		#f.write(content)
 		#f.close()

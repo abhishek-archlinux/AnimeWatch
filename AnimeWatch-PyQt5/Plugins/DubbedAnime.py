@@ -962,7 +962,8 @@ class DubbedAnime():
 			m = random.sample(m, len(m))
 		return m
 	
-	def getEpnList(self,siteName,name,category):
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
+		
 		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
 			base = "http://www.cartoon-world.tv/"
 			url = base+ "watch/" + name+"/"
@@ -1036,7 +1037,7 @@ class DubbedAnime():
 					summary = re.sub('</table>','</table><div class="desc">',summary)
 					summary = re.sub('</div>','</div></div>',summary)
 					print(summary)
-					soup = BeautifulSoup(summary)
+					soup = BeautifulSoup(summary,'lxml')
 
 					info = soup.findAll('td',{'class':'ani-table-ans'})
 
@@ -1190,7 +1191,9 @@ class DubbedAnime():
 				m[j] = i[:-1]
 				j = j + 1
 		m=naturallysorted(m)
-		m.append(picn)
-		m.append(summary)
-		return m
+		#m.append(picn)
+		#m.append(summary)
+		record_history = True
+		display_list = True
+		return (m,summary,picn,record_history,depth_list)
 

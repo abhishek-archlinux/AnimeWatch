@@ -10,22 +10,7 @@ import random
 from bs4 import BeautifulSoup
 import os.path
 
-"""
-class DlgBox(QtWidgets.QWidget):
-	
-	def __init__(self,i,j):
-		super(DlgBox, self).__init__()
-		self.itemR=j
-		self.items=i
-		self.setItem()
-	def setItem(self):    
-		
-		item, ok = QtWidgets.QInputDialog.getItem(self, "QInputDialog.getItem()","Both Subbed And Dubbed Available", self.items, 0, False)
-		if ok and item:
-		    self.itemR=item
-	def returnItem(self):
-		return self.itemR
-"""
+
 def replace_all(text, di):
 	for i, j in di.iteritems():
 		text = text.replace(i, j)
@@ -231,12 +216,12 @@ class Animebam():
 					print (k)
 					m.append(k)
 		return m
-	def getEpnList(self,name,opt):
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		url = "http://www.animebam.net/series/" + name
 		img = []
 		summary = ""
 		content = ccurl(url)
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		link = soup.find('p',{'class':'ptext'})
 		if link:
 			summary = link.text
@@ -249,10 +234,7 @@ class Animebam():
 					if 'http' not in img_src:
 						img_src = 'http:'+img_src
 					img.append(img_src)
-		"""
-		m = re.findall('ptext">[^"]*',content)
-		img = re.findall('http[^"]*.jpg|http[^"]*.jpeg',content)
-		"""
+		
 		print(img)
 		
 		#picn = "/tmp/AnimeWatch/" + name + ".jpg"
@@ -277,6 +259,7 @@ class Animebam():
 		if dub:
 			for i in n:
 				m.append(i+'-dubbed')
-		m.append(picn)
-		m.append(summary)
-		return m
+		#m.append(picn)
+		#m.append(summary)
+		record_history = True
+		return (m,summary,picn,record_history,depth_list)

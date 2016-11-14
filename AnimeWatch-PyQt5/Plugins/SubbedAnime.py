@@ -1402,7 +1402,7 @@ class SubbedAnime():
 			m = random.sample(m, len(m))
 		elif siteName == "AnimeNet":
 			m = []
-			soup = BeautifulSoup(content2)
+			soup = BeautifulSoup(content2,'lxml')
 			link = soup.findAll('li')
 			for i in link:
 				j = i.findAll('a')
@@ -1553,8 +1553,12 @@ class SubbedAnime():
 			f.close()
 		return m
 
-	def getEpnList(self,siteName,name,embed,category):
+	def getEpnList(self,name,opt,record_history,depth_list,extra_info,display_list,siteName,category):
 		url = ""
+		record_history = True
+		depth_list = 1
+		display_list = True
+		embed = depth_list		
 		if siteName == "Anime44":
 			url = "http://www.animenova.org/category/" + name
 			base = "http://www.animenova.org/"
@@ -2287,7 +2291,7 @@ class SubbedAnime():
 					#k = re.sub('\n','',k)
 					#print(k
 				if k:
-					soup = BeautifulSoup(k)
+					soup = BeautifulSoup(k,'lxml')
 					link = soup.findAll('p')
 					for i in link:
 						if 'href' in str(i):

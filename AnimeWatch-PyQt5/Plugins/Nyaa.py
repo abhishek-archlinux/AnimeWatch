@@ -215,7 +215,7 @@ class Nyaa():
 			n = i.find('td', {'class':'tlistln'})
 			o = i.find('td', {'class':'tlistdn'})
 			try:
-				tmp = j.text.replace('_',' ')+'\nid='+k+' sz='+l.text+' se='+m.text+' le='+n.text+' dl='+o.text+'\n'
+				tmp = j.text.replace('_',' ')+'	id='+k+'\nSize='+l.text+'\nSeeds='+m.text+'\nLeechers='+n.text+'\nTotal Downloads='+o.text
 			except:
 				tmp = 'Not Available'
 			print(tmp)
@@ -245,10 +245,11 @@ class Nyaa():
 		m = self.process_page(url)
 		return m
 	
-	def getEpnList(self,name,opt):
-		nm = name.rsplit('-',1)
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
+		print(extra_info)
+		#nm = name.rsplit('-',1)
 		#name = nm[0]
-		name_id = nm[1]
+		name_id = (re.search('id=[^\n]*',extra_info).group()).split('=')[1]
 		url = "https://www.nyaa.se/?page=download&tid=" + name_id
 		print(url)
 		summary = ""
@@ -270,9 +271,11 @@ class Nyaa():
 			file_path = os.path.basename(file_path)	
 			file_arr.append(file_path)
 		
-		file_arr.append('No.jpg')
-		file_arr.append('Summary Not Available')
-		return file_arr
+		
+		#file_arr.append('No.jpg')
+		#file_arr.append('Summary Not Available')
+		record_history = True
+		return (file_arr,'Summary Not Available','No.jpg',record_history,depth_list)
 
 	def getNextPage(self,opt,pgn,genre_num,name):
 		if opt == 'Date':

@@ -632,7 +632,7 @@ class Browser(QtWebKitWidgets.QWebView):
 					if act == item_m[i]:
 						if 'views' in self.title_page:
 							#content = ccurl(url.toString())
-							#soup = BeautifulSoup(content)
+							#soup = BeautifulSoup(content,'lxml')
 							self.title_page = re.sub('[0-9][^ ]* ','',self.title_page,1)
 							self.title_page = re.sub('[0-9][^ ]* views','',self.title_page,1)
 							self.title_page = self.title_page.replace('/','-')

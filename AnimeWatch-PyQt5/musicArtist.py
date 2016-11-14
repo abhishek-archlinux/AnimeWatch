@@ -222,7 +222,7 @@ class musicArtist():
 		print (wiki_url)
 		#content = self.ccurl(wiki_url,'')
 		content = ccurl(wiki_url)
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		link = soup.find('div',{'class':'wiki-content'})
 		print (link)
 

@@ -242,7 +242,7 @@ class Torrent():
 					m = [name]
 		return m
 	
-	def getEpnList(self,name,opt):
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		summary = ""
 		#home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'
 		home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History','Torrent')
@@ -256,10 +256,12 @@ class Torrent():
 			file_path = os.path.basename(file_path)	
 			file_arr.append(file_path)
 		
-		file_arr.append('No.jpg')
-		file_arr.append('Summary Not Available')
-		return file_arr
-
+		#file_arr.append('No.jpg')
+		#file_arr.append('Summary Not Available')
+		#return file_arr
+		record_history = True
+		return (file_arr,'Summary Not Available','No.jpg',record_history,depth_list)
+		
 	def getNextPage(self,opt,pgn,genre_num,name):
 		m = ['Nothing']
 		return m
