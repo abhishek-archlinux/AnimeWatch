@@ -1750,7 +1750,7 @@ class SubbedAnime():
 			link1 = link.findAll('p')
 			for i in link1:
 				summary = summary + i.text
-			print(summary)
+			#print(summary)
 		elif siteName == "Anime1":
 			summary = ""
 			img = []
@@ -1770,7 +1770,7 @@ class SubbedAnime():
 			if link1:
 				i = link1.find('img')
 				img.append(i['src'])
-			print(summary)
+			#print(summary)
 		elif siteName == "AnimeAll":
 			summary = ""
 			img = []
@@ -1810,7 +1810,7 @@ class SubbedAnime():
 			summary = re.sub('\n\n','\n',summary)
 			summary = re.sub('\n\n','',summary)
 			#summary = summary[1:]
-			print(summary)
+			#print(summary)
 		elif siteName == "AnimeHQ":
 			img_hq = ''
 			link = soup.findAll('div', {'id' : 'desc'})
@@ -1852,7 +1852,7 @@ class SubbedAnime():
 				info = ""
 
 			summary = name + '\n' + genre + '\n' + info
-			print(summary)
+			#print(summary)
 		elif siteName == "GoodAnime":
 			summary = ""
 			link = soup.findAll('div',{ 'class':'catdescription'})

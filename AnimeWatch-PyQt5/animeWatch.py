@@ -13326,7 +13326,7 @@ class Ui_MainWindow(object):
 		bin_mode = False
 		try:
 			g.write(summary)
-		except UnicodeDecodeError as e:
+		except UnicodeEncodeError as e:
 			print(e,hist_sum+' will be written in binary mode')
 			g.close()
 			bin_mode = True
@@ -13455,6 +13455,9 @@ class Ui_MainWindow(object):
 					else:
 						hist_path = os.path.join(home,'History',site,'history.txt')
 					if not os.path.isfile(hist_path):
+						hist_dir,last_field = os.path.split(hist_path)
+						if not os.path.exists(hist_dir):
+							os.makedirs(hist_dir)
 						f = open(hist_path, 'w').close()
 					print(self.record_history,'--self.record_history---')
 					if os.path.isfile(hist_path) and self.record_history:

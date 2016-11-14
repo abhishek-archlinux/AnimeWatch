@@ -355,7 +355,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					self.epn_name_in_list = title.text
 					self.ui.epn_name_in_list = title.text
 					
-			print(title,self.url().url(),'--changed-title--')
+			#print(title,self.url().url(),'--changed-title--')
 			if 'list=' in self.url().url() and 'www.youtube.com' in self.url().url():
 				
 				ut = soup.findAll('li',{'class':"yt-uix-scroller-scroll-unit "})
@@ -401,7 +401,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		print(var,'--js--')
 	def load_progress(self,var):
 		if var == 100 and 'youtube.com' in self.url().url():
-			print(self.url(),self.title(),'--load--progress--')
+			#print(self.url(),self.title(),'--load--progress--')
 			self.page().toHtml(self.get_html)
 	def title_changed(self,title):
 		a = 0
@@ -562,7 +562,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			title = title.replace('#','')
 		if title.startswith('.'):
 			title = title[1:]
-		print(title,url,file_path)
+		#print(title,url,file_path)
 		if 'list=' in url:
 			title = title + '-Playlist'
 		img_u = ''
@@ -598,7 +598,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			try:
 				#self.title_page = self.title_page.strip()
 				tmp = self.title_page.replace('\n','#')
-				print(tmp)
+				#print(tmp)
 				tmp1 = tmp.split('#')[0]
 				if tmp1:
 					self.title_page = tmp.split('#')[1]
@@ -611,13 +611,13 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			except:
 				pass
 			self.epn_name_in_list = self.title_page
-			print(data.mediaUrl().url(),data.mediaType(),data.linkText(),data.linkUrl().url(),'--media--url--and--type--')
+			#print(data.mediaUrl().url(),data.mediaType(),data.linkText(),data.linkUrl().url(),'--media--url--and--type--')
 			if data.mediaType() == 1:
 				self.media_url = data.mediaUrl().url()
 				if not self.media_url.startswith('http'):
 					self.media_url = ''
 					print('--no--image-url--')
-				print(data.mediaUrl().url(),'--media-url--image--')
+				#print(data.mediaUrl().url(),'--media-url--image--')
 			
 		except:
 			url = self.hoveredLink
@@ -653,7 +653,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 							self.title_page = self.playlist_dict[yt_id]
 						except:
 							self.title_page = ''
-						print('url=',url,'Title=',self.title_page)
+						#print('url=',url,'Title=',self.title_page)
 						self.epn_name_in_list = self.title_page
 						arr.append('Add as Local Playlist')
 						self.playlist_name = self.epn_name_in_list
