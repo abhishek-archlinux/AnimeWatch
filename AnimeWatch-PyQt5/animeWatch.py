@@ -61,7 +61,6 @@ import shutil
 from tempfile import mkstemp,mkdtemp
 
 try:
-	import haha
 	TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
 except:
 	TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
@@ -7115,7 +7114,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,18)
+		self.version_number = (3,0,0,24)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -7155,7 +7154,7 @@ class Ui_MainWindow(object):
 		self.music_mode_dim_show = False
 		self.site_var = ''
 		self.record_history = False
-		self.depth_list = 1
+		self.depth_list = 0
 		self.display_list = False
 		
 		self.update_proc = QtCore.QProcess()
@@ -11579,8 +11578,7 @@ class Ui_MainWindow(object):
 				self.list2.clear()
 				self.text.clear()
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				if self.site_var:
 					m = self.site_var.getCompleteList(siteName,category,opt) 
 				list1_items = m
@@ -11606,8 +11604,7 @@ class Ui_MainWindow(object):
 					self.list2.clear()
 					self.text.clear()
 					
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
+					
 					if self.site_var:
 						m = self.site_var.getCompleteList(siteName,category,opt) 
 					list1_items = m
@@ -12346,8 +12343,7 @@ class Ui_MainWindow(object):
 		self.list1.verticalScrollBar().setValue(self.list1.verticalScrollBar().minimum())
 		
 		try:
-			#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-			#self.site_var = getattr(module,site)()
+			
 			code = 6
 			pgn = pgn + 1
 			if (opt != "") and (pgn >= 1):
@@ -12384,8 +12380,7 @@ class Ui_MainWindow(object):
 		else:
 			return 0
 		
-		#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-		#self.site_var = getattr(module,site)()
+		
 		try:
 			pgn = pgn - 1
 			if (opt != "") and (pgn >= 1):
@@ -13161,8 +13156,7 @@ class Ui_MainWindow(object):
 			print (site)
 			
 			self.mirror_change.hide()
-			#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-			#self.site_var = getattr(module,site)()
+			
 			if self.site_var:
 				criteria = self.site_var.getOptions() 
 				self.list3.clear()
@@ -13295,8 +13289,7 @@ class Ui_MainWindow(object):
 			
 			video_local_stream = False
 			self.mirror_change.show()
-			#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-			#self.site_var = getattr(module,site)()
+			
 			if self.site_var:
 				criteria = self.site_var.getOptions() 
 				code = 7
@@ -13437,21 +13430,6 @@ class Ui_MainWindow(object):
 					extra_info = new_name_with_info.split('	')[1]
 				else:
 					name = new_name_with_info
-				#name = self.list1.currentItem().text()
-				#name = str(name)
-				if '\nid=' in name:
-					name_tmp = name.split('\n')[0]
-					name_id = re.search('id=[^ ]*',name).group()
-					name_id = name_id.replace('id=','')
-					name = name_tmp + '-'+name_id
-				name2 = name
-				if "/" in name:
-						name,epn = os.path.split(name)
-						
-						fanart = os.path.join(TMPDIR,name+'-fanart.jpg')
-						thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
-				else:
-						epn = ""
 				
 						
 				if opt != "History":
@@ -13462,6 +13440,8 @@ class Ui_MainWindow(object):
 					QtWidgets.QApplication.processEvents()
 					m,summary,picn,self.record_history,self.depth_list = self.site_var.getEpnList(name,opt,self.depth_list,extra_info,siteName,category)
 					self.text.setText('Load..Complete')
+					if not m:
+						return 0
 					#except:
 					#	self.text.setText('Load Failed')
 					#	return 0
@@ -13560,9 +13540,6 @@ class Ui_MainWindow(object):
 				
 				self.videoImage(picn,thumbnail,fanart,summary)
 				
-					
-				
-					
 		
 		elif site == "SubbedAnime":
 			global filter_on
@@ -13831,8 +13808,6 @@ class Ui_MainWindow(object):
 					
 					self.text.setText('Wait...Loading')
 					QtWidgets.QApplication.processEvents()
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
 					if self.site_var:
 						try:
 							m = self.site_var.getEpnList(siteName,name,category) 
@@ -14782,17 +14757,8 @@ class Ui_MainWindow(object):
 				self.list2.setCurrentRow(row)
 			if site != "Local":
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				try:
-					#self.site_var = getattr(module,site)()
-					print(site)
-				except:
-					return 0
-				#print (cmd)
-				#self.text.setText('Loading..Please Wait!')
+				
 				self.progressEpn.setFormat('Wait..')
-				#QtWidgets.QApplication.processEvents()
-				#try:
 				if video_local_stream:
 					if self.thread_server.isRunning():
 						if self.do_get_thread.isRunning():
@@ -14921,10 +14887,7 @@ class Ui_MainWindow(object):
 					r = self.list2.currentRow()
 					self.epn_name_in_list = self.list2.currentItem().text()
 					
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
 					if cmd:
-						#self.text.setText('Loading..Please Wait!')
 						self.progressEpn.setFormat('Wait..')
 						QtWidgets.QApplication.processEvents()
 						try:
@@ -14933,10 +14896,7 @@ class Ui_MainWindow(object):
 							return 0
 				else:
 					
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
 					if self.site_var:
-						#self.text.setText('Loading..Please Wait!')
 						self.progressEpn.setFormat('Wait..')
 						QtWidgets.QApplication.processEvents()
 						try:
@@ -14955,11 +14915,8 @@ class Ui_MainWindow(object):
 					self.list2.setCurrentRow(0)
 					self.list2.setFocus()
 					
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
 					if self.site_var:
 						
-						#self.text.setText('Loading..Please Wait!')
 						
 						self.progressEpn.setFormat('Wait..')
 						QtWidgets.QApplication.processEvents()
@@ -14972,11 +14929,8 @@ class Ui_MainWindow(object):
 			elif site == "DubbedAnime":
 				code = 5
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
 				if self.site_var:
 					
-					#self.text.setText('Loading..Please Wait!')
 					self.progressEpn.setFormat('Wait..')
 					QtWidgets.QApplication.processEvents()
 					try:
@@ -15425,8 +15379,7 @@ class Ui_MainWindow(object):
 			
 			if site != "Local":
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				try:
 					if video_local_stream:
 						finalUrl = self.site_var.getFinalUrl(name,row,mirrorNo,quality)
@@ -15476,8 +15429,7 @@ class Ui_MainWindow(object):
 				
 					epn_t = epn
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				if self.site_var:
 					try:
 						finalUrl = self.site_var.getFinalUrl(siteName,name,epn,mirrorNo,category,quality) 
@@ -15486,8 +15438,6 @@ class Ui_MainWindow(object):
 			elif site == "DubbedAnime":
 				code = 5
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
 				if self.site_var:
 					try:
 						finalUrl = self.site_var.getFinalUrl(siteName,name,epn,mirrorNo,quality) 
@@ -15568,8 +15518,6 @@ class Ui_MainWindow(object):
 			
 			if site != "Local":
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
 				try:
 					if video_local_stream:
 						finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
@@ -15627,8 +15575,7 @@ class Ui_MainWindow(object):
 				
 					epn_t = epn
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				if self.site_var:
 					try:
 						finalUrl = self.site_var.getFinalUrl(siteName,name,epn,mirrorNo,category,quality) 
@@ -15637,8 +15584,7 @@ class Ui_MainWindow(object):
 			elif site == "DubbedAnime":
 				code = 5
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+
 				if self.site_var:
 					try:
 						finalUrl = self.site_var.getFinalUrl(siteName,name,epn,mirrorNo,quality) 
@@ -16991,9 +16937,7 @@ class Ui_MainWindow(object):
 				
 			if site != "Local":
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
 				try:
-					#self.site_var = getattr(module,site)()
 					print(site)
 				except:
 					return 0
@@ -17054,8 +16998,7 @@ class Ui_MainWindow(object):
 					r = self.list2.currentRow()
 					self.epn_name_in_list = name+'-'+self.list2.currentItem().text()
 					
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
+					
 					if self.site_var:
 						self.progressEpn.setFormat('Wait..')
 						QtWidgets.QApplication.processEvents()
@@ -17065,8 +17008,7 @@ class Ui_MainWindow(object):
 							return 0
 				else:
 					
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
+					
 					if self.site_var:
 						self.progressEpn.setFormat('Wait..')
 						QtWidgets.QApplication.processEvents()
@@ -17077,8 +17019,7 @@ class Ui_MainWindow(object):
 			
 			elif site == "DubbedAnime":
 				code = 5
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				if self.site_var:
 					self.progressEpn.setFormat('Wait..')
 					QtWidgets.QApplication.processEvents()
@@ -17401,8 +17342,7 @@ class Ui_MainWindow(object):
 			if (t_opt == "Genre") and (genre_num == 0):
 				self.list3.clear()
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				self.text.setText('Wait...Loading')
 				QtWidgets.QApplication.processEvents()
 				#try:
@@ -17466,8 +17406,7 @@ class Ui_MainWindow(object):
 			elif genre_num == 1:
 					pgn = 1
 					
-					#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-					#self.site_var = getattr(module,site)()
+					
 					self.text.setText('Wait...Loading')
 					QtWidgets.QApplication.processEvents()
 					#try:
@@ -17494,8 +17433,7 @@ class Ui_MainWindow(object):
 				
 				opt = t_opt
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				self.text.setText('Wait...Loading')
 				QtWidgets.QApplication.processEvents()
 				#try:
@@ -17562,8 +17500,7 @@ class Ui_MainWindow(object):
 				self.list1.clear()
 				self.list2.clear()
 				
-				#module = imp.load_source(site,os.path.join(home,'src','Plugins',site+'.py'))
-				#self.site_var = getattr(module,site)()
+				
 				if self.site_var:
 					self.text.setText('Wait...Loading')
 					QtWidgets.QApplication.processEvents()

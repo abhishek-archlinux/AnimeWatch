@@ -1553,9 +1553,9 @@ class SubbedAnime():
 			f.close()
 		return m
 
-	def getEpnList(self,name,opt,record_history,depth_list,extra_info,display_list,siteName,category):
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		url = ""
-		record_history = True
+		
 		depth_list = 1
 		display_list = True
 		embed = depth_list		
@@ -2524,9 +2524,11 @@ class SubbedAnime():
 						new_arr.append(t_name+'-'+str(i))
 					i = i+1
 				m[:0]=new_arr
-		m.append(picn)
-		m.append(summary)
-		return m
+		#m.append(picn)
+		#m.append(summary)
+		record_history = True
+		display_list = True
+		return (m,summary,picn,record_history,depth_list)
 		
 	def getNextPage(self,opt_val,pgn,genre_num,search_term):
 		if (pgn >= 1):

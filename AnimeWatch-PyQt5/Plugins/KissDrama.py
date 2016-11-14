@@ -145,10 +145,18 @@ class KissDrama():
 			for i in m:
 				i = re.sub('/Drama/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			return m
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
+		
+		
+		epn_num = ''
+		if extra_info:
+			name,epn_num = name.rsplit('--',1) 
 		
 		url = 'http://kissasian.com/Drama/' + name
 		print(url)
@@ -220,6 +228,9 @@ class KissDrama():
 		epl=naturallysorted(epl)  
 		#epl.append(picn)
 		#epl.append(summary)
+		if extra_info and epn_num:
+			epl[:] = []
+			epl.append(epn_num)
 		record_history = True
 		return (epl,summary,picn,record_history,depth_list)
 	def urlResolve(self,txt):
@@ -244,7 +255,8 @@ class KissDrama():
 					m.append(k)
 		return m
 	def getFinalUrl(self,name,epn,mirror,quality):
-		
+		if '--' in name and 'id=' in name:
+			name = name.split('--')[0]
 		url = 'http://kissasian.com/Drama/' + name + '/' + epn
 		print(url)
 		sd = ''
@@ -354,6 +366,9 @@ class KissDrama():
 			for i in m:
 				i = re.sub('/Drama/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			return m
@@ -369,6 +384,9 @@ class KissDrama():
 			for i in m:
 				i = re.sub('/Drama/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			return m
@@ -390,6 +408,9 @@ class KissDrama():
 			for i in m:
 				i = re.sub('/Drama/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			if m:
@@ -411,6 +432,9 @@ class KissDrama():
 			for i in m:
 				i = re.sub('/Drama/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			if m:

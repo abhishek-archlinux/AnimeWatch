@@ -138,7 +138,7 @@ class KissAnime():
 	def search(self,name):
 		
 		if name != '':
-			url = 'https://kissanime.to/Search/Anime/?keyword=' + name
+			url = 'http://kissanime.to/Search/Anime/?keyword=' + name
 			content = ccurl(url)
 			content = self.ccurlN(content,url)
 				
@@ -149,12 +149,19 @@ class KissAnime():
 			for i in m:
 				i = re.sub('/Anime/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			return m
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
-		
-		url = 'https://kissanime.to/Anime/' + name
+			
+		epn_num = ''
+		if extra_info:
+			name,epn_num = name.rsplit('--',1) 
+			
+		url = 'http://kissanime.to/Anime/' + name
 		print(url)
 		content = ccurl(url)
 		content = self.ccurlN(content,url)
@@ -220,11 +227,12 @@ class KissAnime():
 			summary = re.sub('\n\n','\n',summary)
 		except:
 			summary = 'Summary Not Available'
-		#print(summary)
-		#print(picn)
+			
 		epl=naturallysorted(epl)  
-		#epl.append(picn)
-		#epl.append(summary)
+		if extra_info and epn_num:
+			epl[:] = []
+			epl.append(epn_num)
+			
 		record_history = True
 		display_list = True
 		return (epl,summary,picn,record_history,depth_list)
@@ -252,8 +260,9 @@ class KissAnime():
 	
 	
 	def getFinalUrl(self,name,epn,mirror,quality):
-		
-		url = 'https://kissanime.to/Anime/' + name + '/' + epn
+		if '--' in name and 'id=' in name:
+			name = name.split('--')[0]
+		url = 'http://kissanime.to/Anime/' + name + '/' + epn
 		print(url)
 		sd = ''
 		hd = ''
@@ -313,7 +322,7 @@ class KissAnime():
 	def getCompleteList(self,opt,genre_num):
 		
 		if opt == 'Genre' and genre_num == 0:
-			url = 'https://kissanime.to/AnimeList/'
+			url = 'http://kissanime.to/AnimeList/'
 			content = ccurl(url)
 			content = self.ccurlN(content,url)
 			
@@ -333,7 +342,7 @@ class KissAnime():
 		if opt == 'History':
 			print('History')
 		elif opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate':
-			url = 'https://kissanime.to/AnimeList/' + opt
+			url = 'http://kissanime.to/AnimeList/' + opt
 			pgn = 1
 			content = ccurl(url)
 			content = self.ccurlN(content,url)
@@ -346,11 +355,14 @@ class KissAnime():
 			for i in m:
 				i = re.sub('/Anime/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			return m
 		if genre_num == 1:
-			url = 'https://kissanime.to/Genre/' + opt
+			url = 'http://kissanime.to/Genre/' + opt
 			pgn = 1
 			content = ccurl(url)
 			content = self.ccurlN(content,url)
@@ -361,6 +373,9 @@ class KissAnime():
 			for i in m:
 				i = re.sub('/Anime/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			return m
@@ -369,9 +384,9 @@ class KissAnime():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
-				url = 'https://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
 			else:
-				url = 'https://kissanime.to/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = ccurl(url)
 			content = self.ccurlN(content,url)
@@ -382,6 +397,9 @@ class KissAnime():
 			for i in m:
 				i = re.sub('/Anime/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			if m:
@@ -391,9 +409,9 @@ class KissAnime():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:
-				url = 'https://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
 			else:
-				url = 'https://kissanime.to/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/Genre/' + opt + '?page=' + pgnum
 			content = ccurl(url)
 			content = self.ccurlN(content,url)
 			m = re.findall('/Anime/[^"]*', content)
@@ -403,6 +421,9 @@ class KissAnime():
 			for i in m:
 				i = re.sub('/Anime/', '', i)
 				m[j] = i
+				if '?id=' in i and '/' in i:
+					nm,ep = i.split('/')
+					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
 
 			if m:
