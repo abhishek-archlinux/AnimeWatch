@@ -43,6 +43,7 @@ from PyQt5.QtCore import QUrl
 
 import time
 from yt import get_yt_url,get_yt_sub,send_notification
+from player_functions import write_files
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty)
 
@@ -512,6 +513,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 	@pyqtSlot(str,str,str)
 	def got_curl_html(self,title,url,file_path):
 		t = title + '	'+url+'	'+'NONE'
+		"""
 		if os.stat(file_path).st_size == 0:
 			f = open(file_path,'w')
 		else:
@@ -522,7 +524,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		except:
 			f.write(t)
 		f.close()
+		"""
+		write_files(file_path,line_by_line=True,t)
 		self.ui.update_playlist(file_path)
+		
 	def add_playlist(self,value):
 		value = value.replace('/','-')
 		value = value.replace('#','')
@@ -530,12 +535,13 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			value = value[1:]
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		new_pl = False
-		if not os.path.exists(file_path):
-			f = open(file_path,'w')
-			new_pl = True
-		else:
-			f = open(file_path,'a')
+		#if not os.path.exists(file_path):
+		#	f = open(file_path,'w')
+		#	new_pl = True
+		#else:
+		#	f = open(file_path,'a')
 		j = 0
+		new_arr = []
 		for i in self.playlist_dict:
 			yt_id = i
 			title = self.playlist_dict[yt_id]
@@ -545,12 +551,14 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				title = title[1:]
 			n_url = 'https://m.youtube.com/watch?v='+yt_id
 			w = title+'	'+n_url+'	'+'NONE'
-			if new_pl and j==0:
-				f.write(w)
-			else:
-				f.write('\n'+w)
+			#if new_pl and j==0:
+			#	f.write(w)
+			#else:
+			#	f.write('\n'+w)
+			new_arr.append(w)
 			j = j+1
-		f.close()
+		#f.close()
+		write_files(file_path,new_arr,line_by_line=True)
 		self.get_playlist = False
 	def triggerPlaylist(self,value,url,title):
 		print ('Menu Clicked')
@@ -576,6 +584,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				url = url.replace(o_url,n_url)
 				print(url,o_url,n_url)
 		t = title + '	'+url+'	'+'NONE'
+		"""
 		if os.stat(file_path).st_size == 0:
 			f = open(file_path,'w')
 		else:
@@ -586,6 +595,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		except:
 			f.write(t)
 		f.close()
+		"""
+		write_files(file_path,t,line_by_line=True)
 		self.ui.update_playlist(file_path)
 	def contextMenuEvent(self, event):
 		self.media_url = ''

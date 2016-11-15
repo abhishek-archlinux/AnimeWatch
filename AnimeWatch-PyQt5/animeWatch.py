@@ -92,6 +92,7 @@ except:
 	pass
 from musicArtist import musicArtist
 from yt import get_yt_url
+from player_functions import write_files
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
@@ -149,24 +150,7 @@ def replace_line(file_path, pattern, subst):
 	
 
 		
-"""
-def get_interface_ip(ifname):
 
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	return socket.inet_ntoa(fcntl.ioctl(s.fileno(), 0x8915, struct.pack('256s', ifname[:15]))[20:24])
-
-def get_lan_ip_old():
-	ip = socket.gethostbyname(socket.gethostname())
-	if ip.startswith("127."):
-		interfaces = ["wlan0","wlan1","wlp1s0","wlp1s1","wifi0","eth0","eth1","eth2","ath0","ath1","ppp0"]
-		for ifname in interfaces:
-			try:
-				ip = get_interface_ip(ifname)
-				break
-			except:
-				pass
-	return ip
-"""
 def get_lan_ip():
 	a = subprocess.check_output(['ip','addr','show'])
 	b = str(a,'utf-8')
@@ -540,9 +524,10 @@ class ThreadingExample(QtCore.QThread):
 			#img.append(wiki)
 			#return img
 			tmp_bio = os.path.join(TMPDIR,name+'-bio.txt')
-			f = open(tmp_bio,'w')
-			f.write(str(wiki))
-			f.close()
+			#f = open(tmp_bio,'w')
+			#f.write(str(wiki))
+			#f.close()
+			write_files(tmp_bio,wiki,line_by_line=False)
 			thumb = os.path.join(TMPDIR,name+'.jpg')
 			if img:
 				url = img[0]
@@ -553,10 +538,11 @@ class ThreadingExample(QtCore.QThread):
 					#subprocess.call(["curl",'--data-urlencode',"-o",thumb,url])
 					pass
 			tmp_n = os.path.join(TMPDIR,name+'.txt')
-			f = open(tmp_n,'w')
-			for i in img:
-				f.write(str(i)+'\n')
-			f.close()
+			#f = open(tmp_n,'w')
+			#for i in img:
+			#	f.write(str(i)+'\n')
+			#f.close()
+			write_files(tmp_n,img,line_by_line=True)
 		#self.terminate()
 
 
@@ -1354,8 +1340,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						
 						
 						
-						#p2= "ui.label_"+str(curR)+".show()"
-						#exec p2
+						
 						
 	def mouseMoveEvent(self,event):
 		self.setFocus()
@@ -1476,23 +1461,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 								elif Player == 'mplayer':
 									finalUrl = '-audiofile '+audio_url+' '+video_url
 						ui.play_file_now(finalUrl)
-					"""
-					if finalUrl.startswith('"'):
-						print('finalURL startswith .". ')
-						finalUrl = re.sub('"','',finalUrl)
-					if finalUrl.startswith('/'):
-						finalUrl = '"'+finalUrl+'"'
-					if Player == "mplayer":
-						command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-						print (command)
-						ui.infoPlay(command)
-					elif Player == "mpv":
-						#finalUrl = finalUrl.replace('"','')
-						#finalUrl = finalUrl.replace(' ','\\ ')
-						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
-						print (command)
-						ui.infoPlay(command)
-					"""
+					
 					if site == "Music":
 						print (finalUrl)
 						try:
@@ -1631,16 +1600,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				if not sumry.startswith('http'):
 					sumry = '"'+sumry+'"'
 				t = sumr+'	'+sumry+'	'+rfr_url
-				if os.stat(file_path).st_size == 0:
-					f = open(file_path,'w')
-				else:
-					f = open(file_path,'a')
-					t = '\n'+t
-				try:
-					f.write(str(t))
-				except:
-					f.write(t)
-				f.close()
+				
+				write_files(file_path,t,line_by_line=True)
 		else:
 			ui.epnfound_return()
 			t = ''
@@ -1674,18 +1635,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
 					t = sumr+'	'+sumry+'	'+rfr_url
 				
-				if os.stat(file_path).st_size == 0:
-					f = open(file_path,'w')
-				else:
-					f = open(file_path,'a')
-					t = '\n'+t
-				try:
-					f.write(str(t))
-				except:
-					f.write(t)
+				write_files(file_path,t,line_by_line=True)
 				
-				f.close()	
-		
 	def contextMenuEvent(self, event):
 		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval,quitReally,mpvplayer,Local,path_final_Url,memory_num_arr,epn_name_in_list,total_seek,cur_label_num,tab_6_player,icon_size_arr,iconv_r,iconv_r_indicator,home,siteName,finalUrlFound,refererNeeded
 		total_seek = 0
@@ -1739,15 +1690,9 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					ui.queue_url_list.append(epnArrList[r])
 					ui.list6.addItem(epnArrList[r].split('	')[0])
 					print (ui.queue_url_list)
-					if os.stat(file_path).st_size == 0:
-						f = open(file_path,'w')
-						f.write(epnArrList[r])
-					else:
-						f = open(file_path,'a')
-						f.write('\n'+epnArrList[r])
-				f.close()
+					
+					write_files(file_path,epnArrList[r],line_by_line=True)
 		elif action == watch:
-			#if site=="Local":
 				if mpvplayer:
 					if mpvplayer.processId()>0:
 						mpvplayer.kill()
@@ -2308,7 +2253,7 @@ class List1(QtWidgets.QListWidget):
 		
 	def dropEvent(self, event):
 		if event.source() == self and (event.dropAction() == QtCore.Qt.MoveAction or self.dragDropMode() == QtWidgets.QAbstractItemView.InternalMove):
-			global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,siteName
+			global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,siteName,original_path_name
 			i = self.currentItem()
 			item = i.text()
 			itemR = self.currentRow()
@@ -2353,6 +2298,7 @@ class List1(QtWidgets.QListWidget):
 								lines[n]=t
 							j = 0
 							length = len(lines)
+							"""
 							f = open(file_path,'w')
 							for i in lines:
 								if j == length - 1:
@@ -2361,6 +2307,8 @@ class List1(QtWidgets.QListWidget):
 									f.write(i+'\n')
 								j = j+1
 							f.close()
+							"""
+							write_files(file_path,lines,line_by_line=True)
 							self.clear()
 							for i in lines:
 								j = i.split(':')
@@ -2374,7 +2322,7 @@ class List1(QtWidgets.QListWidget):
 						else:
 							if os.path.exists(os.path.join(home,'History',site,'history.txt')):
 								file_path = os.path.join(home,'History',site,'history.txt')
-				
+						"""
 						f = open(file_path,'w')
 						i = 0
 						length = self.count()
@@ -2386,6 +2334,8 @@ class List1(QtWidgets.QListWidget):
 								f.write(j+'\n')
 							i = i+1
 						f.close()
+						"""
+						write_files(file_path,original_path_name,line_by_line=True)
 						self.setCurrentRow(n)
 		
 		else:
@@ -2424,6 +2374,7 @@ class List1(QtWidgets.QListWidget):
 					del item
 					del original_path_name[row]
 					length = self.count()-1
+					"""
 					f = open(file_path,'w')
 					for i in range(self.count()):
 						fname = original_path_name[i]
@@ -2432,7 +2383,8 @@ class List1(QtWidgets.QListWidget):
 						else:
 							f.write(str(fname)+'\n')
 					f.close()
-			
+					"""
+					write_files(file_path,original_path_name,line_by_line=True)
 			
 		elif event.modifiers() == QtCore.Qt.ShiftModifier and event.key() == QtCore.Qt.Key_C:
 			ui.copySummary()
@@ -2442,6 +2394,7 @@ class List1(QtWidgets.QListWidget):
 					ui.listfound()
 				tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+finalUrlFound+':'+refererNeeded
 				file_path = os.path.join(home,'Bookmark','bookmark.txt')
+				"""
 				if not os.path.exists(file_path) or (os.stat(file_path).st_size == 0):
 					
 					f = open(file_path,'w')
@@ -2451,6 +2404,8 @@ class List1(QtWidgets.QListWidget):
 					f = open(file_path,'a')
 					f.write('\n'+tmp)
 					f.close()
+				"""
+				write_files(file_path,tmp,line_by_line=True)
 				note = name + " is Bookmarked"
 				#subprocess.Popen(['notify-send',note])
 				send_notification(note)
@@ -2477,6 +2432,7 @@ class List1(QtWidgets.QListWidget):
 						t = lines[r]
 						lines[r] = lines[p]
 						lines[p] = t
+						"""
 						f = open(file_path,'w')
 						k = 1
 						while(k < length):
@@ -2485,6 +2441,8 @@ class List1(QtWidgets.QListWidget):
 						for i in lines:
 							f.write(i)
 						f.close()
+						"""
+						write_files(file_path,lines,line_by_line=True)
 						self.clear()
 						original_path_name[:] = []
 						for i in lines:
@@ -2515,7 +2473,7 @@ class List1(QtWidgets.QListWidget):
 					prev_row = row - 1
 					
 				original_path_name[row],original_path_name[prev_row] = original_path_name[prev_row],original_path_name[row]
-				
+				"""
 				if os.path.exists(file_path):
 					f = open(file_path,'w')
 					j = 0
@@ -2526,6 +2484,9 @@ class List1(QtWidgets.QListWidget):
 						else:
 							f.write('\n'+i)
 						j = j+1
+				"""
+				if os.path.exists(file_path):
+					write_files(file_path,original_path_name,line_by_line=True)
 				self.clear()
 				for i in original_path_name:
 					if '	' in i:
@@ -2596,6 +2557,7 @@ class List1(QtWidgets.QListWidget):
 						t = lines[r]
 						lines[r] = lines[p]
 						lines[p] = t
+						"""
 						f = open(file_path,'w')
 						k = 1
 						while(k < length):
@@ -2604,6 +2566,8 @@ class List1(QtWidgets.QListWidget):
 						for i in lines:
 							f.write(i)
 						f.close()
+						"""
+						write_files(file_path,lines,line_by_line=True)
 						self.clear()
 						original_path_name[:] = []
 						for i in lines:
@@ -2633,7 +2597,7 @@ class List1(QtWidgets.QListWidget):
 					next_row = row+1
 					
 				original_path_name[row],original_path_name[next_row] = original_path_name[next_row],original_path_name[row]
-				
+				"""
 				if os.path.exists(file_path):
 					f = open(file_path,'w')
 					j = 0
@@ -2644,6 +2608,9 @@ class List1(QtWidgets.QListWidget):
 						else:
 							f.write('\n'+i)
 						j = j+1
+				"""
+				if os.path.exists(file_path):
+					write_files(file_path,original_path_name,line_by_line=True)
 				self.clear()
 				for i in original_path_name:
 					if '	' in i:
@@ -2852,23 +2819,29 @@ class List1(QtWidgets.QListWidget):
 				else:
 					tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
 				file_path = os.path.join(home,'Bookmark','bookmark.txt')
+				write_files(file_path,tmp,line_by_line=True)
+				
+				"""
 				if os.path.exists(file_path):
 					f = open(file_path,'r')
 					lines = f.readlines()
 					f.close()
 					lines.append(tmp)
+					
 					f = open(file_path,'w')
 					for i in lines:
 						i = i.replace('\n','')
 						if i:
 							f.write(i+'\n')
 					f.close()
+					
 				elif not os.path.exists(file_path) or (os.stat(file_path).st_size == 0):
 					
 					f = open(file_path,'w')
 					f.write(tmp)
 					f.close()
-				
+					
+				"""
 				note = name + " is Bookmarked"
 				#subprocess.Popen(['notify-send',note])
 				
@@ -2890,6 +2863,7 @@ class List1(QtWidgets.QListWidget):
 			else:
 				return 0
 		file_path = os.path.join(home,'Bookmark',val+'.txt')
+		"""
 		if os.path.exists(file_path):
 			f = open(file_path,'r')
 			lines = f.readlines()
@@ -2906,7 +2880,8 @@ class List1(QtWidgets.QListWidget):
 			f = open(file_path,'w')
 			f.write(tmp)
 			f.close()
-		
+		"""
+		write_files(file_path,tmp,line_by_line=True)
 		note = name + " is Added to "+val+" Category"
 		#subprocess.Popen(['notify-send',note])
 		send_notification(note)
@@ -2935,6 +2910,7 @@ class List1(QtWidgets.QListWidget):
 				sumry = sumry.replace('"','')
 				sumry = '"'+sumry+'"'
 				t = sumr+'	'+sumry+'	'+rfr_url
+				"""
 				if os.stat(file_path).st_size == 0:
 					f = open(file_path,'w')
 				else:
@@ -2946,7 +2922,9 @@ class List1(QtWidgets.QListWidget):
 					f.write(t.encode('utf-8'))
 				#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
 				f.close()
-			
+				"""
+				write_files(file_path,t,line_by_line=True)
+				
 	def contextMenuEvent(self, event):
 			global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt,base_url,bookmark,status,posterManually,siteName,finalUrlFound,refererNeeded,original_path_name,video_local_stream
 			if self.currentItem():
@@ -3295,15 +3273,16 @@ class List2(QtWidgets.QListWidget):
 								j = 0
 								length = len(lines)
 								epnArrList[:]=[]
-								f = open(file_path,'w')
+								#f = open(file_path,'w')
 								for i in lines:
 									epnArrList.append(i)
-									if j == length - 1:
-										f.write(i)
-									else:
-										f.write(i+'\n')
+									#if j == length - 1:
+									#	f.write(i)
+									#else:
+									#	f.write(i+'\n')
 									j = j+1
-								f.close()
+								#f.close()
+								write_files(file_path,lines,line_by_line=True)
 								self.clear()
 								if site != "PlayLists":
 									ui.update_list2()
@@ -3390,13 +3369,16 @@ class List2(QtWidgets.QListWidget):
 					ui.queue_url_list.append(epnArrList[r])
 					ui.list6.addItem(epnArrList[r].split('	')[0])
 					print (ui.queue_url_list)
+					"""
 					if os.stat(file_path).st_size == 0:
 						f = open(file_path,'w')
 						f.write(epnArrList[r])
 					else:
 						f = open(file_path,'a')
 						f.write('\n'+epnArrList[r])
-				f.close()
+					f.close()
+					"""
+					write_files(file_path,epnArrList[r],line_by_line=True)
 			elif video_local_stream:
 				#if not ui.local_file_index:
 				#	ui.list6.clear()
@@ -3477,6 +3459,7 @@ class List2(QtWidgets.QListWidget):
 							
 							del item
 							del epnArrList[row]
+							"""
 							f = open(file_path,'w')
 							j = 0
 							for i in range(self.count()):
@@ -3487,6 +3470,8 @@ class List2(QtWidgets.QListWidget):
 									f.write('\n'+fname)
 								j = j+1
 							f.close()
+							"""
+							write_files(file_path,epnArrList,line_by_line=True)
 		#elif event.key() == QtCore.Qt.Key_Q: 
 		#	startPlayer = "No"
 		#	ui.epnfound()
@@ -3536,12 +3521,13 @@ class List2(QtWidgets.QListWidget):
 						lines[row]=lines[nRow]
 						lines[nRow]=t
 					epnArrList[:]=[]
-					f = open(file_path,'w')
+					#f = open(file_path,'w')
 					for i in lines:
-						f.write(i)
-						j = i.replace('\n','')
+						#f.write(i)
+						j = i.strip()
 						epnArrList.append(j)
-					f.close()
+					#f.close()
+					write_files(file_path,lines,line_by_line=True)
 					ui.update_list2()
 					self.setCurrentRow(nRow)
 					
@@ -3636,12 +3622,13 @@ class List2(QtWidgets.QListWidget):
 						lines[row]=lines[nRow]
 						lines[nRow]=t
 					epnArrList[:]=[]
-					f = open(file_path,'w')
+					#f = open(file_path,'w')
 					for i in lines:
-						f.write(i)
-						j = i.replace('\n','')
+						#f.write(i)
+						j = i.strip()
 						epnArrList.append(j)
-					f.close()
+					#f.close()
+					write_files(file_path,lines,line_by_line=True)
 					ui.update_list2()
 					self.setCurrentRow(nRow)
 					#ui.update_list2()
@@ -4152,6 +4139,7 @@ class List2(QtWidgets.QListWidget):
 				sumry = sumry.replace('"','')
 				sumry = '"'+sumry+'"'
 				t = sumr+'	'+sumry+'	'+rfr_url
+				"""
 				if os.stat(file_path).st_size == 0:
 					f = open(file_path,'w')
 				else:
@@ -4162,6 +4150,8 @@ class List2(QtWidgets.QListWidget):
 				except:
 					f.write(t)
 				f.close()
+				"""
+				write_files(file_path,t,line_by_line=True)
 		else:
 			finalUrl = ui.epn_return(self.currentRow())
 			t = ''
@@ -4197,7 +4187,7 @@ class List2(QtWidgets.QListWidget):
 					#sumry = sumry.replace('"','')
 					#f.write(sumr+'	'+sumry+'	'+rfr_url+'\n')
 					t = sumr+'	'+sumry+'	'+rfr_url
-					
+				"""
 				if os.stat(file_path).st_size == 0:
 					f = open(file_path,'w')
 				else:
@@ -4208,6 +4198,8 @@ class List2(QtWidgets.QListWidget):
 				except:
 					f.write(t.encode('utf-8'))
 				f.close()
+				"""
+				write_files(file_path,t,line_by_line=True)
 		
 		
 	def fix_order(self):
@@ -4243,6 +4235,7 @@ class List2(QtWidgets.QListWidget):
 						if pls:
 							file_path = os.path.join(home,'Playlists',pls)
 						if os.path.exists(file_path):
+							"""
 							#abs_path='/tmp/AnimeWatch/tmp.txt'
 							abs_path = os.path.join(TMPDIR,'tmp.txt')
 							print(file_path,'--file-path--')
@@ -4262,6 +4255,8 @@ class List2(QtWidgets.QListWidget):
 								f.close()
 								if not writing_failed:
 									move(abs_path, file_path)
+							"""
+							write_files(file_path,epnArrList,line_by_line=True)
 			elif (opt == "History" or site =="PlayLists") and row > 0 and site!="Video":
 					file_path = ""
 					
@@ -4279,6 +4274,7 @@ class List2(QtWidgets.QListWidget):
 						print(file_path,'--file-path--')
 						writing_failed = False
 						if os.path.exists(file_path):
+							"""
 							f = open(abs_path,'w')
 							for i in range(len(epnArrList)):
 								j = epnArrList[i].replace('\n','')
@@ -4293,6 +4289,8 @@ class List2(QtWidgets.QListWidget):
 							f.close()
 							if not writing_failed:
 								move(abs_path, file_path)
+							"""
+							write_files(file_path,epnArrList,line_by_line=True)
 			
 						
 	def contextMenuEvent(self, event):
@@ -4776,13 +4774,16 @@ class List5(QtWidgets.QListWidget):
 					ui.queue_url_list.append(epnArrList[r])
 					ui.list6.addItem(epnArrList[r].split('	')[0])
 					print (ui.queue_url_list)
+					"""
 					if os.stat(file_path).st_size == 0:
 						f = open(file_path,'w')
 						f.write(epnArrList[r])
 					else:
 						f = open(file_path,'a')
 						f.write('\n'+epnArrList[r])
-				f.close()
+					f.close()
+					"""
+					write_files(file_path,epnArrList[r],line_by_line=True)
 		#elif event.key() == QtCore.Qt.Key_Left:
 		#	ui.btn1.setFocus()
 			
@@ -8217,29 +8218,38 @@ class Ui_MainWindow(object):
 			self.listLibrary.addItem(fname)
 			file_name = os.path.join(home,'local.txt')
 			#if not os.path.exists(file_name):
-				
+			"""
 			f = open(file_name,'w')
 			
 			for i in range(self.listLibrary.count()):
 				fname = str(self.listLibrary.item(i).text())
 				f.write(fname+'\n')
 			f.close()
+			"""
+			write_files(file_name,fname,line_by_line=True)
 		#self.listLibrary.setFocus()
 	def removeFolderLibrary(self):
 		print ("remove")
 		index = self.listLibrary.currentRow()
 		item  = self.listLibrary.item(index)
 		if item:
+			file_name = os.path.join(home,'local.txt')
+			f = open(file_name,'r')
+			lines = f.readlines()
+			f.close()
+			
 			print (self.listLibrary.item(index).text())
 			self.listLibrary.takeItem(index)
-			
 			del item
-			file_name = os.path.join(home,'local.txt')
+			del lines[index]
+			"""
 			f = open(file_name,'w')
 			for i in range(self.listLibrary.count()):
 				fname = str(self.listLibrary.item(i).text())
 				f.write(fname+'\n')
 			f.close()
+			"""
+			write_files(file_name,lines,line_by_line=True)
 	def adjustVideoScreen(self,value):
 		global mpvplayer,cur_label_num,fullscr
 		if mpvplayer:
@@ -11060,6 +11070,7 @@ class Ui_MainWindow(object):
 				if os.path.exists(os.path.join(home,'History',site,name,'Ep.txt')):
 					file_path = os.path.join(home,'History',site,name,'Ep.txt')
 			if os.path.exists(file_path):
+				"""
 				f = open(file_path,'w')
 				#print (epnArrList)
 				for r in range(len(epnArrList)):
@@ -11069,6 +11080,8 @@ class Ui_MainWindow(object):
 					else:
 						f.write(t+'\n')
 				f.close()
+				"""
+				write_files(file_path,epnArrList,line_by_line=True)
 		
 		self.update_list2()
 		
@@ -11199,14 +11212,21 @@ class Ui_MainWindow(object):
 								tmp_wiki = os.path.join(TMPDIR,nm+'-bio.txt')
 								thumb = os.path.join(TMPDIR,nm+'.jpg')
 								thumb_list = os.path.join(TMPDIR,nm+'.txt')
+								"""
 								f = open(thumb_list,'w')
 								for i in img_arr:
 									img_arr_artist.append(i)
 									f.write(str(i)+'\n')
 								f.close()
+								"""
+								write_files(thumb_list,img_arr,line_by_line=True)
+								"""
 								f = open(tmp_wiki,'w')
 								f.write(str(wiki))
 								f.close()
+								"""
+								write_files(tmp_wiki,wiki,line_by_line=False)
+								
 								if img_arr_artist:
 									url = img_arr_artist[0]
 									del img_arr_artist[0]
@@ -11362,9 +11382,12 @@ class Ui_MainWindow(object):
 						summary = title+'\n\n'+labelId+ sumr
 						summary = re.sub('\t','',summary)
 						sum_file = os.path.join(TMPDIR,name+'-summary.txt')
+						"""
 						f = open(sum_file,'w')
 						f.write(str(summary))
 						f.close()
+						"""
+						write_files(sum_file,summary,line_by_line=False)
 						self.text.clear()
 						self.text.lineWrapMode()
 						self.text.insertPlainText(summary)
@@ -11691,6 +11714,7 @@ class Ui_MainWindow(object):
 	def update_playlist_file(self,file_path):
 		global epnArrList
 		if os.path.exists(file_path):
+			"""
 			f = open(file_path,'w')
 			k = 0
 			for i in range(self.list2.count()):
@@ -11701,6 +11725,8 @@ class Ui_MainWindow(object):
 					f.write('\n'+it)
 				k = k+1
 			f.close()
+			"""
+			write_files(file_path,epnArrList,line_by_line=True)
 			
 	def mark_playlist(self,mark_val,row):
 		global site,epnArrList,home
@@ -11827,13 +11853,14 @@ class Ui_MainWindow(object):
 							lines[row] = n_epn
 					
 					epnArrList[:]=[]
-					f = open(file_path, 'w')
+					#f = open(file_path, 'w')
 					for i in lines:
-						f.write(i)
-						i = i.replace('\n','')
+						#f.write(i)
+						i = i.strip()
 						epnArrList.append(i)
 					#replace_line(file_path,epn,n_epn)
-					f.close()
+					#f.close()
+					write_files(file_path,lines,line_by_line=True)
 				self.list2.setCurrentRow(row)
 		
 		
@@ -11941,10 +11968,13 @@ class Ui_MainWindow(object):
 			t = lines[index-1]
 			t = re.sub('\n','',t)
 			lines[index-1]=t
+		"""
 		f = open(file_path,'w')
 		for i in lines:
 			f.write(i)
 		f.close()
+		"""
+		write_files(file_path,lines,line_by_line=True)
 		if 'Ep.txt' in file_path:
 			f = open(file_path,'r')
 			lines = f.readlines()
@@ -12044,12 +12074,13 @@ class Ui_MainWindow(object):
 				else:
 					lines[row]= n_epn
 				epnArrList[:]=[]
-				f = open(file_path,'w')
+				#f = open(file_path,'w')
 				for i in lines:
-					f.write(i)
-					i = i.replace('\n','')
+					#f.write(i)
+					i = i.strip()
 					epnArrList.append(i)
-				f.close()
+				#f.close()
+				write_files(file_path,lines,line_by_line=True)
 			self.update_list2()
 		
 	def deleteHistory(self):
@@ -12080,6 +12111,7 @@ class Ui_MainWindow(object):
 				if row < len(lines):
 					del lines[row]
 					length = len(lines) - 1
+					"""
 					j = 0
 					f = open(file_path,'w')
 					for i in lines:
@@ -12087,6 +12119,8 @@ class Ui_MainWindow(object):
 							i = i.replace('\n','')
 						f.write(i)
 					f.close()
+					"""
+					write_files(file_path,lines,line_by_line=True)
 			
 		elif site == "Local":
 			r = ui.list3.currentRow()
@@ -12112,11 +12146,12 @@ class Ui_MainWindow(object):
 						del original_path_name[index]
 						self.list1.setCurrentRow(index)
 						if t_opt == "History":
-							f = open(hist_path,'w')
-							for i in range(self.list1.count()):
-								j = original_path_name[i]
-								f.write(j+'\n')
-							f.close()
+							#f = open(hist_path,'w')
+							#for i in range(self.list1.count()):
+							#	j = original_path_name[i]
+							#	f.write(j+'\n')
+							#f.close()
+							write_files(hist_path,original_path_name,line_by_line=True)
 		elif opt == "History":
 			file_path = ''
 			
@@ -12151,16 +12186,17 @@ class Ui_MainWindow(object):
 				del item
 				del original_path_name[row]
 				length = self.list1.count() - 1
-				f = open(file_path,'w')
-				for i in range(self.list1.count()):
+				#f = open(file_path,'w')
+				#for i in range(self.list1.count()):
 					
-					fname = original_path_name[i]
-					fname = fname.strip()
-					if i == length:
-						f.write(str(fname))
-					else:
-						f.write(str(fname)+'\n')
-				f.close()
+				#	fname = original_path_name[i]
+				#	fname = fname.strip()
+				#	if i == length:
+				#		f.write(str(fname))
+				#	else:
+				#		f.write(str(fname)+'\n')
+				#f.close()
+				write_files(file_path,original_path_name,line_by_line=True)
 				
 			
 			
@@ -13462,25 +13498,28 @@ class Ui_MainWindow(object):
 					print(self.record_history,'--self.record_history---')
 					if os.path.isfile(hist_path) and self.record_history:
 						if (os.stat(hist_path).st_size == 0):
-							f = open(hist_path, 'w')
-							f.write(name)
-							f.close()
+							#f = open(hist_path, 'w')
+							#f.write(name)
+							#f.close()
+							write_files(hist_path,name,line_by_line=True)
 						else:
-							f = open(hist_path, 'a')
+							#f = open(hist_path, 'a')
 							lines = tuple(open(hist_path, 'r'))
 							line_list = []
 							for i in lines :
 								i = i.strip()
 								line_list.append(i)
 							if new_name_with_info not in line_list:
-								f.write('\n'+name)
-							f.close()
+								#f.write('\n'+name)
+								write_files(hist_path,name,line_by_line=True)
+							#f.close()
 					
 					hist_dir,last_field = os.path.split(hist_path)
 					hist_site = os.path.join(hist_dir,name)
 					if not os.path.exists(hist_site) and self.record_history:
 						os.makedirs(hist_site)
 						hist_epn = os.path.join(hist_site,'Ep.txt')
+						"""
 						f = open(hist_epn, 'w')
 						j = 0
 						for i in m:
@@ -13494,6 +13533,9 @@ class Ui_MainWindow(object):
 							j = j+1
 							
 						f.close()
+						"""
+						write_files(hist_epn,m,line_by_line=True)
+						
 						hist_sum = os.path.join(hist_site,'summary.txt')
 						hist_picn = os.path.join(hist_site,'poster.jpg')
 						self.summary_write_and_image_copy(hist_sum,summary,picn,hist_picn)
@@ -13529,439 +13571,26 @@ class Ui_MainWindow(object):
 						
 						f_name = os.path.join(hist_site,'Ep.txt')
 						if os.path.exists(f_name):
+							
 							f = open(f_name,'r')
 							lines = f.readlines()
 							f.close()
 							if len(epnArrList) > len(lines):
+								"""
 								f = open(f_name, 'w')
 								for i in m:
 									try:
 										f.write(i+'\n')
 									except UnicodeEncodeError:
 										pass
-								f.close()
+								f.close
+								"""
+								write_files(f_name,m,line_by_line=True)
+							
+							
 				
 				self.videoImage(picn,thumbnail,fanart,summary)
 				
-		
-		elif site == "SubbedAnime":
-			global filter_on
-			key = self.go_page.text()
-			if not key:
-					filter_on = 0
-			self.list2.clear()
-			if self.list1.currentItem():
-				
-				t_name = str(self.list1.currentItem().text())
-				print ("t_name="+t_name)
-				if '#' in t_name:
-					name = str(self.list1.item(0).text())
-					
-				else:
-					name = t_name
-				print ("name="+name)
-				
-				if not os.path.exists(os.path.join(home,'History',site,siteName)) and opt!="History":
-					os.makedirs(os.path.join(home,'History',site,siteName))
-					open(os.path.join(home,'History',site,siteName,'history.txt'), 'w').close()
-					
-				if os.path.isfile(os.path.join(home,'History',site,siteName,'history.txt')) and opt!="History":
-					f = open(os.path.join(home,'History',site,siteName,'history.txt'), 'a')
-					if (os.stat(os.path.join(home,'History',site,siteName,'history.txt')).st_size == 0):
-						f.write(name)
-					else:
-						lines = tuple(open(os.path.join(home,'History',site,siteName,'history.txt'), 'r'))
-						#f.write('\n'+name)
-						line_list = []
-						for i in lines :
-							i = re.sub("\n","",i)
-							line_list.append(i)
-						if name not in line_list:
-							f.write('\n'+name)
-					f.close()
-				code = 3
-				if opt != "History" :
-					self.text.setText('Wait...Loading')
-					QtWidgets.QApplication.processEvents()
-					
-					
-					
-					if self.site_var:
-						if '#' in t_name:
-							try:
-								m = self.site_var.getEpnList(siteName,t_name,embed,category)
-							except:
-								return 0
-						else:
-							try:
-								m = self.site_var.getEpnList(siteName,name,embed,category)
-							except:
-								return 0
-							
-						if not m:
-							return 0
-						if ("LINK:" in m[0]) or '#' in t_name:
-							
-							if "LINK:INFO" == m[0]:
-								embed = embed+1
-								base_url_summary = m.pop()
-								base_url_picn = m.pop()
-								self.list1.clear()
-								del m[0]
-								for i in m:
-									self.list1.addItem(i)
-								return 0
-							elif "LINK:FINAL" == m[0]:
-								del m[0]
-								m.pop()
-								m.pop()
-								m.append(base_url_picn)
-								m.append(base_url_summary)
-								base_url_picn = ""
-								base_url_summary = ""
-								name = str(self.list1.item(0).text())
-								print (name + "***name****")
-								fanart = os.path.join(TMPDIR,name+'-fanart.jpg')
-								thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
-								
-							else:
-								embed = embed+1
-								self.list1.clear()
-								m.pop()
-								m.pop()
-								del m[0]
-								for i in m:
-									self.list1.addItem(i)
-								return 0
-							
-						else:
-							embed = 0
-							base_url_picn = ""
-							base_url_summary = ""
-							epnArrList[:]=[]
-							for i in m:
-								epnArrList.append(i)
-							epnArrList.pop()
-							epnArrList.pop()
-							
-					self.text.setText('Load Complete!')
-				else:
-						if os.path.exists(os.path.join(home,'History',site,siteName,name,'Ep.txt')):
-							lines = tuple(open(os.path.join(home,'History',site,siteName,name, 'Ep.txt'), 'r'))
-						#with open(home+'/History/'+site+'/'+name+'/Ep.txt') as f:
-						#items = f.readlines()
-							m = []
-							epnArrList[:]=[]
-							for i in lines:
-								i = i.replace('\n','')
-								m.append(i)
-								epnArrList.append(i)
-							picn = os.path.join(home,'History',site,siteName,name,'poster.jpg')
-							fanart = os.path.join(home,'History',site,siteName,name,'fanart.jpg')
-							thumbnail = os.path.join(home,'History',site,siteName,name,'thumbnail.jpg')
-							m.append(picn)
-							g = open(os.path.join(home,'History',site,siteName,name,'summary.txt'), 'r')
-							summary = g.read()
-							m.append(summary)
-							#m = lines + tuple(picn) + tuple(summary)
-							g.close()
-				self.text.clear()
-				self.text.lineWrapMode()
-				#self.text.insertPlainText(name +' : '+'\n')
-				
-				try:
-					summary = (m.pop())
-				except:
-					summary = "Not Available"
-				
-				try:
-					picn = m.pop()
-				except:
-					picn = "No.jpg"
-				base_url_picn = ""
-				base_url_summary = ""
-				print (base_url_summary)
-				print (base_url_picn)
-				
-				
-				if os.path.isfile(str(picn)):
-					if not os.path.isfile(fanart):
-						basewidth = screen_width
-						try:
-							img = Image.open(str(picn))
-						except:
-							picn = os.path.join(home,'default.jpg')
-							img = Image.open(str(picn))
-						wpercent = (basewidth / float(img.size[0]))
-						#hsize = int((float(img.size[1]) * float(wpercent)))
-						hsize = screen_height
-						img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-						img.save(str(fanart))
-					if not os.path.isfile(thumbnail):
-						basewidth = 450
-						try:
-							img = Image.open(str(picn))
-						except:
-							picn = os.path.join(home,'default.jpg')
-							img = Image.open(str(picn))
-						wpercent = (basewidth / float(img.size[0]))
-						hsize = int((float(img.size[1]) * float(wpercent)))
-						
-						img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-						img.save(str(thumbnail))
-					picn = thumbnail	
-					tmp = '"background-image: url('+fanart+')"'
-					
-					tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-					QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
-	
-	
-	
-	
-	
-	
-					#self.gridLayout.setAlignment(QtCore.Qt.AlignRight)
-					#self.dockWidget_3.hide()
-	
-					img = QtGui.QPixmap(picn, "1")
-					self.label.setPixmap(img)
-					#self.label.setToolTip(_translate("MainWindow", "<html><h1>"+name+"</h1><head/><body><p>"+summary+"</p>"+"</body></html>" , None))
-				self.text.insertPlainText((summary))
-				j = 0
-				
-				if (opt != "List") or (opt != "Random") or (opt != ""):
-					if not os.path.exists(os.path.join(home,'History',site,siteName,name)) and opt!= "History":
-						os.makedirs(os.path.join(home,'History',site,siteName,name))
-						f = open(os.path.join(home,'History',site,siteName,name,'Ep.txt'), 'w')
-						j = 0
-						print (m)
-						for i in m:
-							
-							if j == 0:
-								f.write(i)
-							else:
-								f.write('\n'+i)
-							j = j+1
-						g = open(os.path.join(home,'History',site,siteName,name,'summary.txt'), 'w')
-						
-						try:
-							summary = str(summary)
-						except:
-							pass
-						try:
-							g.write(summary)
-						except:
-							g.write(summary.encode('utf-8'))
-						
-						if os.path.isfile(picn):
-							shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'poster.jpg'))
-						g.close()
-						f.close()
-					elif os.path.exists(os.path.join(home,'History',site,siteName,name)) and opt!= "History":
-						f = open(os.path.join(home,'History',site,siteName,name,'Ep.txt'), 'a')
-						for i in m:
-							f.write('\n'+i)
-						f.close()
-						summary_path = os.path.join(home,'History',site,siteName,name,'summary.txt')
-						picn_path = os.path.join(home,'History',site,siteName,name,'poster.jpg')
-						if not os.path.exists(summary_path):
-							g = open(summary_path, "w")
-							#fix_encoding = summary.encode('utf8', 'ignore')
-							try:
-								summary = str(summary)
-							except UnicodeDecodeError:
-								pass
-							try:
-								g.write(summary)
-							except:
-								g.write(summary.encode('utf-8'))
-							g.close()
-							#g.write()
-						if not os.path.exists(picn_path) and os.path.isfile(picn):
-								shutil.copy(picn,picn_path)
-				
-				list2_items[:]=[]
-				list2_items = m
-				#print list2_items
-				epnArrList[:]=[]
-				k = 0
-				for i in m:
-					epnArrList.append(i)
-					
-
-		elif site == "DubbedAnime":
-			self.list2.clear()
-			if self.list1.currentItem():
-				name = self.list1.currentItem().text()
-				name = str(name) 
-				if opt != "History" and opt != name:
-					if not os.path.exists(os.path.join(home,'History',site,siteName)):
-						os.makedirs(os.path.join(home,'History',site,siteName))
-						open(os.path.join(home,'History',site,siteName,'history.txt'), 'w').close()
-				if os.path.exists(os.path.join(home,'History',site,siteName)) and opt != "History" and opt != name:
-					f = open(os.path.join(home,'History',site,siteName,'history.txt'), 'a')
-					if (os.stat(os.path.join(home,'History',site,siteName,'history.txt')).st_size == 0):
-						f.write(name)
-					else:
-						lines = tuple(open(os.path.join(home,'History',site,siteName,'history.txt'), 'r'))
-						f.write('\n'+name)
-					f.close()
-				code = 4
-				if opt != "History":
-					
-					self.text.setText('Wait...Loading')
-					QtWidgets.QApplication.processEvents()
-					if self.site_var:
-						try:
-							m = self.site_var.getEpnList(siteName,name,category) 
-						except:
-							return 0
-					epnArrList[:]=[]
-					for i in m:
-						epnArrList.append(i)
-					epnArrList.pop()
-					epnArrList.pop()
-					self.text.setText('Load Complete!')
-				else:
-						if os.path.exists(os.path.join(home,'History',site,siteName,name,'Ep.txt')):
-							lines = tuple(open(os.path.join(home,'History',site,siteName,name, 'Ep.txt'), 'r'))
-						#with open(home+'/History/'+site+'/'+name+'/Ep.txt') as f:
-						#items = f.readlines()
-							m = []
-							epnArrList[:]=[]
-							for i in lines:
-								i = i.replace('\n','')
-								m.append(i)
-								epnArrList.append(i)
-							picn = os.path.join(home,'History',site,siteName,name,'poster.jpg')
-							fanart = os.path.join(home,'History',site,siteName,name,'fanart.jpg')
-							thumbnail = os.path.join(home,'History',site,siteName,name, 'thumbnail.jpg')
-							m.append(picn)
-							g = open(os.path.join(home,'History',site,siteName,name,'summary.txt'),'r')
-							summary = g.read()
-							m.append(summary)
-							#m = lines + tuple(picn) + tuple(summary)
-							g.close()
-					
-				self.text.clear()
-				self.text.lineWrapMode()
-				#self.text.insertPlainText(name +' : '+'\n')
-				try:
-					summary = m.pop()
-				except:
-					summary = "Summary Not Available"
-				try:
-					picn = m.pop()
-				except:
-					picn = "No.jpg"
-				#print m
-				print (picn)
-				
-				if os.path.isfile(str(picn)):
-					if not os.path.isfile(fanart):
-						basewidth = screen_width
-						try:
-							img = Image.open(str(picn))
-						except:
-							picn = os.path.join(home,'default.jpg')
-							img = Image.open(str(picn))
-						wpercent = (basewidth / float(img.size[0]))
-						#hsize = int((float(img.size[1]) * float(wpercent)))
-						hsize = screen_height
-						img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-						img.save(str(fanart))
-					if not os.path.isfile(thumbnail):
-						basewidth = 450
-						try:
-							img = Image.open(str(picn))
-						except:
-							picn = os.path.join(home,'default.jpg')
-							img = Image.open(str(picn))
-						wpercent = (basewidth / float(img.size[0]))
-						hsize = int((float(img.size[1]) * float(wpercent)))
-						
-						img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-						img.save(str(thumbnail))
-					picn = thumbnail	
-					tmp = '"background-image: url('+fanart+')"'
-					
-					tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-					QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
-			
-			
-			
-					#self.dockWidget_3.hide()
-					img = QtGui.QPixmap(picn, "1")
-					self.label.setPixmap(img)
-					#self.label.setToolTip(_translate("MainWindow", "<html><h1>"+name+"</h1><head/><body><p>"+summary+"</p>"+"</body></html>" , None))
-				self.text.insertPlainText(summary)
-				
-				if (opt != "List") or (opt != "Random") or (opt != ""):
-					if not os.path.exists(os.path.join(home,'History',site,siteName,name)) and opt!="History" and opt != name:
-						print (os.path.join(home,'History',site,siteName,name))
-						os.makedirs(os.path.join(home,'History',site,siteName,name))
-						f = open(os.path.join(home,'History',site,siteName,name,'Ep.txt'), 'w')
-						j = 0
-						for i in m:
-							if j == 0:
-								f.write(i)
-							else:
-								f.write('\n'+i)
-							j = j+1
-						f.close()
-						g = open(os.path.join(home,'History',site,siteName,name,'summary.txt'), "w")
-						#fix_encoding = summary.encode('utf8', 'ignore')
-						try:
-							summary = str(summary)
-						except UnicodeDecodeError:
-							pass
-						try:
-							g.write(summary)
-						except:
-							g.write(suummary.encode('utf-8'))
-						#g.write()
-						if os.path.isfile(picn):
-							shutil.copy(picn,os.path.join(home,'History',site,siteName,name, 'poster.jpg'))
-						g.close()
-					elif os.path.exists(os.path.join(home,'History',site,siteName,name)) and opt!="History" and opt != name:
-						f = open(os.path.join(home,'History',site,siteName,name,'Ep.txt'), 'a')
-						for i in m:
-							f.write('\n'+i)
-						f.close()
-						summary_path = os.path.join(home,'History',site,siteName,name,'summary.txt')
-						picn_path = os.path.join(home,'History',site,siteName,name,'poster.jpg')
-						if not os.path.exists(summary_path):
-							g = open(summary_path, "w")
-							#fix_encoding = summary.encode('utf8', 'ignore')
-							try:
-								summary = str(summary)
-							except UnicodeDecodeError:
-								pass
-							try:
-								g.write(summary)
-							except:
-								g.write(summary.encode('utf-8'))
-							g.close()
-							#g.write()
-						if not os.path.exists(picn_path) and os.path.isfile(picn):
-								shutil.copy(picn,picn_path)
-						
-				k = 0
-				epnArrList[:]=[]
-				for i in m:
-					epnArrList.append(i)
-					"""
-					if '	' in i:
-						i = i.split('	')[0]
-					i = i.replace('_',' ')
-					if i.startswith('#'):
-						i = i.replace('#',self.check_symbol,1)
-						self.list2.addItem((i))
-						self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-					else:
-						self.list2.addItem((i))
-					k = k+1
-					"""
 		elif site == "Local":
 			self.list2.clear()
 			if self.list1.currentItem():
@@ -13981,10 +13610,12 @@ class Ui_MainWindow(object):
 							file_path = os.path.join(home,'History',site,'history.txt')
 							if not os.path.isfile(file_path):
 								open(file_path, 'w').close()
+							
 							if os.path.isfile(file_path):
-								f = open(file_path, 'a')
-								f.write(name+'\n')
-								f.close()
+								#f = open(file_path, 'a')
+								#f.write(name+'\n')
+								#f.close()
+								write_files(file_path,name,line_by_line=True)
 							
 							
 							o = os.listdir(path_Local_Dir)
@@ -14047,17 +13678,23 @@ class Ui_MainWindow(object):
 				if not os.path.exists(os.path.join(home,'History',site,name)):
 					print (name)
 					os.makedirs(os.path.join(home,'History',site,name))
-					f = open(os.path.join(home,'History',site,name+'Ep.txt'), 'w')
+					file_ep = os.path.join(home,'History',site,name+'Ep.txt')
+					#f = open(os.path.join(home,'History',site,name+'Ep.txt'), 'w')
+					k_arr = []
 					for i in m:
 						j = os.path.join(path_Local_Dir,i)
-						f.write(i+'	'+j+'\n')
-					f.close()
-					g = open(os.path.join(home,'History',site,name,'summary.txt'), 'w')
-					try:
-						g.write(str(summary))
-					except:
-						g.write(summary.encode('utf-8'))
-					g.close()
+						#f.write(i+'	'+j+'\n')
+						k_arr.append(i+'	'+j)
+					#f.close()
+					write_files(file_ep,k,line_by_line=True)
+					file_sum = os.path.join(home,'History',site,name,'summary.txt')
+					#g = open(os.path.join(home,'History',site,name,'summary.txt'), 'w')
+					#try:
+					#	g.write(str(summary))
+					#except:
+					#	g.write(summary.encode('utf-8'))
+					#g.close()
+					write_files(file_sum,summary,line_by_line=False)
 					if os.path.isfile(picn):
 						shutil.copy(picn,os.path.join(home,'History',site,name,'poster.jpg'))
 					if os.path.isfile(fanart):
@@ -14369,6 +14006,7 @@ class Ui_MainWindow(object):
 			self.list2.setCurrentRow(row)
 			if self.list1.currentItem():
 				file_path = os.path.join(home,'Playlists',self.list1.currentItem().text())
+				"""
 				if os.path.exists(file_path):
 					f = open(file_path,'w')
 					k = 0
@@ -14382,7 +14020,9 @@ class Ui_MainWindow(object):
 							f.write('\n'+it)
 						k = k+1
 					f.close()
-					
+				"""
+				write_files(file_path,epnArrList,line_by_line=True)
+				
 	def get_file_name(self,row,list_widget):
 		global name,site,epnArrList
 		file_name_mkv = ''
@@ -14729,15 +14369,18 @@ class Ui_MainWindow(object):
 						file_path = hist_path
 						f = open(file_path, 'r')
 						lines = f.readlines()
+						f.close()
 						if "\n" in lines[row]:
 							lines[row] = n_epn + "\n"
 						else:
 							lines[row] = n_epn
-						f.close()
+						"""
 						f = open(file_path, 'w')
 						for i in lines:
 							f.write(i)
 						f.close()
+						"""
+						write_files(file_path,lines,line_by_line=True)
 						txt = self.check_symbol + epnArrList[row]
 					txt = txt.replace('_',' ',1)
 					if '	' in txt:
@@ -14845,16 +14488,17 @@ class Ui_MainWindow(object):
 						n_epn = "#" + epnArrList[row]
 						f = open(file_path, 'r')
 						lines = f.readlines()
-						
+						f.close()
 						if "\n" in lines[row]:
 							lines[row] = n_epn + "\n"
 						else:
 							lines[row] = n_epn
-						f.close()
-						f = open(file_path, 'w')
-						for i in lines:
-							f.write(i)
-						f.close()
+						
+						#f = open(file_path, 'w')
+						#for i in lines:
+						#	f.write(i)
+						#f.close()
+						write_files(file_path,lines,line_by_line=True)
 						txt = self.check_symbol + epnArrList[row]
 					txt = txt.replace('_',' ',1)
 					self.list2.item(row).setText(txt)
@@ -15695,14 +15339,16 @@ class Ui_MainWindow(object):
 			thumb = os.path.join(TMPDIR,name+'.jpg')
 			thumb_list = os.path.join(TMPDIR,name+'.txt')
 			print('++++++++++++',thumb,'+++++++++++++')
-			f = open(thumb_list,'w')
-			for i in img_arr:
-				img_arr_artist.append(i)
-				f.write(str(i)+'\n')
-			f.close()
-			f = open(tmp_wiki,'w')
-			f.write(str(wiki))
-			f.close()
+			#f = open(thumb_list,'w')
+			#for i in img_arr:
+			#	img_arr_artist.append(i)
+			#	f.write(str(i)+'\n')
+			#f.close()
+			write_files(thumb_list,img_arr_artist,line_by_line=True)
+			#f = open(tmp_wiki,'w')
+			#f.write(str(wiki))
+			#f.close()
+			write_files(tmp_wiki,wiki,line_by_line=False)
 			if img_arr_artist:
 				url = img_arr_artist[0]
 				del img_arr_artist[0]
@@ -17216,10 +16862,11 @@ class Ui_MainWindow(object):
 		self.list2.clear()
 		#epnArrList[:]=[]
 		file_path = pls
-		fh, abs_path = mkstemp()
-		shutil.copy(file_path,abs_path)
+		#fh, abs_path = mkstemp()
+		#shutil.copy(file_path,abs_path)
 		if os.path.exists(file_path):
 			#fh, abs_path = mkstemp()
+			"""
 			try:
 				f = open(file_path,'w')
 				j = 0
@@ -17233,17 +16880,10 @@ class Ui_MainWindow(object):
 			except:
 				print('Error processing playlist file, hence restoring original')
 				shutil.copy(abs_path,file_path)
+			"""
+			write_files(file_path,epnArrList,line_by_line=True)
 			self.update_list2()
-			"""
-			for i in epnArrList:
-				i = i.strip()
-				if i and '	' in i:
-					i = i.split('	')[0]
-					i = i.replace('_',' ')
-					if i.startswith('#'):
-						i = i.replace('#',self.check_symbol,1)
-					self.list2.addItem(i)
-			"""
+			
 	def update_playlist(self,pls):
 		global epnArrList
 		#self.list1.clear()
@@ -17257,7 +16897,7 @@ class Ui_MainWindow(object):
 		if os.path.exists(file_path) and self.btn1.currentText().lower() == 'youtube':
 			self.list2.clear()
 			epnArrList[:]=[]
-			f = open(file_path)
+			f = open(file_path,'r')
 			lines = f.readlines()
 			f.close()
 			for i in lines:

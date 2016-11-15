@@ -26,6 +26,7 @@ import subprocess
 import shutil
 import os
 
+
 def send_notification(txt):
 	if os.name == 'posix':
 		subprocess.Popen(['notify-send',txt])
