@@ -25,11 +25,8 @@ from functools import partial
 import subprocess
 import shutil
 import os
+from player_functions import send_notification
 
-
-def send_notification(txt):
-	if os.name == 'posix':
-		subprocess.Popen(['notify-send',txt])
 
 def get_yt_url(url,quality):
 	final_url = ''

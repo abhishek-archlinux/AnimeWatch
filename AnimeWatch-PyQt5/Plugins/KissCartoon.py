@@ -7,6 +7,7 @@ import re
 import subprocess
 from subprocess import check_output
 from bs4 import BeautifulSoup 
+import os
 import os.path
 import time
 import shutil
@@ -43,6 +44,8 @@ def ccurl(url):
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
+	if os.name != 'posix':
+		c.setopt(c.SSL_VERIFYPEER,False)
 	curl_opt = ''
 	picn_op = ''
 	nUrl = url

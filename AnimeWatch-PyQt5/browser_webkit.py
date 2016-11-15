@@ -43,120 +43,13 @@ from PyQt5.QtCore import QUrl
 from adb_webkit import NetWorkManager
 
 import time
-from yt import get_yt_url,get_yt_sub,send_notification
+from yt import get_yt_url,get_yt_sub
+from player_functions import ccurl,send_notification,write_files,wget_string
 
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty)
 
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
 
-def ccurl(url):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	print(url)
-	c = pycurl.Curl()
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	postfield = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie' or curl_opt == '-e':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc':
-			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
-			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
-			post1 = post.split('=')[0]
-			post2 = post.split('=')[1]
-			post_data = {post1:post2}
-			postfield = urllib.parse.urlencode(post_data)
-	url = str(url)
-	#c.setopt(c.URL, url)
-	try:
-		c.setopt(c.URL, url)
-	except UnicodeEncodeError:
-		c.setopt(c.URL, url.encode('utf-8'))
-	storage = BytesIO()
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		f = open(picn_op,'wb')
-		c.setopt(c.WRITEDATA, f)
-		c.perform()
-		c.close()
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-e':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		elif curl_opt == '-d':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.POSTFIELDS,postfield)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		content = getContentUnicode(content)
-		return content
 
 
 class downloadThread(QtCore.QThread):
@@ -445,6 +338,7 @@ class Browser(QtWebKitWidgets.QWebView):
 		if '/' in title:
 			title = title.replace('/','-')
 		t = title + '	'+url+'	'+'NONE'
+		"""
 		if os.stat(file_path).st_size == 0:
 			f = open(file_path,'w')
 		else:
@@ -455,6 +349,8 @@ class Browser(QtWebKitWidgets.QWebView):
 		except:
 			f.write(t)
 		f.close()
+		"""
+		write_files(file_path,t,line_by_line=True)
 		self.ui.update_playlist(file_path)
 		
 	def add_playlist(self,value):
@@ -464,12 +360,13 @@ class Browser(QtWebKitWidgets.QWebView):
 			value = value[1:]
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		new_pl = False
-		if not os.path.exists(file_path):
-			f = open(file_path,'w')
-			new_pl = True
-		else:
-			f = open(file_path,'a')
+		#if not os.path.exists(file_path):
+		#	f = open(file_path,'w')
+		#	new_pl = True
+		#else:
+		#	f = open(file_path,'a')
 		j = 0
+		new_arr = []
 		for i in self.playlist_dict:
 			yt_id = i
 			title = self.playlist_dict[yt_id]
@@ -479,12 +376,14 @@ class Browser(QtWebKitWidgets.QWebView):
 				title = title[1:]
 			n_url = 'https://m.youtube.com/watch?v='+yt_id
 			w = title+'	'+n_url+'	'+'NONE'
-			if new_pl and j==0:
-				f.write(w)
-			else:
-				f.write('\n'+w)
+			new_arr.append(w)
+			#if new_pl and j==0:
+			#	f.write(w)
+			#else:
+			#	f.write('\n'+w)
 			j = j+1
-		f.close()
+		#f.close()
+		write_files(file_path,new_arr,line_by_line=True)
 		self.get_playlist = False
 		
 	def triggerPlaylist(self,value,url,title):
@@ -521,6 +420,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				pass
 		print(title,url,file_path)
 		t = title + '	'+url+'	'+'NONE'
+		"""
 		if os.stat(file_path).st_size == 0:
 			f = open(file_path,'w')
 		else:
@@ -531,6 +431,8 @@ class Browser(QtWebKitWidgets.QWebView):
 		except:
 			f.write(t)
 		f.close()
+		"""
+		write_files(file_path,t,line_by_line=True)
 		self.ui.update_playlist(file_path)
 		
 	def contextMenuEvent(self, event):
@@ -711,7 +613,8 @@ class Browser(QtWebKitWidgets.QWebView):
 			else:
 				title = os.path.join(self.ui.tmp_download_folder,title)
 				#title = '/tmp/AnimeWatch/'+title
-			command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
+			#command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
+			command = wget_string(finalUrl,title)
 			print (command)		
 			self.ui.infoWget(command,0)
 			

@@ -32,7 +32,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 import os
 import subprocess,re
-from yt import send_notification
+from player_functions import send_notification
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	

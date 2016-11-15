@@ -10,7 +10,8 @@ import random
 from bs4 import BeautifulSoup  
 import os
 import os.path
-from yt import send_notification
+from player_functions import send_notification
+from player_functions import ccurl as ccurlNew
 
 def naturallysorted(l):
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
@@ -33,92 +34,7 @@ def getContentUnicode(content):
 		content = str(content)
 		print("I'm unicode")
 	return content
-def ccurlNew(url):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	print(url)
-	c = pycurl.Curl()
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	postfield = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc':
-			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
-			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
-			post1 = post.split('=')[0]
-			post2 = post.split('=')[1]
-			post_data = {post1:post2}
-			postfield = urllib.parse.urlencode(post_data)
-	url = str(url)
-	c.setopt(c.URL, url)
-	storage = BytesIO()
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		f = open(picn_op,'wb')
-		c.setopt(c.WRITEDATA, f)
-		c.perform()
-		c.close()
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		elif curl_opt == '-d':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.POSTFIELDS,postfield)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		content = getContentUnicode(content)
-		return content
+
 		
 def ccurl(url,value):
 	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
@@ -147,7 +63,7 @@ def ccurl(url,value):
 	return (content)
 	
 def simplyfind(i):
-	content = ccurl(i,"")
+	content = ccurlNew(i)
 	#replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
 	m = re.findall('["]http://[^"]*.mp4[^"]*|["]http://[^"]*.flv[^"]*|["]https://redirector[^"]*|["]https://[^"]*.mp4', content)
 	m1 = re.findall("[']http://[^']*.mp4[^']*|[']http://[^']*.flv[^']*|[']https://redirector[^']*|[']https://[^']*.mp4", content)
@@ -173,7 +89,7 @@ def findurl(url):
 	if "myvidstream" in str(url):
 		#print("myvidstream="+url
 		packed = ''
-		content = ccurl(url,"")
+		content = ccurlNew(url)
 		final = mp4starUrl(content,'myvidstream')
 		"""
 		soup = BeautifulSoup(content,'lxml')
@@ -220,7 +136,7 @@ def findurl(url):
 	elif "yourupload" in str(url):
 			i = url.replace(r'#038;','')
 			#content = subprocess.check_output(["curl","-L","-A",hdr,i])
-			content = ccurl(i,'')
+			content = ccurlNew(i)
 			m = re.findall("file: 'http://[^']*video.mp4",content)
 			print(m)
 			if m:
@@ -238,7 +154,7 @@ def findurl(url):
 				url = found
 			return url
 	elif "vidkai" in str(url):
-		content = ccurl(url,'')
+		content = ccurlNew(url)
 		#print(content
 		soup = BeautifulSoup(content,'lxml')
 		
@@ -256,7 +172,7 @@ def findurl(url):
 				final = ""
 	
 	elif "uploadc" in str(url):
-		content = ccurl(url,'')
+		content = ccurlNew(url)
 		replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
 		m = re.findall("[']http://[^']*.mp4",content)
 		print(m)
@@ -566,7 +482,7 @@ def mp4starUrl(content,site):
 	return(u)
 
 def uploadcrazy(url):
-	content = ccurl(url,"")
+	content = ccurlNew(url)
 	m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
 	if m:
 		url = re.sub('file: "','',m[0])
@@ -603,7 +519,7 @@ class DubbedAnime():
 				url = "http://www.cartoon-world.tv/" + epn + "/"
 				
 				
-				content = ccurl(url,"")
+				content = ccurlNew(url)
 				print(url)
 				m = []
 				soup = BeautifulSoup(content,'lxml')
@@ -640,7 +556,7 @@ class DubbedAnime():
 		elif siteName == "Animetycoon":
 				
 				url = "http://www.animetycoon.net/" + epn + "/"
-				content = ccurl(url,"")
+				content = ccurlNew(url)
 				print(url)
 				final = ""
 				m = re.findall('http://[^"]*uploadcrazy[^"]*|http://[^"]*vidkai[^"]*|http://[^"]*justmp4[^"]*|http://[^"]*mp4star[^"]*',content)
@@ -659,14 +575,14 @@ class DubbedAnime():
 				
 		elif siteName == "Dubcrazy":
 				url = "http://www.dubbedanimeonline.pw/" + epn + "/"
-				content = ccurl(url,"")
+				content = ccurlNew(url)
 				print(url)
 				m = []
 				n =[]
 				soup = BeautifulSoup(content,'lxml')
 				m = re.findall('http://[^"]*embed[^"]*',content)
 				if m:
-					content = ccurl(m[0],"")
+					content = ccurlNew(m[0])
 					#n = re.findall('https://redirector[^"]*',content)
 					#print(n
 					soup = BeautifulSoup(content,'lxml')
@@ -695,7 +611,7 @@ class DubbedAnime():
 		elif siteName == "AniDub":
 				url = "http://www.watchcartoononline.com/" + epn
 				print(url)
-				content = ccurl(url,"")
+				content = ccurlNew(url)
 				m = re.findall('["]http://[^"]*embed[^"]*',content)
 				print(m)
 				n = []
@@ -743,7 +659,7 @@ class DubbedAnime():
 		elif siteName == "AnimeStatic":
 				url = "http://www.animestatic.co/" + epn + '/'
 				print(url)
-				content = ccurl(url,"")
+				content = ccurlNew(url)
 				m = re.findall('["]http://[^"]*embed[^"]*',content)
 				print(m)
 				n = []
@@ -762,7 +678,7 @@ class DubbedAnime():
 			final = ''
 			url = "http://gogocartoon.us/" + epn
 			print(url,'----------')
-			content = ccurl(url,"")
+			content = ccurlNew(url)
 			soup = BeautifulSoup(content,'lxml')
 			#link = soup.find('div',{'class':'anime_video_body_watch'})
 			#if not link:
@@ -783,7 +699,7 @@ class DubbedAnime():
 							if ' ' in str(link1):
 								link1 = re.sub(' ','%20',str(link1))
 							print(link1)
-							content1 = ccurl(link1,'')
+							content1 = ccurlNew(link1)
 							soup = BeautifulSoup(content1,'lxml')
 							links = soup.findAll('source')
 							for i in links:
@@ -897,7 +813,7 @@ class DubbedAnime():
 			#content = str(req.text)
 			content = ccurlNew(url)
 		else:
-			content = ccurl(url,"")
+			content = ccurlNew(url)
 		soup = BeautifulSoup(content,'lxml')
 		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Movies" or siteName == "Cartoon-World-Cartoon" or siteName == "Dubcrazy" or siteName == "Animetycoon":
 				if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Animetycoon" or siteName == "Cartoon-World-Movies":
@@ -927,7 +843,7 @@ class DubbedAnime():
 		elif siteName == "AniDub" or siteName == "AnimeStatic":
 				m = []
 				if siteName == "AniDub" and category != "Movies":
-					content1 = ccurl(urlc,"")
+					content1 = ccurlNew(urlc)
 					soup1 = BeautifulSoup(content1,'lxml')
 					link1 = soup1.findAll('div',{'id':'ddmcc_container'})
 					link2 = soup.findAll('div',{'id':'ddmcc_container'})

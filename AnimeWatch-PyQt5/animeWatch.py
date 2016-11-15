@@ -61,6 +61,7 @@ import shutil
 from tempfile import mkstemp,mkdtemp
 
 try:
+	import haha
 	TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
 except:
 	TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
@@ -92,7 +93,7 @@ except:
 	pass
 from musicArtist import musicArtist
 from yt import get_yt_url
-from player_functions import write_files
+from player_functions import write_files,ccurl,send_notification,wget_string,open_files
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
@@ -109,10 +110,6 @@ try:
 except:
 	from mpris_nodbus import MprisServer
 
-
-def send_notification(txt):
-	if OSNAME == 'posix':
-		subprocess.Popen(['notify-send',txt])
 
 try:
 	import libtorrent as lt
@@ -182,114 +179,7 @@ def set_mainwindow_palette(fanart):
 
 
 
-def ccurl(url):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	print(url)
-	c = pycurl.Curl()
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	postfield = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie' or curl_opt == '-e':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc':
-			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
-			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
-			post1 = post.split('=')[0]
-			post2 = post.split('=')[1]
-			post_data = {post1:post2}
-			postfield = urllib.parse.urlencode(post_data)
-	url = str(url)
-	#c.setopt(c.URL, url)
-	try:
-		c.setopt(c.URL, url)
-	except UnicodeEncodeError:
-		c.setopt(c.URL, url.encode('utf-8'))
-	storage = BytesIO()
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		try:
-			f = open(picn_op,'wb')
-			c.setopt(c.WRITEDATA, f)
-		except:
-			return 0
-		
-		try:
-			c.perform()
-			c.close()
-		except:
-			print('failure in obtaining image try again')
-			pass
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-e':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		elif curl_opt == '-d':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.POSTFIELDS,postfield)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		try:
-			c.perform()
-			c.close()
-			content = storage.getvalue()
-			content = getContentUnicode(content)
-		except:
-			print('curl failure try again')
-			content = ''
-		return content
+
 
 
 
@@ -2274,9 +2164,10 @@ class List1(QtWidgets.QListWidget):
 					if bookmark == "True":
 						if os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
 							file_path = os.path.join(home,'Bookmark',status+'.txt')
-							f = open(file_path,'r')
-							l = f.readlines()
-							f.close()
+							#f = open(file_path,'r')
+							#l = f.readlines()
+							#f.close()
+							l = open_files(file_path,True)
 							lines = []
 							for i in l:
 								i = re.sub('\n','',i)
@@ -2414,9 +2305,10 @@ class List1(QtWidgets.QListWidget):
 			if bookmark == "True":
 				file_path = os.path.join(home,'Bookmark',status+'.txt')
 				if os.path.exists(file_path):
-					f = open(file_path,'r')
-					lins = f.readlines()
-					f.close()
+					#f = open(file_path,'r')
+					#lins = f.readlines()
+					#f.close()
+					lins = open_files(file_path,True)
 					lines = []
 					for i in lins:
 						i = re.sub('\n','',i)
@@ -2539,9 +2431,10 @@ class List1(QtWidgets.QListWidget):
 			if bookmark == "True":
 				file_path = os.path.join(home,'Bookmark',status+'.txt')
 				if os.path.exists(file_path):
-					f = open(file_path,'r')
-					lins = f.readlines()
-					f.close()
+					#f = open(file_path,'r')
+					#lins = f.readlines()
+					#f.close()
+					lins = open_files(file_path,True)
 					lines = []
 					for i in lins:
 						i = re.sub('\n','',i)
@@ -3248,9 +3141,10 @@ class List2(QtWidgets.QListWidget):
 									file_path = os.path.join(home,'History',site,name,'Ep.txt')
 				
 							if os.path.exists(file_path):
-								f = open(file_path,'r')
-								l = f.readlines()
-								f.close()
+								#f = open(file_path,'r')
+								#l = f.readlines()
+								#f.close()
+								l = open_files(file_path,True)
 								lines = []
 								for i in l:
 									i = i.replace('\n','')
@@ -3508,9 +3402,10 @@ class List2(QtWidgets.QListWidget):
 						file_path = os.path.join(home,'History',site,name,'Ep.txt')
 				#ui.replace_lineByIndex(file_path,'','',row)
 				if os.path.exists(file_path):
-					f = open(file_path,'r')
-					lines = f.readlines()
-					f.close()
+					#f = open(file_path,'r')
+					#lines = f.readlines()
+					#f.close()
+					lines = open_files(file_path,True)
 					length = len(lines)
 					if row == length - 1:
 						t = lines[row].replace('\n','')+'\n'
@@ -3609,9 +3504,10 @@ class List2(QtWidgets.QListWidget):
 						file_path = os.path.join(home,'History',site,name,'Ep.txt')
 				#ui.replace_lineByIndex(file_path,'','',row)
 				if os.path.exists(file_path):
-					f = open(file_path,'r')
-					lines = f.readlines()
-					f.close()
+					#f = open(file_path,'r')
+					#lines = f.readlines()
+					#f.close()
+					lines = open_files(file_path,True)
 					length = len(lines)
 					if nRow == length - 1:
 						t = lines[row].replace('\n','')
@@ -7115,7 +7011,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,24)
+		self.version_number = (3,0,0,28)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -8143,9 +8039,10 @@ class Ui_MainWindow(object):
 		self.LibraryDialog.show()
 		file_name = os.path.join(home,'local.txt')
 		if os.path.exists(file_name):
-			f = open(file_name,'r')
-			lines = f.readlines()
-			f.close()
+			#f = open(file_name,'r')
+			#lines = f.readlines()
+			#f.close()
+			lines = open_files(file_name,True)
 			self.listLibrary.clear()
 			for i in lines:
 				i = i.replace('\n','')
@@ -8234,10 +8131,10 @@ class Ui_MainWindow(object):
 		item  = self.listLibrary.item(index)
 		if item:
 			file_name = os.path.join(home,'local.txt')
-			f = open(file_name,'r')
-			lines = f.readlines()
-			f.close()
-			
+			#f = open(file_name,'r')
+			#lines = f.readlines()
+			#f.close()
+			lines = open_files(file_name,True)
 			print (self.listLibrary.item(index).text())
 			self.listLibrary.takeItem(index)
 			del item
@@ -9159,9 +9056,11 @@ class Ui_MainWindow(object):
 		m =[]
 		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
 				#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name
-				f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
-				line_a = f.readlines()
-				f.close()
+				file_name = os.path.join(home,'Bookmark',status+'.txt')
+				#f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
+				#line_a = f.readlines()
+				#f.close()
+				line_a = open_files(file_name,True)
 				#r = self.list1.currentRow()
 				
 				
@@ -9224,9 +9123,10 @@ class Ui_MainWindow(object):
 				#print path
 				if os.path.exists(os.path.join(home,'Local',name)):
 					if os.path.exists(os.path.join(home,'Local',name,'Ep.txt')):
-						f = open(os.path.join(home,'Local',name,'Ep.txt'),'r')
-						lines = f.readlines()
-						f.close()
+						#f = open(os.path.join(home,'Local',name,'Ep.txt'),'r')
+						#lines = f.readlines()
+						#f.close()
+						lines = open_files(os.path.join(home,'Local',name,'Ep.txt'),True)
 						for i in lines:
 							#j = re.sub('\n','',i)
 							#k = j .split('/')[-1]
@@ -9237,10 +9137,11 @@ class Ui_MainWindow(object):
 					 
 					m.append(picn)
 					if os.path.exists(os.path.join(home,'Local',name,'summary.txt')):
-						g = open(os.path.join(home,'Local',name,'summary.txt'), 'r')
-						summary = g.read()
+						#g = open(os.path.join(home,'Local',name,'summary.txt'), 'r')
+						#summary = g.read()
+						summary = open_files(os.path.join(home,'Local',name,'summary.txt'),False)
 						m.append(summary)
-						g.close()
+						#g.close()
 					else:
 						m.append("Summary Not Available")
 					#print m
@@ -9250,10 +9151,11 @@ class Ui_MainWindow(object):
 					 
 					m.append(picn)
 					if os.path.exists(os.path.join(home,'Local',name,'summary.txt')):
-						g = open(os.path.join(home,'Local',name,'summary.txt'), 'r')
-						summary = g.read()
+						#g = open(os.path.join(home,'Local',name,'summary.txt'), 'r')
+						#summary = g.read()
+						summary = open_files(os.path.join(home,'Local',name,'summary.txt'),False)
 						m.append(summary)
-						g.close()
+						#g.close()
 					else:
 						m.append("Summary Not Available")
 					#print (m)
@@ -9264,13 +9166,14 @@ class Ui_MainWindow(object):
 					picn = os.path.join(home,'Music','Artist',name,'thumbnail.jpg')
 					m.append(picn)
 					if os.path.exists(os.path.join(home,'Music','Artist',name,'bio.txt')):
-						g = open(os.path.join(home,'Music','Artist',name,'bio.txt'), 'r')
-						try:
-							summary = str(g.read())
-						except:
-							summary = (g.read())
+						#g = open(os.path.join(home,'Music','Artist',name,'bio.txt'), 'r')
+						#try:
+						#	summary = str(g.read())
+						#except:
+						#	summary = (g.read())
+						summary = open_files(os.path.join(home,'Music','Artist',name,'bio.txt'),False)
 						m.append(summary)
-						g.close()
+						#g.close()
 					else:
 						m.append("Summary Not Available")
 					#print (m)
@@ -9302,10 +9205,11 @@ class Ui_MainWindow(object):
 					
 					try:	
 						#if os.path.exists(dir_name+'/summary.txt'):
-						g = open(os.path.join(dir_name,'summary.txt'), 'r')
-						summary = g.read()
+						#g = open(os.path.join(dir_name,'summary.txt'), 'r')
+						#summary = g.read()
+						summary = open_files(os.path.join(dir_name,'summary.txt'),False)
 						m.append(summary)
-						g.close()
+						#g.close()
 						#else:
 						#	m.append("Not Available")
 					except:
@@ -10979,7 +10883,8 @@ class Ui_MainWindow(object):
 				sumry = os.path.join(TMPDIR,nm+'-bio.txt')
 				shutil.copy(sumry,os.path.join(home,'Music','Artist',nm,'bio.txt'))
 		if os.path.exists(sumry):
-			txt = open(sumry,'r').read()
+			txt = open_files(sumry,False)
+			#txt = open(sumry,'r').read()
 			self.text.setText(txt)
 	def showImage(self):
 		global name
@@ -11649,9 +11554,10 @@ class Ui_MainWindow(object):
 			return 0
 		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
 			opt = "History"
-			f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
-			line_a = f.readlines()
-			f.close()
+			#f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
+			#line_a = f.readlines()
+			#f.close()
+			line_a = open(os.path.join(home,'Bookmark',status+'.txt'),True)
 			self.list1.clear()
 			original_path_name[:] = []
 			for i in line_a:
@@ -11837,9 +11743,10 @@ class Ui_MainWindow(object):
 					file_change = True
 					
 				if os.path.exists(file_path) and file_change:
-					f = open(file_path, 'r')
-					lines = f.readlines()
-					f.close()
+					#f = open(file_path, 'r')
+					#lines = f.readlines()
+					#f.close()
+					lines = open_files(file_path,True)
 					if finalUrlFound == True:
 						if lines[row].startswith('#') and mark_val == 'unmark':
 							lines[row]=lines[row].replace('#','')
@@ -11959,9 +11866,10 @@ class Ui_MainWindow(object):
 	
 	def replace_lineByIndex(self,file_path,nepn,replc,index):
 		global opt,site,name,pre_opt,home,bookmark,base_url,embed,status,epnArrList
-		f = open(file_path,'r')
-		lines = f.readlines()
-		f.close()
+		#f = open(file_path,'r')
+		#lines = f.readlines()
+		#f.close()
+		lines = open_files(file_path,True)
 		length = len(lines)
 		lines[index] = replc
 		if (index == length - 1) and (length > 1):
@@ -11976,9 +11884,10 @@ class Ui_MainWindow(object):
 		"""
 		write_files(file_path,lines,line_by_line=True)
 		if 'Ep.txt' in file_path:
-			f = open(file_path,'r')
-			lines = f.readlines()
-			f.close()
+			#f = open(file_path,'r')
+			#lines = f.readlines()
+			#f.close()
+			lines = open_files(file_path,True)
 			epnArrList[:]=[]
 			for i in lines:
 				i = i.replace('\n','')
@@ -12062,9 +11971,10 @@ class Ui_MainWindow(object):
 					file_path = os.path.join(home,'History',site,name,'Ep.txt')
 
 			if os.path.exists(file_path):
-				f = open(file_path,'r')
-				lines = f.readlines()
-				f.close()
+				#f = open(file_path,'r')
+				#lines = f.readlines()
+				#f.close()
+				lines = open_files(file_path,True)
 				if '#' in epnArrList[row]:
 					n_epn = epnArrList[row]
 				else:
@@ -12105,9 +12015,10 @@ class Ui_MainWindow(object):
 			if item and os.path.exists(file_path):
 				self.list1.takeItem(row)
 				del item
-				f = open(file_path,'r')
-				lines = f.readlines()
-				f.close()
+				#f = open(file_path,'r')
+				#lines = f.readlines()
+				#f.close()
+				lines = open_files(file_path,True)
 				if row < len(lines):
 					del lines[row]
 					length = len(lines) - 1
@@ -13054,7 +12965,8 @@ class Ui_MainWindow(object):
 		
 		if os.path.exists(file_name) and site!="PlayLists":
 			print(site,siteName,name,file_name)
-			lines = tuple(open(file_name, 'r'))
+			#lines = tuple(open(file_name, 'r'))
+			lines = open_files(file_name,True)
 				#with open(home+'/History/'+site+'/'+name+'/Ep.txt') as f:
 				#items = f.readlines()
 			m = []
@@ -13087,11 +12999,12 @@ class Ui_MainWindow(object):
 			thumbnail = thumbnail1
 			
 			if os.path.isfile(summary_file):
-				g = open(summary_file, 'r')
-				summary = g.read()
+				#g = open(summary_file, 'r')
+				#summary = g.read()
 				#m.append(summary)
 				#m = lines + tuple(picn) + tuple(summary)
-				g.close()
+				#g.close()
+				summary = open_files(summary_file,False)
 			
 			j = 0
 			
@@ -13374,13 +13287,23 @@ class Ui_MainWindow(object):
 			shutil.copy(picn,hist_picn)
 			
 	def get_summary_history(self,file_name):
+		summary = open_files(file_name,False)
+		return summary
+		"""
 		summary = 'Summary Not Available'
 		if os.path.exists(file_name):
 			if OSNAME == 'posix':
 				summary = open(file_name).read()
 			else:
-				summary = open(file_name,encoding='utf-8').read()
+				try:
+					f = open(file_name,encoding='utf-8',mode='r')
+					summary = f.read()
+					f.close()
+				except:
+					summary = "can't decode"
+				
 			return summary
+		"""
 			
 	def listfound(self):
 		global site,name,base_url,name1,embed,opt,pre_opt,mirrorNo,list1_items,list2_items,quality,row_history,home,epn,path_Local_Dir,bookmark,status,epnArrList,finalUrlFound,refererNeeded,audio_id,sub_id
@@ -13395,9 +13318,10 @@ class Ui_MainWindow(object):
 		m = []
 		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
 			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+finalUrlFound+':'+refererNeeded+':'+video_local_stream
-			f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
-			line_a = f.readlines()
-			f.close()
+			#f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
+			#line_a = f.readlines()
+			#f.close()
+			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
 			r = self.list1.currentRow()
 			if r < 0:
 				return 0
@@ -13504,7 +13428,8 @@ class Ui_MainWindow(object):
 							write_files(hist_path,name,line_by_line=True)
 						else:
 							#f = open(hist_path, 'a')
-							lines = tuple(open(hist_path, 'r'))
+							#lines = tuple(open(hist_path, 'r'))
+							lines = open_files(hist_path,True)
 							line_list = []
 							for i in lines :
 								i = i.strip()
@@ -13552,8 +13477,8 @@ class Ui_MainWindow(object):
 					print(hist_epn)
 					if os.path.exists(hist_epn):
 						
-						lines = tuple(open(hist_epn, 'r'))
-						
+						#lines = tuple(open(hist_epn, 'r'))
+						lines = open_files(hist_epn,True)
 						m = []
 						
 						epnArrList[:]=[]
@@ -13572,9 +13497,10 @@ class Ui_MainWindow(object):
 						f_name = os.path.join(hist_site,'Ep.txt')
 						if os.path.exists(f_name):
 							
-							f = open(f_name,'r')
-							lines = f.readlines()
-							f.close()
+							#f = open(f_name,'r')
+							#lines = f.readlines()
+							#f.close()
+							lines = open_files(f_name,True)
 							if len(epnArrList) > len(lines):
 								"""
 								f = open(f_name, 'w')
@@ -13632,9 +13558,10 @@ class Ui_MainWindow(object):
 							thumbnail = os.path.join(home,'Local',name,'thumbnail.jpg')
 							summary1 = os.path.join(home,'Local',name,'summary.txt')
 							if os.path.exists(summary1):
-								summary = open(summary1,'r').read()
-							else:
-								summary = "Not Available"
+								#summary = open(summary1,'r').read()
+								#else:
+								#summary = "Not Available"
+								summary = open_files(summary1,False)
 								
 							print (picn)
 							self.videoImage(picn,thumbnail,fanart,summary)
@@ -13642,9 +13569,10 @@ class Ui_MainWindow(object):
 				else:
 					if os.path.exists(os.path.join(home,'History',site,name,'Ep.txt')):
 						
-						lines = tuple(open(os.path.join(home,'History',site,name,'Ep.txt'), 'r'))
+						#lines = tuple(open(os.path.join(home,'History',site,name,'Ep.txt'), 'r'))
 						#with open(home+'/History/'+site+'/'+name+'/Ep.txt') as f:
 						#items = f.readlines()
+						lines = open_files(os.path.join(home,'History',site,name,'Ep.txt'),True)
 						m = []
 						
 						epnArrList[:]=[]
@@ -13663,14 +13591,14 @@ class Ui_MainWindow(object):
 						fanart = os.path.join(home,'History',site,name,'fanart.jpg')
 						thumbnail = os.path.join(home,'History',site,name,'thumbnail.jpg')
 						m.append(picn)
-						try:
-							g = open(os.path.join(home,'History',site,name,'summary.txt'), 'r')
-							summary = g.read()
+						#try:
+						#	g = open(os.path.join(home,'History',site,name,'summary.txt'), 'r')
+						#	summary = g.read()
 							#m = lines + tuple(picn) + tuple(summary)
-							g.close()
-						except:
-							summary = "Not Available"
-							
+						#	g.close()
+						#except:
+						#	summary = "Not Available"
+						summary = open_files(os.path.join(home,'History',site,name,'summary.txt'),False)
 						self.videoImage(picn,thumbnail,fanart,summary)
 				
 				
@@ -13732,9 +13660,10 @@ class Ui_MainWindow(object):
 				item = self.list1.item(r)
 				if item:
 					pls = str(item.text())
-					f = open(os.path.join(home,'Playlists',pls),'r')
-					m = f.readlines()
-					f.close()
+					#f = open(os.path.join(home,'Playlists',pls),'r')
+					#m = f.readlines()
+					#f.close()
+					m = open_files(os.path.join(home,'Playlists',pls),True)
 					#print m
 					for i in m:
 						i = i.replace('\n','')
@@ -13773,9 +13702,10 @@ class Ui_MainWindow(object):
 				pls = self.list1.currentItem().text()
 				file_path = os.path.join(home,'Playlists',str(pls))
 				if os.path.exists(file_path):
-					f = open(file_path)
-					lines = f.readlines()
-					f.close()
+					#f = open(file_path)
+					#lines = f.readlines()
+					#f.close()
+					lines = open_files(file_path,True)
 					k = 0
 					for i in lines:
 						i = i.replace('\n','')
@@ -13838,10 +13768,11 @@ class Ui_MainWindow(object):
 					thumbnail = os.path.join(home,'Local',art_n,'thumbnail.jpg')
 					fanart = os.path.join(home,'Local',art_n,'fanart.jpg')
 					summary1 = os.path.join(home,'Local',art_n,'summary.txt')
-					if os.path.exists(summary1):
-						summary = open(summary1,'r').read()
-					else:
-						summary = "Not Available"
+					#if os.path.exists(summary1):
+					#	summary = open(summary1,'r').read()
+					#else:
+					#	summary = "Not Available"
+					summary = open_files(summary1,False)
 					self.videoImage(picn,thumbnail,fanart,summary)
 						
 					print (picn)
@@ -13888,9 +13819,12 @@ class Ui_MainWindow(object):
 					art_list = os.listdir(music_dir_art_name)
 					sumr = os.path.join(music_dir_art_name,'bio.txt')
 					if os.path.exists(sumr):
-						summary = open(sumr,'r').read()
-					else:
-						summary = "Not Available"
+						summary = open_files(sumr,False)
+						
+					#	summary = open(sumr,'r').read()
+					#else:
+					#	summary = "Not Available"
+					
 					poster = os.path.join(music_dir_art_name,'poster.jpg')
 					fan = os.path.join(music_dir_art_name,'fanart.jpg')
 					thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
@@ -13925,9 +13859,10 @@ class Ui_MainWindow(object):
 					art_list = os.listdir(music_dir_art_name)
 					sumr = os.path.join(music_dir_art_name,'bio.txt')
 					if os.path.exists(sumr):
-						summary = open(sumr,'r').read()
-					else:
-						summary = "Not Available"
+						#summary = open(sumr,'r').read()
+						summary = open_files(sumr,False)
+					#else:
+					#	summary = "Not Available"
 					poster = os.path.join(music_dir_art_name,'poster.jpg')
 					fan = os.path.join(music_dir_art_name,'fanart.jpg')
 					thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
@@ -14367,9 +14302,10 @@ class Ui_MainWindow(object):
 					else:
 						n_epn = '#'+epnArrList[row]
 						file_path = hist_path
-						f = open(file_path, 'r')
-						lines = f.readlines()
-						f.close()
+						#f = open(file_path, 'r')
+						#lines = f.readlines()
+						#f.close()
+						lines = open_files(file_path,True)
 						if "\n" in lines[row]:
 							lines[row] = n_epn + "\n"
 						else:
@@ -14486,9 +14422,10 @@ class Ui_MainWindow(object):
 						txt = n_epn.replace('#',self.check_symbol,1)
 					else:
 						n_epn = "#" + epnArrList[row]
-						f = open(file_path, 'r')
-						lines = f.readlines()
-						f.close()
+						#f = open(file_path, 'r')
+						#lines = f.readlines()
+						#f.close()
+						lines = open_files(file_path,True)
 						if "\n" in lines[row]:
 							lines[row] = n_epn + "\n"
 						else:
@@ -14853,7 +14790,8 @@ class Ui_MainWindow(object):
 						npn = os.path.join(folder_name,new_epn)
 						
 						if finalUrl.startswith('http'):
-							command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+							#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+							command = wget_string(finalUrl,npn)
 							print (command)
 					
 							self.infoWget(command,0)
@@ -14866,7 +14804,8 @@ class Ui_MainWindow(object):
 				url1 = re.sub('#','',finalUrl[0])
 				print (url1)
 				url1 = str(url1)
-				command = "wget -c --user-agent="+'"'+hdr+'" '+rfr+' "'+url1+'"'+" -O "+os.path.join(TMPDIR,new_epn)
+				#command = "wget -c --user-agent="+'"'+hdr+'" '+rfr+' "'+url1+'"'+" -O "+os.path.join(TMPDIR,new_epn)
+				command = wget_string(url1,os.path.join(TMPDIR,new_epn),rfr)
 				print (command)
 					
 				self.infoWget(command,0)
@@ -15387,10 +15326,10 @@ class Ui_MainWindow(object):
 				if os.path.exists(tmp_nm+'-bio.txt'):
 					shutil.copy(tmp_nm+'-bio.txt',b_path)
 				if os.path.exists(b_path):
-					
-					sumr = open(b_path,'r').read()
-				else:
-					sumr = ""
+					sumr = open_files(b_path,False)
+					#sumr = open(b_path,'r').read()
+				#else:
+				#	sumr = ""
 				self.videoImage(m_path,t_path,f_path,sumr)
 				self.label.show()
 				self.text.show()
@@ -15438,9 +15377,11 @@ class Ui_MainWindow(object):
 			npn = os.path.join(folder_name,new_epn)
 			if finalUrl.startswith('http'):
 				if not referer:
-					command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+					#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+					command = wget_string(finalUrl,npn)
 				else:
-					command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
+					#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
+					command = wget_string(finalUrl,npn,rfr)
 				print (command)
 				self.infoWget(command,0)
 		downloadVideo = 0
@@ -15541,9 +15482,11 @@ class Ui_MainWindow(object):
 					npn = npn+'.mp4'
 				if finalUrl.startswith('http'):
 					if not referer:
-						command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+						#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
+						command = wget_string(finalUrl,npn)
 					else:
-						command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
+						#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
+						command = wget_string(finalUrl,npn,rfr)
 					print (command)
 					self.infoWget(command,0)
 		
@@ -16897,9 +16840,10 @@ class Ui_MainWindow(object):
 		if os.path.exists(file_path) and self.btn1.currentText().lower() == 'youtube':
 			self.list2.clear()
 			epnArrList[:]=[]
-			f = open(file_path,'r')
-			lines = f.readlines()
-			f.close()
+			#f = open(file_path,'r')
+			#lines = f.readlines()
+			#f.close()
+			lines = open_files(file_path,True)
 			for i in lines:
 				i = i.replace('\n','')
 				if i:
@@ -16924,9 +16868,10 @@ class Ui_MainWindow(object):
 						self.list1.setCurrentRow(i)
 						break
 			else:
-				f = open(file_path,'r')
-				lines = f.readlines()
-				f.close()
+				#f = open(file_path,'r')
+				#lines = f.readlines()
+				#f.close()
+				lines = open_files(file_path,True)
 				new_epn = lines[-1].strip()
 				epnArrList.append(new_epn)
 				new_epn_title = new_epn.split('	')[0]
@@ -17004,7 +16949,8 @@ class Ui_MainWindow(object):
 				opt = t_opt
 				file_path = os.path.join(home,'History',site,'history.txt')
 				if os.path.isfile(file_path):
-					lines = tuple(open(file_path, 'r'))
+					#lines = tuple(open(file_path, 'r'))
+					lines = open_files(file_path,True)
 					#lines_set = set(lines)
 					#lines_set.sort()
 					#out= open(home+'/History/'+site+'/history.txt', 'w')
@@ -17012,7 +16958,8 @@ class Ui_MainWindow(object):
 					#	if line.strip():
 					#		out.write(line)
 					#out.close()
-					lins = tuple(open(file_path, 'r'))
+					#lins = tuple(open(file_path, 'r'))
+					lins = open_files(file_path,True)
 					list1_items = []
 					original_path_name[:] = []
 					for i in lins:
@@ -17120,7 +17067,8 @@ class Ui_MainWindow(object):
 			if opt == "History":
 					file_path = os.path.join(home,'History',site,siteName,'history.txt')
 					if os.path.isfile(file_path):
-						lines = tuple(open(file_path, 'r'))
+						#lines = tuple(open(file_path, 'r'))
+						lines = open_files(file_path,True)
 						self.label.clear()
 						self.line.clear()
 						self.list1.clear()
@@ -17248,8 +17196,9 @@ class Ui_MainWindow(object):
 			elif opt == "History":
 				file_path = os.path.join(home,'History',site,'history.txt')
 				if os.path.isfile(file_path):
-					f = open(file_path,'r')
-					lins = f.readlines()
+					#f = open(file_path,'r')
+					#lins = f.readlines()
+					lins = open_files(file_path,True)
 					list2_items = []
 					self.line.clear()
 					self.list1.clear()
@@ -17493,10 +17442,10 @@ class Ui_MainWindow(object):
 		p = []
 		vid = []
 		if os.path.isfile(os.path.join(home,'local.txt')):
-			f = open(os.path.join(home,'local.txt'), 'r')
-			lines_dir = f.readlines()
-			f.close()
-			
+			#f = open(os.path.join(home,'local.txt'), 'r')
+			#lines_dir = f.readlines()
+			#f.close()
+			lines_dir = open_files(os.path.join(home,'local.txt'),True)
 			for lines_d in lines_dir:
 				video[:]=[]
 				#lines_d = lines_d.replace('\n','')
@@ -17784,10 +17733,10 @@ class Ui_MainWindow(object):
 		p = []
 		m_files = []
 		if os.path.isfile(os.path.join(home,'local.txt')):
-			f = open(os.path.join(home,'local.txt'), 'r')
-			lines_dir = f.readlines()
-			f.close()
-			
+			#f = open(os.path.join(home,'local.txt'), 'r')
+			#lines_dir = f.readlines()
+			#f.close()
+			lines_dir = open_files(os.path.join(home,'local.txt'),True)
 			for lines_d in lines_dir:
 				if not lines_d.startswith('#'):
 					music[:]=[]
@@ -18149,10 +18098,10 @@ class Ui_MainWindow(object):
 		p = []
 		m_files = []
 		if os.path.isfile(os.path.join(home,'local.txt')):
-			f = open(os.path.join(home,'local.txt'), 'r')
-			lines_dir = f.readlines()
-			f.close()
-			
+			#f = open(os.path.join(home,'local.txt'), 'r')
+			#lines_dir = f.readlines()
+			#f.close()
+			lines_dir = open_files(os.path.join(home,'local.txt'),True)
 			for lines_d in lines_dir:
 				if not lines_d.startswith('#'):
 					music[:]=[]
@@ -18806,9 +18755,10 @@ def main():
 					print ("addons loading....")
 						
 	if os.path.exists(os.path.join(home,'config.txt')):
-		f = open(os.path.join(home,'config.txt'),'r')
-		lines = f.readlines()
-		f.close()
+		#f = open(os.path.join(home,'config.txt'),'r')
+		#lines = f.readlines()
+		#f.close()
+		lines = open_files(os.path.join(home,'config.txt'),True)
 		for i in lines:
 			if not i.startswith('#'):
 				j = i.split('=')[-1]

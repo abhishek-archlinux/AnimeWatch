@@ -10,11 +10,14 @@ from subprocess import check_output
 from bs4 import BeautifulSoup
 import os.path
 from subprocess import check_output
+from player_functions import send_notification
 try:
 	import libtorrent as lt
+	from stream import ThreadServer,TorrentThread,get_torrent_info
 except:
-	pass
-from stream import ThreadServer,TorrentThread,get_torrent_info
+	notify_txt = 'python3 bindings for libtorrent are broken\nTorrent Streaming feature will be disabled'
+	send_notification(notify_txt)
+
 import shutil
 #from hurry.filesize import size
 try:

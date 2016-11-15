@@ -8,6 +8,7 @@ import random
 import subprocess
 from subprocess import check_output
 from bs4 import BeautifulSoup
+import os
 import os.path
 from subprocess import check_output
 import shutil
@@ -69,6 +70,8 @@ def ccurl(url,value,code):
 	
 	url = str(url)
 	c.setopt(c.URL, url)
+	if os.name != 'posix':
+		c.setopt(c.SSL_VERIFYPEER,False)
 	storage = BytesIO()
 	
 	if value:
@@ -163,7 +166,7 @@ class Shoutcast():
 		
 	def process_page(self,content):
 		content = re.sub(r'\\',"-",content)
-		print(content)
+		#print(content)
 		#f = open('/tmp/tmp.txt','w')
 		#f.write(content)
 		#f.close()
@@ -184,7 +187,7 @@ class Shoutcast():
 		s = []
 		for i in l:
 			try:
-				print(i['ID'],i['Name'],i['Bitrate'],i['Listeners'])
+				#print(i['ID'],i['Name'],i['Bitrate'],i['Listeners'])
 				s.append(i['Name'].replace('/','-')+'	id='+str(i['ID'])+'\nBitrate='+str(i['Bitrate'])+'\nListeners='+str(i['Listeners'])+'\n')
 			except:
 				pass
