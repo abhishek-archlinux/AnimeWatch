@@ -7389,7 +7389,7 @@ class Ui_MainWindow(object):
 		path = path.replace('"','')
 		inter = str(interval)
 		
-		
+		new_tmp = '"'+TMPDIR+'"'
 		if not self.mpv_thumbnail_lock:
 			if OSNAME == 'posix':
 				subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,"-t",str(inter),'-q','10','-s','350'])
@@ -7399,12 +7399,12 @@ class Ui_MainWindow(object):
 				#self.progressEpn.setFormat('Generating Thumbnail Wait..')
 				self.mpv_thumbnail_lock = True
 				if 'youtube.com' in path:
-					subprocess.call(["mpv","--no-sub","--ytdl=yes","--quiet","--no-audio","--vo-image:outdir="+TMPDIR,"--start="+str(inter)+"%","--frames=1",path])
+					subprocess.call(["mpv","--no-sub","--ytdl=yes","--quiet","--no-audio","--vo-image:outdir="+new_tmp,"--start="+str(inter)+"%","--frames=1",path],shell=True)
 				else:
 					if Player == 'mpv':
-						subprocess.call(["mpv","--no-sub","--ytdl=no","--quiet","--no-audio","--vo=image:outdir="+TMPDIR,"--start="+str(inter)+"%","--frames=1",path])
+						subprocess.call(["mpv","--no-sub","--ytdl=no","--quiet","--no-audio","--vo=image:outdir="+new_tmp,"--start="+str(inter)+"%","--frames=1",path],shell=True)
 					elif Player == 'mplayer':
-						subprocess.call(["mplayer","-nosub","-nolirc","-nosound",'-vo',"jpeg:quality=100:outdir="+TMPDIR,"-ss",str(inter),"-endpos","1","-frames","1","-vf","scale=320:180",path])
+						subprocess.call(["mplayer","-nosub","-nolirc","-nosound",'-vo',"jpeg:quality=100:outdir="+new_tmp,"-ss",str(inter),"-endpos","1","-frames","1","-vf","scale=320:180",path],shell=True)
 					
 				picn_path = os.path.join(TMPDIR,'00000001.jpg')
 				if os.path.exists(picn_path):
@@ -12918,7 +12918,7 @@ class Ui_MainWindow(object):
 	def rawlist_highlight(self):
 		
 		global site,name,base_url,name1,embed,opt,pre_opt,mirrorNo,list1_items,list2_items,quality,row_history,home,epn,path_Local_Dir,epnArrList,bookmark,status,siteName,original_path_name,screen_height,screen_width
-		print('========raw_list_highlight==========')
+		#print('========raw_list_highlight==========')
 		if self.list1.currentItem():
 			nm = original_path_name[self.list1.currentRow()].strip()
 			if '	' in nm:
@@ -12934,7 +12934,7 @@ class Ui_MainWindow(object):
 		thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 		m = []
 		epnArrList[:]=[]
-		print('========raw_list_highlight==========')
+		#print('========raw_list_highlight==========')
 		summary = 'Summary Not Available'
 		picn = 'No.jpg'
 		if site == "SubbedAnime" or site == "DubbedAnime":
@@ -13016,48 +13016,11 @@ class Ui_MainWindow(object):
 				#self.text.insertPlainText(name +' : '+'\n')
 				pass
 			if summary.lower() == 'summary not available':
-				summary = summary+'\n'+original_path_name[cur_row]
-			self.text.insertPlainText(summary)
-			
-			
+				summary = summary+'\n'+original_path_name[cur_row]			
+			self.videoImage(picn,thumbnail,fanart,summary)
 				
 			if os.path.isfile(str(picn)):
-				if not os.path.isfile(fanart):
-					basewidth = screen_width
-					img = Image.open(str(picn))
-					wpercent = (basewidth / float(img.size[0]))
-					#hsize = int((float(img.size[1]) * float(wpercent)))
-					hsize = screen_height
-					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-					img.save(str(fanart))
-				if not os.path.isfile(thumbnail):
-					basewidth = 450
-					img = Image.open(str(picn))
-					wpercent = (basewidth / float(img.size[0]))
-					hsize = int((float(img.size[1]) * float(wpercent)))
-					
-					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-					img.save(str(thumbnail))
-				picn = thumbnail
-				#picn = "/tmp/AnimeWatch/"+name+'.jpg'	
-				tmp = '"background-image: url('+fanart+')"'
-				
-				tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-				
-				QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
-				
-				
-		
-				#self.dockWidget_3.hide()
-			
-				img = QtGui.QPixmap(picn, "1")
-				#.scaled(self.label.size(), QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
-				self.label.setPixmap(img)
-			
-				#self.label.setToolTip(_translate("MainWindow", "<html><h1>"+name+"</h1><head/><body><p>"+summary+"</p></body></html>" , None))
-				
 				self.list2.clear()
-			
 				self.update_list2()
 		
 		else:
@@ -13861,8 +13824,8 @@ class Ui_MainWindow(object):
 					if os.path.exists(sumr):
 						#summary = open(sumr,'r').read()
 						summary = open_files(sumr,False)
-					#else:
-					#	summary = "Not Available"
+					else:
+						summary = "Not Available"
 					poster = os.path.join(music_dir_art_name,'poster.jpg')
 					fan = os.path.join(music_dir_art_name,'fanart.jpg')
 					thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
@@ -13877,43 +13840,42 @@ class Ui_MainWindow(object):
 	def videoImage(self,picn,thumbnail,fanart,summary):
 		global screen_height,screen_width
 		#self.label.clear()
-		if os.path.isfile(str(picn)):
-			if not os.path.isfile(fanart):
-				basewidth = screen_width
-				try:
+		try:
+			if os.path.isfile(str(picn)):
+				if not os.path.isfile(fanart):
+					basewidth = screen_width
 					img = Image.open(str(picn))
-				except:
 					picn = os.path.join(home,'default.jpg')
 					img = Image.open(str(picn))
-				wpercent = (basewidth / float(img.size[0]))
-				#hsize = int((float(img.size[1]) * float(wpercent)))
-				hsize = screen_height
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(fanart))
-			if not os.path.isfile(thumbnail):
-				basewidth = 450
-				try:
+					wpercent = (basewidth / float(img.size[0]))
+					#hsize = int((float(img.size[1]) * float(wpercent)))
+					hsize = screen_height
+					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+					img.save(str(fanart))
+				if not os.path.isfile(thumbnail):
+					basewidth = 450
 					img = Image.open(str(picn))
-				except:
 					picn = os.path.join(home,'default.jpg')
 					img = Image.open(str(picn))
-				wpercent = (basewidth / float(img.size[0]))
-				hsize = int((float(img.size[1]) * float(wpercent)))
+					wpercent = (basewidth / float(img.size[0]))
+					hsize = int((float(img.size[1]) * float(wpercent)))
+					
+					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+					img.save(str(thumbnail))
+				picn = thumbnail	
+				tmp = '"background-image: url('+fanart+')"'
 				
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(thumbnail))
-			picn = thumbnail	
-			tmp = '"background-image: url('+fanart+')"'
-			
-			tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-			QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
-			
-			#self.dockWidget_3.hide()
+				tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
+				QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
+				
+				#self.dockWidget_3.hide()
 
-			img = QtGui.QPixmap(picn, "1")
-			self.label.setPixmap(img)
-			if not self.float_window.isHidden():
-				self.float_window.setPixmap(img)
+				img = QtGui.QPixmap(picn, "1")
+				self.label.setPixmap(img)
+				if not self.float_window.isHidden():
+					self.float_window.setPixmap(img)
+		except Exception as e:
+			print(e,'--error--in processing image--')
 		self.text.clear()
 		if summary:
 			#self.text.clear()
@@ -14046,7 +14008,7 @@ class Ui_MainWindow(object):
 			finalUrl = finalUrl.replace('"','')
 		else:
 			current_playing_file_path = finalUrl
-		if mpvplayer.processId() > 0:
+		if mpvplayer.processId() > 0 and OSNAME == 'posix':
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
 				t1 = bytes('\n'+'show_text '+epnShow+'\n','utf-8')
@@ -14062,6 +14024,9 @@ class Ui_MainWindow(object):
 			self.mplayer_SubTimer.start(2000)
 			print('..function play_file_now gapless mode..')
 		else:
+			if mpvplayer.processId()>0:
+				mpvplayer.kill()
+				
 			idw = str(int(self.tab_5.winId()))
 			if Player == 'mpv':
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
@@ -15328,8 +15293,8 @@ class Ui_MainWindow(object):
 				if os.path.exists(b_path):
 					sumr = open_files(b_path,False)
 					#sumr = open(b_path,'r').read()
-				#else:
-				#	sumr = ""
+				else:
+					sumr = "Summary Not Available"
 				self.videoImage(m_path,t_path,f_path,sumr)
 				self.label.show()
 				self.text.show()

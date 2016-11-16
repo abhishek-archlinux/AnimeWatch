@@ -51,39 +51,37 @@ def get_yt_url(url,quality):
 		except:
 			pass
 	try:
-		
-		if quality == 'sd480p':
-			"""
-			try:
-				try:
-					audio = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','171','-g','--playlist-end','1',url])
-				except:
-					audio = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','140','-g','--playlist-end','1',url])
-				try:
-					video = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','244','-g','--playlist-end','1',url])
-				except:
-					video = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','135','-g','--playlist-end','1',url])
-				audio = str(audio,'utf-8').strip()
-				video = str(video,'utf-8').strip()
-				final_url = audio+'#'+video
-			except:
+		if os.name == 'posix':
+			if quality == 'sd480p':
 				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
-			"""
-			final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
-			final_url = str(final_url,'utf-8')
-		elif quality == 'sd':
-			final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
-			final_url = str(final_url,'utf-8')
-		elif quality == 'hd':
-			try:
-				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','22','-g','--playlist-end','1',url])
-				final_url = str(final_url,'utf-8')
-			except:
+			elif quality == 'sd':
 				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
-	except:
-		txt ='Please Update livestreamer and youtube-dl'
+			elif quality == 'hd':
+				try:
+					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','22','-g','--playlist-end','1',url])
+					final_url = str(final_url,'utf-8')
+				except:
+					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
+					final_url = str(final_url,'utf-8')
+		else:
+			if quality == 'sd480p':
+				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url],shell=True)
+				final_url = str(final_url,'utf-8')
+			elif quality == 'sd':
+				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url],shell=True)
+				final_url = str(final_url,'utf-8')
+			elif quality == 'hd':
+				try:
+					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','22','-g','--playlist-end','1',url],shell=True)
+					final_url = str(final_url,'utf-8')
+				except:
+					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url],shell=True)
+					final_url = str(final_url,'utf-8')
+	except Exception as e:
+		print(e,'--error in processing youtube url--')
+		txt ='Please Update youtube-dl'
 		#subprocess.Popen(['notify-send',txt])
 		send_notification(txt)
 		final_url = ''
