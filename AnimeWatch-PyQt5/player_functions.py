@@ -52,6 +52,7 @@ def open_files(file_path,lines_read=True):
 def write_files(file_name,content,line_by_line):
 	fh, tmp_new_file = mkstemp()
 	file_exists = False
+	write_operation = True
 	if os.path.exists(file_name):
 		file_exists = True
 		shutil.copy(file_name,tmp_new_file)
@@ -140,12 +141,23 @@ def write_files(file_name,content,line_by_line):
 					f.write(content.encode('utf-8'))
 					f.close()
 	except Exception as e:
+		write_operation = False
 		print(e,'error in handling file, hence restoring original')
 		if file_exists:
 			shutil.copy(tmp_new_file,file_name)
 			print('copying ',tmp_new_file,' to ',file_name)
 	if os.path.exists(tmp_new_file):
-		os.remove(tmp_new_file)
+		try:
+			os.remove(tmp_new_file)
+			if write_operation:
+				print('write operation on: '+file_name+' successful and successfully removed temp file: '+tmp_new_file)
+			else:
+				print('write operation on: '+file_name+' failed hence restored original and successfully removed temp file: '+tmp_new_file)
+		except Exception as e:
+			if write_operation:
+				print(e,' : write operation on '+file_name+' successful but remove '+tmp_new_file+' manually')
+			else:
+				print(e,' : write operation on '+file_name+' failed hence original restored, but remove '+tmp_new_file+' manually')
 
 def wget_string(url,dest,rfr=None):
 	hdr = USER_AGENT

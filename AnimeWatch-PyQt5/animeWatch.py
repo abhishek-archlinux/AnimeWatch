@@ -11580,7 +11580,7 @@ class Ui_MainWindow(object):
 			#f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
 			#line_a = f.readlines()
 			#f.close()
-			line_a = open(os.path.join(home,'Bookmark',status+'.txt'),True)
+			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
 			self.list1.clear()
 			original_path_name[:] = []
 			for i in line_a:
@@ -13312,7 +13312,7 @@ class Ui_MainWindow(object):
 			if r < 0:
 				return 0
 			tmp = line_a[r]
-			tmp = re.sub('\n','',tmp)
+			tmp = tmp.strip()
 			tmp1 = tmp.split(':')
 			site = tmp1[0]
 			if site == "Music" or site == "Video":
@@ -13430,21 +13430,7 @@ class Ui_MainWindow(object):
 					if not os.path.exists(hist_site) and self.record_history:
 						os.makedirs(hist_site)
 						hist_epn = os.path.join(hist_site,'Ep.txt')
-						"""
-						f = open(hist_epn, 'w')
-						j = 0
-						for i in m:
-							try:
-								if j == 0:
-									f.write(i)
-								else:
-									f.write('\n'+i)
-							except UnicodeEncodeError as e:
-								print(e,'episode--'+str(j)+"--can't be written")
-							j = j+1
-							
-						f.close()
-						"""
+						
 						write_files(hist_epn,m,line_by_line=True)
 						
 						hist_sum = os.path.join(hist_site,'summary.txt')
@@ -13453,7 +13439,7 @@ class Ui_MainWindow(object):
 				
 				else:
 					if site.lower() == 'subbedanime' or site.lower() == 'dubbedanime':
-						if self.list3.currentItem():
+						if self.list3.currentItem() and bookmark == 'False':
 							siteName = self.list3.currentItem().text()
 						hist_site = os.path.join(home,'History',site,siteName,name)
 					else:
@@ -13488,15 +13474,7 @@ class Ui_MainWindow(object):
 							#f.close()
 							lines = open_files(f_name,True)
 							if len(epnArrList) > len(lines):
-								"""
-								f = open(f_name, 'w')
-								for i in m:
-									try:
-										f.write(i+'\n')
-									except UnicodeEncodeError:
-										pass
-								f.close
-								"""
+								
 								write_files(f_name,m,line_by_line=True)
 							
 							
@@ -16663,10 +16641,8 @@ class Ui_MainWindow(object):
 			print ("mpv=" + str(mpvplayer.processId()))
 			print (command)
 			if mpvplayer.processId() > 0 :
-				self.infoPlay(command)
-			else:
-				print ("hello")
-				self.infoPlay(command)
+				mpvplaye.kill()
+			self.infoPlay(command)
 			
 		else:
 			if type(finalUrl) is list:
@@ -16743,6 +16719,7 @@ class Ui_MainWindow(object):
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+sub_id+" -aid "+audio_id+" "+finalUrl
 				print ("mpv=" + str(mpvplayer.processId()))
 				print(Player,'---------state----'+str(mpvplayer.state()))
+				"""
 				if mpvplayer.processId() > 0:
 					#if mpvplayer.processId()>0:
 					if Player == "mplayer" or Player == "mpv":
@@ -16755,10 +16732,12 @@ class Ui_MainWindow(object):
 						print (t2)
 						mpvplayer.write(t2)
 				else:
+				"""
+				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
-					if Player == 'mplayer':
+					if Player == 'mplayer' and mpvplayer.processId() > 0:
 						subprocess.Popen(['killall','mplayer'])
-					self.infoPlay(command)
+				self.infoPlay(command)
 				
 				
 	
@@ -19331,7 +19310,8 @@ def main():
 			ui.watchDirectly(urllib.parse.unquote(t),'','no')
 			ui.dockWidget_3.hide()
 	ui.quality_val = quality
-	
+	#x = tray.showMessage
+	#x('hi','hello',1)
 	ret = app.exec_()
 	if ui.dockWidget_3.isHidden():
 		dock_opt = 0
