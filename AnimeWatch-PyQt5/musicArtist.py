@@ -59,14 +59,7 @@ class musicArtist():
 		return content
 	def ccurlT(self,url,rfr):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		#if rfr:
-		#	content = subprocess.check_output(['curl','-L','-A',hdr,'-e',rfr,url])
-		#else:
-		#	content = subprocess.check_output(['curl','-L','-A',hdr,url])
-		#hdrs = {'user-agent':self.hdr}
-		#req = requests.get(url,headers=hdrs)
-		#content = req.text
-		#content = self.getContentUnicode(content)
+		
 		content = ccurl(url)
 		return content
 	def search(self,name,name_url):

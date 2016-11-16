@@ -270,6 +270,7 @@ class KissDrama():
 			os.remove(lnk_file)
 			
 		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
+		print(url,quality,self.cookie_file)
 		cloudfare(url,quality,self.cookie_file)
 		
 		

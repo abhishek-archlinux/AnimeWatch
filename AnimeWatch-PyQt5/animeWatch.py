@@ -61,7 +61,6 @@ import shutil
 from tempfile import mkstemp,mkdtemp
 
 try:
-	import haha
 	TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
 except:
 	TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
@@ -359,11 +358,11 @@ class ThreadingExample(QtCore.QThread):
 
 			link = soup.findAll('div',{'class':'row clearfix'})
 			#print link
-			print (link)
+			#print (link)
 			name3 = ""
 			for i in link:
 				j = i.findAll('a')
-				print (j)
+				#print (j)
 				for k in j:
 					try:
 						url = k['href']
@@ -388,7 +387,7 @@ class ThreadingExample(QtCore.QThread):
 			content = ccurl(wiki_url)
 			soup = BeautifulSoup(content,'lxml')
 			link = soup.find('div',{'class':'wiki-content'})
-			print (link)
+			#print (link)
 
 			if link:
 				
@@ -2850,6 +2849,8 @@ class List1(QtWidgets.QListWidget):
 				profile = menu.addAction("Find Last.fm Profile(manually)")
 				default = menu.addAction("Set Default Background")
 				delPosters = menu.addAction("Delete Poster")
+				delFanart = menu.addAction("Delete Fanart")
+				delThumb = menu.addAction("Delete Playlist Thumbnails")
 				delInfo = menu.addAction("Delete Info")
 				go_to = menu.addAction("Go To Last.fm")
 				thumbnail = menu.addAction("Show Thumbnail View")
@@ -2907,7 +2908,7 @@ class List1(QtWidgets.QListWidget):
 								ui.lock_process = True
 								ui.IconView()
 								ui.lock_process = False
-				elif action == delInfo or action == delPosters or action == default:
+				elif action == delInfo or action == delPosters or action == default or action == delThumb or action == delFanart:
 					if (ui.list3.currentItem()):
 						if str(ui.list3.currentItem().text()) == "Artist":
 							if '/' in name:
@@ -2957,6 +2958,27 @@ class List1(QtWidgets.QListWidget):
 										if i.endswith('.jpg') or i.endswith('.txt'):
 											t = os.path.join(TMPDIR,i)
 											os.remove(t) 
+								elif action == delThumb:
+									m=os.listdir(dir_n)
+									for i in m:
+										print(i)
+										if i.startswith('256px') or i.startswith('128px'):
+											os.remove(os.path.join(dir_n,i))
+									m = os.listdir(TMPDIR)
+									for i in m:
+										if i.startswith('256x') or i.startswith('128x'):
+											t = os.path.join(TMPDIR,i)
+											os.remove(t) 
+								elif action == delFanart:
+									m=os.listdir(dir_n)
+									for i in m:
+										if i.startswith('fanart'):
+											os.remove(os.path.join(dir_n,i))
+									m = os.listdir(TMPDIR)
+									for i in m:
+										if i.startswith('fanart'):
+											t = os.path.join(TMPDIR,i)
+											os.remove(t)
 								elif action == default:
 									shutil.copy(default_wall,picn)
 									shutil.copy(default_wall,fanart)
@@ -7011,7 +7033,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,28)
+		self.version_number = (3,0,0,33)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -10768,16 +10790,19 @@ class Ui_MainWindow(object):
 				#picn = '/tmp/AnimeWatch/'+nm+'.jpg'
 				#thumbnail = '/tmp/AnimeWatch/'+nm+'-thumbnail.jpg'
 				basewidth = 450
-				img = Image.open(str(picn))
-				wpercent = (basewidth / float(img.size[0]))
-				hsize = int((float(img.size[1]) * float(wpercent)))
-				
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(thumbnail))	
-				shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'poster.jpg'))
-				shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'))
-				ui.videoImage(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,'fanart.jpg'),'')
-				#self.listfound()
+				try:
+					img = Image.open(str(picn))
+					wpercent = (basewidth / float(img.size[0]))
+					hsize = int((float(img.size[1]) * float(wpercent)))
+					
+					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+					img.save(str(thumbnail))	
+					shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'poster.jpg'))
+					shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'))
+					ui.videoImage(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,'fanart.jpg'),'')
+					#self.listfound()
+				except Exception as e:
+					print(e,': line 10783')
 	
 	def copyFanart(self):
 		global name,site,opt,pre_opt,home,siteName,original_path_name,screen_height,screen_width
@@ -11054,8 +11079,6 @@ class Ui_MainWindow(object):
 					self.downloadWget[i].start()
 	def posterfound(self,nav):
 			global name,posterManually,hdr,site,img_arr_artist
-			
-			
 			if site == "Music":
 				r = self.list3.currentRow()
 				item = self.list3.item(r)
@@ -13521,11 +13544,9 @@ class Ui_MainWindow(object):
 							thumbnail = os.path.join(home,'Local',name,'thumbnail.jpg')
 							summary1 = os.path.join(home,'Local',name,'summary.txt')
 							if os.path.exists(summary1):
-								#summary = open(summary1,'r').read()
-								#else:
-								#summary = "Not Available"
 								summary = open_files(summary1,False)
-								
+							else:
+								summary = "Not Available"
 							print (picn)
 							self.videoImage(picn,thumbnail,fanart,summary)
 				
@@ -13731,11 +13752,12 @@ class Ui_MainWindow(object):
 					thumbnail = os.path.join(home,'Local',art_n,'thumbnail.jpg')
 					fanart = os.path.join(home,'Local',art_n,'fanart.jpg')
 					summary1 = os.path.join(home,'Local',art_n,'summary.txt')
-					#if os.path.exists(summary1):
-					#	summary = open(summary1,'r').read()
-					#else:
-					#	summary = "Not Available"
-					summary = open_files(summary1,False)
+					if os.path.exists(summary1):
+						#summary = open(summary1,'r').read()
+						summary = open_files(summary1,False)
+					else:
+						summary = "Not Available"
+					
 					self.videoImage(picn,thumbnail,fanart,summary)
 						
 					print (picn)
@@ -13784,9 +13806,9 @@ class Ui_MainWindow(object):
 					if os.path.exists(sumr):
 						summary = open_files(sumr,False)
 						
-					#	summary = open(sumr,'r').read()
-					#else:
-					#	summary = "Not Available"
+						#summary = open(sumr,'r').read()
+					else:
+						summary = "Not Available"
 					
 					poster = os.path.join(music_dir_art_name,'poster.jpg')
 					fan = os.path.join(music_dir_art_name,'fanart.jpg')
@@ -13794,7 +13816,7 @@ class Ui_MainWindow(object):
 					if not os.path.exists(poster) and srch != "offline":	
 						#self.threadEx = ThreadingExample(name)
 						self.threadPool.append( ThreadingExample(nm) )
-						self.threadPool[len(self.threadPool)-1].finished.connect(self.finishedM)
+						self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
 						#self.threadEx.start()
 						self.threadPool[len(self.threadPool)-1].start()
 					else:
@@ -13832,7 +13854,7 @@ class Ui_MainWindow(object):
 					if not os.path.exists(poster) and srch != "offline" and artist_name_mplayer != "None" and artist_name_mplayer:	
 						
 						self.threadPool.append( ThreadingExample(nm) )
-						self.threadPool[len(self.threadPool)-1].finished.connect(self.finishedM)
+						self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
 						self.threadPool[len(self.threadPool)-1].start()
 					else:
 						self.videoImage(poster,thumb,fan,summary)
@@ -13844,9 +13866,12 @@ class Ui_MainWindow(object):
 			if os.path.isfile(str(picn)):
 				if not os.path.isfile(fanart):
 					basewidth = screen_width
-					img = Image.open(str(picn))
-					picn = os.path.join(home,'default.jpg')
-					img = Image.open(str(picn))
+					try:
+						img = Image.open(str(picn))
+					except:
+						print(e,'Error in opening image, videoImage,---13849')
+						picn = os.path.join(home,'default.jpg')
+						img = Image.open(str(picn))
 					wpercent = (basewidth / float(img.size[0]))
 					#hsize = int((float(img.size[1]) * float(wpercent)))
 					hsize = screen_height
@@ -13854,9 +13879,12 @@ class Ui_MainWindow(object):
 					img.save(str(fanart))
 				if not os.path.isfile(thumbnail):
 					basewidth = 450
-					img = Image.open(str(picn))
-					picn = os.path.join(home,'default.jpg')
-					img = Image.open(str(picn))
+					try:
+						img = Image.open(str(picn))
+					except Exception as e:
+						print(e,'Error in opening image, videoImage,---13861')
+						picn = os.path.join(home,'default.jpg')
+						img = Image.open(str(picn))
 					wpercent = (basewidth / float(img.size[0]))
 					hsize = int((float(img.size[1]) * float(wpercent)))
 					
@@ -13875,7 +13903,7 @@ class Ui_MainWindow(object):
 				if not self.float_window.isHidden():
 					self.float_window.setPixmap(img)
 		except Exception as e:
-			print(e,'--error--in processing image--')
+			print(e,'--error--in processing image--VideoImage 13883')
 		self.text.clear()
 		if summary:
 			#self.text.clear()
@@ -15265,20 +15293,20 @@ class Ui_MainWindow(object):
 					img = QtGui.QPixmap(picn, "1")
 					self.label.setPixmap(img)
 		
-	def finishedM(self):
+	def finishedM(self,nm):
 		global name,epnArrList,site
 		#t = "File Download Complete"
 		#subprocess.Popen(["notify-send",t])
 		#print "Process Ended"
 		if site == "Music" and self.list3.currentItem():
-			if str(self.list3.currentItem().text())=="Artist":
-				nm = self.list1.currentItem().text()
-			else:
-				try:
-					r = self.list2.currentRow()
-					nm = epnArrList[r].split('	')[2]
-				except:
-					nm = ""
+			#if str(self.list3.currentItem().text())=="Artist":
+			#	nm = self.list1.currentItem().text()
+			#else:
+			#	try:
+			#		r = self.list2.currentRow()
+			#		nm = epnArrList[r].split('	')[2]
+			#	except:
+			#		nm = ""
 			if nm:
 				m_path = os.path.join(home,'Music','Artist',nm,'poster.jpg')
 				t_path = os.path.join(home,'Music','Artist',nm,'thumbnail.jpg')

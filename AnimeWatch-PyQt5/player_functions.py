@@ -144,7 +144,8 @@ def write_files(file_name,content,line_by_line):
 		if file_exists:
 			shutil.copy(tmp_new_file,file_name)
 			print('copying ',tmp_new_file,' to ',file_name)
-		
+	if os.path.exists(tmp_new_file):
+		os.remove(tmp_new_file)
 
 def wget_string(url,dest,rfr=None):
 	hdr = USER_AGENT

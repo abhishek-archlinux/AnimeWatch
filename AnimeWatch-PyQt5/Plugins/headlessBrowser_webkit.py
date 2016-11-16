@@ -25,7 +25,7 @@ class NetWorkManager(QNetworkAccessManager):
 		super(NetWorkManager, self).__init__()
    
 	def createRequest(self, op, request, device = None ):
-		global block_list
+		global block_list,TMP_DIR
 		try:
 			urlLnk = (request.url()).toString()
 			path = (request.url().toString())
@@ -47,7 +47,7 @@ class NetWorkManager(QNetworkAccessManager):
 		else:
 			if 'itag=' in urlLnk and 'redirector' not in urlLnk:
 				print('*********')
-				f = open('/tmp/AnimeWatch/lnk.txt','w')
+				f = open(os.path.join(TMP_DIR,'lnk.txt'),'w')
 				f.write(urlLnk)
 				f.close()
 				return QNetworkAccessManager.createRequest(self, op, request, device)
@@ -237,8 +237,10 @@ class BrowseUrl(QtWidgets.QWidget):
 
 	def __init__(self,url,quality,c):
 		super(BrowseUrl, self).__init__()
+		global TMP_DIR
 		self.cookie_file = c
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
+		TMP_DIR = self.tmp_dir
 		self.Browse(url,quality)
 	
 		

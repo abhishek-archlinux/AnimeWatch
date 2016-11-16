@@ -22,6 +22,19 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl,pyqtSlot,pyqtSignal
 
+def getContentUnicode(content):
+	if isinstance(content,bytes):
+		print("I'm byte")
+		try:
+			content = str((content).decode('utf-8'))
+		except:
+			content = str(content)
+	else:
+		print(type(content))
+		content = str(content)
+		print("I'm unicode")
+	return content
+
 def ccurl(url,external_cookie=None):
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	if 'youtube.com' in url:
@@ -151,6 +164,7 @@ def _get_video_val(url,c_file,q):
 		
 		soup = BeautifulSoup(html,'lxml')
 		m = soup.findAll('select',{'id':'selectQuality'})
+		print(m,'---select--quality---')
 		if m:
 			#print(m)
 			arr = []
@@ -548,14 +562,16 @@ class BrowseUrlT(QWebEngineView):
 		
 		if os.path.exists(self.cookie_file):
 			content = ccurl(url+'#'+'-b'+'#'+self.cookie_file)
-			#print(content)
+			print(content)
 			if 'checking_browser' in content:
 				os.remove(self.cookie_file)
 				self.add_cookie = True
 			else:
 				self.add_cookie = False
 				if ('kisscartoon' in url or 'kissasian' in url) and self.quality and ('id=' in url):
+					print("--------------------",content)
 					self.media_val = _get_video_val(content,self.cookie_file,self.quality)
+					print(self.media_val,'--media--val--')
 		else:
 			self.add_cookie = True
 		
