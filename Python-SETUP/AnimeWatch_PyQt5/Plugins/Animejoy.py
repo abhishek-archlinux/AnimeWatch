@@ -10,112 +10,14 @@ from subprocess import check_output
 from bs4 import BeautifulSoup
 import os.path
 from subprocess import check_output
-#from hurry.filesize import size
+from player_functions import ccurl
 
 def naturallysorted(l): 
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
 	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
 	return sorted(l, key = alphanum_key)
 
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
-	
-def ccurl(url):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	print(url)
-	c = pycurl.Curl()
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	postfield = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc':
-			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
-			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
-			post1 = post.split('=')[0]
-			post2 = post.split('=')[1]
-			post_data = {post1:post2}
-			postfield = urllib.parse.urlencode(post_data)
-	url = str(url)
-	c.setopt(c.URL, url)
-	storage = BytesIO()
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		f = open(picn_op,'wb')
-		c.setopt(c.WRITEDATA, f)
-		c.perform()
-		c.close()
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		elif curl_opt == '-d':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.POSTFIELDS,postfield)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		content = getContentUnicode(content)
-		return content
+
 
 def replace_all(text, di):
 	for i, j in di.iteritems():
@@ -123,12 +25,10 @@ def replace_all(text, di):
 	return text
 
 
-
-
-
 class Animejoy():
-	def __init__(self):
+	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.tmp_dir = tmp
 	def getOptions(self):
 			criteria = ['Random','History','List']
 			return criteria
@@ -152,17 +52,8 @@ class Animejoy():
 			#print(m
 			url = m[0]
 		print(url)
-		"""
-		content = subprocess.check_output(["curl","-I","-A",hdr,url])
-		sizeArr = re.findall("Content-Length:[^\n]*",content)
-		if sizeArr:
-			size1 = re.sub("Content-Length:","",sizeArr[0])
-			size1 = re.sub("\r| ","",size1)
-			size2 = int(size1)/(1024*1024)
-			print("Size = "+str(size2) + "M"
-		"""
+		
 		return url
-		#subprocess.Popen(["smplayer","-add-to-playlist",url]) 
 	
 	def search(self,name):
 		strname = str(name)
@@ -203,12 +94,12 @@ class Animejoy():
 			m = random.sample(m, len(m))
 		return m
 	
-	def getEpnList(self,name,opt):
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		url = "http://anime-joy.tv/watch/" + name
 		print(url)
 		summary = ""
 		content = ccurl(url)
-		soup = BeautifulSoup(content)
+		soup = BeautifulSoup(content,'lxml')
 		link = soup.findAll('div', { "class" : 'ozet' })
 		link1 = soup.findAll('img')
 		img=""
@@ -216,7 +107,17 @@ class Animejoy():
 			summary = i.text
 			#summary = re.sub("\n","",summary)
 		if not summary:
-			summary = "No Summary"
+			summary = "Summary Not Available"
+		else:
+			m = re.findall(r'\\n',summary)
+			print(m)
+			n = re.findall(r'\\t',summary)
+			for i in m:
+				summary = summary.replace(i,'')
+			for i in n:
+				summary = summary.replace(i,'')
+			print(summary)
+			
 		for i in link1:
 			if 'src' in str(i):
 				j = i['src']
@@ -224,7 +125,8 @@ class Animejoy():
 					img = j
 					img = img.replace('animejoy.tv','anime-joy.tv')
 					print(img)
-		picn = "/tmp/" + name + ".jpg"
+		#picn = "/tmp/" + name + ".jpg"
+		picn = os.path.join(self.tmp_dir,name+'.jpg')
 		try:
 			if not os.path.isfile(picn) and img:
 				#subprocess.call(["curl","-o",picn,img])
@@ -238,7 +140,8 @@ class Animejoy():
 			m[j] = i
 			j = j + 1
 		m=naturallysorted(m)  
-		m.append(picn)
-		m.append(summary)
-		return m
+		#m.append(picn)
+		#m.append(summary)
+		record_history = True
+		return (m,summary,picn,record_history,depth_list)
 

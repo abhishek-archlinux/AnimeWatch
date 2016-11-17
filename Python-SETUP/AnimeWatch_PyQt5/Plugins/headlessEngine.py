@@ -1,8 +1,4 @@
 import sys  
-#from PyQt5.QtGui import *  
-#from PyQt5.QtCore import *  
-#from PyQt5.QtWebEngineWidgets import *  
-#from PyQt5.QtWebEngineCore import *  
 import re
 import urllib
 import urllib3
@@ -21,8 +17,136 @@ from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngi
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl,pyqtSlot,pyqtSignal
-from headlessBrowser import ccurl
 
+def getContentUnicode(content):
+	if isinstance(content,bytes):
+		print("I'm byte")
+		try:
+			content = str((content).decode('utf-8'))
+		except:
+			content = str(content)
+	else:
+		print(type(content))
+		content = str(content)
+		print("I'm unicode")
+	return content
+
+def ccurl(url,external_cookie=None):
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+	if 'youtube.com' in url:
+		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
+	print(url)
+	c = pycurl.Curl()
+	curl_opt = ''
+	picn_op = ''
+	rfr = ''
+	nUrl = url
+	cookie_file = ''
+	postfield = ''
+	if '#' in url:
+		curl_opt = nUrl.split('#')[1]
+		url = nUrl.split('#')[0]
+		if curl_opt == '-o':
+			picn_op = nUrl.split('#')[2]
+		elif curl_opt == '-Ie' or curl_opt == '-e':
+			rfr = nUrl.split('#')[2]
+		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
+			cookie_file = nUrl.split('#')[2]
+		if curl_opt == '-d':
+			post = nUrl.split('#')[2]
+			post = re.sub('"','',post)
+			post = re.sub("'","",post)
+			post1 = post.split('=')[0]
+			post2 = post.split('=')[1]
+			post_data = {post1:post2}
+			postfield = urllib.parse.urlencode(post_data)
+	url = str(url)
+	#c.setopt(c.URL, url)
+	try:
+		c.setopt(c.URL, url)
+	except UnicodeEncodeError:
+		c.setopt(c.URL, url.encode('utf-8'))
+	storage = BytesIO()
+	if os.name != 'posix':
+		c.setopt(c.SSL_VERIFYPEER,False)
+	if curl_opt == '-o':
+		c.setopt(c.FOLLOWLOCATION, True)
+		c.setopt(c.USERAGENT, hdr)
+		try:
+			f = open(picn_op,'wb')
+			c.setopt(c.WRITEDATA, f)
+		except:
+			return 0
+		
+		try:
+			c.perform()
+			c.close()
+		except:
+			print('failure in obtaining image try again')
+			pass
+		f.close()
+	else:
+		if curl_opt == '-I':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Ie':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-e':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(pycurl.REFERER, rfr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-IA':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+		elif curl_opt == '-Icb':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
+			if os.path.exists(cookie_file):
+				os.remove(cookie_file)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-bc':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEJAR,cookie_file)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		elif curl_opt == '-L':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		elif curl_opt == '-d':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.POSTFIELDS,postfield)
+		elif curl_opt == '-b':
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+			c.setopt(c.COOKIEFILE,cookie_file)
+		else:
+			c.setopt(c.FOLLOWLOCATION, True)
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.WRITEDATA, storage)
+		try:
+			c.perform()
+			c.close()
+			content = storage.getvalue()
+			content = getContentUnicode(content)
+		except:
+			print('curl failure try again')
+			content = ''
+		return content
 
 
 def _get_video_val(url,c_file,q):
@@ -36,6 +160,7 @@ def _get_video_val(url,c_file,q):
 		
 		soup = BeautifulSoup(html,'lxml')
 		m = soup.findAll('select',{'id':'selectQuality'})
+		print(m,'---select--quality---')
 		if m:
 			#print(m)
 			arr = []
@@ -134,6 +259,8 @@ class BrowserPage(QWebEnginePage):
 		super(BrowserPage, self).__init__()
 		print('hello')
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.cookie_file = c_file
+		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
 		x = ''
 		self.m = self.profile().cookieStore()
 		self.profile().setHttpUserAgent(self.hdr)
@@ -144,8 +271,8 @@ class BrowserPage(QWebEnginePage):
 		p.netS.connect(lambda y = x : self.urlMedia(y))
 		self.profile().setRequestInterceptor(p)
 		#self.profile().clearHttpCache()
-		self.profile().setCachePath('/tmp/AnimeWatch')
-		self.profile().setPersistentStoragePath('/tmp/AnimeWatch')
+		self.profile().setCachePath(self.tmp_dir)
+		self.profile().setPersistentStoragePath(self.tmp_dir)
 		self.url = url
 		z = ''
 		#self.val_signal.connect(lambda y = z : self.val_found(y))
@@ -156,7 +283,8 @@ class BrowserPage(QWebEnginePage):
 		self.quality = quality
 		self.val = m_val
 		self.add_cookie = add_cookie
-		self.cookie_file = c_file
+		
+		
 		if not self.add_cookie:
 			self.m.deleteAllCookies()
 			self.set_cookie(self.cookie_file)
@@ -175,11 +303,12 @@ class BrowserPage(QWebEnginePage):
 		print("end")
 	@pyqtSlot(str)
 	def urlMedia(self,info):
-		if os.path.exists('/tmp/AnimeWatch/lnk.txt'):
-			os.remove('/tmp/AnimeWatch/lnk.txt')
+		lnk = os.path.join(self.tmp_dir,'lnk.txt')
+		if os.path.exists(lnk):
+			os.remove(lnk)
 		print('*******')
 		print(info)
-		f = open('/tmp/AnimeWatch/lnk.txt','w')
+		f = open(lnk,'w')
 		f.write(info)
 		f.close()
 		self.media_signal.emit(info)
@@ -305,12 +434,12 @@ class BrowserPage(QWebEnginePage):
 				str1 = asp['domain']+'	'+'FALSE'+'	'+asp['path']+'	'+'FALSE'+'	'+str(0)+'	'+'ASP.NET_SessionId'+'	'+asp['ASP.NET_SessionId']
 			if idt:
 				str1 = idt['domain']+'	'+'FALSE'+'	'+idt['path']+'	'+'FALSE'+'	'+str(0)+'	'+'idtz'+'	'+idt['idtz']
-				
-			if not os.path.exists('/tmp/AnimeWatch/cloud_cookie.txt'):
-				f = open('/tmp/AnimeWatch/cloud_cookie.txt','w')
+			cc = os.path.join(self.tmp_dir,'cloud_cookie.txt')
+			if not os.path.exists(cc):
+				f = open(cc,'w')
 				f.write(str1)
 			else:
-				f = open('/tmp/AnimeWatch/cloud_cookie.txt','a')
+				f = open(cc,'a')
 				f.write('\n'+str1)
 			#print('written--cloud_cookie--------------')
 			f.close()
@@ -355,7 +484,7 @@ class BrowserPage(QWebEnginePage):
 	def htm_src(self,x):
 		html = x
 		if 'var glink = ' in html:
-			c_f = '/tmp/AnimeWatch/cloud_cookie.txt'
+			c_f = os.path.join(self.tmp_dir,'cloud_cookie.txt')
 			if os.path.exists(c_f):
 				f = open(c_f,'a')
 			else:
@@ -402,15 +531,6 @@ class BrowserPage(QWebEnginePage):
 		#x = self.page().toHtml(lambda x = result: self.htm(x))
 		
 
-
-	
-	
-
-
-		
-		
-	
-
 class BrowseUrlT(QWebEngineView):
 	#cookie_s = pyqtSignal(str)
 	def __init__(self,url,quality,cookie):
@@ -423,23 +543,22 @@ class BrowseUrlT(QWebEngineView):
 		self.cnt = 0
 		self.cookie_file = cookie
 		self.Browse(self.url)
+		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
 		
 	def Browse(self,url):
 		
-		
-		
-		
-		
 		if os.path.exists(self.cookie_file):
 			content = ccurl(url+'#'+'-b'+'#'+self.cookie_file)
-			#print(content)
+			print(content)
 			if 'checking_browser' in content:
 				os.remove(self.cookie_file)
 				self.add_cookie = True
 			else:
 				self.add_cookie = False
 				if ('kisscartoon' in url or 'kissasian' in url) and self.quality and ('id=' in url):
+					print("--------------------",content)
 					self.media_val = _get_video_val(content,self.cookie_file,self.quality)
+					print(self.media_val,'--media--val--')
 		else:
 			self.add_cookie = True
 		
@@ -486,7 +605,7 @@ class BrowseUrlT(QWebEngineView):
 		self.add_cookie = False
 		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url):
 			print('Cookie Obtained, now link finding')
-			f = open('/tmp/AnimeWatch/tmp_cookie','w')
+			f = open(os.path.join(self.tmp_dir,'tmp_cookie'),'w')
 			f.write('Cookie Obtained, now link finding')
 			f.close()
 			
@@ -494,7 +613,7 @@ class BrowseUrlT(QWebEngineView):
 			#self.setHtml('<html>Link Resolved</html>')
 		else:
 			self.setHtml('<html>cookie Obtained</html>')
-		c_f = '/tmp/AnimeWatch/cloud_cookie.txt'
+		c_f = os.path.join(self.tmp_dir,'cloud_cookie.txt')
 		if os.path.exists(c_f):
 			content = open(c_f).read()
 			f = open(self.cookie_file,'w')
