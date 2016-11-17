@@ -22,7 +22,11 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 
 from setuptools import setup
-
+import os
+if os.name == 'posix':
+	install_dependencies = ['pycurl','bs4','Pillow','pytaglib','lxml','youtube_dl','urllib3','dbus-python','psutil']
+else:
+	install_dependencies = ['PyQt5','pycurl','bs4','Pillow','pytaglib','lxml','youtube_dl','urllib3','psutil']
 setup(
     name='animewatch',
     version='3.0.0',
@@ -35,6 +39,6 @@ setup(
     include_package_data=True,
     entry_points={'gui_scripts':['animewatch = AnimeWatch_PyQt5.animeWatch:main'],},
     package_data={'AnimeWatch_PyQt5':['tray.png','default.jpg','AnimeWatch.desktop','input.conf','animewatch-start','1.png','Instructions']},
-    install_requires=['pycurl','bs4','Pillow','pytaglib','python-libtorrent','lxml','youtube_dl','urllib3','dbus-python','psutil'],
+    install_requires=install_dependencies,
     description="A Audio/Video manager and Front End for mpv/mplayer with special emphasis on Anime Collection",
 )
