@@ -149,8 +149,6 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 
 1. For Arch Linux users, AnimeWatch is available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) , [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) and [animewatch-pyqt5-git](https://aur.archlinux.org/packages/animewatch-pyqt5-git) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt' or any other conventional method. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/scr/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
 
-  **Note**: A recent update on Arch broke the python3 bindings for libtorrent, which is required for enabling streaming torrent feature. [A bug report](https://bugs.archlinux.org/task/50745) has already been filed. Therefore as a temporary fix users have to install libtorrent-rasterbar by using alternative PKGBUILD suggested by the developer in the bug report.
-
 2. Ubuntu or Debian based distro users can directly go to Release section or package directory,download appropriate .deb package and install it using 'sudo gdebi pkg_name.deb'. If 'gdebi' is not installed then install it using 'sudo apt-get install gdebi'. It will resolve all the dependencies while installing the package. Normally 'dpkg -i' is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use 'gdebi' for convenience. Ubuntu 14.04 users also have to install 'python3-dbus.mainloop.qt' for MPRIS2 support. ~~Pyqt5 version is not available for Ubuntu, since qt5-webengine is not availbale on it. Currently there are no significant featurewise differences between pyqt5 and pyqt4 version, there are only structural differences. Users won't notice any significant variation between the two while using.~~. PyQt5 version is now available for Ubuntu 16.04 (from version number 2.8.0-0 onwards) which uses qtwebkit in fallback mode if qtwebengine is not available. For removing the package use 'sudo apt-get remove animewatch'. PyQt5 version won't work on Ubuntu 14.04.
 
   Note: From version number 2.8.0-0 onwards, only PyQt5 version will be available. It is difficult to maintain two different versions (i.e. PyQt4 and PyQt5) of the same programme. AnimeWatch 2.7.0-0 was the last PyQt4 release. All the subsequent release will be PyQt5 only.
@@ -170,9 +168,21 @@ python-pyqt4 (for PyQt4 version, which is not maintained now. AnimeWatch-2.7.0-0
 
 python-pillow {For Image Processing}
 
-python-beautifulsoup4 {For parsing webpage}
+python-beautifulsoup4 {For scrapping webpage}
 
-python-pycurl {Main library for fetching pages}
+python-lxml {Internal parser used in beautifulsoup4 for advance features}
+
+python-pycurl {Main library for fetching web pages}
+
+python-urllib3 {Alternative python library for fetching web pages}
+
+libtorrent-rasterbar {since version 2.5.0-0, For Torrent Streaming Support}
+
+python3-libtorrent (for Ubuntu 14.04 and 16.04, since version 2.5.0-0)
+
+youtube-dl {for YouTube Support}
+
+python3-dbus {for MPRIS DBus support}
 
 ffmpegthumbnailer(Thumbnail Generator for Local Files)
 
@@ -184,25 +194,11 @@ sqlite3 (for managing local music and video database, Addons are not managed by 
 
 mpv or mplayer (having both is good option, for streaming video mpv is the best because it's seeking capability within live stream is very efficient and it's buffer management is also very good, and for listening music mplayer is very cost-effective. Cpu usage is just 1 to 2 % when playing music with mplayer. When playing local video files mplayer cpu utilization always remains 4-5 % point less than that of mpv atleast on my system)
 
-python-urllib3
-
-python-lxml
-
 python-psutil
 
 curl
 
 wget
-
-libtorrent-rasterbar {since version 2.5.0-0}
-
-python3-libtorrent (for Ubuntu 14.04, since version 2.5.0-0)
-
-livestreamer, youtube-dl {for YouTube Support}
-
-python3-livestreamer {on ubuntu 16.04}
-
-python3-dbus {for MPRIS DBus support}
 
 ~~python-requests { Not required for version >= 2.1.1-1}~~
 
@@ -248,8 +244,6 @@ python3 install.py
 Application Launcher will be created as "~/.local/share/applications/AnimeWatch.desktop"
 
 All other configuration files will be created in "~/.config/AnimeWatch/"
-
-
 
 ###Uninstall
 
@@ -325,6 +319,8 @@ j : toggle Subtitle
 Shift+j: If available, Load external subtitles from folder '~/.config/AnimeWatch/External-Subtitle'. (Staring name of external-subtitle file should match name in the playlist entry)
 
 k : toggle audio
+
+L : Show/Hide Player Controls
 
 m : show video file name
 
