@@ -6585,9 +6585,24 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_player_opt.insertWidget(8,self.player_next,0)
 		self.player_next.setText(self.player_buttons['next'])
 		
+		
+		self.player_showhide_title_list = QtWidgets.QPushButton(self.player_opt)
+		self.player_showhide_title_list.setObjectName(_fromUtf8("player_showhide_title_list"))
+		self.horizontalLayout_player_opt.insertWidget(9,self.player_showhide_title_list,0)
+		self.player_showhide_title_list.setText('T')
+		self.player_showhide_title_list.clicked.connect(lambda x=0:self.playerPlaylist("Show/Hide Title List"))
+		self.player_showhide_title_list.setToolTip('Show/Hide Title List')
+		
+		self.player_showhide_playlist = QtWidgets.QPushButton(self.player_opt)
+		self.player_showhide_playlist.setObjectName(_fromUtf8("player_showhide_playlist"))
+		self.horizontalLayout_player_opt.insertWidget(10,self.player_showhide_playlist,0)
+		self.player_showhide_playlist.setText('\u2118')
+		self.player_showhide_playlist.clicked.connect(lambda x=0:self.playerPlaylist("Show/Hide Playlist"))
+		self.player_showhide_playlist.setToolTip('Show/Hide Playlist')
+		
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
-		self.horizontalLayout_player_opt.insertWidget(9,self.player_playlist,0)
+		self.horizontalLayout_player_opt.insertWidget(11,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
 		self.player_menu_option = ['Show/Hide Video','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
@@ -6638,20 +6653,22 @@ class Ui_MainWindow(object):
 		self.player_playlist1.setMenu(self.player_menu1)
 		self.player_playlist1.setCheckable(True)
 		
-		self.frame1.setMinimumHeight(50)
-		self.frame.setMinimumHeight(50)
-		self.goto_epn.setMinimumHeight(50)
-		self.frame1.setMaximumHeight(50)
-		self.frame.setMaximumHeight(50)
-		self.goto_epn.setMaximumHeight(50)
-		self.mirror_change.setMaximumHeight(50)
-		self.player_playlist1.setMaximumHeight(50)
-		self.backward.setMaximumHeight(50)
-		self.forward.setMaximumHeight(50)
-		self.goto_epn_filter.setMaximumHeight(50)
-		self.goto_epn_filter_txt.setMaximumHeight(50)
-		self.queue_manage.setMaximumWidth(20)
-		self.queue_manage.setMaximumHeight(50)
+		self.frame1.setMinimumHeight(60)
+		self.frame.setMinimumHeight(60)
+		self.goto_epn.setMinimumHeight(60)
+		self.frame1.setMaximumHeight(60)
+		self.frame.setMaximumHeight(60)
+		self.goto_epn.setMaximumHeight(60)
+		
+		self.mirror_change.setMaximumHeight(30)
+		self.player_playlist1.setMaximumHeight(30)
+		self.backward.setMaximumHeight(30)
+		self.forward.setMaximumHeight(30)
+		self.goto_epn_filter.setMaximumHeight(30)
+		self.goto_epn_filter_txt.setMaximumHeight(30)
+		self.queue_manage.setMaximumWidth(30)
+		self.queue_manage.setMaximumHeight(30)
+		
 		#self.frame.setMaximumWidth(300)
 		#self.tabWidget1.addTab(self.tab_2, _fromUtf8(""))
 		self.tab_5 = tab5(MainWindow)
@@ -7357,6 +7374,10 @@ class Ui_MainWindow(object):
 		self.mplayer_SubTimer.timeout.connect(self.subMplayer)
 		self.mplayer_SubTimer.setSingleShot(True)
 		
+		self.external_SubTimer = QtCore.QTimer()
+		self.external_SubTimer.timeout.connect(self.load_external_sub)
+		self.external_SubTimer.setSingleShot(True)
+		
 		self.total_file_size = 0
 		self.id_audio_bitrate = 0
 		self.id_video_bitrate = 0
@@ -7647,28 +7668,45 @@ class Ui_MainWindow(object):
 		global Player,mpvplayer,sub_id
 		external_sub = False
 		sub_arr = []
-		m = os.listdir(self.yt_sub_folder)
+		#m = os.listdir(self.yt_sub_folder)
+		#print(m)
 		new_name = self.epn_name_in_list.replace('/','-')
+		ext_arr = ['mkv','mp4','avi','flv']
 		if new_name.startswith('.'):
 			new_name = new_name[1:]
 			new_name = new_name.strip()
+		if '.' in new_name:
+			ext = new_name.rsplit('.',1)[1]
+			ext_n = ext.strip()
+			if ext_n in ext_arr:
+				new_name = new_name.rsplit('.',1)[0]
+		new_name_original = new_name
 		if new_name.endswith('YouTube'):
 			new_name = ''.join(new_name.rsplit('YouTube',1))
 			new_name = new_name.strip()
 			if new_name.endswith('-'):
 				new_name = new_name[:-1]
 				new_name = new_name.strip()
+		lang_ext = ['.en','.es','.jp','.fr']
+		sub_ext = ['.vtt','.srt','.ass']
+		for i in lang_ext:
+			for j in sub_ext:
+				k1 = new_name_original+i+j
+				k2 = new_name+i+j
+				sub_name_1 = os.path.join(self.yt_sub_folder,k1)
+				sub_name_2 = os.path.join(self.yt_sub_folder,k2)
+				#print(sub_name)
+				if os.path.exists(sub_name_1):
+					sub_arr.append(sub_name_1)
+					external_sub = True
+					print(sub_name_1)
+				if os.path.exists(sub_name_2):
+					sub_arr.append(sub_name_2)
+					external_sub = True
+					print(sub_name_2)
 		print(new_name,'--new--name--')
-		for i in m:
-			if i.startswith(new_name) and (i.endswith('.vtt') or i.endswith('.srt') or i.endswith('.ass')):
-				sub_arr.append(os.path.join(self.yt_sub_folder,i))
-				external_sub = True
-		
-		if external_sub:
-			txt_notify = 'External Subtitle Available\n Trying To Load'
-			#subprocess.Popen(['notify-send',txt_notify])
-			send_notification(txt_notify)
 		if mpvplayer.processId() > 0 and sub_arr:
+			sub_arr.reverse()
 			for title_sub in sub_arr:
 				if Player == "mplayer":
 					if os.path.exists(title_sub):
@@ -7855,7 +7893,7 @@ class Ui_MainWindow(object):
 		#playlist_show = 1-playlist_show
 		#self.action[]
 		
-		
+		print(val)
 		if val == "Show/Hide Cover And Summary":
 			v = str(self.action_player_menu[1].text())
 			if self.text.isHidden() and self.label.isHidden():
@@ -8301,15 +8339,15 @@ class Ui_MainWindow(object):
 		ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 		ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.frame1.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+		ui.frame1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
 		ui.torrent_frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 		ui.float_window.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 		#ui.progress.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-	
+		ui.player_opt.setStyleSheet("font:bold 11px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;height:20px")
 		
 		
 		ui.btn1.setStyleSheet("""QComboBox {
-	min-height:20px;
+	min-height:30px;
 	max-height:63px;
 	border-radius: 3px;
 	font-size:10px;
@@ -11979,7 +12017,8 @@ class Ui_MainWindow(object):
 						self.list2.item(k).setIcon(QtGui.QIcon(icon_new_pixel))
 					except:
 						pass
-				
+		txt_str = str(self.list1.count())+'/'+str(self.list2.count())
+		self.page_number.setText(txt_str)
 	def mark_History(self):
 		global epnArrList,curR,opt,siteName,site,name,home
 		file_path = ""
@@ -14042,7 +14081,8 @@ class Ui_MainWindow(object):
 				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 			print(command,'function play_file_now')
 			self.infoPlay(command)
-			
+		if not self.external_SubTimer.isActive():
+			self.external_SubTimer.start(3000)
 	def is_artist_exists(self,row):
 		global epnArrList
 		try:
