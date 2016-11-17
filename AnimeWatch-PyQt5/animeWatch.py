@@ -59,15 +59,19 @@ from PyQt5.QtCore import QUrl
 import imp
 import shutil
 from tempfile import mkstemp,mkdtemp
+from player_functions import write_files,ccurl,send_notification,wget_string,open_files,get_config_options,get_tmp_dir
 
-try:
-	TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
-except:
-	TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
-	if not os.path.exists(TMPDIR):
+TMPDIR = get_tmp_dir()
+
+if TMPDIR and not os.path.exists(TMPDIR):
+	try:
 		os.makedirs(TMPDIR)
+	except OSError as e:
+		print(e)
+		TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
 	
 OSNAME=os.name
+
 print(TMPDIR,OSNAME)
 
 from shutil import move
@@ -92,7 +96,7 @@ except:
 	pass
 from musicArtist import musicArtist
 from yt import get_yt_url
-from player_functions import write_files,ccurl,send_notification,wget_string,open_files
+
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn,TCPServer
@@ -7050,7 +7054,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,33)
+		self.version_number = (3,0,0,39)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -9718,7 +9722,11 @@ class Ui_MainWindow(object):
 				picnD = os.path.join(home,'thumbnails',site,name_t)
 			#print(picnD,'=picnD')
 			if not os.path.exists(picnD):
-				os.makedirs(picnD)
+				try:
+					os.makedirs(picnD)
+				except Exception as e:
+					print(e)
+					return os.path.join(home,'default.jpg')
 			picn = os.path.join(picnD,nameEpn)+'.jpg'
 			picn = picn.replace('#','')
 			if picn.startswith(self.check_symbol):
@@ -9747,7 +9755,11 @@ class Ui_MainWindow(object):
 				#picn = home+'/thumbnails/'+nameEpn+'.jpg'
 				playlist_dir = os.path.join(home,'thumbnails','PlayLists')
 				if not os.path.exists(playlist_dir):
-					os.makedirs(playlist_dir)
+					try:
+						os.makedirs(playlist_dir)
+					except Exception as e:
+						print(e)
+						return os.path.join(home,'default.jpg')
 				pl_n = self.list1.currentItem().text()
 				playlist_name = os.path.join(playlist_dir,pl_n)
 				if not os.path.exists(playlist_name):
@@ -9783,7 +9795,11 @@ class Ui_MainWindow(object):
 			#picn = home+'/thumbnails/'+nameEpn+'.jpg'
 			picnD = os.path.join(home,'thumbnails',name)
 			if not os.path.exists(picnD):
-				os.makedirs(picnD)
+				try:
+					os.makedirs(picnD)
+				except Exception as e:
+					print(e)
+					return os.path.join(home,'default.jpg')
 			picn = os.path.join(picnD,nameEpn+'.jpg')
 			#if not os.path.exists()
 			picn = picn.replace('#','')
@@ -10146,7 +10162,10 @@ class Ui_MainWindow(object):
 					mpvplayer.kill()
 					if Player == 'mplayer':
 						if mpvplayer.processId() > 0:
-							subprocess.Popen(['killall','mplayer'])
+							try:
+								subprocess.Popen(['killall','mplayer'])
+							except:
+								pass
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
 					
@@ -10162,7 +10181,12 @@ class Ui_MainWindow(object):
 					self.getNextInList()
 				else:
 					print(mpvplayer.state())
-					subprocess.call(['killall','mplayer'])
+					mpvplayer.kill()
+					if mpvplayer.processId() > 0:
+						try:
+							subprocess.call(['killall','mplayer'])
+						except:
+							pass
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
 					print (mpvplayer.processId(),'--mpvnext---')
@@ -10208,7 +10232,10 @@ class Ui_MainWindow(object):
 					mpvplayer.kill()
 					if Player == 'mplayer':
 						if mpvplayer.processId() > 0:
-							subprocess.Popen(['killall','mplayer'])
+							try:
+								subprocess.Popen(['killall','mplayer'])
+							except:
+								pass
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
 					
@@ -10224,7 +10251,12 @@ class Ui_MainWindow(object):
 					self.getNextInList()
 				else:
 					print(mpvplayer.state())
-					subprocess.call(['killall','mplayer'])
+					mpvplayer.kill()
+					if mpvplayer.processId() > 0:
+						try:
+							subprocess.Popen(['killall','mplayer'])
+						except:
+							pass
 					del mpvplayer
 					mpvplayer = QtCore.QProcess()
 					print (mpvplayer.processId(),'--mpvnext---')
@@ -12237,7 +12269,11 @@ class Ui_MainWindow(object):
 							pl_n = self.list1.currentItem().text()
 							playlist_name = os.path.join(playlist_dir,pl_n)
 							if not os.path.exists(playlist_name):
-								os.makedirs(playlist_name)
+								try:
+									os.makedirs(playlist_name)
+								except Exception as e:
+									print(e)
+									return 0
 							picnD = os.path.join(playlist_name,a1)
 							try:
 								picn = picnD+'.jpg'
@@ -12257,7 +12293,11 @@ class Ui_MainWindow(object):
 							picnD = os.path.join(home,'thumbnails',site,name_t)
 						print(picnD,'=picnD')
 						if not os.path.exists(picnD):
-							os.makedirs(picnD)
+							try:
+								os.makedirs(picnD)
+							except Exception as e:
+								print(e)
+								return 0
 						picn = os.path.join(picnD,a1)+'.jpg'
 					if (picn and not os.path.exists(picn) and 'http' not in path) or (picn and not os.path.exists(picn) and 'http' in path and 'youtube.com' in path ):
 						path = path.replace('"','')
@@ -12278,7 +12318,11 @@ class Ui_MainWindow(object):
 						name_t = ''
 					picnD = os.path.join(home,'thumbnails',name_t)
 					if not os.path.exists(picnD):
-						os.makedirs(picnD)
+						try:
+							os.makedirs(picnD)
+						except Exception as e:
+							print(e)
+							return 0
 					try:
 						picn = os.path.join(picnD,a1)+'.jpg'
 					except:
@@ -13296,6 +13340,7 @@ class Ui_MainWindow(object):
 				list1_items.append(i)	
 
 	def summary_write_and_image_copy(self,hist_sum,summary,picn,hist_picn):
+		"""
 		g = open(hist_sum, 'w')
 		bin_mode = False
 		try:
@@ -13308,6 +13353,8 @@ class Ui_MainWindow(object):
 			g = open(hist_sum,'wb')
 			g.write(summary.encode('utf-8'))
 			g.close()
+		"""
+		write_files(hist_sum,summary,line_by_line=False)
 		if os.path.isfile(picn):
 			shutil.copy(picn,hist_picn)
 			
@@ -13467,14 +13514,18 @@ class Ui_MainWindow(object):
 					hist_dir,last_field = os.path.split(hist_path)
 					hist_site = os.path.join(hist_dir,name)
 					if not os.path.exists(hist_site) and self.record_history:
-						os.makedirs(hist_site)
-						hist_epn = os.path.join(hist_site,'Ep.txt')
-						
-						write_files(hist_epn,m,line_by_line=True)
-						
-						hist_sum = os.path.join(hist_site,'summary.txt')
-						hist_picn = os.path.join(hist_site,'poster.jpg')
-						self.summary_write_and_image_copy(hist_sum,summary,picn,hist_picn)
+						try:
+							os.makedirs(hist_site)
+							hist_epn = os.path.join(hist_site,'Ep.txt')
+							
+							write_files(hist_epn,m,line_by_line=True)
+							
+							hist_sum = os.path.join(hist_site,'summary.txt')
+							hist_picn = os.path.join(hist_site,'poster.jpg')
+							self.summary_write_and_image_copy(hist_sum,summary,picn,hist_picn)
+						except Exception as e:
+							print(e)
+							return 0
 				
 				else:
 					if site.lower() == 'subbedanime' or site.lower() == 'dubbedanime':
@@ -14269,7 +14320,10 @@ class Ui_MainWindow(object):
 			mpvplayer.kill()
 			if Player == 'mplayer':
 				if mpvplayer.processId() > 0:
-					subprocess.Popen(['killall','mplayer'])
+					try:
+						subprocess.Popen(['killall','mplayer'])
+					except Exception as e:
+						print(e)
 			mpvplayer = QtCore.QProcess()
 	
 		if epn_goto == 0 and site != "PlayLists" and downloadVideo == 0:
@@ -14609,7 +14663,10 @@ class Ui_MainWindow(object):
 				audio_url = finalUrl.split('#')[0]
 				if Player == 'mplayer':
 					if mpvplayer.processId() > 0:
-						subprocess.Popen(['killall','mplayer'])
+						try:
+							subprocess.Popen(['killall','mplayer'])
+						except:
+							pass
 					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
 				else:
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
@@ -14628,7 +14685,10 @@ class Ui_MainWindow(object):
 					self.infoPlay(command)
 				elif Player == "mplayer":
 					if mpvplayer.processId() > 0:
-						subprocess.Popen(['killall','mplayer'])
+						try:
+							subprocess.Popen(['killall','mplayer'])
+						except:
+							pass
 					quitReally = "no"
 					
 					idw = str(int(self.tab_5.winId()))
@@ -14700,7 +14760,10 @@ class Ui_MainWindow(object):
 								rfr_url = finalUrl[1]
 								if Player == "mplayer":
 									if mpvplayer.processId() > 0:
-										subprocess.Popen(['killall','mplayer'])
+										try:
+											subprocess.Popen(['killall','mplayer'])
+										except:
+											pass
 									quitReally = "no"
 									idw = str(int(self.tab_5.winId()))
 									self.tab_5.show()
@@ -14714,7 +14777,10 @@ class Ui_MainWindow(object):
 							else:
 								if Player == "mplayer":
 									if mpvplayer.processId() > 0:
-										subprocess.Popen(['killall','mplayer'])
+										try:
+											subprocess.Popen(['killall','mplayer'])
+										except:
+											pass
 									quitReally = "no"
 									idw = str(int(self.tab_5.winId()))
 									self.tab_5.show()
@@ -14729,7 +14795,10 @@ class Ui_MainWindow(object):
 					else:
 					
 							if mpvplayer.processId() > 0:
-								subprocess.Popen(['killall','mplayer'])
+								try:
+									subprocess.Popen(['killall','mplayer'])
+								except:
+									pass
 							epnShow = finalUrl[0]
 							for i in range(len(finalUrl)-1):
 								#epnShow = epnShow +' '+finalUrl[i+1]
@@ -14749,7 +14818,10 @@ class Ui_MainWindow(object):
 						finalUrl = str(finalUrl)
 						if Player == "mplayer":
 							if mpvplayer.processId() > 0:
-								subprocess.Popen(['killall','mplayer'])
+								try:
+									subprocess.Popen(['killall','mplayer'])
+								except:
+									pass
 							quitReally = "no"
 							idw = str(int(self.tab_5.winId()))
 							self.tab_5.show()
@@ -16210,14 +16282,20 @@ class Ui_MainWindow(object):
 					if mpvplayer.processId()>0:
 						mpvplayer.kill()
 						if mpvplayer.processId() > 0:
-							subprocess.Popen(['killall','mplayer'])
+							try:
+								subprocess.Popen(['killall','mplayer'])
+							except:
+								pass
 					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 				else:
 					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
 					if mpvplayer.processId()>0:
 						mpvplayer.kill()
 						if mpvplayer.processId() > 0:
-							subprocess.Popen(['killall','mpv'])
+							try:
+								subprocess.Popen(['killall','mpv'])
+							except:
+								pass
 					print('---*******-------line 15849--')
 				self.infoPlay(command)
 				
@@ -16258,7 +16336,10 @@ class Ui_MainWindow(object):
 					else:
 						mpvplayer.write(b'\n quit \n')
 						if mpvplayer.processId() > 0:
-							subprocess.Popen(['killall','mplayer'])
+							try:
+								subprocess.Popen(['killall','mplayer'])
+							except:
+								pass
 						self.infoPlay(command)
 						self.external_url = False
 				elif Player == "mpv":
@@ -16401,12 +16482,18 @@ class Ui_MainWindow(object):
 				finalUrl = epnShow
 			if Player == 'mplayer':
 				if mpvplayer.processId() > 0:
-					subprocess.Popen(['killall','mplayer'])
+					try:
+						subprocess.Popen(['killall','mplayer'])
+					except:
+						pass
 				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
 			else:
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
 				if mpvplayer.processId() > 0:
-					subprocess.Popen(['killall','mpv'])
+					try:
+						subprocess.Popen(['killall','mpv'])
+					except:
+						pass
 			self.infoPlay(command)
 		else:
 			epnShowN = '"'+epnShow.replace('"','')+'"'
@@ -16435,7 +16522,10 @@ class Ui_MainWindow(object):
 					else:
 						mpvplayer.write(b'\n quit \n')
 						if mpvplayer.processId() > 0:
-							subprocess.Popen(['killall','mplayer'])
+							try:
+								subprocess.Popen(['killall','mplayer'])
+							except:
+								pass
 						self.infoPlay(command)
 						self.external_url = False
 			else:
@@ -16739,7 +16829,10 @@ class Ui_MainWindow(object):
 						if mpvplayer.processId() > 0:
 							mpvplayer.kill()
 							if Player == 'mplayer':
-								subprocess.Popen(['killall','mplayer'])
+								try:
+									subprocess.Popen(['killall','mplayer'])
+								except:
+									pass
 						self.infoPlay(command)
 			else:
 				#if '""' in finalUrl:
@@ -16776,7 +16869,10 @@ class Ui_MainWindow(object):
 				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
 					if Player == 'mplayer' and mpvplayer.processId() > 0:
-						subprocess.Popen(['killall','mplayer'])
+						try:
+							subprocess.Popen(['killall','mplayer'])
+						except:
+							pass
 				self.infoPlay(command)
 				
 				
@@ -19058,6 +19154,7 @@ def main():
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
 		f.write("\nDEFAULT_DOWNLOAD_LOCATION="+TMPDIR)
+		f.write("\nTMP_REMOVE=no")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001

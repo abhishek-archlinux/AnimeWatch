@@ -1,8 +1,4 @@
 import sys  
-#from PyQt5.QtGui import *  
-#from PyQt5.QtCore import *  
-#from PyQt5.QtWebEngineWidgets import *  
-#from PyQt5.QtWebEngineCore import *  
 import re
 import urllib
 import urllib3
@@ -534,15 +530,6 @@ class BrowserPage(QWebEnginePage):
 		#self.cnt = self.cnt+1
 		#x = self.page().toHtml(lambda x = result: self.htm(x))
 		
-
-
-	
-	
-
-
-		
-		
-	
 
 class BrowseUrlT(QWebEngineView):
 	#cookie_s = pyqtSignal(str)

@@ -1,6 +1,6 @@
 import os
 import shutil
-from tempfile import mkstemp
+from tempfile import mkstemp,mkdtemp
 import urllib
 import urllib3
 import pycurl
@@ -11,7 +11,45 @@ USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Fire
 
 def send_notification(txt):
 	if os.name == 'posix':
-		subprocess.Popen(['notify-send',txt])
+		try:
+			subprocess.Popen(['notify-send',txt])
+		except Exception as e:
+			print(e)
+		
+def get_config_options(file_name,value_field):
+	req_val = ''
+	if os.path.exists(file_name):
+		lines = open_files(file_name,True)
+		for i in lines:
+			try:
+				i,j = i.split('=')
+			except Exception as e:
+				print(e,'wrong values in config file')
+				return req_val
+			j = j.strip()
+			if str(i.lower()) == str(value_field.lower()):
+				req_val = j
+				break
+	return req_val
+	
+
+def get_tmp_dir():
+	TMPDIR = ''
+	try:
+		option_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','other_options.txt')
+		tmp_option = get_config_options(option_file,'TMP_REMOVE')
+		if tmp_option:
+			if tmp_option.lower() == 'no':
+				TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
+			else:
+				TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
+			
+		else:
+			TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
+	except:
+		TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
+	return TMPDIR
+		
 
 def open_files(file_path,lines_read=True):
 	if os.path.exists(file_path):

@@ -53,10 +53,10 @@ class BrowseUrl(QWebEngineView):
 			content = 'checking_browser'
 		#web = BrowseUrl(url,quality)
 		if 'checking_browser' in content:
-			try:
+			if os.name == 'posix':
 				p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file])
-			except:
-				p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file])
+			else:
+				p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file],shell=True)
 			
 			cnt = 0
 			
@@ -80,10 +80,10 @@ class BrowseUrl(QWebEngineView):
 				while(not os.path.exists(lnk_file) and cnt < 30):
 					if os.path.exists(file_path):
 						os.remove(file_path)
-						try:
+						if os.name == 'posix':
 							p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file])
-						except:
-							p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file])
+						else:
+							p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file],shell=True)
 					print(cnt)
 					print('wait Clouflare ')
 					time.sleep(1)
