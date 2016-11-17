@@ -11991,6 +11991,8 @@ class Ui_MainWindow(object):
 	def update_list2(self):
 		global epnArrList,site,refererNeeded,finalUrlFound
 		update_pl_thumb = True
+		if not epnArrList:
+			return 0
 		if self.list2.isHidden():
 			update_pl_thumb = False
 		#if not self.scrollArea.isHidden():
@@ -13936,7 +13938,7 @@ class Ui_MainWindow(object):
 					basewidth = screen_width
 					try:
 						img = Image.open(str(picn))
-					except:
+					except Exception as e:
 						print(e,'Error in opening image, videoImage,---13849')
 						picn = os.path.join(home,'default.jpg')
 						img = Image.open(str(picn))
