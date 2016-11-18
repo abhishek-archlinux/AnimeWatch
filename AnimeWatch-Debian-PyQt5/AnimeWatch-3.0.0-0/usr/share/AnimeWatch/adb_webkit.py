@@ -16,13 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 """
 
 import sys
 from PyQt5 import QtCore, QtGui,QtNetwork
-
 from PyQt5.QtNetwork import QNetworkAccessManager
 
 class NetWorkManager(QNetworkAccessManager):

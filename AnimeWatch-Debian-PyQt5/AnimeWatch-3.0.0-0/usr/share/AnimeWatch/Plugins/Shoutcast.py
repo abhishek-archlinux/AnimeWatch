@@ -8,6 +8,7 @@ import random
 import subprocess
 from subprocess import check_output
 from bs4 import BeautifulSoup
+import os
 import os.path
 from subprocess import check_output
 import shutil
@@ -69,6 +70,8 @@ def ccurl(url,value,code):
 	
 	url = str(url)
 	c.setopt(c.URL, url)
+	if os.name != 'posix':
+		c.setopt(c.SSL_VERIFYPEER,False)
 	storage = BytesIO()
 	
 	if value:
@@ -151,8 +154,9 @@ def replace_all(text, di):
 
 
 class Shoutcast():
-	def __init__(self):
+	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.tmp_dir = tmp
 	def getOptions(self):
 			criteria = ['History','Genre','Anime','JPOP']
 			return criteria
@@ -162,7 +166,7 @@ class Shoutcast():
 		
 	def process_page(self,content):
 		content = re.sub(r'\\',"-",content)
-		print(content)
+		#print(content)
 		#f = open('/tmp/tmp.txt','w')
 		#f.write(content)
 		#f.close()
@@ -183,8 +187,8 @@ class Shoutcast():
 		s = []
 		for i in l:
 			try:
-				print(i['ID'],i['Name'],i['Bitrate'],i['Listeners'])
-				s.append(i['Name'].replace('/','-')+'\nid='+str(i['ID'])+' Bitrate='+str(i['Bitrate'])+' Listeners='+str(i['Listeners'])+'\n')
+				#print(i['ID'],i['Name'],i['Bitrate'],i['Listeners'])
+				s.append(i['Name'].replace('/','-')+'	id='+str(i['ID'])+'\nBitrate='+str(i['Bitrate'])+'\nListeners='+str(i['Listeners'])+'\n')
 			except:
 				pass
 		return s
@@ -226,10 +230,10 @@ class Shoutcast():
 			idr = []
 			url = "http://thugie.nl/streams.php"
 			content = ccurl(url,"",4)
-			soup = BeautifulSoup(content)
+			soup = BeautifulSoup(content,'lxml')
 			tmp = soup.prettify()
 			#m = soup.findAll('div',{'class':'boxcenterdir fontstyle'})
-			#soup = BeautifulSoup(tmp)
+			#soup = BeautifulSoup(tmp,'lxml')
 			m = []
 			links = soup.findAll('div',{'class':'dirOuterDiv1 clearFix'})
 			for i in links:
@@ -250,7 +254,7 @@ class Shoutcast():
 				listeners.append(g.text)
 				bitrate.append(z.text)
 			for i in range(len(idr)):
-				m.append(name[i].strip().replace('/','-')+'-TV\nid='+str(idr[i]).replace('\\','')+' Bitrate='+str(bitrate[i])+' Listeners='+str(listeners[i])+'\n')
+				m.append(name[i].strip().replace('/','-')+'-TV	id='+str(idr[i]).replace('\\','')+'\nBitrate='+str(bitrate[i])+'\nListeners='+str(listeners[i])+'\n')
 		else:
 			url = "https://www.shoutcast.com/Home/BrowseByGenre"
 			content = ccurl(url,opt,1)
@@ -258,11 +262,12 @@ class Shoutcast():
 		print(opt,url)
 		return m
 	
-	def getEpnList(self,name,opt):
-		nm = name.rsplit('-',1)
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
+		name_id = (re.search('id=[^\n]*',extra_info).group()).split('=')[1]
+		#nm = name.rsplit('-',1)
 		#name = nm[0]
-		name_id = nm[1]
-		name = nm[0]
+		#name_id = nm[1]
+		#name = nm[0]
 		file_arr = []
 		id_station = int(name_id)
 		station_url = ''
@@ -282,9 +287,11 @@ class Shoutcast():
 			m = re.findall('http://[^"]*',content)
 			station_url = str(m[0])
 		file_arr.append(name+'	'+station_url+'	'+'NONE')
-		file_arr.append('No.jpg')
-		file_arr.append('Summary Not Available')
-		return file_arr
+		#file_arr.append('No.jpg')
+		#file_arr.append('Summary Not Available')
+		record_history = True
+		return (file_arr,'Summary Not Available','No.jpg',record_history,depth_list)
+		
 
 	def getNextPage(self,opt,pgn,genre_num,name):
 		m = []

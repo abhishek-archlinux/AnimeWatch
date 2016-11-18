@@ -17,111 +17,7 @@ from PyQt5.QtWebKitWidgets import QWebPage,QWebView
 from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtSignal,
                           pyqtProperty,QUrl)
 from PyQt5.QtNetwork import QNetworkAccessManager
-
-
-def getContentUnicode(content):
-		if isinstance(content,bytes):
-			print("I'm byte")
-			try:
-				content = str((content).decode('utf-8'))
-			except:
-				content = str(content)
-		else:
-			print(type(content))
-			content = str(content)
-			print("I'm unicode")
-		return content
-
-def ccurl(url):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	print(url)
-	c = pycurl.Curl()
-	
-	
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
-			cookie_file = nUrl.split('#')[2]
-	url = str(url)
-	print(url,'----------url------')
-	try:
-		c.setopt(c.URL, url)
-	except UnicodeEncodeError:
-		c.setopt(c.URL, url.encode('utf-8'))
-	storage = BytesIO()
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		f = open(picn_op,'wb')
-		c.setopt(c.WRITEDATA, f)
-		c.perform()
-		c.close()
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-Ib':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-b':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		content = getContentUnicode(content)
-		return content
+from player_functions import ccurl
 
 
 class NetWorkManager(QNetworkAccessManager):
@@ -129,7 +25,7 @@ class NetWorkManager(QNetworkAccessManager):
 		super(NetWorkManager, self).__init__()
    
 	def createRequest(self, op, request, device = None ):
-		global block_list
+		global block_list,TMP_DIR
 		try:
 			urlLnk = (request.url()).toString()
 			path = (request.url().toString())
@@ -151,7 +47,7 @@ class NetWorkManager(QNetworkAccessManager):
 		else:
 			if 'itag=' in urlLnk and 'redirector' not in urlLnk:
 				print('*********')
-				f = open('/tmp/AnimeWatch/lnk.txt','w')
+				f = open(os.path.join(TMP_DIR,'lnk.txt'),'w')
 				f.write(urlLnk)
 				f.close()
 				return QNetworkAccessManager.createRequest(self, op, request, device)
@@ -161,7 +57,7 @@ class NetWorkManager(QNetworkAccessManager):
 
   
 class BrowserPage(QWebPage):  
-	def __init__(self,url,quality):
+	def __init__(self,url,quality,c):
 		super(BrowserPage, self).__init__()
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		#self.loadFinished.connect(self._loadFinished)
@@ -169,6 +65,9 @@ class BrowserPage(QWebPage):
 		self.url = url
 		self.cnt = 0
 		self.quality = quality
+		self.cookie_file = c
+		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
+		
 	def userAgentForUrl(self, url):
 		return self.hdr
 		
@@ -182,24 +81,9 @@ class BrowserPage(QWebPage):
 		#print('Progress')
 		#print(self.url)
 		
-		if 'kissanime' in self.url:
-			cookie_file = '/tmp/AnimeWatch/kcookie.txt'
-		elif 'kisscartoon' in self.url:
-			cookie_file = '/tmp/AnimeWatch/kcookieC.txt'
-		elif 'kissasian' in self.url:
-			cookie_file = '/tmp/AnimeWatch/kcookieD.txt'
-		elif 'masterani' in self.url:
-			cookie_file = '/tmp/AnimeWatch/animeSquare.txt'
-		elif 'animeget' in self.url:
-			cookie_file = '/tmp/AnimeWatch/animeget.txt'
-		elif 'animeplace' in self.url:
-			cookie_file = '/tmp/AnimeWatch/animeplace.txt'
-		elif 'moetube' in self.url:
-			cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
-		elif 'nyaa' in self.url:
-			cookie_file = '/tmp/AnimeWatch/nyaa.txt'
+		
 		if 'moetube' in self.url:
-			txt_file = '/tmp/AnimeWatch/moetube.txt'
+			txt_file = (self.tmp_dir,'moetube.txt')
 			frame = self.mainFrame()  
 			html = frame.toHtml()
 			#print(html)
@@ -211,7 +95,7 @@ class BrowserPage(QWebPage):
 				f.write(html)
 				f.close()
 		
-		if self.cnt == 0 and os.path.exists(cookie_file) and ('kisscartoon' in self.url or 'kissasian' in self.url):
+		if self.cnt == 0 and os.path.exists(self.cookie_file) and ('kisscartoon' in self.url or 'kissasian' in self.url):
 			frame = self.mainFrame()
 			html = frame.toHtml()
 			soup = BeautifulSoup(html,'lxml')
@@ -317,9 +201,8 @@ class BrowserPage(QWebPage):
 			if 'kissasian' in self.url:
 				str3 = 'kissasian.com	FALSE	/	FALSE	0		__test'
 			
-			if not os.path.exists('/tmp/AnimeWatch'):
-				os.makedirs('/tmp/AnimeWatch')
-			f = open(cookie_file,'w')
+			
+			f = open(self.cookie_file,'w')
 			if str3:
 				f.write(str2+'\n'+str1+'\n'+str3)
 			else:
@@ -345,50 +228,31 @@ class BrowserPage(QWebPage):
 		return(d)
 		
 class Browser(QWebView):
-	def __init__(self,url,quality):
+	def __init__(self,url,quality,c):
 		super(Browser, self).__init__()
-		self.setPage(BrowserPage(url,quality))
+		self.setPage(BrowserPage(url,quality,c))
 		
 
 class BrowseUrl(QtWidgets.QWidget):
 
-	def __init__(self,url,quality):
+	def __init__(self,url,quality,c):
 		super(BrowseUrl, self).__init__()
-		
+		global TMP_DIR
+		self.cookie_file = c
+		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
+		TMP_DIR = self.tmp_dir
 		self.Browse(url,quality)
 	
 		
 	def Browse(self,url,quality):
-		
-		
-		
-		
-		if 'kissanime' in url:
-			cookie_file = '/tmp/AnimeWatch/kcookie.txt'
-		elif 'kisscartoon' in url:
-			cookie_file = '/tmp/AnimeWatch/kcookieC.txt'
-		elif 'kissasian' in url:
-			cookie_file = '/tmp/AnimeWatch/kcookieD.txt'
-		elif 'masterani' in url:
-			cookie_file = '/tmp/AnimeWatch/animeSquare.txt'
-		elif 'animeget' in url:
-			cookie_file = '/tmp/AnimeWatch/animeget.txt'
-		elif 'animeplace' in url:
-			cookie_file = '/tmp/AnimeWatch/animeplace.txt'
-		elif 'moetube' in url:
-			cookie_file = '/tmp/AnimeWatch/animeHQ.txt'
-		elif 'nyaa' in url:
-			cookie_file = '/tmp/AnimeWatch/nyaa.txt'
-			#if os.path.exists(cookie_file):
-			#	os.remove(cookie_file)
-		
+			
 		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:
 			content = ccurl(url)
 		else:
 			content = 'checking_browser'
 		
 		if 'checking_browser' in content:
-			if not os.path.exists(cookie_file):
+			if not os.path.exists(self.cookie_file):
 				
 				self.cookie = QtNetwork.QNetworkCookieJar()
 				self.nam = NetWorkManager()
@@ -396,7 +260,7 @@ class BrowseUrl(QtWidgets.QWidget):
 			else:
 				cookie_arr = QtNetwork.QNetworkCookieJar()
 				c = []
-				f = open(cookie_file,'r')
+				f = open(self.cookie_file,'r')
 				lines = f.readlines()
 				f.close()
 				for i in lines:
@@ -426,7 +290,7 @@ class BrowseUrl(QtWidgets.QWidget):
 				self.nam = NetWorkManager()
 				self.nam.setCookieJar(cookie_arr)
 			
-			self.web = Browser(url,quality)
+			self.web = Browser(url,quality,self.cookie_file)
 			self.tab_2 = QtWidgets.QWidget()
 			self.tab_2.setMaximumSize(300,50)
 			self.tab_2.setWindowTitle('Wait!')
@@ -442,7 +306,7 @@ class BrowseUrl(QtWidgets.QWidget):
 			cnt = 0
 			
 			
-			while(not os.path.exists(cookie_file) and cnt < 30):
+			while(not os.path.exists(self.cookie_file) and cnt < 30):
 				#print()
 				print('wait Clouflare ')
 				time.sleep(1)
@@ -453,7 +317,7 @@ class BrowseUrl(QtWidgets.QWidget):
 			if cnt >= 30 and not os.path.exists(cookie_file):
 				f = open(cookie_file,'w')
 				f.close()
-			lnk_file = '/tmp/AnimeWatch/lnk.txt'
+			lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
 			if os.path.exists(lnk_file):
 				os.remove(lnk_file)
 			cnt = 0
