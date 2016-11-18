@@ -36,7 +36,6 @@ import pycurl
 from io import StringIO,BytesIO
 import re
 import subprocess
-
 from subprocess import check_output
 from bs4 import BeautifulSoup
 
@@ -122,19 +121,8 @@ except:
 	send_notification(notify_txt)
 	
 
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
 
+"""
 def replace_line(file_path, pattern, subst):
 	#Create temp file
 	fh, abs_path = mkstemp()
@@ -147,7 +135,7 @@ def replace_line(file_path, pattern, subst):
 	remove(file_path)
 	#Move new file
 	move(abs_path, file_path)
-	
+"""
 
 		
 
@@ -179,12 +167,6 @@ def set_mainwindow_palette(fanart):
 		palette	= QtGui.QPalette()
 		palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
 		MainWindow.setPalette(palette)
-
-
-
-
-
-
 
 
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
@@ -2142,8 +2124,10 @@ class List1(QtWidgets.QListWidget):
 		#if ui.page_number.hasFocus():
 			#self.setFocus()
 	def mouseMoveEvent(self, event): 
+		global ui
+		if ui.auto_hide_dock and not ui.dockWidget_3.isHidden():
+			ui.dockWidget_3.hide()
 		self.setFocus()
-		
 	def dropEvent(self, event):
 		if event.source() == self and (event.dropAction() == QtCore.Qt.MoveAction or self.dragDropMode() == QtWidgets.QAbstractItemView.InternalMove):
 			global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,siteName,original_path_name
@@ -3132,6 +3116,9 @@ class List2(QtWidgets.QListWidget):
 	#if not self.hasFocus():
 	#	self.setFocus()
 	def mouseMoveEvent(self, event): 
+		global ui
+		if ui.auto_hide_dock and not ui.dockWidget_3.isHidden():
+			ui.dockWidget_3.hide()
 		self.setFocus()
 		
 	def dropEvent(self, event):
@@ -3254,7 +3241,7 @@ class List2(QtWidgets.QListWidget):
 				ui.list2.hide()
 				ui.goto_epn.hide()
 				ui.list1.show()
-				ui.frame.show()
+				#ui.frame.show()
 				ui.list1.setFocus()
 				show_hide_playlist = 0
 				show_hide_titlelist = 1
@@ -3612,7 +3599,7 @@ class List2(QtWidgets.QListWidget):
 			if ui.float_window.isHidden():
 				if ui.list1.isHidden():
 					ui.list1.show()
-					ui.frame.show()
+					#ui.frame.show()
 				ui.list1.setFocus()
 			else:
 				prev_r = self.currentRow() - 1
@@ -3629,7 +3616,8 @@ class List2(QtWidgets.QListWidget):
 				ui.epnfound()
 				if ui.list1.isHidden():
 					ui.list1.show()
-					ui.frame.show()
+					if not ui.goto_epn.isHidden():
+						ui.frame.show()
 				self.setFocus()
 			else:
 				nextr = self.currentRow() + 1
@@ -3743,7 +3731,7 @@ class List2(QtWidgets.QListWidget):
 				#ui.gridLayout.setContentsMargins(10,10,10,10)
 				ui.superGridLayout.setContentsMargins(10,10,10,10)
 				ui.list2.show()
-				ui.goto_epn.show()
+				#ui.goto_epn.show()
 				ui.btn20.show()
 				#if Player == "mpv":
 				if wget:
@@ -4270,7 +4258,7 @@ class List2(QtWidgets.QListWidget):
 				ui.update_list2()
 			elif action == view_list_thumbnail:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 128px;}
+				QListWidget:item {height: 64px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
@@ -4433,7 +4421,7 @@ class List2(QtWidgets.QListWidget):
 				ui.update_list2()
 			elif action == view_list_thumbnail:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 128px;}
+				QListWidget:item {height: 112px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
@@ -4770,11 +4758,16 @@ class QLineCustom(QtWidgets.QLineEdit):
 		print ("down")
 		global category,home,site,bookmark
 		
-		if (event.type()==QtCore.QEvent.KeyPress) and (event.key() == QtCore.Qt.Key_Down):
+		if (event.key() == QtCore.Qt.Key_Down):
 			print ("Down")
+			ui.list4.show()
 			ui.list4.setFocus()
+			self.show()
 		elif event.key() == QtCore.Qt.Key_Up:
+			ui.list4.show()
 			ui.list4.setFocus()
+			self.show()
+			
 		super(QLineCustom, self).keyPressEvent(event)
 		
 		
@@ -5586,10 +5579,12 @@ class tab5(QtWidgets.QWidget):
 			new_tray_widget.hide()
 			print('--float--activity--')
 	def mouseMoveEvent(self,event):
-		global Player,fullscr,pause_indicator,site,new_tray_widget
+		global Player,fullscr,pause_indicator,site,new_tray_widget,ui
 		self.setFocus()
 		pos = event.pos()
 		#print pos.y()
+		if ui.auto_hide_dock and not ui.dockWidget_3.isHidden():
+			ui.dockWidget_3.hide()
 		if not ui.float_window.isHidden() and new_tray_widget.remove_toolbar:
 			if not self.float_timer.isActive():
 				wid_height = int(ui.float_window.height()/3)
@@ -5988,6 +5983,9 @@ class tab5(QtWidgets.QWidget):
 					ui.gridLayout.setContentsMargins(0,0,0,0)
 					ui.superGridLayout.setContentsMargins(0,0,0,0)
 					#ui.frame1.setMaximumHeight(20)
+					#ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+					#ui.superGridLayout.addWidget(ui.tab_5, 0, 0, 1, 1)
+					#ui.superGridLayout.addWidget(ui.frame1, 0, 1, 1, 1)
 					ui.text.hide()
 					ui.label.hide()
 					#if site != "Music":
@@ -6010,14 +6008,15 @@ class tab5(QtWidgets.QWidget):
 					#ui.tab_5.setParent(None)
 					
 					#ui.tab_5.showMaximized()
-					ui.tab_5.show()
-					ui.tab_5.setFocus()
+					self.show()
+					self.setFocus()
 					#ui.tab_5.showFullScreen()
 					if not ui.tab_2.isHidden():
 						ui.tab_2.hide()
 					#ui.gridLayout.showFullScreen()
 					if (Player == "mplayer" or Player=="mpv"):
 						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+					#ui.superGridLayout.insertWidget()
 					MainWindow.showFullScreen()
 					#self.showFullScreen()
 				else:
@@ -6027,7 +6026,7 @@ class tab5(QtWidgets.QWidget):
 					#ui.gridLayout.setContentsMargins(10,10,10,10)
 					ui.superGridLayout.setContentsMargins(10,10,10,10)
 					ui.list2.show()
-					ui.goto_epn.show()
+					#ui.goto_epn.show()
 					ui.btn20.show()
 					if wget.processId() > 0 or video_local_stream:
 						ui.progress.show()
@@ -6072,13 +6071,13 @@ class tab5(QtWidgets.QWidget):
 				ui.tab_5.hide()
 				if show_hide_titlelist == 1:
 					ui.list1.show()
-					ui.frame.show()
+					#ui.frame.show()
 				if show_hide_cover == 1:
 					ui.label.show()
 					ui.text.show()
 				if show_hide_titlelist == 1:
 					ui.list2.show()
-					ui.goto_epn.show()
+					#ui.goto_epn.show()
 				
 				ui.list2.setFocus()
 			else:
@@ -6117,25 +6116,7 @@ class tab5(QtWidgets.QWidget):
 				print(ht,'--ht--',ui.scrollArea1.height())
 				ui.scrollArea1.verticalScrollBar().setValue(ht)
 				
-				"""
-				print ("width="+str(ui.tab_6.width()))
-				#ui.tab_6.setMaximumSize(10000,10000)
-				w = float((ui.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
-				width=str(int(w))
-				height=str(int(h))
-				ui.scrollArea1.verticalScrollBar().setValue(((curR+1)/iconv_r)*h+((curR+1)/iconv_r)*10)
-				"""
-				"""
-				print ("hello tab_6")
-				row = ui.list2.currentRow()
-				p1 = "ui.label_epn_"+str(row)+".y()"
-				ht = eval(p1)
-				print(ht,'--ht--',ui.scrollArea1.height())
-				QtGui.QApplication.processEvents()
-				print(ht,'--ht--',ui.scrollArea1.height())
-				ui.scrollArea1.verticalScrollBar().setValue(ht)
-				"""
+				
 			if wget:
 				if wget.processId() > 0:
 					#ui.goto_epn.hide()
@@ -6202,7 +6183,7 @@ except AttributeError:
 
 class Ui_MainWindow(object):
 	def setupUi(self, MainWindow):
-		global BASEDIR
+		global BASEDIR,screen_width
 		MainWindow.setObjectName(_fromUtf8("MainWindow"))
 		#MainWindow.resize(875, 600)
 		
@@ -6223,10 +6204,10 @@ class Ui_MainWindow(object):
 		self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
 		self.superTab.setMouseTracking(True)
 		self.superGridLayout.addWidget(self.superTab,0,1,1,1)
-		self.superGridLayout.setContentsMargins(10,10,10,10)
-		self.superGridLayout.setSpacing(10)
-		self.gridLayout.setSpacing(10)
-		self.gridLayout.setContentsMargins(0,0,0,0)
+		self.superGridLayout.setContentsMargins(5,5,5,5)
+		self.superGridLayout.setSpacing(0)
+		self.gridLayout.setSpacing(5)
+		self.gridLayout.setContentsMargins(5,5,5,5)
 		#self.horizontalLayout_3 = QtGui.QHBoxLayout(self.tab)
 		#self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
 		#Causes No FullScreen#
@@ -6260,8 +6241,7 @@ class Ui_MainWindow(object):
 		###########################
 		self.label = QtWidgets.QLabel(MainWindow)
 		#self.label.setSizePolicy(sizePolicy)
-		self.label.setMaximumSize(QtCore.QSize(280, 250))
-		self.label.setMinimumSize(QtCore.QSize(280, 250))
+		
 		#self.label.setMinimumSize(QtCore.QSize(300, 250))
 		self.label.setText(_fromUtf8(""))
 		self.label.setScaledContents(True)
@@ -6270,8 +6250,7 @@ class Ui_MainWindow(object):
 		self.text.setObjectName(_fromUtf8("text"))
 		#self.text.setMaximumSize(QtCore.QSize(450, 250))
 		#self.text.setMinimumSize(QtCore.QSize(450, 250))
-		self.text.setMaximumWidth(280)
-		self.text.setMaximumHeight(250)
+		
 		self.text.lineWrapMode()
 		
 		self.VerticalLayoutLabel.insertWidget(0,self.label,0)
@@ -6344,7 +6323,7 @@ class Ui_MainWindow(object):
 		self.list4.setObjectName(_fromUtf8("list4"))
 		#self.list4.setMaximumSize(QtCore.QSize(400,16777215))
 		self.list4.setMouseTracking(True)
-		self.verticalLayout_40.insertWidget(1,self.list4,0)
+		
 		self.list4.hide()
 		
 		self.list5 = List5(MainWindow)
@@ -6369,15 +6348,14 @@ class Ui_MainWindow(object):
 		self.frame.setObjectName(_fromUtf8("frame"))
 		self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.frame)
 		self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
-		#self.horizontalLayout_3.setContentsMargins(0,5,0,5)
-		#self.horizontalLayout_3.setContentsMargins(1,1,1,1)
+		
 		self.backward = QtWidgets.QPushButton(self.frame)
 		self.backward.setObjectName(_fromUtf8("backward"))
 		self.horizontalLayout_3.addWidget(self.backward)
 		
 		self.hide_btn_list1 = QtWidgets.QPushButton(self.frame)
 		self.hide_btn_list1.setObjectName(_fromUtf8("hide_btn_list1"))
-		self.horizontalLayout_3.addWidget(self.hide_btn_list1)
+		
 		self.hide_btn_list1.setMinimumHeight(30)
 		self.hide_btn_list1_menu = QtWidgets.QMenu()
 		self.hide_btn_menu_option = ['Sort','Shuffle']
@@ -6389,15 +6367,23 @@ class Ui_MainWindow(object):
 		self.hide_btn_list1.setText('Order')
 		self.filter_btn = QtWidgets.QPushButton(self.frame)
 		self.filter_btn.setObjectName(_fromUtf8("filter_btn"))
-		self.horizontalLayout_3.addWidget(self.filter_btn)
+		
 		self.filter_btn.setMinimumHeight(30)
+		self.filter_btn.hide()
 		#self.go_page = QtGui.QLineEdit(self.frame)
+		
+		self.page_number = QtWidgets.QLineEdit(self.frame)
+		self.page_number.setObjectName(_fromUtf8("page_number"))
+		
+		self.page_number.setMaximumWidth(48)
+		self.page_number.setMinimumHeight(30)
+		
 		self.go_page = QLineCustom(self.frame)
 		self.go_page.setObjectName(_fromUtf8("go_page"))
 		self.go_page.setMinimumHeight(30)
-		self.horizontalLayout_3.addWidget(self.go_page)
-		self.go_page.hide()
-		
+		self.go_page.setPlaceholderText('Filter')
+		#self.go_page.hide()
+	
 		
 		
 		self.forward = QtWidgets.QPushButton(self.frame)
@@ -6405,6 +6391,13 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_3.addWidget(self.forward)
 		self.forward.hide()
 		self.backward.hide()
+		
+		self.horizontalLayout_3.insertWidget(2,self.page_number,0)
+		self.horizontalLayout_3.insertWidget(3,self.go_page,0)
+		self.horizontalLayout_3.insertWidget(4,self.filter_btn,0)
+		self.horizontalLayout_3.insertWidget(5,self.hide_btn_list1,0)
+		
+		
 		
 		#self.gridLayout.addWidget(self.frame, 1, 1, 1, 1)
 		#self.goto_epn = QtGui.QLineEdit(MainWindow)
@@ -6416,7 +6409,14 @@ class Ui_MainWindow(object):
 		self.goto_epn.setObjectName(_fromUtf8("goto_epn"))
 		self.horizontalLayout_goto_epn = QtWidgets.QHBoxLayout(self.goto_epn)
 		self.horizontalLayout_goto_epn.setObjectName(_fromUtf8("horizontalLayout_goto_epn"))
+		self.horizontalLayout_goto_epn.setContentsMargins(0,0,0,0)
+		self.horizontalLayout_goto_epn.setSpacing(5)
 		#self.gridLayout.addWidget(self.goto_epn, 1, 2, 1, 1)
+		self.horizontalLayout_3.setContentsMargins(0,0,0,0)
+		self.horizontalLayout_3.setSpacing(5)
+		
+		self.goto_epn.hide()
+		self.frame.hide()
 		
 		#self.progress = QtWidgets.QProgressBar(MainWindow)
 		self.progress = QProgressBarCustom(MainWindow,self)
@@ -6505,31 +6505,34 @@ class Ui_MainWindow(object):
 		self.slider.setRange(0,100)
 		self.slider.setMouseTracking(True)
 		
-		self.list1.setMaximumWidth(300)
-		#self.list1.setMaximumHeight(250)
-		self.list2.setMaximumWidth(300)
-		#self.list2.setWordWrap(True)
-		#self.list2.setIconSize(QtCore.QSize(128,128))
+		width_allowed = int((screen_width)/4.5)
+		print(width_allowed,'--width--allowed--')
+		self.list1.setMaximumWidth(width_allowed)
+		self.list2.setMaximumWidth(width_allowed)
 		self.list2.setIconSize(QtCore.QSize(128,128))
-		#self.list2.setMaximumHeight(250)
-		self.frame.setMaximumWidth(300)
-		self.list4.setMaximumWidth(300)
-		self.list5.setMaximumWidth(300)
-		self.list6.setMaximumWidth(300)
-		self.goto_epn.setMaximumWidth(300)
+		self.frame.setMaximumWidth(width_allowed)
+		self.list4.setMaximumWidth(width_allowed)
+		self.list5.setMaximumWidth(width_allowed)
+		self.list6.setMaximumWidth(width_allowed)
+		self.goto_epn.setMaximumWidth(width_allowed)
+		self.text.setMaximumWidth(screen_width-2*width_allowed-280)
+		self.text.setMaximumHeight(250)
+		self.label.setMaximumSize(QtCore.QSize(280, 250))
+		self.label.setMinimumSize(QtCore.QSize(280, 250))
+		
 		self.list1.setWordWrap(True)
 		self.list1.setTextElideMode(QtCore.Qt.ElideRight)
 		self.list2.setWordWrap(True)
 		self.list2.setTextElideMode(QtCore.Qt.ElideRight)
-		#self.list3.setWordWrap(True)
 		self.list4.setWordWrap(True)
 		self.list4.setTextElideMode(QtCore.Qt.ElideRight)
 		self.list5.setWordWrap(True)
 		self.list5.setTextElideMode(QtCore.Qt.ElideRight)
 		self.list6.setWordWrap(True)
 		self.list6.setTextElideMode(QtCore.Qt.ElideRight)
-		
-		
+		#self.gridLayout.setAlignment(QtCore.Qt.AlignLeft)#Can cause video disappear in fullscreen mode
+		#self.superGridLayout.setAlignment(QtCore.Qt.AlignRight)Can cause video disappear in fullscreen mode
+		#self.verticalLayout_40.insertWidget(1,self.frame,0)
 		
 		self.player_opt = QtWidgets.QFrame(self.frame1)
 		self.player_opt.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -6600,13 +6603,21 @@ class Ui_MainWindow(object):
 		self.player_showhide_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_showhide_playlist.setObjectName(_fromUtf8("player_showhide_playlist"))
 		self.horizontalLayout_player_opt.insertWidget(10,self.player_showhide_playlist,0)
-		self.player_showhide_playlist.setText('\u2118')
+		#self.player_showhide_playlist.setText('\u2118')
+		self.player_showhide_playlist.setText('PL')
 		self.player_showhide_playlist.clicked.connect(lambda x=0:self.playerPlaylist("Show/Hide Playlist"))
 		self.player_showhide_playlist.setToolTip('Show/Hide Playlist')
 		
+		self.player_filter = QtWidgets.QPushButton(self.player_opt)
+		self.player_filter.setObjectName(_fromUtf8("player_filter"))
+		self.horizontalLayout_player_opt.insertWidget(11,self.player_filter,0)
+		self.player_filter.setText('Y')
+		self.player_filter.setToolTip('Show/Hide Filter and other options')
+		self.player_filter.clicked.connect(self.show_hide_filter_toolbar)
+		
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
-		self.horizontalLayout_player_opt.insertWidget(11,self.player_playlist,0)
+		self.horizontalLayout_player_opt.insertWidget(12,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
 		self.player_menu_option = ['Show/Hide Video','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
@@ -6624,6 +6635,7 @@ class Ui_MainWindow(object):
 		self.queue_manage.setObjectName(_fromUtf8("queue_manage"))
 		self.horizontalLayout_goto_epn.insertWidget(0,self.queue_manage,0)
 		self.queue_manage.setText("Q")
+		self.queue_manage.setMinimumWidth(30)
 		
 		self.mirror_change = QtWidgets.QPushButton(self.goto_epn)
 		self.mirror_change.setObjectName(_fromUtf8("mirror_change"))
@@ -6635,12 +6647,13 @@ class Ui_MainWindow(object):
 		self.goto_epn_filter.setObjectName(_fromUtf8("Filter Button"))
 		self.horizontalLayout_goto_epn.insertWidget(2,self.goto_epn_filter,0)
 		self.goto_epn_filter.setText("Filter")
+		self.goto_epn_filter.hide()
 		
 		self.goto_epn_filter_txt = QLineCustomEpn(self.goto_epn)
 		self.goto_epn_filter_txt.setObjectName(_fromUtf8("Filter Text"))
 		self.horizontalLayout_goto_epn.insertWidget(3,self.goto_epn_filter_txt,0)
-		self.goto_epn_filter.setText("Filter")
-		self.goto_epn_filter_txt.hide()
+		self.goto_epn_filter_txt.setPlaceholderText("Filter")
+		#self.goto_epn_filter_txt.hide()
 		
 		self.player_playlist1 = QtWidgets.QPushButton(self.goto_epn)
 		self.player_playlist1.setObjectName(_fromUtf8("player_playlist1"))
@@ -6658,11 +6671,11 @@ class Ui_MainWindow(object):
 		self.player_playlist1.setCheckable(True)
 		
 		self.frame1.setMinimumHeight(60)
-		self.frame.setMinimumHeight(60)
-		self.goto_epn.setMinimumHeight(60)
+		self.frame.setMinimumHeight(30)
+		self.goto_epn.setMinimumHeight(30)
 		self.frame1.setMaximumHeight(60)
-		self.frame.setMaximumHeight(60)
-		self.goto_epn.setMaximumHeight(60)
+		self.frame.setMaximumHeight(30)
+		self.goto_epn.setMaximumHeight(30)
 		
 		self.mirror_change.setMaximumHeight(30)
 		self.player_playlist1.setMaximumHeight(30)
@@ -6689,7 +6702,7 @@ class Ui_MainWindow(object):
 		self.tab_6 = tab6(MainWindow)
 		self.tab_6.setMouseTracking(True)
 		#self.tab_6 = QtGui.QWidget()
-		self.gridLayout.addWidget(self.tab_6)
+		#self.gridLayout.addWidget(self.tab_6)
 		#ui.gridLayout.addWidget(ui.tab_6, 0, 4, 1, 1)
 		self.tab_6.setObjectName(_fromUtf8("tab_6"))
 		#self.tabWidget1.addTab(self.tab_6, _fromUtf8(""))
@@ -6697,6 +6710,7 @@ class Ui_MainWindow(object):
 		self.tab_2 = QtWidgets.QWidget()
 		self.tab_2.setObjectName(_fromUtf8("tab_2"))
 		self.gridLayout.addWidget(self.tab_2,0,2,1,1)
+		#self.superGridLayout.addWidget(self.tab_2,2,1,1,1)
 		self.gridLayout.addWidget(self.tab_6,0,2,1,1)
 		self.tab_2.hide()
 		#self.tab_2.setMinimumSize(900,400)
@@ -6826,12 +6840,7 @@ class Ui_MainWindow(object):
 		#self.chk = QtGui.QComboBox(self.dockWidgetContents_3)
 		#self.chk.setGeometry(QtCore.QRect(40, 120, 91, 21))
 		#self.chk.setObjectName(_fromUtf8("chk"))
-		self.page_number = QtWidgets.QLineEdit(self.frame)
-		#self.page_number.setMaximumSize(QtCore.QSize(48, 16777215))
-		self.page_number.setObjectName(_fromUtf8("page_number"))
-		self.horizontalLayout_3.addWidget(self.page_number)
-		self.page_number.setMaximumWidth(48)
-		self.page_number.setMinimumHeight(30)
+		
 		
 		self.horizontalLayout10 = QtWidgets.QVBoxLayout(self.tab_6)
 		self.horizontalLayout10.setObjectName(_fromUtf8("horizontalLayout"))
@@ -6918,7 +6927,7 @@ class Ui_MainWindow(object):
 		self.float_window_layout = QtWidgets.QVBoxLayout(self.float_window)
 		self.float_window.setMinimumSize(250,200)
 		self.float_window.hide()
-		self.float_window_dim = [0,0,250,200]
+		self.float_window_dim = [20,40,250,200]
 		self.float_window.setScaledContents(True)
 		self.float_window.setObjectName(_fromUtf8("float_window"))
 		try:
@@ -7039,13 +7048,31 @@ class Ui_MainWindow(object):
 		self.comboView.setMinimumHeight(30)
 		self.btnHistory.setMinimumHeight(30)
 		
-		self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
-		self.gridLayout.addWidget(self.frame, 1, 2, 1, 1)
-		self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
-		#self.VerticalLayoutLabel_Dock3.setContentsMargins(30,10,30,10)
-		#self.gridLayout1.setSpacing(30)
-		#self.filt = mouseoverEvent(self)
-		#self.text.installEventFilter(self.filt)
+		
+		#gridLayout content: self.frame1,self.frame,self.goto_epn
+		#superGridLayout content : self.superTab,self.dockWidget_3
+		 
+		
+		self.superGridLayout.addWidget(self.frame1, 1, 1, 1, 1)
+		#self.superGridLayout.addWidget(self.tab_5, 0, 0, 1, 1)
+		#self.gridLayout.addWidget(self.frame1, 1,1 , 1, 1)
+		
+		self.verticalLayout_50.insertWidget(0,self.list2,0)
+		self.verticalLayout_50.insertWidget(1,self.list6,0)
+		self.verticalLayout_50.insertWidget(2,self.list5,0)
+		self.verticalLayout_50.insertWidget(3,self.goto_epn,0)
+		
+		
+		self.verticalLayout_40.insertWidget(0,self.list1,0)
+		self.verticalLayout_40.insertWidget(1,self.list4,0)
+		self.verticalLayout_40.insertWidget(2,self.frame,0)
+		self.verticalLayout_40.setSpacing(5)
+		self.verticalLayout_50.setSpacing(5)
+		
+		#self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
+		#self.gridLayout.addWidget(self.frame, 1, 2, 1, 1)
+		#self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
+
 		self.frame_timer = QtCore.QTimer()
 		self.frame_timer.timeout.connect(self.frame_options)
 		self.frame_timer.setSingleShot(True)
@@ -7054,7 +7081,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,39)
+		self.version_number = (3,0,0,42)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -7090,7 +7117,7 @@ class Ui_MainWindow(object):
 		self.subtitle_new_added = False
 		self.window_frame = 'true'
 		self.float_window_open = False
-		self.music_mode_dim = [0,0,900,350]
+		self.music_mode_dim = [20,40,900,350]
 		self.music_mode_dim_show = False
 		self.site_var = ''
 		self.record_history = False
@@ -7393,6 +7420,32 @@ class Ui_MainWindow(object):
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
 		self.mpv_thumbnail_lock = False
 		
+	def show_hide_filter_toolbar(self):
+		if self.list1.isHidden() and self.list2.isHidden():
+			pass
+		elif not self.list1.isHidden() and self.list2.isHidden():
+			if self.frame.isHidden():
+				self.frame.show()
+			elif not self.frame.isHidden():
+				self.frame.hide()
+		elif self.list1.isHidden() and not self.list2.isHidden():
+			if self.goto_epn.isHidden():
+				self.goto_epn.show()
+			elif not self.goto_epn.isHidden():
+				self.goto_epn.hide()
+		elif not self.list1.isHidden() and not self.list2.isHidden():
+			if self.frame.isHidden() and not self.goto_epn.isHidden():
+				self.goto_epn.hide()
+			elif not self.frame.isHidden() and self.goto_epn.isHidden():
+				self.frame.hide()
+			elif not self.frame.isHidden() and not self.goto_epn.isHidden():
+				self.frame.hide()
+				self.goto_epn.hide()
+			elif self.frame.isHidden() and self.goto_epn.isHidden():
+				self.frame.show()
+				self.goto_epn.show()
+				
+		
 	def orient_dock(self,initial_start=None):
 		if initial_start:
 			txt = initial_start
@@ -7400,12 +7453,13 @@ class Ui_MainWindow(object):
 				self.btn_orient.setText(self.player_buttons['right'])
 				self.btn_orient.setToolTip('Orient Dock to Right')
 				self.orientation_dock = 'left'
-				self.superGridLayout.addWidget(self.dockWidget_3,0,0,1,1)
+				self.superGridLayout.addWidget(self.dockWidget_3,0,1,1,1)
 			else:
 				self.btn_orient.setText(self.player_buttons['left'])
 				self.btn_orient.setToolTip('Orient Dock to Left')
 				self.orientation_dock = 'right'
 				self.superGridLayout.addWidget(self.dockWidget_3,0,5,1,1)
+				#self.gridLayout.addWidget(self.dockWidget_3,0,3,1,1)
 		else:
 			txt = self.btn_orient.text()
 			if txt == self.player_buttons['right']:
@@ -7413,12 +7467,13 @@ class Ui_MainWindow(object):
 				self.btn_orient.setToolTip('Orient Dock to Left')
 				self.orientation_dock = 'right'
 				self.superGridLayout.addWidget(self.dockWidget_3,0,5,1,1)
+				#self.gridLayout.addWidget(self.dockWidget_3,0,3,1,1)
 			else:
 				self.player_buttons['left']
 				self.btn_orient.setText(self.player_buttons['right'])
 				self.btn_orient.setToolTip('Orient Dock to Right')
 				self.orientation_dock = 'left'
-				self.superGridLayout.addWidget(self.dockWidget_3,0,0,1,1)
+				self.superGridLayout.addWidget(self.dockWidget_3,0,1,1,1)
 			
 	def close_frame_btn(self):
 		txt = self.btn4.text()
@@ -7513,7 +7568,7 @@ class Ui_MainWindow(object):
 			curR = 0
 			#self.epnfound()
 			self.list1.show()
-			self.frame.show()
+			#self.frame.show()
 			
 			self.list1.setFocus()
 		else:
@@ -7521,7 +7576,7 @@ class Ui_MainWindow(object):
 				self.list1.hide()
 				self.frame.hide()
 				self.list2.show()
-				self.goto_epn.show()
+				#self.goto_epn.show()
 				self.list2.setFocus()
 				show_hide_titlelist = 0
 				show_hide_playlist = 1
@@ -7606,7 +7661,7 @@ class Ui_MainWindow(object):
 			self.goto_epn_filter_txt.setFocus()
 		else:
 			self.goto_epn_filter_txt.clear()
-			self.goto_epn_filter_txt.hide()
+			#self.goto_epn_filter_txt.hide()
 	def player_started_playing(self):
 		global player_start_now
 		player_start_now = 1
@@ -7759,13 +7814,13 @@ class Ui_MainWindow(object):
 						
 						if show_hide_titlelist == 1:
 							ui.list1.show()
-							ui.frame.show()
+							#ui.frame.show()
 						if show_hide_cover == 1:
 							ui.label.show()
 							ui.text.show()
 						if show_hide_titlelist == 1:
 							ui.list2.show()
-							ui.goto_epn.show()
+							#ui.goto_epn.show()
 						
 						ui.list2.setFocus()
 					else:
@@ -7934,7 +7989,7 @@ class Ui_MainWindow(object):
 					show_hide_playlist = 0
 				else:
 					self.list2.show()
-					self.goto_epn.show()
+					#self.goto_epn.show()
 					show_hide_playlist = 1
 					if MainWindow.isFullScreen():
 						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
@@ -7948,7 +8003,7 @@ class Ui_MainWindow(object):
 				show_hide_titlelist = 0
 			else:
 				self.list1.show()
-				self.frame.show()
+				#self.frame.show()
 				show_hide_titlelist = 1
 				if MainWindow.isFullScreen():
 					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
@@ -8073,7 +8128,7 @@ class Ui_MainWindow(object):
 				self.list4.show()
 				self.go_page.clear()
 			else:
-				self.go_page.hide()
+				#self.go_page.hide()
 				self.list4.hide()
 				self.list1.setFocus()
 		elif not self.tab_6.isHidden():
@@ -8339,11 +8394,11 @@ class Ui_MainWindow(object):
 		#ui.list1.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 		#ui.list2.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
 		#ui.list3.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
-		ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+		ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+		ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
 		ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.frame1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+		ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
+		ui.frame1.setStyleSheet("font: bold 11px;color:white;background:rgba(0,0,0,60%);border:rgba(0,0,0,30%);border-radius:3px;")
 		ui.torrent_frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 		ui.float_window.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 		#ui.progress.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
@@ -8458,7 +8513,7 @@ class Ui_MainWindow(object):
 		""")
 
 		ui.list1.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;
 		}
 		
 		QListWidget:item {
@@ -8601,13 +8656,13 @@ class Ui_MainWindow(object):
 		""")
 		
 		if self.list_with_thumbnail:
-			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-			QListWidget:item {height: 128px;}
+			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+			QListWidget:item {height: 112px;}
 			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 			QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 		else:
-			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
+			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
 			QListWidget:item {height: 30px;}
 			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
@@ -8909,8 +8964,8 @@ class Ui_MainWindow(object):
 			self.list2.show()
 			self.text.show()
 			self.label.show()
-			self.frame.show()
-			self.goto_epn.show()
+			#self.frame.show()
+			#self.goto_epn.show()
 			self.list1.setFocus()
 	def PlayEpn(self):
 		
@@ -10293,12 +10348,10 @@ class Ui_MainWindow(object):
 			
 			self.list1.show()
 			self.list2.show()
-		
 			self.label.show()
 			self.text.show()
 			self.frame.show()
 			self.dockWidget_3.show()
-		
 			self.goto_epn.show()
 			self.list1.setFocus()
 			self.frame1.show()
@@ -10333,10 +10386,10 @@ class Ui_MainWindow(object):
 		self.list1.show()
 		self.list2.show()
 		self.label.show()
-		self.frame.show()
+		#self.frame.show()
 		self.frame1.show()
 		self.text.show()
-		self.goto_epn.show()
+		#self.goto_epn.show()
 		view_layout = "List"
 		if mpvplayer:
 			if mpvplayer.processId() > 0:
@@ -10364,9 +10417,9 @@ class Ui_MainWindow(object):
 		self.list2.show()
 		self.label.show()
 		self.text.show()
-		self.frame.show()
+		#self.frame.show()
 		self.frame1.show()
-		self.goto_epn.show()
+		#self.goto_epn.show()
 	def webHide(self):
 		global mpvplayer
 		if mpvplayer.processId() > 0:
@@ -10377,7 +10430,7 @@ class Ui_MainWindow(object):
 	def togglePlaylist(self):
 		if self.list2.isHidden():
 			self.list2.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 		else:
 			self.list2.hide()
 			self.goto_epn.hide()
@@ -10408,9 +10461,9 @@ class Ui_MainWindow(object):
 			self.list2.show()
 			self.label.show()
 			self.text.show()
-			self.frame.show()
+			#self.frame.show()
 			self.frame1.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 		
 		
 	def IconView(self):
@@ -10476,9 +10529,9 @@ class Ui_MainWindow(object):
 			self.label.show()
 			self.list1.setFocus()
 			self.text.show()
-			self.frame.show()
+			#self.frame.show()
 			self.frame1.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 			#view_layout = "List"
 			
 	def IconViewEpn(self):
@@ -10537,9 +10590,9 @@ class Ui_MainWindow(object):
 			self.label.show()
 			self.list1.setFocus()
 			self.text.show()
-			self.frame.show()
+			#self.frame.show()
 			self.frame1.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 				
 	def textShowHide(self):
 		global fullscrT,idwMain,idw
@@ -10563,7 +10616,7 @@ class Ui_MainWindow(object):
 		
 		if fullscrT == 0:
 			self.list2.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 			#self.btnEpnList.hide()
 			#self.label.setMinimumSize(QtCore.QSize(350, 400))
 			self.tab_5.setFocus()
@@ -11907,8 +11960,8 @@ class Ui_MainWindow(object):
 			ui.listfound()
 			self.list1.setFocus()
 			self.list4.hide()
-			#self.go_page.clear()
-			self.go_page.hide()
+			self.go_page.clear()
+			#self.go_page.hide()
 		#self.list4.hide()
 	def search_list5_options(self):
 		global opt,site,name,base_url,name1,embed,pre_opt,bookmark,base_url_picn,base_url_summary
@@ -11923,6 +11976,7 @@ class Ui_MainWindow(object):
 			ui.epnfound()
 			#self.list2.setFocus()
 			self.list5.setFocus()
+			self.goto_epn_filter_txt.clear()
 			#self.go_page.clear()
 			#self.goto_epn_filter_txt.hide()
 		#self.list4.hide()
@@ -12228,7 +12282,7 @@ class Ui_MainWindow(object):
 	def epn_highlight(self):
 		global epnArrList,home,site
 		#self.text.hide()
-		self.list4.hide()
+		#self.list4.hide()
 		num = self.list2.currentRow()
 		if num < 0:
 			return 0
@@ -12645,6 +12699,12 @@ class Ui_MainWindow(object):
 			self.btnAddon.hide()
 		if not self.btnHistory.isHidden():
 			self.btnHistory.hide()
+		self.list3.clear()
+		self.list1.clear()
+		self.list2.clear()
+		self.label.clear()
+		self.text.clear()
+		
 		if site == "PlayLists":
 			bookmark = "False"
 			criteria = os.listdir(os.path.join(home,'Playlists'))
@@ -12652,8 +12712,6 @@ class Ui_MainWindow(object):
 			home_n = os.path.join(home,'Playlists')
 			criteria = naturallysorted(criteria)
 			#criteria = sorted(criteria,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),reverse=True)
-			self.list3.clear()
-			self.list1.clear()
 			original_path_name[:] = []
 			for i in criteria:
 				self.list1.addItem(i)
@@ -12680,13 +12738,7 @@ class Ui_MainWindow(object):
 			for i in bookmark_extra:
 				self.list3.addItem(i)
 		elif site == "Select":
-			self.list3.clear()
-			self.list1.clear()
-			self.list2.clear()
-			self.label.clear()
-			self.text.clear()
 			site = 'None'
-		
 		elif site == "Addons":
 			site = 'None'
 			self.btnAddon.show()
@@ -12706,11 +12758,6 @@ class Ui_MainWindow(object):
 		elif site == "YouTube":
 			site = 'None'
 			bookmark = "False"
-			self.list3.clear()
-			self.list1.clear()
-			self.list2.clear()
-			self.label.clear()
-			self.text.clear()
 			self.search()
 		else:
 			bookmark = "False"
@@ -12732,6 +12779,11 @@ class Ui_MainWindow(object):
 		rfr_url = ""
 		finalUrlFound = False
 		refererNeeded = False
+		self.list3.clear()
+		self.list1.clear()
+		self.list2.clear()
+		self.label.clear()
+		self.text.clear()
 		site = (self.btnAddon.currentText())
 		print(type(self.site_var),site,'--addon-changed--')
 		plugin_path = os.path.join(home,'src','Plugins',site+'.py')
@@ -13057,7 +13109,7 @@ class Ui_MainWindow(object):
 			summary_file = os.path.join(home,'History',site,siteName,name,'summary.txt')
 		elif site == "Local":
 			
-			name = original_path_name[r]
+			name = original_path_name[cur_row]
 			file_name = os.path.join(home,'Local',name,'Ep.txt')
 			picn1 = os.path.join(home,'Local',name,'poster.jpg')
 			fanart1 = os.path.join(home,'Local',name,'fanart.jpg')
@@ -13231,8 +13283,6 @@ class Ui_MainWindow(object):
 					else:
 						self.list1.addItem("Sorry No Search Function")
 				#del site_var
-			
-		
 		elif site == "Local":
 			self.mirror_change.hide()
 			criteria = ["List",'History','All']
@@ -13668,7 +13718,7 @@ class Ui_MainWindow(object):
 						#f.write(i+'	'+j+'\n')
 						k_arr.append(i+'	'+j)
 					#f.close()
-					write_files(file_ep,k,line_by_line=True)
+					write_files(file_ep,k_arr,line_by_line=True)
 					file_sum = os.path.join(home,'History',site,name,'summary.txt')
 					#g = open(os.path.join(home,'History',site,name,'summary.txt'), 'w')
 					#try:
@@ -15523,7 +15573,8 @@ class Ui_MainWindow(object):
 		self.progress.setValue(100)
 		self.progress.hide()
 		if self.tab_2.isHidden():
-			self.goto_epn.show()
+			#self.goto_epn.show()
+			pass
 		type_int = False
 		if self.queue_url_list:
 			j = 0
@@ -17519,7 +17570,7 @@ class Ui_MainWindow(object):
 		if self.list1.isHidden() and not self.list2.isHidden():
 			if self.list1.count() > 0:
 				self.list1.show()
-				self.frame.show()
+				#self.frame.show()
 				show_hide_titlelist = 1
 				self.list2.hide()
 				self.goto_epn.hide()
@@ -17530,7 +17581,7 @@ class Ui_MainWindow(object):
 				self.frame.hide()
 				show_hide_titlelist = 0
 				self.list2.show()
-				self.goto_epn.show()
+				#self.goto_epn.show()
 				show_hide_playlist = 1
 	
 	
@@ -18289,7 +18340,7 @@ class Ui_MainWindow(object):
 			show_hide_titlelist = 0
 			ui.list2.setCurrentRow(music_arr_setting[2])
 			ui.list2.show()
-			ui.goto_epn.show()
+			#ui.goto_epn.show()
 			show_hide_playlist = 1
 			ui.list2.setFocus()
 		
@@ -18308,9 +18359,9 @@ class Ui_MainWindow(object):
 		ui.audio_track.show()
 		ui.subtitle_track.show()
 		ui.list1.show()
-		ui.frame.show()
+		#ui.frame.show()
 		ui.list2.show()
-		ui.goto_epn.show()
+		#ui.goto_epn.show()
 		
 		print(default_arr_setting,'--default-setting--')
 		if default_arr_setting[0] > 0 and default_arr_setting[0] < ui.btn1.count():
@@ -18601,8 +18652,13 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 				MainWindow.hide()
 				self.h_mode.setText('&Show')
 			elif txt == '&Show':
-				MainWindow.show()
 				self.h_mode.setText('&Hide')
+				if ui.music_mode_dim_show:
+					MainWindow.showNormal()
+					MainWindow.setGeometry(ui.music_mode_dim[0],ui.music_mode_dim[1],ui.music_mode_dim[2],ui.music_mode_dim[3])
+					MainWindow.show()
+				else:
+					MainWindow.showMaximized()
 			
 class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 	def __init__(self,parent=None):
@@ -18639,11 +18695,17 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 				self.right_menu.h_mode.setText('&Hide')
 			else:
 				if MainWindow.isHidden():
-					MainWindow.show()
-					self.right_menu.h_mode.setText('&Show')
+					self.right_menu.h_mode.setText('&Hide')
+					if ui.music_mode_dim_show:
+						MainWindow.showNormal()
+						MainWindow.setGeometry(ui.music_mode_dim[0],ui.music_mode_dim[1],ui.music_mode_dim[2],ui.music_mode_dim[3])
+						MainWindow.show()
+					else:
+						MainWindow.showMaximized()
+						
 				else:
 					MainWindow.hide()
-					self.right_menu.h_mode.setText('&Hide')
+					self.right_menu.h_mode.setText('&Show')
 			"""
 			geom = self.geometry()
 			x = geom.x()
@@ -18945,7 +19007,7 @@ def main():
 					if tmp_mode.lower() == 'true':
 						ui.list_with_thumbnail = True
 						ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 128px;}
+				QListWidget:item {height: 112px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
@@ -19314,7 +19376,10 @@ def main():
 			t1 = tray.geometry().height()
 		except:
 			t1 = 65
+			
+		MainWindow.setGeometry(ui.music_mode_dim[0],ui.music_mode_dim[1],ui.music_mode_dim[2],ui.music_mode_dim[3])
 		
+		"""
 		print(t1,'tray--geometry\n')
 		if t1 > 64:
 			pos_y = 22
@@ -19333,6 +19398,7 @@ def main():
 		
 		#ui.options('layout_mode_music_startup')
 		MainWindow.setGeometry(pos_x,pos_y,w_wdt,w_ht)
+		"""
 	
 	else:
 		ui.sd_hd.show()
@@ -19349,14 +19415,14 @@ def main():
 	
 	if show_hide_playlist == 1:
 		ui.list2.show()
-		ui.goto_epn.show()
+		#ui.goto_epn.show()
 	elif show_hide_playlist == 0:
 		ui.list2.hide()
 		ui.goto_epn.hide()
 			
 	if show_hide_titlelist == 1:
 		ui.list1.show()
-		ui.frame.show()
+		#ui.frame.show()
 	elif show_hide_titlelist == 0:
 		ui.list1.hide()
 		ui.frame.hide()

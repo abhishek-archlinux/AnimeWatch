@@ -188,19 +188,17 @@ class BrowserPage(QWebPage):
 			#print(cfc)
 			#print(cfd)
 			#print(asp)
+			str3 = ''
 			str1 = cfc['domain']+'	'+cfc['HttpOnly']+'	'+cfc['path']+'	'+'FALSE'+'	'+cfc['expiry']+'	'+'cf_clearance'+'	'+cfc['cf_clearance']
 			str2 = cfd['domain']+'	'+cfd['HttpOnly']+'	'+cfd['path']+'	'+'FALSE'+'	'+cfd['expiry']+'	'+'__cfduid'+'	'+cfd['__cfduid']
 			if asp:
 				str3 = asp['domain']+'	'+'FALSE'+'	'+asp['path']+'	'+'FALSE'+'	'+asp['expiry']+'	'+'ASP.NET_SessionId'+'	'+asp['ASP.NET_SessionId']
-			else:
-				str3 = ''
+				
 			if idt:
 				str3 = idt['domain']+'	'+'FALSE'+'	'+idt['path']+'	'+'FALSE'+'	'+idt['expiry']+'	'+'idtz'+'	'+idt['idtz']
-			else:
-				str3 = ''
+				
 			if 'kissasian' in self.url:
 				str3 = 'kissasian.com	FALSE	/	FALSE	0		__test'
-			
 			
 			f = open(self.cookie_file,'w')
 			if str3:
