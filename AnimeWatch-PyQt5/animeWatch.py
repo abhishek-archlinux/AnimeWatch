@@ -6215,10 +6215,21 @@ class Ui_MainWindow(object):
 		self.label.setText(_fromUtf8(""))
 		self.label.setScaledContents(True)
 		self.label.setObjectName(_fromUtf8("label"))
-		self.text = QtWidgets.QTextBrowser(MainWindow)
+		#self.text = QtWidgets.QTextBrowser(MainWindow)
+		self.text = QtWidgets.QTextEdit(MainWindow)
+		self.text.setAcceptRichText(False)
 		self.text.setObjectName(_fromUtf8("text"))
+		self.text.copyAvailable.connect(self.text_editor_changed)
+		self.text_save_btn = QtWidgets.QPushButton(MainWindow)
+		self.text_save_btn.setText('Save')
+		self.text_save_btn.setMinimumSize(QtCore.QSize(30,25))
+		self.text_save_btn.clicked.connect(self.save_text_edit)
+		self.text_save_btn.hide()
+		self.text_save_btn_timer = QtCore.QTimer()
 		#self.text.setMaximumSize(QtCore.QSize(450, 250))
 		#self.text.setMinimumSize(QtCore.QSize(450, 250))
+		self.text_save_btn_timer.timeout.connect(self.text_save_btn_hide)
+		self.text_save_btn_timer.setSingleShot(True)
 		
 		self.text.lineWrapMode()
 		#self.VerticalLayoutLabel.setStretch(2,1)
@@ -6801,8 +6812,7 @@ class Ui_MainWindow(object):
 		self.btnWebReviews_search.setPlaceholderText('Search Web')
 		self.btnWebReviews_search.returnPressed.connect(lambda x=0:self.reviewsWeb(action='return_pressed'))
 		
-		
-		
+		#self.btnWebReviews_search.setMenu(self.btnweb_menu)
 		##################
 		
 		
@@ -7408,7 +7418,23 @@ class Ui_MainWindow(object):
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
 		self.mpv_thumbnail_lock = False
+	def text_save_btn_hide(self):
+		self.text_save_btn.hide()
+	def save_text_edit(self):
+		txt = self.text.toPlainText()
+		self.text.clear()
+		self.copySummary(txt)
+	def text_editor_changed(self):
+		g = self.text.geometry()
+		txt = self.text.toPlainText()
+		print(g.x(),g.y())
 		
+		self.text_save_btn.setGeometry(g.x()+g.width()-30,g.y()-25,35,25)
+		self.text_save_btn.show()
+		
+		#if not self.text_save_btn_timer.isActive():
+		self.text_save_btn_timer.start(4000)
+		#self.copySummary(txt)
 	def show_hide_filter_toolbar(self):
 		if self.list1.isHidden() and self.list2.isHidden():
 			pass
@@ -8378,6 +8404,7 @@ class Ui_MainWindow(object):
 			#ui.list2.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
 			#ui.list3.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
 			ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			ui.text_save_btn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,60%);border:rgba(0,0,0,30%);border-radius:3px")
 			ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
 			ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
@@ -10385,9 +10412,11 @@ class Ui_MainWindow(object):
 				self.tab_5.show()
 	def webClose(self):
 		global view_layout
-		#homeN = home+'/src/default.html'
-		#self.web.load(QUrl(homeN))
-		#self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
+		
+		if not self.VerticalLayoutLabel.itemAt(2):
+			self.VerticalLayoutLabel.addStretch(2)
+			print('--stretch -- added--to --label and text widget--')
+		
 		self.tmp_web_srch = ''
 		try:
 			self.web.close()
@@ -10408,6 +10437,9 @@ class Ui_MainWindow(object):
 		#self.goto_epn.show()
 	def webHide(self):
 		global mpvplayer
+		#if not self.VerticalLayoutLabel.itemAt(2):
+		#	self.VerticalLayoutLabel.addStretch(2)
+		#	print('--stretch -- added--to --label and text widget--')
 		if mpvplayer.processId() > 0:
 			self.tab_2.hide()
 		else:
@@ -10840,7 +10872,7 @@ class Ui_MainWindow(object):
 			name = original_path_name[r]
 		if not os.path.isfile(picn):
 			picn = os.path.join(home,'default.jpg')
-		if os.path.isfile(picn) and opt == "History":
+		if os.path.isfile(picn) and opt == "History" and (site.lower()!= 'video' and site.lower()!= 'music' and site.lower()!= 'local'):
 			#thumbnail = '/tmp/AnimeWatch/'+name+'thumbnail.jpg'
 			#check again
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
@@ -10860,7 +10892,7 @@ class Ui_MainWindow(object):
 				shutil.copy(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'))
 				ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
 			#self.listfound()
-		elif os.path.isfile(picn) and (site == "Local" or site == "Video") and opt != "History":
+		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			#thumbnail = '/tmp/AnimeWatch/'+name+'thumbnail.jpg'
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 			basewidth = 450
@@ -10918,7 +10950,7 @@ class Ui_MainWindow(object):
 		if site == "Local":
 			r = self.list1.currentRow()
 			name = original_path_name[r]
-		if os.path.isfile(picn) and opt == "History":
+		if os.path.isfile(picn) and opt == "History" and (site.lower()!= 'video' and site.lower()!= 'music' and site.lower()!= 'local'):
 			basewidth = screen_width
 			img = Image.open(picn)
 			wpercent = (basewidth / float(img.size[0]))
@@ -10932,7 +10964,7 @@ class Ui_MainWindow(object):
 			else:
 				shutil.copy(picn,os.path.join(home,'History',site,name,'fanart.jpg'))
 				ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
-		elif os.path.isfile(picn) and (site == "Local" or site == "Video") and opt != "History":
+		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			basewidth = screen_width
 			img = Image.open(picn)
 			wpercent = (basewidth / float(img.size[0]))
@@ -10967,7 +10999,7 @@ class Ui_MainWindow(object):
 				print(picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
 				ui.videoImage(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,'fanart.jpg'),'')
 			#ui.listfound()
-	def copySummary(self):
+	def copySummary(self,copy_sum=None):
 		global name,site,opt,pre_opt,home,siteName,original_path_name
 		print (site)
 		print (opt)
@@ -10986,12 +11018,14 @@ class Ui_MainWindow(object):
 			r = self.list1.currentRow()
 			name = original_path_name[r]
 			print(sumry,'---',name,'--copysummary---')
-		if os.path.isfile(sumry) and opt == "History":
+		if copy_sum:
+			write_files(sumry,copy_sum,False)
+		if os.path.isfile(sumry) and opt == "History" and (site != "Local" and site != "Video" and site != 'Music'):
 			if site == "SubbedAnime" or site == "DubbedAnime":
 				shutil.copy(sumry,os.path.join(home,'History',site,siteName,name,'summary.txt'))
 			else:
 				shutil.copy(sumry,os.path.join(home,'History',site,name,'summary.txt'))
-		elif os.path.isfile(sumry) and (site == "Local" or site == "Video") and opt != "History":
+		elif os.path.isfile(sumry) and (site == "Local" or site == "Video"):
 				shutil.copy(sumry,os.path.join(home,'Local',name,'summary.txt'))
 		elif (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
@@ -12883,9 +12917,11 @@ class Ui_MainWindow(object):
 		self.dockWidget_3.hide()
 		self.label.hide()
 		self.text.hide()
-		self.VerticalLayoutLabel.takeAt(2)
+		print(self.VerticalLayoutLabel.itemAt(2),'--itemAt--')
+		if self.VerticalLayoutLabel.itemAt(2):
+			self.VerticalLayoutLabel.takeAt(2)
+			print('--stretch--deleted--')
 		self.frame.hide()
-		
 		#self.frame1.hide()
 		self.tab_2.show()
 		self.goto_epn.hide()
@@ -12900,6 +12936,13 @@ class Ui_MainWindow(object):
 				self.tmp_web_srch = key
 			elif action == 'context_menu' or action == 'search_by_name':
 				key = srch_txt
+				#try:
+				#	cur_site_index = self.btnWebReviews.findText(web_arr_dict[review_site])
+				#except Exception as e:
+				#	print(e)
+				#	cur_site_index = 0
+				#self.btnWebReviews.setCurrentIndex(cur_site_index)
+				#print(action,'---context--menu--')
 			elif action == 'index_changed' or action == 'btn_pushed':
 				if not self.tmp_web_srch:
 					key = name1

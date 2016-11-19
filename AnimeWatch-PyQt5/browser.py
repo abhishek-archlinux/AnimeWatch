@@ -490,11 +490,14 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.ui.update_playlist(file_path)
 	def contextMenuEvent(self, event):
 		self.media_url = ''
+		self.selected_text = ''
 		menu = self.page().createStandardContextMenu()
 		try:
 			data = self.page().contextMenuData()
 			url = data.linkUrl().url()
 			self.title_page = data.linkText()
+			self.selected_text = data.selectedText()
+			print(self.selected_text)
 			#print(data.selectedText(),'--selected-text--')
 			try:
 				#self.title_page = self.title_page.strip()
@@ -528,7 +531,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			url = self.media_url
 			print(url)
 			
-		arr = ['Download As Fanart','Download As Cover']
+		arr = ['Download As Fanart','Download As Cover','Copy Summary']
 		arr_extra_tvdb = ['Series Link','Season Episode Link']
 		arr_last = ['Artist Link']
 		action = []
@@ -582,7 +585,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			
 			for i in range(len(action)):
 				if act == action[i]:
-					self.download(url,arr[i])
+					self.download(url,arr[i],copy_summary=self.selected_text)
 			if yt:
 				for i in range(len(item_m)):
 					if act == item_m[i]:
@@ -648,13 +651,15 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 						if not os.path.exists(file_path):
 							f = open(file_path,'w')
 							f.close()
-			elif 'tvdb' in self.url().url() or 'last.fm' in self.url().url():
+			elif 'tvdb' in self.url().url() or 'last.fm' in self.url().url() or self.selected_text:
 				print(self.url().url(),'--tvdb-url--')
 				if 'tvdb' in self.url().url():
 					arr = arr + arr_extra_tvdb
-				if 'last.fm' in self.url().url():
+				elif 'last.fm' in self.url().url():
 					arr = arr + arr_last
-			
+				elif self.selected_text:
+					arr[:]=[]
+					arr.append('Copy Summary')
 				for i in range(len(arr)):
 					action.append(menu.addAction(arr[i]))
 					
@@ -662,7 +667,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				
 				for i in range(len(action)):
 					if act == action[i]:
-						self.download(self.url().url(),arr[i])
+						self.download(self.url().url(),arr[i],copy_summary=self.selected_text)
 			else:
 				super(Browser, self).contextMenuEvent(event)
 	def getContentUnicode(self,content):
@@ -681,7 +686,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		content = ccurl(url)
 		return content
-	def download(self, url,option):
+	def download(self, url,option,copy_summary=None):
 		
 		if option.lower() == 'play with animewatch':
 			final_url = ''
@@ -738,6 +743,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.ui.posterfound(url)
 			self.ui.copyImg()
 			self.ui.copySummary()
+		elif option.lower() == 'copy summary':
+			self.ui.copySummary(copy_sum=copy_summary)
 		else:
 			print ("Hello")
 			hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
