@@ -1292,7 +1292,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					#idw = str(mn)
 					idw = str(int(ui.tab_5.winId()))
 					ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-					ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+					##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
 					#ui.horizontalLayout10.addWidget(ui.tab_5)
 					#if ui.tab_5.isHidden() or ui.tab_5.width==0:
 					ui.tab_5.show()
@@ -1378,7 +1378,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					ui.epnfound()
 					if num < ui.list2.count():
 						ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-						ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+						##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
 						ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
 						#ui.horizontalLayout10.addWidget(ui.tab_5)
 					
@@ -5219,7 +5219,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 					num = ui.list2.currentRow()
 					curR = num
 					
-					ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
+					ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 					
 					if '	' in epnArrList[num]:
 						new_epn = (epnArrList[num]).split('	')[0]
@@ -5235,7 +5235,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 						
 						idw = str(int(ui.tab_5.winId()))
 						ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-						ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+						##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
 						#ui.horizontalLayout10.addWidget(ui.tab_5)
 						if ui.tab_5.isHidden() or ui.tab_5.width==0:
 							ui.tab_5.show()
@@ -5307,8 +5307,8 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 						ui.epnfound()
 						if num < ui.list2.count():
 							ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-							ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
-							ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
+							##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+							ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 						
 							#if ui.tab_5.isHidden() or ui.tab_5.width()==0:
 							print (ui.tab_5.width())
@@ -6081,21 +6081,13 @@ class tab5(QtWidgets.QWidget):
 				
 				ui.list2.setFocus()
 			else:
+				ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 				#ui.tab_5.setMinimumSize(0,0)
 				ui.gridLayout.setSpacing(10)
-				ui.frame1.hide()
+				#ui.frame1.hide()
 				ui.tab_5.hide()
 				i = 0
 				thumbnail_indicator[:]=[]
-				"""
-				if total_till > 0:
-					while(i<total_till):
-						t = "ui.label_"+str(i)+".deleteLater()"
-						exec (t)
-						i = i+1
-				"""
-				#total_till = 0
-				#browse_cnt = 0
 				if iconv_r_indicator:
 					iconv_r = iconv_r_indicator[0]
 				else:
@@ -6208,6 +6200,11 @@ class Ui_MainWindow(object):
 		self.superGridLayout.setSpacing(0)
 		self.gridLayout.setSpacing(5)
 		self.gridLayout.setContentsMargins(5,5,5,5)
+		
+		#self.gridLayout.setColumnStretch(0,1)
+		#self.gridLayout.setColumnStretch(2,1)
+		#self.gridLayout.setColumnStretch(3,2)
+		
 		#self.horizontalLayout_3 = QtGui.QHBoxLayout(self.tab)
 		#self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
 		#Causes No FullScreen#
@@ -6252,9 +6249,11 @@ class Ui_MainWindow(object):
 		#self.text.setMinimumSize(QtCore.QSize(450, 250))
 		
 		self.text.lineWrapMode()
-		
+		#self.VerticalLayoutLabel.setStretch(2,1)
 		self.VerticalLayoutLabel.insertWidget(0,self.label,0)
 		self.VerticalLayoutLabel.insertWidget(1,self.text,0)
+		#self.VerticalLayoutLabel.setStretch(1,2)
+		self.VerticalLayoutLabel.addStretch(1)
 		#self.text.hide()
 		self.label.setAlignment(QtCore.Qt.AlignTop)
 		self.text.setAlignment(QtCore.Qt.AlignBottom)
@@ -6711,7 +6710,7 @@ class Ui_MainWindow(object):
 		self.tab_2.setObjectName(_fromUtf8("tab_2"))
 		self.gridLayout.addWidget(self.tab_2,0,2,1,1)
 		#self.superGridLayout.addWidget(self.tab_2,2,1,1,1)
-		self.gridLayout.addWidget(self.tab_6,0,2,1,1)
+		self.gridLayout.addWidget(self.tab_6,0,1,1,1)
 		self.tab_2.hide()
 		#self.tab_2.setMinimumSize(900,400)
 		#MainWindow.setCentralWidget(self.centralwidget)
@@ -7825,21 +7824,14 @@ class Ui_MainWindow(object):
 						ui.list2.setFocus()
 					else:
 						#ui.tab_5.setMinimumSize(0,0)
+						ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 						ui.gridLayout.setSpacing(10)
 						
-						ui.frame1.hide()
+						#ui.frame1.hide()
 						ui.tab_5.hide()
 						i = 0
 						thumbnail_indicator[:]=[]
-						"""
-						if total_till > 0:
-							while(i<total_till):
-								t = "ui.label_"+str(i)+".deleteLater()"
-								exec t
-								i = i+1
-						"""
-						#total_till = 0
-						#browse_cnt = 0
+						
 						if iconv_r_indicator:
 							iconv_r = iconv_r_indicator[0]
 						else:
@@ -8375,572 +8367,575 @@ class Ui_MainWindow(object):
 			font: bold 12px;color:black;background-image:url('1.png');
 		}
 		""")
-	def buttonStyle(self):
+	def buttonStyle(self,widget=None):
 		global home,BASEDIR
 		png_home = os.path.join(BASEDIR,'1.png')
-		ui.dockWidget_3.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-				
-				
-		ui.tab_6.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.tab_5.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		#ui.btn9.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.go_opt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		#ui.list1.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		#ui.list2.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
-		#ui.list3.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
-		ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
-		ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
-		ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
-		ui.frame1.setStyleSheet("font: bold 11px;color:white;background:rgba(0,0,0,60%);border:rgba(0,0,0,30%);border-radius:3px;")
-		ui.torrent_frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.float_window.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		#ui.progress.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.player_opt.setStyleSheet("font:bold 11px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;height:20px")
-		
-		
-		ui.btn1.setStyleSheet("""QComboBox {
-	min-height:30px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	selection-color:yellow;
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	
-	}
+		if not widget:
+			ui.dockWidget_3.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+					
+					
+			ui.tab_6.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.tab_5.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			#ui.btn9.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.go_opt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.list1.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			#ui.list2.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			#ui.list3.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
+			ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
+			ui.frame1.setStyleSheet("font: bold 11px;color:white;background:rgba(0,0,0,60%);border:rgba(0,0,0,30%);border-radius:3px;")
+			ui.torrent_frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.float_window.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			#ui.progress.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.player_opt.setStyleSheet("font:bold 11px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;height:20px")
+			
+			
+			ui.btn1.setStyleSheet("""QComboBox {
+			min-height:30px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			selection-color:yellow;
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			
+			}
 
-	QComboBox::focus {
-	
-	color:yellow;
-	
-	
-	}
+			QComboBox::focus {
+			
+			color:yellow;
+			
+			
+			}
 
 
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-	
-		ui.btnAddon.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	selection-color:yellow;
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	
-	}
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+		
+			ui.btnAddon.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			selection-color:yellow;
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			
+			}
 
-	
-	QComboBox::focus {
-	
-	color:yellow;
-	
-	
-	}
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-		
-		
-		ui.comboView.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	padding: 1px 1px 1px 1px;
-	font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	
-	}
+			
+			QComboBox::focus {
+			
+			color:yellow;
+			
+			
+			}
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+			
+			
+			ui.comboView.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			padding: 1px 1px 1px 1px;
+			font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			
+			}
 
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
 
-		ui.slider.setStyleSheet("""QSlider:groove:horizontal {
-	
-	height: 8px;
-	border:rgba(0,0,0,30%);
-	background:rgba(0,0,0,30%);
-	margin: 2px 0;
-	}
+			ui.slider.setStyleSheet("""QSlider:groove:horizontal {
+		
+			height: 8px;
+			border:rgba(0,0,0,30%);
+			background:rgba(0,0,0,30%);
+			margin: 2px 0;
+			}
 
-	QSlider:handle:horizontal {
-	background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);
-	border: 1px solid #5c5c5c;
-	
-	width: 2px;
-	margin: -2px 0; 
-	border-radius: 3px;
-	}
+			QSlider:handle:horizontal {
+			background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);
+			border: 1px solid #5c5c5c;
+			
+			width: 2px;
+			margin: -2px 0; 
+			border-radius: 3px;
+			}
 
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}
-		""")
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}
+				""")
 
-		ui.list1.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;
-		}
+			ui.list1.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;
+			}
+			
+			QListWidget:item {
+			height: 30px;
+			
+			}
 		
-		QListWidget:item {
-		height: 30px;
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
+			
 		
-		}
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
-		
-		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-		
-	
-		""")
-		
-		ui.list4.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			""")
+			
+			ui.list4.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		ui.list5.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		ui.list6.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			""")
+			
+			ui.list5.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		
-		ui.scrollArea.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		ui.scrollArea1.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			""")
+			
+			ui.list6.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
 		
-	
-	
-		""")
 		
-		if self.list_with_thumbnail:
-			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
-			QListWidget:item {height: 112px;}
-			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
-			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
-			QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+			""")
+			
+			
+			ui.scrollArea.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
+		
+		
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
+		
+		
+			""")
+			
+			ui.scrollArea1.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
+		
+		
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
+		
+		
+			""")
+			
+			if self.list_with_thumbnail:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+				QListWidget:item {height: 112px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+			else:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+				QListWidget:item {height: 30px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+			
+			ui.list3.setStyleSheet("""QListWidget{
+			font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
+			
+			QListWidget:item {
+			height: 20px;
+			
+			}
+		
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: violet;
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			""")
+			
+			ui.progress.setStyleSheet("""QProgressBar{
+			font: bold 12px;
+			color:white;
+			background:rgba(0,0,0,30%);
+			border:rgba(0,0,0,1%) ;
+			border-radius: 1px;
+			text-align: center;}
+			
+			QProgressBar:chunk {
+			background-color: rgba(255,255,255,30%);
+			width: 10px;
+			margin: 0.5px;
+			}}""")
+			
+			ui.progressEpn.setStyleSheet("""QProgressBar{
+			font: bold 12px;
+			color:white;
+			background:rgba(0,0,0,30%);
+			border:rgba(0,0,0,1%) ;
+			border-radius: 1px;
+			text-align: center;
+			}
+			
+			QProgressBar:chunk {
+			background-color: rgba(255,255,255,30%);
+			width: 10px;
+			margin: 0.5px;
+			}}""")
+
+			ui.btnWebReviews.setStyleSheet("""QComboBox {
+			min-height:0px;
+			max-height:50px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:white;
+			
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+		
+			ui.btn30.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.btn2.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.btn3.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+			
+			ui.btn10.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""") 
+			
+			ui.chk.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			
+			font-size:9px;
+			padding: 1px 1px 1px 1px;
+			font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			width: 2px;
+			height: 2px;
+			}""") 
+
+			ui.comboBox20.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.comboBox30.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.btnOpt.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+			
+			ui.label_torrent_stop.setStyleSheet("""
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}
+				""")
+			
+			ui.label_down_speed.setStyleSheet("""
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}
+				""")
+			
+			ui.label_up_speed.setStyleSheet("""
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}""")
 		else:
-			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
-			QListWidget:item {height: 30px;}
-			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
-			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
-			QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
-		
-		ui.list3.setStyleSheet("""QListWidget{
-		font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-		
-		QListWidget:item {
-		height: 20px;
-		
-		}
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: violet;
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		""")
-		
-		ui.progress.setStyleSheet("""QProgressBar{
-			
-					font: bold 12px;
-					color:white;
-					background:rgba(0,0,0,30%);
-					border:rgba(0,0,0,1%) ;
-					border-radius: 1px;
-		text-align: center;
-		}
-		QProgressBar:chunk {
-	background-color: rgba(255,255,255,30%);
-	width: 10px;
-	margin: 0.5px;
-	}
-		
-		
-		}
-	
-	
-	
-		""")
-		ui.progressEpn.setStyleSheet("""QProgressBar{
-			
-					font: bold 12px;
-					color:white;
-					background:rgba(0,0,0,30%);
-					border:rgba(0,0,0,1%) ;
-					border-radius: 1px;
-		text-align: center;
-		}
-		QProgressBar:chunk {
-	background-color: rgba(255,255,255,30%);
-	width: 10px;
-	margin: 0.5px;
-	}
-		
-		
-		}
-	
-	
-	
-		""")
-
-		ui.btnWebReviews.setStyleSheet("""QComboBox {
-	min-height:0px;
-	max-height:50px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:white;
-	
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-	
-		ui.btn30.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.btn2.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.btn3.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-		ui.btn10.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""") 
-		ui.chk.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	
-	font-size:9px;
-	padding: 1px 1px 1px 1px;
-	font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""") 
-
-		ui.comboBox20.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.comboBox30.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.btnOpt.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-		ui.label_torrent_stop.setStyleSheet("""
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}
-		""")
-		
-		ui.label_down_speed.setStyleSheet("""
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}
-		""")
-		
-		ui.label_up_speed.setStyleSheet("""
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}""")
+			if widget == ui.list2:
+				if self.list_with_thumbnail:
+					ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+					QListWidget:item {height: 112px;}
+					QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+					QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+					QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+				else:
+					ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+					QListWidget:item {height: 30px;}
+					QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+					QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+					QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 		
 
 	def setPlayerFocus(self):
@@ -10454,6 +10449,7 @@ class Ui_MainWindow(object):
 		if self.tab_2.isHidden():
 			self.HideEveryThing()
 			self.tab_2.show()
+			self.frame1.show()
 		else:
 			self.tab_6.hide()
 			self.tab_2.hide()
@@ -10544,17 +10540,7 @@ class Ui_MainWindow(object):
 		tmp_name[:]=[]
 		num = self.list2.currentRow()
 		i = 0
-		"""
-		if total_till_epn > 0:
-			while(i<total_till_epn):
-				t = "self.label_epn_"+str(i)+".deleteLater()"
 		
-				exec (t)
-		
-				i = i+1
-		#else:
-		total_till_epn = 0
-		"""
 		if self.tab_6.isHidden() or (viewMode == "Thumbnail" and site == "PlayLists"):
 			
 			self.list1.hide()
@@ -10563,16 +10549,16 @@ class Ui_MainWindow(object):
 			self.label.hide()
 			self.text.hide()
 			self.frame.hide()
-			self.frame1.hide()
+			#self.frame1.hide()
 			self.goto_epn.hide()
 			self.dockWidget_3.hide()
-			if mpvplayer:
-				if mpvplayer.processId()>0:
-					self.tab_5.show()
-					self.frame1.show()
-					iconv_r = 1
-					
-			self.gridLayout.addWidget(self.tab_6,0,2,1,1)		
+			if mpvplayer.processId()>0:
+				self.tab_5.show()
+				self.frame1.show()
+				iconv_r = 1
+				self.gridLayout.addWidget(self.tab_6,0,2,1,1)	
+			else:	
+				self.gridLayout.addWidget(self.tab_6,0,1,1,1)		
 			self.tab_6.show()
 			self.thumbnailEpn()
 			self.tab_2.hide()
@@ -18306,6 +18292,7 @@ class Ui_MainWindow(object):
 		
 	def music_mode_layout(self):
 		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt,new_tray_widget,tray
+		#ui.VerticalLayoutLabel.takeAt(2)
 		if not self.float_window.isHidden():
 			tray.right_menu._detach_video()
 			
@@ -18343,9 +18330,10 @@ class Ui_MainWindow(object):
 			#ui.goto_epn.show()
 			show_hide_playlist = 1
 			ui.list2.setFocus()
-		
+		ui.buttonStyle(ui.list2)
 	def video_mode_layout(self):
 		global layout_mode,default_arr_setting,opt,new_tray_widget,tray
+		#ui.VerticalLayoutLabel.addStretch(1)
 		if not self.float_window.isHidden():
 			tray.right_menu._detach_video()
 		print('default Mode')
@@ -18390,7 +18378,7 @@ class Ui_MainWindow(object):
 			ui.list2.setFocus()
 			
 		MainWindow.showMaximized()
-		
+		ui.buttonStyle(ui.list2)
 	def _set_window_frame(self):
 		global new_tray_widget
 		txt = ui.window_frame
