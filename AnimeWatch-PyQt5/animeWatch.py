@@ -646,7 +646,7 @@ class ExtendedQLabel(QtWidgets.QLabel):
 			name = tmp_name[num%len(tmp_name)]
 		print (name)
 		menu = QtWidgets.QMenu(self)
-		review = menu.addAction("Review")
+		#review = menu.addAction("Review")
 		rmPoster = menu.addAction("Remove Poster")
 		adPoster = menu.addAction("Find Image")
 		rset = menu.addAction("Reset Counter")
@@ -660,13 +660,13 @@ class ExtendedQLabel(QtWidgets.QLabel):
 			#print name
 			p1 = "ui."+t+".clear()"
 			exec (p1)
-	
-		elif action == review:
+			
+			#elif action == review:
 	
 			#ui.btn10.setItemText(0, _translate("MainWindow",name, None))
 			#ui.btn10.setItemText(0, _translate("MainWindow",name, None))
-			ui.btn2.setCurrentIndex(1)
-			ui.reviews()
+			#ui.btn2.setCurrentIndex(1)
+			#ui.reviews()
 		elif action == adPoster:
 			if site == "SubbedAnime" and base_url == 15:
 				nam = re.sub('[0-9]*','',name)
@@ -2872,22 +2872,12 @@ class List1(QtWidgets.QListWidget):
 							f = open(file_path,'w')
 							f.close()
 				elif action == profile:
-					"""
-					item, ok = QtGui.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Name or Url manually')
-					if ok and item:
-						if '/' in name:
-							name = name.replace('/','-')
-						
-						tmp_file='/tmp/AnimeWatch/'+name+'.txt'
-						if os.path.exists(tmp_file):
-							os.remove(tmp_file)
-						ui.posterfound(str(item))
-					"""
 					if '/' in name:
 						nam = name.replace('/','-')
 					else:
 						nam = name
-					ui.reviewsMusic("Last.Fm")
+					#ui.reviewsMusic("Last.Fm")
+					ui.reviewsWeb(srch_txt=nam,review_site='last.fm',action='search_by_name')
 				elif action == thumbnail:
 					if site == "Local" or bookmark == "True" or opt == "History" or site == "Video" or site == "Music":
 						if ui.list3.currentItem():
@@ -2976,25 +2966,23 @@ class List1(QtWidgets.QListWidget):
 						nam = name.replace('/','-')
 					else:
 						nam = name
-					ui.reviewsMusic("Last.Fm")
+					#ui.reviewsMusic("Last.Fm")
+					ui.reviewsWeb(srch_txt=nam,review_site='last.fm',action='search_by_name')
 			else:
 				menu = QtWidgets.QMenu(self)
 				#review = menu.addAction("Review")
 				submenuR = QtWidgets.QMenu(menu)
-				submenuR.setTitle("Reviews")
+				submenuR.setTitle("Find Information")
 				menu.addMenu(submenuR)
 				submenu = QtWidgets.QMenu(menu)
 				submenu.setTitle("Bookmark Options")
 				menu.addMenu(submenu)
 				#if bookmark == "True":
-				review1 = submenuR.addAction("MyAnimeList")
-				review2 = submenuR.addAction("Anime-Planet")
-				review3 = submenuR.addAction("Anime-Source")
-				review4 = submenuR.addAction("TVDB")
-				review5 = submenuR.addAction("ANN")
-				review6 = submenuR.addAction("AniDB")
-				review7 = submenuR.addAction("Google")
-				review8 = submenuR.addAction("Youtube")
+				submenu_arr_dict = {'mal':'MyAnimeList','ap':'Anime-Planet','ans':'Anime-Source','tvdb':'TVDB','ann':'ANN','anidb':'AniDB','g':'Google','yt':'Youtube','ddg':'DuckDuckGo','last.fm':'last.fm','zerochan':'Zerochan'}
+				reviews = []
+				for i in submenu_arr_dict:
+					reviews.append(submenuR.addAction(submenu_arr_dict[i]))
+				
 				addBookmark = submenu.addAction("Add Bookmark")
 				
 				bookmark_array = ['bookmark']
@@ -3023,7 +3011,10 @@ class List1(QtWidgets.QListWidget):
 					if action == item_m[i]:
 						item_name = item_m[i].text()
 						self.triggerBookmark(item_name)
-				
+				for i in range(len(reviews)):
+					if action == reviews[i]:
+						ui.reviewsWeb(srch_txt=name,review_site=list(submenu_arr_dict.keys())[list(submenu_arr_dict.values()).index(reviews[i].text())],action='context_menu')
+						
 				if action == new_pls:
 					print ("creating new bookmark category")
 					item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Playlist Name')
@@ -3044,11 +3035,7 @@ class List1(QtWidgets.QListWidget):
 					
 				elif action == addBookmark:
 					self.addBookmarkList()
-					"""
-					elif action == rmPoster:
-				
-					ui.label.clear()
-					"""
+					
 				elif action == thumbnail:
 					if (site == "Local" or site == 'PlayLists') or bookmark == "True" or opt == "History" or site == "Video":
 						ui.scrollArea.setFocus()
@@ -3061,44 +3048,17 @@ class List1(QtWidgets.QListWidget):
 							if '.txt' in i or '.jpg' in i:
 								t = os.path.join(TMPDIR,i)
 								os.remove(t)
-					
-				
-				elif action == review1:
-					ui.btnWebReviews.setCurrentIndex(1)
-					ui.reviewsWeb()
-				elif action == review2:	
-					ui.btnWebReviews.setCurrentIndex(2)
-					ui.reviewsWeb()
-				elif action == review3:	
-					ui.btnWebReviews.setCurrentIndex(3)
-					ui.reviewsWeb()
-				elif action == review4:	
-					ui.btnWebReviews.setCurrentIndex(4)
-					ui.reviewsWeb()
-				elif action == review5:	
-					ui.btnWebReviews.setCurrentIndex(5)
-					ui.reviewsWeb()
-				elif action == review6:	
-					ui.btnWebReviews.setCurrentIndex(6)
-					ui.reviewsWeb()
-				elif action == review7:	
-					ui.btnWebReviews.setCurrentIndex(7)
-					ui.reviewsWeb()
-				elif action == review8:	
-					ui.btnWebReviews.setCurrentIndex(8)
-					ui.reviewsWeb()
 				elif action == tvdb:
 					if self.currentItem():
 						ui.posterfound("")
 						r = self.currentRow()
-						
 						ui.copyImg()
 						ui.copySummary()
 						#ui.copyFanart()
 				elif action == history:
 					ui.setPreOpt()
 				elif action == tvdbM:
-					ui.reviewsMusic("TVDB:"+name)
+					ui.reviewsWeb(srch_txt=name,review_site='tvdb',action='context_menu')
 class List2(QtWidgets.QListWidget):
 	def __init__(self, parent):
 		super(List2, self).__init__(parent)
@@ -4205,7 +4165,7 @@ class List2(QtWidgets.QListWidget):
 						
 	def contextMenuEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,site,home,opt,finalUrlFound,epnArrList
-		global quitReally,epnArrList,name,hdr
+		global quitReally,epnArrList,name,hdr,ui
 		#print name
 		if site == "Music":
 			menu = QtWidgets.QMenu(self)
@@ -4269,7 +4229,18 @@ class List2(QtWidgets.QListWidget):
 				ui.scrollArea1.setFocus()
 			
 			elif action == go_to:
-					ui.reviewsMusic("Last.Fm")
+					if ui.list3.currentItem():
+						nam1 = ''
+						if str(ui.list3.currentItem().text())=="Artist":
+							nam1 = str(ui.list1.currentItem().text())
+						else:
+							r = self.currentRow()
+							try:
+								nam1 = epnArrList[r].split('	')[2]
+							except:
+								nam1 = ''
+						print (nam1)
+						ui.reviewsWeb(srch_txt=nam1,review_site='last.fm',action='search_by_name')
 			elif action == fix_ord:
 				self.fix_order()
 			elif action == delInfo or action == delPosters or action == default:
@@ -4479,7 +4450,8 @@ class List2(QtWidgets.QListWidget):
 			elif action == eplistM:
 				if ui.list1.currentItem():
 					name1 = (ui.list1.currentItem().text())
-					ui.reviewsMusic("TVDB:"+name1)
+					#ui.reviewsMusic("TVDB:"+name1)
+					ui.reviewsWeb(srch_txt=name1,review_site='tvdb',action='search_by_name')
 			elif action == eplist:
 				if self.currentItem():
 					self.find_info(0)
@@ -6782,7 +6754,8 @@ class Ui_MainWindow(object):
 		#self.text.setObjectName(_fromUtf8("text"))
 		#self.horizontalLayout.addWidget(self.text)
 		self.dockWidget_4.setWidget(self.dockWidgetContents_4)
-		###################################################
+		
+		###################  Browser Layout  ##############################
 		self.horizontalLayout_5 = QtWidgets.QVBoxLayout(self.tab_2)
 		#MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(8), self.dockWidget_4)
 		
@@ -6802,23 +6775,34 @@ class Ui_MainWindow(object):
 		self.btnWebHide = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebHide.setObjectName(_fromUtf8("btnWebHide"))
 		self.btnWebHide.setMaximumSize(200,50)
-		self.horizLayout_web.addWidget(self.btnWebHide)
+		self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
 		
 		self.btnWebClose = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebClose.setObjectName(_fromUtf8("btnWebClose"))
 		self.btnWebClose.setMaximumSize(200,50)
-		self.horizLayout_web.addWidget(self.btnWebClose)
+		self.horizLayout_web.insertWidget(1,self.btnWebClose,0)
 		
 		self.btnWebReviews = QtWidgets.QComboBox(self.tab_2)
 		self.btnWebReviews.setObjectName(_fromUtf8("btnWebReviews"))
-		self.horizLayout_web.addWidget(self.btnWebReviews)
+		self.horizLayout_web.insertWidget(2,self.btnWebReviews,0)
 		self.btnWebReviews.setMaximumSize(200,50)
 		
-		self.btnPls = QtWidgets.QPushButton(self.tab_2)
-		self.btnPls.setObjectName(_fromUtf8("btnPls"))
-		self.horizLayout_web.addWidget(self.btnPls)
-		self.btnPls.setMaximumSize(200,50)
-		self.btnPls.setText("Playlist")
+		self.btnGoWeb = QtWidgets.QPushButton(self.tab_2)
+		self.btnGoWeb.setObjectName(_fromUtf8("btnGoWeb"))
+		self.horizLayout_web.insertWidget(3,self.btnGoWeb,0)
+		self.btnGoWeb.setMaximumSize(200,50)
+		self.btnGoWeb.setText("Go")
+		self.btnGoWeb.clicked.connect(lambda x=0: self.reviewsWeb(action='btn_pushed'))
+		
+		self.btnWebReviews_search = QtWidgets.QLineEdit(self.tab_2)
+		self.btnWebReviews_search.setObjectName(_fromUtf8("btnWebReviews_search"))
+		self.horizLayout_web.insertWidget(4,self.btnWebReviews_search,0)
+		self.btnWebReviews_search.setMaximumSize(200,50)
+		self.btnWebReviews_search.setPlaceholderText('Search Web')
+		self.btnWebReviews_search.returnPressed.connect(lambda x=0:self.reviewsWeb(action='return_pressed'))
+		
+		
+		
 		##################
 		
 		
@@ -7122,7 +7106,7 @@ class Ui_MainWindow(object):
 		self.record_history = False
 		self.depth_list = 0
 		self.display_list = False
-		
+		self.tmp_web_srch = ''
 		self.update_proc = QtCore.QProcess()
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7141,6 +7125,9 @@ class Ui_MainWindow(object):
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
+		self.btnWebReviews.addItem(_fromUtf8(""))
+		self.btnWebReviews.addItem(_fromUtf8(""))
+		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
@@ -7230,7 +7217,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.btnWebClose, QtCore.SIGNAL(_fromUtf8("clicked()")), self.webHide)
 		self.btnWebClose.clicked.connect(self.webClose)
 		self.btnWebHide.clicked.connect(self.webHide)
-		self.btnPls.clicked.connect(self.togglePlaylist)
+		#self.btnPls.clicked.connect(self.togglePlaylist)
 		#QtCore.QObject.connect(self.go_opt, QtCore.SIGNAL(_fromUtf8("clicked()")), self.go_opt_options)
 		self.go_opt.clicked.connect(self.go_opt_options)
 		#QtCore.QObject.connect(self.btn10, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.browse_epn)
@@ -7252,9 +7239,9 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.comboView, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.viewPreference)
 		self.comboView.currentIndexChanged['int'].connect(self.viewPreference)
 		#QtCore.QObject.connect(self.btn2, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.reviews)
-		self.btn2.currentIndexChanged['int'].connect(self.reviews)
+		#self.btn2.currentIndexChanged['int'].connect(self.reviews)
 		#QtCore.QObject.connect(self.btnWebReviews, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.reviewsWeb)
-		self.btnWebReviews.currentIndexChanged['int'].connect(self.reviewsWeb)
+		self.btnWebReviews.currentIndexChanged['int'].connect(lambda x: self.reviewsWeb(action='index_changed'))
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("itemDoubleClicked(QListWidgetItem*)")), self.listfound)
 		self.list1.itemDoubleClicked['QListWidgetItem*'].connect(self.list1_double_clicked)
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("currentRowChanged(int)")), self.history_highlight)
@@ -7355,6 +7342,9 @@ class Ui_MainWindow(object):
 		self.btnWebReviews.setItemText(6, _translate("MainWindow", "AniDB", None))
 		self.btnWebReviews.setItemText(7, _translate("MainWindow", "Google", None))
 		self.btnWebReviews.setItemText(8, _translate("MainWindow", "Youtube", None))
+		self.btnWebReviews.setItemText(9, _translate("MainWindow", "DuckDuckGo", None))
+		self.btnWebReviews.setItemText(10, _translate("MainWindow", "Zerochan", None))
+		self.btnWebReviews.setItemText(11, _translate("MainWindow", "last.fm", None))
 		self.chk.setItemText(0, _translate("MainWindow", "mpv", None))
 		#self.chk.setItemText(1, _translate("MainWindow", "Default", None))
 		self.chk.setItemText(1, _translate("MainWindow", "mplayer", None))
@@ -10398,6 +10388,7 @@ class Ui_MainWindow(object):
 		#homeN = home+'/src/default.html'
 		#self.web.load(QUrl(homeN))
 		#self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
+		self.tmp_web_srch = ''
 		try:
 			self.web.close()
 			self.web.deleteLater()
@@ -12805,78 +12796,6 @@ class Ui_MainWindow(object):
 			if not os.path.exists(os.path.join(home,"History",site)):
 				os.makedirs(os.path.join(home,"History",site))
 			self.search()
-	
-	def reviewsMusic(self,val):
-		global name,nam,old_manager,new_manager,artist_name_mplayer,epnArrList,site,home,screen_width,quality,site,epnArrList
-		self.HideEveryThing()
-		#self.dockWidget_3.hide()
-		
-		self.tab_2.show()
-		if not self.web:
-			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
-			self.web.setObjectName(_fromUtf8("web"))
-			self.horizontalLayout_5.addWidget(self.web)
-		#self.web.show()
-		#old_manager = self.web.page().networkAccessManager()
-		if not QT_WEB_ENGINE:
-			nam = NetWorkManager()
-			self.web.page().setNetworkAccessManager(nam)
-		self.webStyle(self.web)
-		if site == "Music":
-			if str(self.list3.currentItem().text())=="Artist":
-				nam1 = str(self.list1.currentItem().text())
-			else:
-				r = self.list2.currentRow()
-				nam1 = epnArrList[r].split('	')[2]
-			print (nam1)
-		else:
-			nam1 = ""
-		if val == "Last.Fm":
-			self.web.load(QUrl("http://www.last.fm/search?q="+nam1))
-		elif "TVDB:" in val:
-			name1 = val.split(':')[-1]
-			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-	def reviews(self):
-		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
-		if not self.web:
-			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
-			
-			self.web.setObjectName(_fromUtf8("web"))
-			self.horizontalLayout_5.addWidget(self.web)
-		review_site = str(self.btn2.currentText())
-		#self.tabWidget1.setCurrentIndex(1)
-		self.HideEveryThing()
-		self.tab_2.show()
-		name = str(name)
-		name1 = re.sub('-| ','+',name)
-		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
-		key = self.line.text()
-		if key:
-			name1 = str(key)
-		#old_manager = self.web.page().networkAccessManager()
-		if not QT_WEB_ENGINE:
-			nam = NetWorkManager()
-			self.web.page().setNetworkAccessManager(nam)
-		self.webStyle(self.web)
-		if review_site == "Anime-Planet":
-			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
-		elif review_site == "MyAnimeList":
-			self.web.load(QUrl("http://myanimelist.net/anime.php?q="+name1))
-		elif review_site == "Anime-Source":
-			self.web.load(QUrl("http://www.anime-source.com/banzai/modules.php?name=NuSearch&type=all&action=search&info="+name1))
-		
-		elif review_site == "TVDB":
-			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-		elif review_site == "AniDB":
-			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
-		elif review_site == "ANN":
-			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
-		elif review_site == "Google":
-			self.web.load(QUrl("https://www.google.com/search?q="+name1))
-		elif review_site == "Reviews":
-			self.web.setHtml("<html>Reviews</html>")
-		#new_manager = NetWorkManager(old_manager)
-		#self.web.page().setNetworkAccessManager(old_manager)
 		
 	def goto_web_directly(self,url):
 		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
@@ -12922,9 +12841,23 @@ class Ui_MainWindow(object):
 		self.web.load(QUrl(url))
 		
 			
-	def reviewsWeb(self):
+	def reviewsWeb(self,srch_txt=None,review_site=None,action=None):
 		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
-		review_site = str(self.btnWebReviews.currentText())
+		
+		web_arr_dict = {'mal':'MyAnimeList','ap':'Anime-Planet','ans':'Anime-Source','tvdb':'TVDB','ann':'ANN','anidb':'AniDB','g':'Google','yt':'Youtube','ddg':'DuckDuckGo','reviews':'Reviews','last.fm':'last.fm','zerochan':'Zerochan'}
+		
+		if not review_site:
+			review_site_tmp = self.btnWebReviews.currentText()
+			review_site = list(web_arr_dict.keys())[list(web_arr_dict.values()).index(review_site_tmp)]
+		#if action:
+		#	if action == 'index_changed':
+		#		if review_site:
+		#			try:
+		#				self.btnWebReviews_search.setPlaceholderText('Search '+web_arr_dict[review_site])
+		#			except Exception as e:
+		#				print(e)
+		#		return 0
+		#review_site = str(self.btnWebReviews.currentText())
 		print(self.web,'0')
 		if not self.web and review_site:
 			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
@@ -12937,7 +12870,7 @@ class Ui_MainWindow(object):
 			else:
 				cur_location = self.web.url().toString()
 			print(cur_location,'--web--url--')
-			if 'youtube' in review_site.lower() and 'youtube' not in cur_location and QT_WEB_ENGINE:
+			if 'yt' in review_site.lower() and 'youtube' not in cur_location and QT_WEB_ENGINE:
 				self.web.close()
 				self.web.deleteLater()
 				self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
@@ -12947,18 +12880,37 @@ class Ui_MainWindow(object):
 		
 		self.list1.hide()
 		self.list2.hide()
-		self.label.hide()
 		self.dockWidget_3.hide()
+		self.label.hide()
 		self.text.hide()
+		self.VerticalLayoutLabel.takeAt(2)
 		self.frame.hide()
-		self.frame1.hide()
+		
+		#self.frame1.hide()
 		self.tab_2.show()
 		self.goto_epn.hide()
 		name = str(name)
 		name1 = re.sub('-| ','+',name)
 		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
-		key = self.line.text()
-		self.line.clear()
+		key = ''
+		if action:
+			if action == 'return_pressed':
+				key = self.btnWebReviews_search.text()
+				self.btnWebReviews_search.clear()
+				self.tmp_web_srch = key
+			elif action == 'context_menu' or action == 'search_by_name':
+				key = srch_txt
+			elif action == 'index_changed' or action == 'btn_pushed':
+				if not self.tmp_web_srch:
+					key = name1
+				else:
+					key = self.tmp_web_srch
+			elif action == 'line_return_pressed':
+				key = self.line.text()
+				self.line.clear()
+		else:
+			key = self.line.text()
+			self.line.clear()
 		if key:
 			name1 = str(key)
 		#old_manager = self.web.page().networkAccessManager()
@@ -12986,80 +12938,41 @@ class Ui_MainWindow(object):
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
 		self.webStyle(self.web)
-		if review_site == "Anime-Planet":
+		if review_site == "ap":
 			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
-		elif review_site == "MyAnimeList":
+		elif review_site == "mal":
 			self.web.load(QUrl("http://myanimelist.net/anime.php?q="+name1))
-		elif review_site == "Anime-Source":
+		elif review_site == "ans":
 			self.web.load(QUrl("http://www.anime-source.com/banzai/modules.php?name=NuSearch&type=all&action=search&info="+name1))
-		elif review_site == "TVDB":
+		elif review_site == "tvdb":
 			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-		elif review_site == "AniDB":
+		elif review_site == "anidb":
 			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
-		elif review_site == "ANN":
+		elif review_site == "ann":
 			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
-		elif review_site == "Google":
+		elif review_site == "g":
 			self.web.load(QUrl("https://www.google.com/search?q="+name1))
-		elif review_site == "Youtube":
+		elif review_site == "ddg":
+			self.web.load(QUrl("https://duckduckgo.com/?q="+name1))
+		elif review_site == "yt":
 			if not name1:
 				name1 = 'GNU Linux FSF'
-			
 			if pl_list and new_url:
 				self.web.load(QUrl(new_url))
 			else:
-				self.web.load(QUrl("https://www.youtube.com/results?search_query="+name1))
-		elif review_site == "Reviews":
+				self.web.load(QUrl("https://m.youtube.com/results?search_query="+name1))
+		elif review_site == "last.fm":
+			self.web.load(QUrl("http://www.last.fm/search?q="+name1))
+		elif review_site == 'zerochan':
+			self.web.load(QUrl("http://www.zerochan.net/search?q="+name1))
+		elif review_site == "reviews":
 			self.web.setHtml('<html>Reviews:</html>')
-		#new_manager = NetWorkManager(old_manager)
-		#self.web.page().setNetworkAccessManager(old_manager)
-	def reviews(self):
-		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
-		if not self.web:
-			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
-			self.web.setObjectName(_fromUtf8("web"))
-			self.horizontalLayout_5.addWidget(self.web)
-		review_site = str(self.btnWebReviews.currentText())
-		#if review_site == "Reviews":
-		#	review_site = "MyAnimeList"
 		
-		#self.tabWidget1.setCurrentIndex(1)
-		self.list1.hide()
-		self.list2.hide()
-		self.label.hide()
-		self.dockWidget_3.hide()
-		self.text.hide()
-		self.frame.hide()
-		self.frame1.hide()
-		self.tab_2.show()
-		self.goto_epn.hide()
-		name = str(name)
-		name1 = re.sub('-| ','+',name)
-		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
-		key = self.line.text()
-		if key:
-			name1 = str(key)
-		#old_manager = self.web.page().networkAccessManager()
-		if not QT_WEB_ENGINE:
-			nam = NetWorkManager()
-			self.web.page().setNetworkAccessManager(nam)
-		self.webStyle(self.web)
-		if review_site == "Anime-Planet":
-			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
-		elif review_site == "MyAnimeList":
-			self.web.load(QUrl("http://myanimelist.net/anime.php?q="+name1))
-		elif review_site == "Anime-Source":
-			self.web.load(QUrl("http://www.anime-source.com/banzai/modules.php?name=NuSearch&type=all&action=search&info="+name1))
-		
-		elif review_site == "TVDB":
-			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-		elif review_site == "AniDB":
-			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
-		elif review_site == "ANN":
-			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
-		elif review_site == "Google":
-			self.web.load(QUrl("https://www.google.com/search?q="+name1))
-		elif review_site == "Reviews":
-			self.web.setHtml('<html>Reviews:</html>')
+		if review_site:
+			try:
+				self.btnWebReviews_search.setPlaceholderText('Search '+web_arr_dict[review_site])
+			except Exception as e:
+				print(e)
 		
 	def rawlist_highlight(self):
 		
@@ -13338,7 +13251,7 @@ class Ui_MainWindow(object):
 			if name_t:
 				name = name_t
 				self.btnWebReviews.setCurrentIndex(8)
-				self.reviewsWeb()
+				self.reviewsWeb(srch_txt=name,review_site='yt',action='line_return_pressed')
 			#if ui.btn1.currentText() == 'Addons' and addon_index >=0 and addon_index < ui.btnAddon.count():
 			#ui.btnAddon.setCurrentIndex(addon_index)
 		elif site == "DubbedAnime" or site == "SubbedAnime":
