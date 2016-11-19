@@ -2543,6 +2543,7 @@ class List1(QtWidgets.QListWidget):
 			r = self.currentRow()
 			item = self.item(r)
 			if item:
+				
 				if site == "PlayLists":
 					index = self.currentRow()
 					item_r  = self.item(index)
@@ -12240,7 +12241,15 @@ class Ui_MainWindow(object):
 			item = self.list1.item(row)
 			nam = str(item.text())
 			if item:
-				
+				if epnArrList:
+					icon_name = self.get_thumbnail_image_path(0,epnArrList[0])
+					icon_dir_path,thumb_name = os.path.split(icon_name)
+					thumb_path = os.path.join(home,'thumbnails')
+					print(icon_dir_path,'--thumbnail--path--')
+					if icon_dir_path.startswith(thumb_path):
+						if os.path.exists(icon_dir_path):
+							shutil.rmtree(icon_dir_path)
+							print(icon_dir_path,'--thumbnail--directory--deleted--')
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					dir_name =os.path.join(home,'History',site,siteName,nam)
 					print (dir_name	)
