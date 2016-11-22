@@ -252,20 +252,22 @@ def ccurl(url,external_cookie=None):
 	if '#' in url:
 		curl_opt = nUrl.split('#')[1]
 		url = nUrl.split('#')[0]
+		print(curl_opt,url,'----------------------------------')
 		if curl_opt == '-o':
 			picn_op = nUrl.split('#')[2]
 		elif curl_opt == '-Ie' or curl_opt == '-e':
 			rfr = nUrl.split('#')[2]
 		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
 			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
+		elif curl_opt == '-d':
 			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
+			post = post.replace('"','')
+			post = post.replace("'",'')
 			post1 = post.split('=')[0]
 			post2 = post.split('=')[1]
-			post_data = {post1:post2}
+			post_data = {str(post1):str(post2)}
 			postfield = urllib.parse.urlencode(post_data)
+			print(postfield,'--postfields--')
 	url = str(url)
 	#c.setopt(c.URL, url)
 	try:
