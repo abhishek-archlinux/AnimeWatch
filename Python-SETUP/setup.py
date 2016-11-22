@@ -25,8 +25,8 @@ from setuptools import setup
 import os
 if os.name == 'posix':
 	install_dependencies = ['pycurl','bs4','Pillow','pytaglib','lxml','youtube_dl','urllib3','dbus-python','psutil']
-else:
-	install_dependencies = ['PyQt5','pycurl','bs4','Pillow','pytaglib','lxml','youtube_dl','urllib3','psutil']
+elif os.name == 'nt':
+	install_dependencies = ['PyQt5','pycurl','bs4','Pillow','mutagen','lxml','youtube_dl','urllib3','psutil','certifi']
 setup(
     name='animewatch',
     version='3.0.0',
