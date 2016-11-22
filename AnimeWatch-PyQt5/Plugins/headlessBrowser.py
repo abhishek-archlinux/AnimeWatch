@@ -21,7 +21,7 @@ from io import StringIO,BytesIO
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkAccessManager
-from player_functions import ccurl
+#from player_functions import ccurl
 
 
 
