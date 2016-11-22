@@ -202,13 +202,23 @@ def wget_string(url,dest,rfr=None):
 	if not rfr:
 		if os.name == 'posix':
 			command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
-		else:
-			command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
+		elif os.name == 'nt':
+			ca_cert = get_ca_certificate()
+			if ca_cert:
+				cert = "--ca-certificate="+'"'+ca_cert+'"'
+				command = "wget -c "+cert+" --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
+			else:
+				command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
 	else:
 		if os.name == 'posix':
 			command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
-		else:
-			command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
+		elif os.name == 'nt':
+			ca_cert = get_ca_certificate()
+			if ca_cert:
+				cert = "--ca-certificate="+'"'+ca_cert+'"'
+				command = "wget -c "+cert+" --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
+			else:
+				command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
 	return command
 	
 def getContentUnicode(content):
@@ -263,8 +273,12 @@ def ccurl(url,external_cookie=None):
 	except UnicodeEncodeError:
 		c.setopt(c.URL, url.encode('utf-8'))
 	storage = BytesIO()
-	if os.name != 'posix':
-		c.setopt(c.SSL_VERIFYPEER,False)
+	if os.name == 'nt':
+		ca_cert = get_ca_certificate()
+		if ca_cert:
+			c.setopt(c.CAINFO, ca_cert)
+		else:
+			c.setopt(c.SSL_VERIFYPEER,False)
 	if curl_opt == '-o':
 		c.setopt(c.FOLLOWLOCATION, True)
 		c.setopt(c.USERAGENT, hdr)
@@ -343,3 +357,16 @@ def ccurl(url,external_cookie=None):
 			print('curl failure try again')
 			content = ''
 		return content
+
+def get_ca_certificate():
+	ca_cert = ''
+	if os.name == 'nt':
+		try:
+			import certifi
+			ca_cert = certifi.where()
+		except Exception as e:
+			print(e)
+	return ca_cert
+		
+		
+		

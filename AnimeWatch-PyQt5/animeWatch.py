@@ -90,9 +90,15 @@ import struct
 from PyQt5.QtWidgets import QInputDialog
 import sqlite3
 try:
-	import taglib
+	try:
+		import taglib
+		SONG_TAGS = 'taglib'
+	except:	
+		import mutagen
+		SONG_TAGS = 'mutagen'
 except:
-	pass
+	SONG_TAGS = None
+print(SONG_TAGS,'--tagging-module--')
 from musicArtist import musicArtist
 from yt import get_yt_url
 
@@ -7075,7 +7081,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,42)
+		self.version_number = (3,0,0,43)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -18055,7 +18061,7 @@ class Ui_MainWindow(object):
 				w=self.getTaglib(str(i))
 				try:
 					cur.execute('INSERT INTO Music VALUES(?,?,?,?,?,?,?,?,?,?,?)',w)
-					print ("Inserting")
+					#print ("Inserting")
 				except:
 					print (w)
 					print ("Duplicate")
@@ -18080,43 +18086,56 @@ class Ui_MainWindow(object):
 					QtWidgets.QApplication.processEvents()
 					#print "Inserting"
 				except:
-					print (w)
+					#print (w)
 					print ("Escaping")
 		conn.commit()
 		conn.close()
 		self.text.setText('Complete Tagging '+str(t))
 		QtWidgets.QApplication.processEvents()
 	def getTaglib(self,path):
-		t = taglib.File(path)
-		#print path
+		#t = taglib.File(path)
+		if SONG_TAGS:
+			if SONG_TAGS == 'taglib':
+				t = taglib.File(path)
+			elif SONG_TAGS == 'mutagen':
+				t = mutagen.File(path,easy=True)
+		else:
+			t = {}
 		m = []
 		try:
-			ar = t.tags['ARTIST']
+			if SONG_TAGS == 'taglib':
+				ar = t.tags['ARTIST']
+			elif SONG_TAGS == 'mutagen':
+				ar = t.tags['artist']
 			ar1 = ar[0]
-		except:
+		except Exception as e:
+			print(e,'--error--',path)
 			ar1 = "Unknown"
 		try:
-			ti = t.tags['TITLE']
+			if SONG_TAGS == 'taglib':
+				ti = t.tags['TITLE']
+			elif SONG_TAGS == 'mutagen':
+				ti = t.tags['title']
 			ti1 = ti[0]
-		except:
+		except Exception as e:
+			print(e,path)
 			#ti1 = path.split('/')[-1]
 			ti1 = os.path.basename(path)
 		
 		try:
-			al = t.tags['ALBUM']
+			if SONG_TAGS == 'taglib':
+				al = t.tags['ALBUM']
+			elif SONG_TAGS == 'mutagen':
+				al = t.tags['album']
 			al1 = al[0]
-		except:
+		except Exception as e:
+			print(e,path)
 			al1 = "Unknown"
-		#dir1 = str(path).rsplit('/',1)[0]
 		dir1,raw_title = os.path.split(path)
-		#print dir1
-		#print ar1
-		#print al1
-		#print ti1
 		
 		r = ti1+':'+ar1+':'+al1
 				
-		print (r)		
+		#print (r)		
 		
 		m.append(str(ti1))
 		m.append(str(ar1))
@@ -18182,7 +18201,7 @@ class Ui_MainWindow(object):
 			if os.path.exists(i) and (k in m_files) and not rows:
 				w=self.getTaglib(i)
 				cur.execute('INSERT INTO Music VALUES(?,?,?,?,?,?,?,?,?,?,?)',w)
-				print ("Not Inserted, Hence Inserting File = "+i)
+				#print ("Not Inserted, Hence Inserting File = "+i)
 			elif os.path.exists(i) and rows and (k in m_files):
 				print ("File Modified")
 				cur.execute('Delete FROM Music Where Path="'+i+'"')
@@ -18190,7 +18209,7 @@ class Ui_MainWindow(object):
 				
 				w=self.getTaglib(i)
 				cur.execute('INSERT INTO Music VALUES(?,?,?,?,?,?,?,?,?,?,?)',w)
-				print ("And Now Inserted File Again = "+i)
+				#print ("And Now Inserted File Again = "+i)
 			elif not os.path.exists(i) and rows:
 				cur.execute('Delete FROM Music Where Path="'+i+'"')
 				print ('Deleting File From Database : '+i)
