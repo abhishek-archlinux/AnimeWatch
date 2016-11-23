@@ -6418,7 +6418,7 @@ class Ui_MainWindow(object):
 		self.progress.setTextVisible(True)
 		self.progress.hide()
 		self.progress.setToolTip("Click for more options")
-		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3'}
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3','pr':'\u226A','nxt':'\u226B','min':'\u2581','max':'\u25A2','close':'\u2613','resize':'M'}
 		self.check_symbol = '\u2714'
 		self.torrent_frame = QtWidgets.QFrame(MainWindow)
 		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
@@ -6597,16 +6597,24 @@ class Ui_MainWindow(object):
 		self.player_showhide_playlist.clicked.connect(lambda x=0:self.playerPlaylist("Show/Hide Playlist"))
 		self.player_showhide_playlist.setToolTip('Show/Hide Playlist')
 		
+		self.queue_manage = QtWidgets.QPushButton(self.goto_epn)
+		self.queue_manage.setObjectName(_fromUtf8("queue_manage"))
+		self.horizontalLayout_player_opt.insertWidget(11,self.queue_manage,0)
+		self.queue_manage.setText("Q")
+		self.queue_manage.setToolTip('Show/Hide Queue')
+		#self.queue_manage.setMinimumWidth(30)
+		self.queue_manage.clicked.connect(self.queue_manage_list)
+		
 		self.player_filter = QtWidgets.QPushButton(self.player_opt)
 		self.player_filter.setObjectName(_fromUtf8("player_filter"))
-		self.horizontalLayout_player_opt.insertWidget(11,self.player_filter,0)
+		self.horizontalLayout_player_opt.insertWidget(12,self.player_filter,0)
 		self.player_filter.setText('Y')
 		self.player_filter.setToolTip('Show/Hide Filter and other options')
 		self.player_filter.clicked.connect(self.show_hide_filter_toolbar)
 		
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
-		self.horizontalLayout_player_opt.insertWidget(12,self.player_playlist,0)
+		self.horizontalLayout_player_opt.insertWidget(13,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
 		self.player_menu_option = ['Show/Hide Video','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
@@ -6620,11 +6628,7 @@ class Ui_MainWindow(object):
 		self.player_playlist.setCheckable(True)
 		
 		
-		self.queue_manage = QtWidgets.QPushButton(self.goto_epn)
-		self.queue_manage.setObjectName(_fromUtf8("queue_manage"))
-		self.horizontalLayout_goto_epn.insertWidget(0,self.queue_manage,0)
-		self.queue_manage.setText("Q")
-		self.queue_manage.setMinimumWidth(30)
+		
 		
 		self.mirror_change = QtWidgets.QPushButton(self.goto_epn)
 		self.mirror_change.setObjectName(_fromUtf8("mirror_change"))
@@ -6794,27 +6798,52 @@ class Ui_MainWindow(object):
 		self.btnWebHide.setObjectName(_fromUtf8("btnWebHide"))
 		self.btnWebHide.setMaximumSize(200,50)
 		self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
+		self.btnWebHide.setText(self.player_buttons['min'])
+		self.btnWebHide.clicked.connect(self.webHide)
 		
 		self.btnWebClose = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebClose.setObjectName(_fromUtf8("btnWebClose"))
 		self.btnWebClose.setMaximumSize(200,50)
 		self.horizLayout_web.insertWidget(1,self.btnWebClose,0)
+		self.btnWebClose.setText(self.player_buttons['close'])
+		self.btnWebClose.clicked.connect(self.webClose)
+		
+		self.btnWebResize = QtWidgets.QPushButton(self.tab_2)
+		self.btnWebResize.setObjectName(_fromUtf8("btnWebResize"))
+		self.btnWebResize.setMaximumSize(200,50)
+		self.horizLayout_web.insertWidget(2,self.btnWebResize,0)
+		self.btnWebResize.setText(self.player_buttons['resize'])
+		self.btnWebResize.clicked.connect(self.webResize)
+		
+		self.btnWebPrev = QtWidgets.QPushButton(self.tab_2)
+		self.btnWebPrev.setObjectName(_fromUtf8("btnWebPrev"))
+		self.btnWebPrev.setMaximumSize(200,50)
+		self.horizLayout_web.insertWidget(3,self.btnWebPrev,0)
+		self.btnWebPrev.clicked.connect(self.go_prev_web_page)
+		self.btnWebPrev.setText(self.player_buttons['pr'])
+		
+		self.btnWebNext = QtWidgets.QPushButton(self.tab_2)
+		self.btnWebNext.setObjectName(_fromUtf8("btnWebNext"))
+		self.btnWebNext.setMaximumSize(200,50)
+		self.horizLayout_web.insertWidget(4,self.btnWebNext,0)
+		self.btnWebNext.clicked.connect(self.go_next_web_page)
+		self.btnWebNext.setText(self.player_buttons['nxt'])
 		
 		self.btnWebReviews = QtWidgets.QComboBox(self.tab_2)
 		self.btnWebReviews.setObjectName(_fromUtf8("btnWebReviews"))
-		self.horizLayout_web.insertWidget(2,self.btnWebReviews,0)
+		self.horizLayout_web.insertWidget(5,self.btnWebReviews,0)
 		self.btnWebReviews.setMaximumSize(200,50)
 		
 		self.btnGoWeb = QtWidgets.QPushButton(self.tab_2)
 		self.btnGoWeb.setObjectName(_fromUtf8("btnGoWeb"))
-		self.horizLayout_web.insertWidget(3,self.btnGoWeb,0)
+		self.horizLayout_web.insertWidget(6,self.btnGoWeb,0)
 		self.btnGoWeb.setMaximumSize(200,50)
 		self.btnGoWeb.setText("Go")
 		self.btnGoWeb.clicked.connect(lambda x=0: self.reviewsWeb(action='btn_pushed'))
 		
 		self.btnWebReviews_search = QtWidgets.QLineEdit(self.tab_2)
 		self.btnWebReviews_search.setObjectName(_fromUtf8("btnWebReviews_search"))
-		self.horizLayout_web.insertWidget(4,self.btnWebReviews_search,0)
+		self.horizLayout_web.insertWidget(6,self.btnWebReviews_search,0)
 		self.btnWebReviews_search.setMaximumSize(200,50)
 		self.btnWebReviews_search.setPlaceholderText('Search Web')
 		self.btnWebReviews_search.returnPressed.connect(lambda x=0:self.reviewsWeb(action='return_pressed'))
@@ -7212,7 +7241,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.goto_epn_filter, QtCore.SIGNAL(_fromUtf8("clicked()")),self.goto_epn_filter_on)
 		self.goto_epn_filter.clicked.connect(self.goto_epn_filter_on)
 		#QtCore.QObject.connect(self.queue_manage, QtCore.SIGNAL(_fromUtf8("clicked()")),self.queue_manage_list)
-		self.queue_manage.clicked.connect(self.queue_manage_list)
+		
 		#QtCore.QObject.connect(self.audio_track, QtCore.SIGNAL(_fromUtf8("clicked()")),self.toggleAudio)
 		self.audio_track.clicked.connect(self.toggleAudio)
 		#QtCore.QObject.connect(self.subtitle_track, QtCore.SIGNAL(_fromUtf8("clicked()")),self.toggleSubtitle)
@@ -7232,8 +7261,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.btn201, QtCore.SIGNAL(_fromUtf8("clicked()")), self.prev_thumbnails)
 		self.btn201.clicked.connect(self.prev_thumbnails)
 		#QtCore.QObject.connect(self.btnWebClose, QtCore.SIGNAL(_fromUtf8("clicked()")), self.webHide)
-		self.btnWebClose.clicked.connect(self.webClose)
-		self.btnWebHide.clicked.connect(self.webHide)
+		
 		#self.btnPls.clicked.connect(self.togglePlaylist)
 		#QtCore.QObject.connect(self.go_opt, QtCore.SIGNAL(_fromUtf8("clicked()")), self.go_opt_options)
 		self.go_opt.clicked.connect(self.go_opt_options)
@@ -7339,8 +7367,8 @@ class Ui_MainWindow(object):
 		self.btn30.setItemText(6, _translate("MainWindow", "AnimeHi10", None))
 		self.btn30.setItemText(7, _translate("MainWindow", "KissAnime", None))
 		self.btn3.setText(_translate("MainWindow", "Library", None))
-		self.btnWebClose.setText(_translate("MainWindow", "Close", None))
-		self.btnWebHide.setText(_translate("MainWindow", "Hide", None))
+		#self.btnWebClose.setText(_translate("MainWindow", "Close", None))
+		#self.btnWebHide.setText(_translate("MainWindow", "Hide", None))
 		self.btn2.setItemText(0, _translate("MainWindow", "Reviews", None))
 		self.btn2.setItemText(1, _translate("MainWindow", "MyAnimeList", None))
 		self.btn2.setItemText(2, _translate("MainWindow", "Anime-Planet", None))
@@ -7425,6 +7453,19 @@ class Ui_MainWindow(object):
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
 		self.mpv_thumbnail_lock = False
+	def webResize(self):
+		global screen_width
+		wdt = self.tab_2.width()
+		if wdt <= 400:
+			self.tab_2.setMaximumWidth(screen_width)
+		else:
+			self.tab_2.setMaximumWidth(400)
+	def go_prev_web_page(self):
+		if self.web:
+			self.web.back()
+	def go_next_web_page(self):
+		if self.web:
+			self.web.forward()
 	def text_save_btn_hide(self):
 		self.text_save_btn.hide()
 	def save_text_edit(self):
@@ -8403,6 +8444,8 @@ class Ui_MainWindow(object):
 			#ui.btn9.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebPrev.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebNext.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
@@ -10447,10 +10490,22 @@ class Ui_MainWindow(object):
 		#if not self.VerticalLayoutLabel.itemAt(2):
 		#	self.VerticalLayoutLabel.addStretch(2)
 		#	print('--stretch -- added--to --label and text widget--')
+		
+		txt = self.btnWebHide.text()
+		if txt == self.player_buttons['min']:
+			self.horizontalLayout_player_opt.insertWidget(13,self.btnWebHide,0)
+			self.btnWebHide.setText(self.player_buttons['max'])
+		else:
+			self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
+			self.btnWebHide.setText(self.player_buttons['min'])
 		if mpvplayer.processId() > 0:
-			self.tab_2.hide()
+			if self.tab_2.isHidden():
+				self.tab_2.show()
+			else:
+				self.tab_2.hide()
 		else:
 			self.showHideBrowser()
+			
 		
 	def togglePlaylist(self):
 		if self.list2.isHidden():
@@ -10884,35 +10939,37 @@ class Ui_MainWindow(object):
 			#check again
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 			basewidth = 450
-			img = Image.open(str(picn))
-			wpercent = (basewidth / float(img.size[0]))
-			hsize = int((float(img.size[1]) * float(wpercent)))
-			
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(str(thumbnail))
-			if site == "SubbedAnime" or site == "DubbedAnime":
-				shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'poster.jpg'))
-				shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
-			else:
-				shutil.copy(picn,os.path.join(home,'History',site,name,'poster.jpg'))
-				shutil.copy(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
-			#self.listfound()
+			try:
+				img = Image.open(str(picn))
+				wpercent = (basewidth / float(img.size[0]))
+				hsize = int((float(img.size[1]) * float(wpercent)))
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(str(thumbnail))
+				if site == "SubbedAnime" or site == "DubbedAnime":
+					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'poster.jpg'))
+					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
+				else:
+					shutil.copy(picn,os.path.join(home,'History',site,name,'poster.jpg'))
+					shutil.copy(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line 10933--')
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
-			#thumbnail = '/tmp/AnimeWatch/'+name+'thumbnail.jpg'
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 			basewidth = 450
-			img = Image.open(str(picn))
-			wpercent = (basewidth / float(img.size[0]))
-			hsize = int((float(img.size[1]) * float(wpercent)))
-			
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(str(thumbnail))	
-			shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
-			shutil.copy(picn,os.path.join(home,'Local',name,'thumbnail.jpg'))
-			#self.listfound()
-			ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			try:
+				img = Image.open(str(picn))
+				wpercent = (basewidth / float(img.size[0]))
+				hsize = int((float(img.size[1]) * float(wpercent)))
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(str(thumbnail))	
+				shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
+				shutil.copy(picn,os.path.join(home,'Local',name,'thumbnail.jpg'))
+				#self.listfound()
+				ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line 10948--')
 		elif os.path.isfile(picn) and (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
 				nm = name
@@ -10959,28 +11016,34 @@ class Ui_MainWindow(object):
 			name = original_path_name[r]
 		if os.path.isfile(picn) and opt == "History" and (site.lower()!= 'video' and site.lower()!= 'music' and site.lower()!= 'local'):
 			basewidth = screen_width
-			img = Image.open(picn)
-			wpercent = (basewidth / float(img.size[0]))
-			#hsize = int((float(img.size[1]) * float(wpercent)))
-			hsize = screen_height
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(picn)
-			if site == "SubbedAnime" or site == "DubbedAnime":
-				shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'fanart.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
-			else:
-				shutil.copy(picn,os.path.join(home,'History',site,name,'fanart.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
+			try:
+				img = Image.open(picn)
+				wpercent = (basewidth / float(img.size[0]))
+				#hsize = int((float(img.size[1]) * float(wpercent)))
+				hsize = screen_height
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(picn)
+				if site == "SubbedAnime" or site == "DubbedAnime":
+					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'fanart.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
+				else:
+					shutil.copy(picn,os.path.join(home,'History',site,name,'fanart.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line--11010--')
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			basewidth = screen_width
-			img = Image.open(picn)
-			wpercent = (basewidth / float(img.size[0]))
-			#hsize = int((float(img.size[1]) * float(wpercent)))
-			hsize = screen_height
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(picn)
-			shutil.copy(picn,os.path.join(home,'Local',name,'fanart.jpg'))
-			ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			try:
+				img = Image.open(picn)
+				wpercent = (basewidth / float(img.size[0]))
+				#hsize = int((float(img.size[1]) * float(wpercent)))
+				hsize = screen_height
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(picn)
+				shutil.copy(picn,os.path.join(home,'Local',name,'fanart.jpg'))
+				ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line--11023--')
 			#ui.listfound()
 		elif (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
@@ -13928,7 +13991,7 @@ class Ui_MainWindow(object):
 					poster = os.path.join(music_dir_art_name,'poster.jpg')
 					fan = os.path.join(music_dir_art_name,'fanart.jpg')
 					thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
-					if not os.path.exists(poster) and srch != "offline" and artist_name_mplayer != "None" and artist_name_mplayer:	
+					if not os.path.exists(poster) and srch != "offline" and artist_name_mplayer.lower() != "none" and artist_name_mplayer:	
 						
 						self.threadPool.append( ThreadingExample(nm) )
 						self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
@@ -15776,13 +15839,16 @@ class Ui_MainWindow(object):
 				#if "EndOfFile:" in a:
 				#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-					if (self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0):
+					#if ((self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0)) and not self.queue_url_list:
+					if self.player_setLoop_var:
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
 						#curR = self.list2.currentRow()
 					else:
 						if not self.queue_url_list:
+							if self.list2.count() == 0:
+								return 0
 							if curR == self.list2.count() - 1:
 								curR = 0
 								if site == "Music" and not self.playerPlaylist_setLoop_var:
@@ -15797,12 +15863,13 @@ class Ui_MainWindow(object):
 										self.listfound()
 							else:
 								curR = curR + 1
+							self.list2.setCurrentRow(curR)
 					mplayerLength = 0
 					self.total_file_size = 0
 					if mpv_start:
 						mpv_start.pop()
-					if not self.queue_url_list:
-						self.list2.setCurrentRow(curR)
+					#if not self.queue_url_list:
+					#	self.list2.setCurrentRow(curR)
 					#epn = self.list2.currentItem().text()
 					#epn = re.sub("#","",str(epn))
 					#mpvplayer.waitForReadyRead()
@@ -16011,7 +16078,8 @@ class Ui_MainWindow(object):
 					#	curR = self.list2.currentRow()
 					#else:
 						#quitReally == "no"
-					if (self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0):
+					#if ((self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0)) and not self.queue_url_list:
+					if self.player_setLoop_var:
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
@@ -16019,6 +16087,8 @@ class Ui_MainWindow(object):
 						
 					else:
 						if not self.queue_url_list:
+							if self.list2.count() == 0:
+								return 0
 							if curR == self.list2.count() - 1:
 								curR = 0
 								if site == "Music" and not self.playerPlaylist_setLoop_var:
@@ -16033,8 +16103,8 @@ class Ui_MainWindow(object):
 										self.listfound()
 							else:
 								curR = curR + 1
-					if not self.queue_url_list:
-						self.list2.setCurrentRow(curR)
+							self.list2.setCurrentRow(curR)
+						
 					if "HTTP error 403 Forbidden" in a:
 						print (a)
 						quitReally = "yes"
@@ -16273,7 +16343,8 @@ class Ui_MainWindow(object):
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 				#if '#' in finalUrl:
 				self.external_url = True
-			
+			if finalUrl.startswith('"http') or finalUrl.startswith('http'):
+				self.external_url = True
 		new_epn = self.epn_name_in_list
 	
 		
@@ -16333,8 +16404,8 @@ class Ui_MainWindow(object):
 						epnShow = '"' + "Queued:  "+ new_epn + '"'
 						t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
 						t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
-						print (finalUrl,'---hello-----')
-						
+						#print (finalUrl,'---hello-----')
+						print(t2)
 						mpvplayer.write(t1)
 						mpvplayer.write(t2)
 						if self.mplayer_SubTimer.isActive():
@@ -16352,6 +16423,7 @@ class Ui_MainWindow(object):
 								pass
 						self.infoPlay(command)
 						self.external_url = False
+						print(command)
 				elif Player == "mpv":
 					command1 = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
 					try:
@@ -16360,22 +16432,28 @@ class Ui_MainWindow(object):
 					except:
 						command = command1
 				
-					if mpvplayer.processId()>0:
 						
-						try:
-							epnShow = '"' + "Queued:  "+ new_epn + '"'
-							t1 = bytes('\n'+'show-text '+epnShow+'\n','utf-8')
-							t2 = bytes('\n'+"loadfile "+finalUrl+'\n','utf-8')
-							print (finalUrl,'---hello-----')
-							mpvplayer.write(t1)
-							mpvplayer.write(t2)
-							if self.external_url:
-								#mpvplayer.write(b'\n set aid 1 \n')
-								self.external_url = False
-						except:
-							self.infoPlay(command)
+					if not self.external_url:
+						epnShow = '"' + "Queued:  "+ new_epn + '"'
+						t1 = bytes('\n'+'show-text '+epnShow+'\n','utf-8')
+						t2 = bytes('\n'+"loadfile "+finalUrl+'\n','utf-8')
+						#print (finalUrl,'---hello-----')
+						mpvplayer.write(t1)
+						mpvplayer.write(t2)
+						print(t2)
+						#if self.external_url:
+						#mpvplayer.write(b'\n set aid 1 \n')
+							
 					else:
+						mpvplayer.write(b'\n quit \n')
+						if mpvplayer.processId() > 0:
+							try:
+								subprocess.Popen(['killall','mpv'])
+							except:
+								pass
 						self.infoPlay(command)
+						self.external_url = False
+						print(command)
 			
 				print ("mpv=" + str(mpvplayer.processId()))
 				if site == "Music":
@@ -16470,6 +16548,8 @@ class Ui_MainWindow(object):
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 				epnShow = finalUrl
 				self.external_url = True
+			if epnShow.startswith('"http') or epnShow.startswith('http'):
+				self.external_url = True
 		else:
 			epnShow = self.queue_url_list.pop()
 			curR = curR - 1
@@ -16516,16 +16596,27 @@ class Ui_MainWindow(object):
 				epnShow = '"'+epnShow.replace('"','')+'"'
 				if epnShow.startswith('"http'):
 					epnShow = epnShow.replace('"','')
+					self.external_url = True
 				t2 = bytes('\n'+"loadfile "+epnShow+" replace"+'\n','utf-8')
-				print(t2)
+				
 				if Player == 'mpv':
-					mpvplayer.write(t2)
-					if self.external_url:
-						#mpvplayer.write(b'\n set aid 1 \n')
+					if not self.external_url:
+						mpvplayer.write(t2)
+						print(t2)
+					else:
+						mpvplayer.write(b'\n quit \n')
+						if mpvplayer.processId() > 0:
+							try:
+								subprocess.Popen(['killall','mpv'])
+							except:
+								pass
+						self.infoPlay(command)
 						self.external_url = False
+						print(command)
 				elif Player == "mplayer":
 					if not self.external_url:
 						mpvplayer.write(t2)
+						print(t2)
 						if self.mplayer_SubTimer.isActive():
 							self.mplayer_SubTimer.stop()
 						self.mplayer_SubTimer.start(2000)
@@ -16538,6 +16629,7 @@ class Ui_MainWindow(object):
 								pass
 						self.infoPlay(command)
 						self.external_url = False
+						print(command)
 			else:
 				print (command)
 				self.infoPlay(command)

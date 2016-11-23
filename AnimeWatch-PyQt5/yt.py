@@ -25,6 +25,7 @@ from functools import partial
 import subprocess
 import shutil
 import os
+from tempfile import mkstemp
 from player_functions import send_notification
 
 
@@ -91,7 +92,7 @@ def get_yt_url(url,quality):
 	return final_url
 
 def get_yt_sub(url,name,dest_dir,tmp_dir):
-	global name_epn, dest_dir_sub,tmp_dir_sub
+	global name_epn, dest_dir_sub,tmp_dir_sub,TMPFILE
 	name_epn = name
 	dest_dir_sub = dest_dir
 	tmp_dir_sub = tmp_dir
@@ -118,13 +119,14 @@ def get_yt_sub(url,name,dest_dir,tmp_dir):
 			pass
 	
 	#out = "/tmp/AnimeWatch/youtube-sub"
-	out = os.path.join(tmp_dir_sub,'youtube-sub')
+	#out = os.path.join(tmp_dir_sub,'youtube-sub')
+	fh,TMPFILE = mkstemp(suffix=None,prefix='youtube-sub')
 	#sub_name = out.split('/')[-1]
-	sub_name = os.path.basename(out)
-	print(out,'---------output--------dest---------')
+	dir_name,sub_name = os.path.split(TMPFILE)
+	print(TMPFILE,'---------output--------dest---------',dest_dir_sub,'--',dir_name,' ---',sub_name)
 	#subprocess.call(['youtube-dl','--all-sub','--skip-download','--output',out,url])
-	command = "youtube-dl --all-sub --skip-download --output "+out+" "+url
-	
+	command = "youtube-dl --all-sub --skip-download --output "+TMPFILE+" "+url
+	print(command)
 	
 	yt_sub_process = QtCore.QProcess()
 	yt_sub_process.started.connect(yt_sub_started)
@@ -147,13 +149,14 @@ def yt_sub_dataReady(p):
 		pass
 		
 def yt_sub_finished():
-	global name_epn,dest_dir_sub,tmp_dir_sub
+	global name_epn,dest_dir_sub,tmp_dir_sub,TMPFILE
 	name = name_epn
 	dest_dir = dest_dir_sub
-	sub_name = 'youtube-sub'
-	print(name,dest_dir)
+	#sub_name = os.path.basename(TMPFILE)
+	#print(name,dest_dir)
 	#dir_name = '/tmp/AnimeWatch/'
-	dir_name = tmp_dir_sub
+	dir_name,sub_name = os.path.split(TMPFILE)
+	print(dir_name,sub_name)
 	m = os.listdir(dir_name)
 	new_name = name.replace('/','-')
 	if new_name.startswith('.'):
@@ -170,11 +173,15 @@ def yt_sub_finished():
 			ext = k1+'.'+k2
 			sub_ext = ext+','+sub_ext
 			dest_name = new_name + '.'+ ext
+			print(dest_name)
 			dest_path = os.path.join(dest_dir,dest_name)
-			shutil.copy(src_path,dest_path)
-			os.remove(src_path)
-			sub_avail = True
+			print(src_path,dest_path)
+			if os.path.exists(src_path):
+				shutil.copy(src_path,dest_path)
+				os.remove(src_path)
+				sub_avail = True
 	if sub_avail:
 		txt_notify = "External Subtitle "+ sub_ext+" Available\nPress Shift+J to load"
-		
+	if os.path.exists(TMPFILE):
+		os.remove(TMPFILE)
 	send_notification(txt_notify)
