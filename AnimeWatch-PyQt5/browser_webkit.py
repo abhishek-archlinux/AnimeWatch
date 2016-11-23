@@ -493,6 +493,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				yt = True
 				arr[:]=[]
 				arr.append('Play with AnimeWatch')
+				arr.append('Queue Item')
 				arr.append('Download')
 				arr.append('Get Subtitle (If Available)')
 				if 'ytimg.com' in url.toString():
@@ -623,6 +624,21 @@ class Browser(QtWebKitWidgets.QWebView):
 			print(self.ui.epn_name_in_list)
 			get_yt_sub(url.toString(),self.ui.epn_name_in_list,self.yt_sub_folder,self.ui.tmp_download_folder)
 			
+		elif option.lower() == 'queue item':
+			file_path = os.path.join(self.home,'Playlists','Queue')
+			if not os.path.exists(file_path):
+				f = open(file_path,'w')
+				f.close()
+			if not self.ui.queue_url_list:
+				self.ui.list6.clear()
+			title = self.title_page.replace('/','-')
+			if title.startswith('.'):
+				title = title[1:]
+			r = title + '	'+url.toString()+'	'+'NONE'
+			self.ui.queue_url_list.append(r)
+			self.ui.list6.addItem(title)
+			print (self.ui.queue_url_list)
+			write_files(file_path,r,line_by_line=True)
 		elif option.lower() == 'season episode link':
 			if self.site != "Music" and self.site != "PlayLists":
 				self.ui.getTvdbEpnInfo(url.toString())

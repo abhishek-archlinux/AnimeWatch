@@ -45,13 +45,14 @@ try:
 	from adb import NetWorkManager
 	from browser import Browser
 	QT_WEB_ENGINE = True
+	print('Using QTWEBENGINE')
 except:
 	from PyQt5 import QtWebKitWidgets
 	from PyQt5.QtWebKitWidgets import QWebView
 	from adb_webkit import NetWorkManager
 	from browser_webkit import Browser
 	QT_WEB_ENGINE = False
-	
+	print('Using QTWEBKIT')
 
 
 from PyQt5.QtCore import QUrl
@@ -4376,7 +4377,8 @@ class List2(QtWidgets.QListWidget):
 					self.init_offline_mode()
 			if goto_web_mode:
 				if action == goto_web:
-					ui.goto_web_directly(url_web)
+					#ui.goto_web_directly(url_web)
+					ui.reviewsWeb(srch_txt=url_web,review_site='yt',action='open')
 					#txt = action.text()
 					#if txt.lower() == 'open in youtube browser':
 					
@@ -6418,7 +6420,7 @@ class Ui_MainWindow(object):
 		self.progress.setTextVisible(True)
 		self.progress.hide()
 		self.progress.setToolTip("Click for more options")
-		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3','pr':'\u226A','nxt':'\u226B','min':'\u2581','max':'\u25A2','close':'\u2613','resize':'M'}
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3','pr':'\u226A','nxt':'\u226B','min':'\u2581','max':'\u25A2','close':'\u2715','resize':'M'}
 		self.check_symbol = '\u2714'
 		self.torrent_frame = QtWidgets.QFrame(MainWindow)
 		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
@@ -6843,7 +6845,7 @@ class Ui_MainWindow(object):
 		
 		self.btnWebReviews_search = QtWidgets.QLineEdit(self.tab_2)
 		self.btnWebReviews_search.setObjectName(_fromUtf8("btnWebReviews_search"))
-		self.horizLayout_web.insertWidget(6,self.btnWebReviews_search,0)
+		self.horizLayout_web.insertWidget(7,self.btnWebReviews_search,0)
 		self.btnWebReviews_search.setMaximumSize(200,50)
 		self.btnWebReviews_search.setPlaceholderText('Search Web')
 		self.btnWebReviews_search.returnPressed.connect(lambda x=0:self.reviewsWeb(action='return_pressed'))
@@ -12955,21 +12957,15 @@ class Ui_MainWindow(object):
 			
 	def reviewsWeb(self,srch_txt=None,review_site=None,action=None):
 		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
-		
+		new_url = ''
+		if srch_txt:
+			srch_txt = srch_txt.replace('"','')
 		web_arr_dict = {'mal':'MyAnimeList','ap':'Anime-Planet','ans':'Anime-Source','tvdb':'TVDB','ann':'ANN','anidb':'AniDB','g':'Google','yt':'Youtube','ddg':'DuckDuckGo','reviews':'Reviews','last.fm':'last.fm','zerochan':'Zerochan'}
 		
 		if not review_site:
 			review_site_tmp = self.btnWebReviews.currentText()
 			review_site = list(web_arr_dict.keys())[list(web_arr_dict.values()).index(review_site_tmp)]
-		#if action:
-		#	if action == 'index_changed':
-		#		if review_site:
-		#			try:
-		#				self.btnWebReviews_search.setPlaceholderText('Search '+web_arr_dict[review_site])
-		#			except Exception as e:
-		#				print(e)
-		#		return 0
-		#review_site = str(self.btnWebReviews.currentText())
+			
 		print(self.web,'0')
 		if not self.web and review_site:
 			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
@@ -13036,7 +13032,7 @@ class Ui_MainWindow(object):
 			name1 = str(key)
 		#old_manager = self.web.page().networkAccessManager()
 		pl_list = False
-		new_url = ''
+		
 		if not name1:
 			if self.list1.currentItem():
 				name1 = self.list1.currentItem().text()
@@ -13078,10 +13074,13 @@ class Ui_MainWindow(object):
 		elif review_site == "yt":
 			if not name1:
 				name1 = 'GNU Linux FSF'
-			if pl_list and new_url:
+			if pl_list and new_url and action != 'open':
 				self.web.load(QUrl(new_url))
+			elif action=='open':
+				self.web.load(QUrl(srch_txt))
 			else:
 				self.web.load(QUrl("https://m.youtube.com/results?search_query="+name1))
+			print(srch_txt,'--yt--open--')
 		elif review_site == "last.fm":
 			self.web.load(QUrl("http://www.last.fm/search?q="+name1))
 		elif review_site == 'zerochan':
