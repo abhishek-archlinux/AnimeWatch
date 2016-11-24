@@ -2848,7 +2848,7 @@ class List1(QtWidgets.QListWidget):
 				delFanart = menu.addAction("Delete Fanart")
 				delThumb = menu.addAction("Delete Playlist Thumbnails")
 				delInfo = menu.addAction("Delete Info")
-				go_to = menu.addAction("Go To Last.fm")
+				#go_to = menu.addAction("Go To Last.fm")
 				thumbnail = menu.addAction("Show Thumbnail View")
 				cache = menu.addAction("Clear Cache")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
@@ -2969,13 +2969,12 @@ class List1(QtWidgets.QListWidget):
 									shutil.copy(default_wall,picn)
 									shutil.copy(default_wall,fanart)
 									ui.videoImage(picn,os.path.join(home,'Music','Artist',nam,'thumbnail.jpg'),fanart,'')
-				elif action == go_to:
-					if '/' in name:
-						nam = name.replace('/','-')
-					else:
-						nam = name
-					#ui.reviewsMusic("Last.Fm")
-					ui.reviewsWeb(srch_txt=nam,review_site='last.fm',action='search_by_name')
+				#elif action == go_to:
+				#	if '/' in name:
+				#		nam = name.replace('/','-')
+				#	else:
+				#		nam = name
+				#	ui.reviewsWeb(srch_txt=nam,review_site='last.fm',action='search_by_name')
 			else:
 				menu = QtWidgets.QMenu(self)
 				#review = menu.addAction("Review")
@@ -7112,7 +7111,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,43)
+		self.version_number = (3,0,0,44)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -13008,6 +13007,8 @@ class Ui_MainWindow(object):
 				key = self.btnWebReviews_search.text()
 				self.btnWebReviews_search.clear()
 				self.tmp_web_srch = key
+				if review_site == 'reviews':
+					review_site = 'g'
 			elif action == 'context_menu' or action == 'search_by_name':
 				key = srch_txt
 				#try:
@@ -13090,7 +13091,8 @@ class Ui_MainWindow(object):
 		
 		if review_site:
 			try:
-				self.btnWebReviews_search.setPlaceholderText('Search '+web_arr_dict[review_site])
+				if web_arr_dict[review_site] == self.btnWebReviews.currentText():
+					self.btnWebReviews_search.setPlaceholderText('Search '+web_arr_dict[review_site])
 			except Exception as e:
 				print(e)
 		
