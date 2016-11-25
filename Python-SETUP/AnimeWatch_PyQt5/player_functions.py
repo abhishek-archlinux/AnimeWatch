@@ -202,13 +202,23 @@ def wget_string(url,dest,rfr=None):
 	if not rfr:
 		if os.name == 'posix':
 			command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
-		else:
-			command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
+		elif os.name == 'nt':
+			ca_cert = get_ca_certificate()
+			if ca_cert:
+				cert = "--ca-certificate="+'"'+ca_cert+'"'
+				command = "wget -c "+cert+" --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
+			else:
+				command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
 	else:
 		if os.name == 'posix':
 			command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
-		else:
-			command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
+		elif os.name == 'nt':
+			ca_cert = get_ca_certificate()
+			if ca_cert:
+				cert = "--ca-certificate="+'"'+ca_cert+'"'
+				command = "wget -c "+cert+" --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
+			else:
+				command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
 	return command
 	
 def getContentUnicode(content):
@@ -242,20 +252,22 @@ def ccurl(url,external_cookie=None):
 	if '#' in url:
 		curl_opt = nUrl.split('#')[1]
 		url = nUrl.split('#')[0]
+		print(curl_opt,url,'----------------------------------')
 		if curl_opt == '-o':
 			picn_op = nUrl.split('#')[2]
 		elif curl_opt == '-Ie' or curl_opt == '-e':
 			rfr = nUrl.split('#')[2]
 		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
 			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
+		elif curl_opt == '-d':
 			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
+			post = post.replace('"','')
+			post = post.replace("'",'')
 			post1 = post.split('=')[0]
 			post2 = post.split('=')[1]
-			post_data = {post1:post2}
+			post_data = {str(post1):str(post2)}
 			postfield = urllib.parse.urlencode(post_data)
+			print(postfield,'--postfields--')
 	url = str(url)
 	#c.setopt(c.URL, url)
 	try:
@@ -263,8 +275,12 @@ def ccurl(url,external_cookie=None):
 	except UnicodeEncodeError:
 		c.setopt(c.URL, url.encode('utf-8'))
 	storage = BytesIO()
-	if os.name != 'posix':
-		c.setopt(c.SSL_VERIFYPEER,False)
+	if os.name == 'nt':
+		ca_cert = get_ca_certificate()
+		if ca_cert:
+			c.setopt(c.CAINFO, ca_cert)
+		else:
+			c.setopt(c.SSL_VERIFYPEER,False)
 	if curl_opt == '-o':
 		c.setopt(c.FOLLOWLOCATION, True)
 		c.setopt(c.USERAGENT, hdr)
@@ -343,3 +359,16 @@ def ccurl(url,external_cookie=None):
 			print('curl failure try again')
 			content = ''
 		return content
+
+def get_ca_certificate():
+	ca_cert = ''
+	if os.name == 'nt':
+		try:
+			import certifi
+			ca_cert = certifi.where()
+		except Exception as e:
+			print(e)
+	return ca_cert
+		
+		
+		

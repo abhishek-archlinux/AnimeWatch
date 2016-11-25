@@ -16,12 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 """
-import sys
-from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 
+import sys
+from PyQt5 import QtCore,QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 from PyQt5.QtNetwork import QNetworkAccessManager
 
 class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
@@ -32,11 +30,10 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 	def interceptRequest(self,info):
 		t = info.requestUrl()
 		urlLnk = t.url()
-		
-		
 		lower_path = urlLnk.lower()
 		
 		block_list = ["doubleclick.net",'adnxs','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
+		
 		block = False
 		for l in block_list:
 			if l in lower_path:

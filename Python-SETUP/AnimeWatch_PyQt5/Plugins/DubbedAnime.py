@@ -416,6 +416,15 @@ def mp4starUrl(content,site):
 			u = re.sub("'"+v+'[^,]*','',o[0])
 			u = u.replace("'",'')
 			u = u.replace(",",'')
+	elif site == 'uploadcrazy':
+		v = m['http']
+		o = re.findall('"'+v+':[^"]*',content)
+		print(o)
+		if o:
+			print(o)
+			u = re.sub('"','',o[0])
+			u = u.replace("'",'')
+			u = u.replace(",",'')
 	else:
 		n = m['https']
 		v = m['url']
@@ -483,14 +492,49 @@ def mp4starUrl(content,site):
 
 def uploadcrazy(url):
 	content = ccurlNew(url)
+	"""
 	m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
 	if m:
 		url = re.sub('file: "','',m[0])
 	else:
 		url = ""
+	"""
+	url = mp4starUrl(content,'uploadcrazy')
 	return url
 	
-	
+def newMp4star(url):
+	global qualityVideo
+	nurl = url.split('/')[2]
+	print(nurl)
+	if not nurl.startswith('embed'):
+		content = ccurlNew(url+'#'+'-I')
+		if "Location:" in content:
+			m = re.findall('Location: [^\n]*',content)
+			url = re.sub('Location: |\r','',m[-1])
+	content = ccurlNew(url)
+	soup = BeautifulSoup(content,'lxml')
+	link = soup.find('video')
+	link1 = link.findAll('source')
+	final = ''
+	n = []
+	for i in link1:
+		n.append(i['src'])
+	if n:
+		if len(n) == 1:
+			src = n[0]
+		else:
+			
+			if qualityVideo == 'hd':
+				src = n[0]
+			else:
+				src = n[-1]
+		content = ccurlNew(src+'#'+'-I')
+		if "Location:" in content:
+			m = re.findall('Location: [^\n]*',content)
+			final = re.sub('Location: |\r','',m[-1])
+		else:
+			final = src
+	return final
 class DubbedAnime():
 	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -510,6 +554,33 @@ class DubbedAnime():
 			content = str(content)
 			print("I'm unicode")
 		return content
+		
+	def get_correct_mirror(self,m,mirrorNo):
+		length = len(m)
+		j = 1
+		final = ''
+		while (j <= length):		
+			mirrorNo = mirrorNo - 1
+			msg = "Total " + str(len(m)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
+			#subprocess.Popen(["notify-send",msg])
+			send_notification(msg)
+			src = m[mirrorNo]
+			print(src)
+			if 'vidcrazy' in src or 'uploadcrazy' in src:
+				final = uploadcrazy(src)
+			elif 'vidkai' in src:
+				final = findurl(src)
+			elif 'mp4star' in src or 'justmp4' in src: 
+				try:
+					final = newMp4star(src)
+				except Exception as e:
+					print(e,'getting next link')
+			print(final,'--final--')
+			if final and final.startswith('http'):
+				break
+			j = j + 1
+			mirrorNo = j	
+		return final
 	def getFinalUrl(self,siteName,name,epn,mirrorNo,quality):
 		global qualityVideo
 		qualityVideo = quality
@@ -529,104 +600,42 @@ class DubbedAnime():
 						if 'vidcrazy' in i['src'] or 'uploadcrazy' in i['src'] or 'mp4star' in i['src'] or 'justmp4' in i['src'] or 'gotvb8' in i['src'] or 'vidkai' in i['src']:
 								m.append(i['src'])
 				print(m)
-				length = len(m)
-				j = 1
-				final = ''
-				while (j <= length):		
-						mirrorNo = mirrorNo - 1
-						msg = "Total " + str(len(m)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
-						#subprocess.Popen(["notify-send",msg])
-						send_notification(msg)
-						src = m[mirrorNo]
-						print(src)
-						if 'vidcrazy' in src or 'uploadcrazy' in src:
-							final = uploadcrazy(src)
-						elif 'vidkai' in src:
-							final = findurl(src)
-						else:
-							try:
-								final = mp4star(src)
-							except:
-								pass
-						print(final,'--final--')
-						if final and final.startswith('http'):
-							break
-						j = j + 1
-						mirrorNo = j	
+				final = self.get_correct_mirror(m,mirrorNo)
 		elif siteName == "Animetycoon":
 				
-				url = "http://www.animetycoon.net/" + epn + "/"
+				url = "http://www.animetycoon.org/" + epn + "/"
 				content = ccurlNew(url)
 				print(url)
 				final = ""
 				m = re.findall('http://[^"]*uploadcrazy[^"]*|http://[^"]*vidkai[^"]*|http://[^"]*justmp4[^"]*|http://[^"]*mp4star[^"]*',content)
 				print(m)
-				if len(m) == 1:
-					final = findurl(m[0])
-				else:
-					mirrorNo = mirrorNo - 1
-					print(m[mirrorNo])
-					if mirrorNo < len(m):
-						print(m[mirrorNo],'---',len(m))
-						final = findurl(m[mirrorNo])
-				
-				
-			
+				final = self.get_correct_mirror(m,mirrorNo)
 				
 		elif siteName == "Dubcrazy":
-				url = "http://www.dubbedanimeonline.pw/" + epn + "/"
+				url = "http://www.dubbedanimehere.com/" + epn + "/"
 				content = ccurlNew(url)
 				print(url)
 				m = []
 				n =[]
 				soup = BeautifulSoup(content,'lxml')
 				m = re.findall('http://[^"]*embed[^"]*',content)
-				if m:
-					content = ccurlNew(m[0])
-					#n = re.findall('https://redirector[^"]*',content)
-					#print(n
-					soup = BeautifulSoup(content,'lxml')
-					link = soup.find('video')
-					link1 = link.findAll('source')
-					for i in link1:
-						n.append(i['src'])
-					if n:
-						if len(n) == 1:
-							src = n[0]
-						else:
-							
-							if qualityVideo == 'hd':
-								src = n[0]
-							else:
-								src = n[-1]
-						#content = (subprocess.check_output(['curl','-L','-I','-A',self.hdr,src]) )
-						#content = self.getContent(content)
-						content = ccurlNew(src+'#'+'-I')
-						t = re.findall('https[^\n]*', content)
-						#print(m
-						if m:
-							#print(m
-							final = t[0]
-							final = re.sub('\r', '', final)
+				final = self.get_correct_mirror(m,mirrorNo)
 		elif siteName == "AniDub":
-				url = "http://www.watchcartoononline.com/" + epn
+				url = "https://www.watchcartoononline.io/" + epn
 				print(url)
 				content = ccurlNew(url)
-				m = re.findall('["]http://[^"]*embed[^"]*',content)
+				m = re.findall('["]https://[^"]*embed[^"]*',content)
 				print(m)
 				n = []
 				for i in m:
 					j= i[1:]
 					print(j)
 					replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
-					#j = replace_all(j, replc)
-					j = str(urllib.parse.unquote(j))
+					#j = str(urllib.parse.unquote(j))
 					n.append(j)
 				print(n)
-				post = 'confirm="Click Here to Watch Free!!"'
+				post = 'confirm="Click+Here+to+Watch+Free!!"'
 				for i in n:
-					#content = (subprocess.check_output(['curl','-d',post,i]))
-					#content = self.getContent(content)
 					content = ccurlNew(i+'#'+'-d'+'#'+post)
 					print(content)
 					m = re.findall('file:[^"]*"http[^"]*',content)
@@ -636,23 +645,13 @@ class DubbedAnime():
 							print(final1[0])
 							k = final1[0]
 							replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
-							#k = replace_all(k, replc)
-							#k = str(urllib.parse.unquote(k))
-							#k = re.sub(' ','%20',k)
 							k = re.sub('\n','',k)
-							#content = (subprocess.check_output(['curl','-L',"-I",k]))
-							#content = self.getContent(content)
 							content = ccurlNew(k+'#'+'-I')
 							print('----------------',content,'-------------------')
 							
 							n = re.findall('Location: [^\n]*',content)
 							final = re.sub('Location: |\r','',n[-1])
 							print(final)
-							
-							
-							#final = replace_all(n[0], replc)
-							#final = str(urllib.parse.unquote(n[0]))
-							#final = re.sub('\r|\n','',n[0])
 							final = re.sub(' ','%20',final)
 							if final:
 								break
@@ -788,17 +787,17 @@ class DubbedAnime():
 				url = "http://www.cartoon-world.tv/cartoon-list/"
 		elif siteName == "Dubcrazy":
 			if category == "Movies":
-				url = "http://www.dubbedanimeonline.pw/dubbed-movies-list/"
+				url = "http://www.dubbedanimeonline.us/dubbed-movies-list/"
 			else:
-				url = "http://www.dubbedanimeonline.pw/dubbed-anime-list/"
+				url = "http://www.dubbedanimeonline.us/dubbed-anime-list/"
 		elif siteName == "Animetycoon":
-			url = "http://www.animetycoon.net/full-index/"
+			url = "http://www.animetycoon.org/full-index/"
 		elif siteName == "AniDub":
 			if category == "Movies":
-				url = "http://www.watchcartoononline.com/movie-list"
+				url = "https://www.watchcartoononline.io/movie-list"
 			else:
-				url = "http://www.watchcartoononline.com/dubbed-anime-list" 
-				urlc = "http://www.watchcartoononline.com/cartoon-list"
+				url = "https://www.watchcartoononline.io/dubbed-anime-list" 
+				urlc = "https://www.watchcartoononline.io/cartoon-list"
 		elif siteName == "AnimeStatic":
 			if category == "Movies":
 				url = "http://www.animestatic.co/anime-movies/"
@@ -884,17 +883,18 @@ class DubbedAnime():
 			base = "http://www.cartoon-world.tv/"
 			url = base+ "watch/" + name+"/"
 		elif siteName == "Dubcrazy":
-			base = "http://www.dubbedanimeonline.pw/"
+			#base = "http://www.dubbedanimeonline.us/"
+			base = "http://www.dubbedanimehere.com/"
 			url = base+ "view/" + name+"/" 
 		elif siteName == "Animetycoon":
-			base = "http://www.animetycoon.net/"
+			base = "http://www.animetycoon.org/"
 			url = base+ "watch/" + name+"/"
 		elif siteName == "AniDub":
-			base = "http://www.watchcartoononline.com/"
+			base = "https://www.watchcartoononline.io/"
 			if category == "Movie":
-					url = "http://www.watchcartoononline.com/" + name
+					url = "https://www.watchcartoononline.io/" + name
 			else:
-					url = "http://www.watchcartoononline.com/anime/" + name
+					url = "https://www.watchcartoononline.io/anime/" + name
 		elif siteName == "AnimeStatic":
 			base = "http://www.animestatic.co/"
 			if category == "Movies": 
@@ -964,11 +964,12 @@ class DubbedAnime():
 		
 		elif siteName == "AniDub" or siteName == "AnimeStatic":
 			m = []
+			summary = ''
 			if category == "Movies":
 				m.append(name)
 			else:
 				if siteName == "AniDub":
-					link = soup.findAll('div',{'class':'menustyle'})
+					link = soup.findAll('div',{'id':'catlist-listview'})
 				else:
 					link = soup.findAll('ul',{ 'class':'eps eps-list'})
 				for i in link:
@@ -982,7 +983,7 @@ class DubbedAnime():
 		
 			if siteName == "AniDub":
 				img = []
-				link = soup.findAll('div',{'class':'katcont'})		 	
+				link = soup.findAll('div',{'class':'iltext'})		 	
 				for i in link:
 					summary = re.sub('\n','',i.text)
 				img = re.findall('http[^"]*.jpg',content)
@@ -1077,7 +1078,7 @@ class DubbedAnime():
 					pass
 		elif siteName == "Dubcrazy":
 			
-					
+			
 			try:
 				summary = ""
 				link = soup.findAll('div',{'class':'main_container'})
@@ -1087,7 +1088,7 @@ class DubbedAnime():
 					for k in j:
 						summary = k.text
 				
-				img = "http://www.dubbedanimeonline.pw/images/" + name+".jpg"
+				img = "http://www.dubbedanimehere.com/images/" + name+".jpg"
 				print(img)
 				#picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				picn = os.path.join(self.tmp_dir,name+'.jpg')
