@@ -38,7 +38,32 @@ class Animebam():
 		m = re.findall('/embed/[^"]*',content)
 		print(m)
 
-		referer = []
+		rfr = 'http://www.animebam.net/jwplayer/jwplayer.flash.swf'
+		if m:
+			url = 'http://www.animebam.net' + m[0]
+		else:
+			url = ''
+		print(url)
+		if url:
+			content = ccurl(url)
+		else:
+			content = ''
+		try:
+			pre = re.search('file: "/play[^"]*',content).group()
+			pre = pre.replace('file: "','')
+			print(pre)
+			url = 'http://www.animebam.net' + pre
+			content = ccurl(url+'#'+'-Ie'+'#'+rfr)
+			final = ''
+			print(content)
+			if "Location:" in content:
+				m = re.findall('Location: [^\n]*',content)
+				final = re.sub('Location: |\r','',m[-1])
+		except Exception as e:
+			print(e,'--error--in--resolving--url--')
+			final= ''
+		return final
+		"""
 		j = 0
 		for i in m:
 			referer.append('http://www.animebam.net' + i)
@@ -67,6 +92,7 @@ class Animebam():
 		if m:
 			return m[0]
 		#subprocess.Popen(["smplayer","-add-to-playlist",m[0]]) 
+		"""
 	def search(self,name):
 		url = "http://www.animebam.net/search?search=" + name
 		content = ccurl(url)

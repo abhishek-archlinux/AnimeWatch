@@ -67,8 +67,12 @@ def ccurl(url,external_cookie=None):
 	except UnicodeEncodeError:
 		c.setopt(c.URL, url.encode('utf-8'))
 	storage = BytesIO()
-	if os.name != 'posix':
-		c.setopt(c.SSL_VERIFYPEER,False)
+	if os.name == 'nt':
+		ca_cert = get_ca_certificate()
+		if ca_cert:
+			c.setopt(c.CAINFO, ca_cert)
+		else:
+			c.setopt(c.SSL_VERIFYPEER,False)
 	if curl_opt == '-o':
 		c.setopt(c.FOLLOWLOCATION, True)
 		c.setopt(c.USERAGENT, hdr)
@@ -148,6 +152,15 @@ def ccurl(url,external_cookie=None):
 			content = ''
 		return content
 
+def get_ca_certificate():
+	ca_cert = ''
+	if os.name == 'nt':
+		try:
+			import certifi
+			ca_cert = certifi.where()
+		except Exception as e:
+			print(e)
+	return ca_cert
 
 def _get_video_val(url,c_file,q):
 		

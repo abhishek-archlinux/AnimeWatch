@@ -22,6 +22,7 @@ try:
 	from headlessBrowser import BrowseUrl
 except:
 	from headlessBrowser_webkit import BrowseUrl
+	
 def cloudfare(url,quality,c):
 	web = BrowseUrl(url,quality,c)
 
@@ -44,8 +45,13 @@ def ccurl(url):
 	c = pycurl.Curl()
 	c.setopt(c.FOLLOWLOCATION, True)
 	c.setopt(c.USERAGENT, hdr)
-	if os.name != 'posix':
-		c.setopt(c.SSL_VERIFYPEER,False)
+	if os.name == 'nt':
+		from player_functions import get_ca_certificate
+		ca_cert = get_ca_certificate()
+		if ca_cert:
+			c.setopt(c.CAINFO, ca_cert)
+		else:
+			c.setopt(c.SSL_VERIFYPEER,False)
 	curl_opt = ''
 	picn_op = ''
 	nUrl = url

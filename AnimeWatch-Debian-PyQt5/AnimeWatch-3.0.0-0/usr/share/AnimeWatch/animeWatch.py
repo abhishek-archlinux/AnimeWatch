@@ -45,13 +45,14 @@ try:
 	from adb import NetWorkManager
 	from browser import Browser
 	QT_WEB_ENGINE = True
+	print('Using QTWEBENGINE')
 except:
 	from PyQt5 import QtWebKitWidgets
 	from PyQt5.QtWebKitWidgets import QWebView
 	from adb_webkit import NetWorkManager
 	from browser_webkit import Browser
 	QT_WEB_ENGINE = False
-	
+	print('Using QTWEBKIT')
 
 
 from PyQt5.QtCore import QUrl
@@ -90,9 +91,15 @@ import struct
 from PyQt5.QtWidgets import QInputDialog
 import sqlite3
 try:
-	import taglib
+	try:
+		import taglib
+		SONG_TAGS = 'taglib'
+	except:	
+		import mutagen
+		SONG_TAGS = 'mutagen'
 except:
-	pass
+	SONG_TAGS = None
+print(SONG_TAGS,'--tagging-module--')
 from musicArtist import musicArtist
 from yt import get_yt_url
 
@@ -549,21 +556,23 @@ def naturallysorted(l):
 
 class MyEventFilter(QtCore.QObject):
 	def eventFilter(self, receiver, event):
-		if(event.type() == QtCore.QEvent.MouseMove):
-			#MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-				pos = event.pos()
-				#print "x="+str(pos.x())
-				#print pos.y()
-				#widget = MainWindow.childAt(event.pos())
-				#if widget:
-				#	print widget.objectName()
-				#print str(widget.objectName())
-				if pos.x() == 0:
-					ui.dockWidget_3.show()
-				elif pos.x() > 300:
-					ui.dockWidget_3.hide()
-					ui.list1.setFocus()
-				return True
+		global tray,MainWindow,ui
+		#print(event.pos(),event.type())
+		print(event)
+		if event.type():
+			if(event.type() == QtCore.QEvent.ToolTip):
+				#MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+					pos = event.pos()
+					#print "x="+str(pos.x())
+					#print pos.y()
+					#widget = MainWindow.childAt(event.pos())
+					#if widget:
+					#	print widget.objectName()
+					#print str(widget.objectName())
+					print(pos)
+					if MainWindow.isHidden() and ui.float_window.isHidden():
+						tray.right_menu._detach_video()
+					return 0
 		else:
 		#Call Base Class Method to Continue Normal Event Processing
 			return super(MyEventFilter,self).eventFilter(receiver, event)
@@ -646,7 +655,7 @@ class ExtendedQLabel(QtWidgets.QLabel):
 			name = tmp_name[num%len(tmp_name)]
 		print (name)
 		menu = QtWidgets.QMenu(self)
-		review = menu.addAction("Review")
+		#review = menu.addAction("Review")
 		rmPoster = menu.addAction("Remove Poster")
 		adPoster = menu.addAction("Find Image")
 		rset = menu.addAction("Reset Counter")
@@ -660,13 +669,13 @@ class ExtendedQLabel(QtWidgets.QLabel):
 			#print name
 			p1 = "ui."+t+".clear()"
 			exec (p1)
-	
-		elif action == review:
+			
+			#elif action == review:
 	
 			#ui.btn10.setItemText(0, _translate("MainWindow",name, None))
 			#ui.btn10.setItemText(0, _translate("MainWindow",name, None))
-			ui.btn2.setCurrentIndex(1)
-			ui.reviews()
+			#ui.btn2.setCurrentIndex(1)
+			#ui.reviews()
 		elif action == adPoster:
 			if site == "SubbedAnime" and base_url == 15:
 				nam = re.sub('[0-9]*','',name)
@@ -1292,7 +1301,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					#idw = str(mn)
 					idw = str(int(ui.tab_5.winId()))
 					ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-					ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+					##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
 					#ui.horizontalLayout10.addWidget(ui.tab_5)
 					#if ui.tab_5.isHidden() or ui.tab_5.width==0:
 					ui.tab_5.show()
@@ -1378,7 +1387,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					ui.epnfound()
 					if num < ui.list2.count():
 						ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-						ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+						##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
 						ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
 						#ui.horizontalLayout10.addWidget(ui.tab_5)
 					
@@ -2124,8 +2133,10 @@ class List1(QtWidgets.QListWidget):
 		#if ui.page_number.hasFocus():
 			#self.setFocus()
 	def mouseMoveEvent(self, event): 
+		global ui
+		if ui.auto_hide_dock and not ui.dockWidget_3.isHidden():
+			ui.dockWidget_3.hide()
 		self.setFocus()
-		
 	def dropEvent(self, event):
 		if event.source() == self and (event.dropAction() == QtCore.Qt.MoveAction or self.dragDropMode() == QtWidgets.QAbstractItemView.InternalMove):
 			global posterManually,site,home,pre_opt,opt,base_url,bookmark,name,embed,status,siteName,original_path_name
@@ -2541,6 +2552,7 @@ class List1(QtWidgets.QListWidget):
 			r = self.currentRow()
 			item = self.item(r)
 			if item:
+				
 				if site == "PlayLists":
 					index = self.currentRow()
 					item_r  = self.item(index)
@@ -2838,7 +2850,7 @@ class List1(QtWidgets.QListWidget):
 				delFanart = menu.addAction("Delete Fanart")
 				delThumb = menu.addAction("Delete Playlist Thumbnails")
 				delInfo = menu.addAction("Delete Info")
-				go_to = menu.addAction("Go To Last.fm")
+				#go_to = menu.addAction("Go To Last.fm")
 				thumbnail = menu.addAction("Show Thumbnail View")
 				cache = menu.addAction("Clear Cache")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
@@ -2870,22 +2882,12 @@ class List1(QtWidgets.QListWidget):
 							f = open(file_path,'w')
 							f.close()
 				elif action == profile:
-					"""
-					item, ok = QtGui.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Name or Url manually')
-					if ok and item:
-						if '/' in name:
-							name = name.replace('/','-')
-						
-						tmp_file='/tmp/AnimeWatch/'+name+'.txt'
-						if os.path.exists(tmp_file):
-							os.remove(tmp_file)
-						ui.posterfound(str(item))
-					"""
 					if '/' in name:
 						nam = name.replace('/','-')
 					else:
 						nam = name
-					ui.reviewsMusic("Last.Fm")
+					#ui.reviewsMusic("Last.Fm")
+					ui.reviewsWeb(srch_txt=nam,review_site='last.fm',action='search_by_name')
 				elif action == thumbnail:
 					if site == "Local" or bookmark == "True" or opt == "History" or site == "Video" or site == "Music":
 						if ui.list3.currentItem():
@@ -2969,30 +2971,27 @@ class List1(QtWidgets.QListWidget):
 									shutil.copy(default_wall,picn)
 									shutil.copy(default_wall,fanart)
 									ui.videoImage(picn,os.path.join(home,'Music','Artist',nam,'thumbnail.jpg'),fanart,'')
-				elif action == go_to:
-					if '/' in name:
-						nam = name.replace('/','-')
-					else:
-						nam = name
-					ui.reviewsMusic("Last.Fm")
+				#elif action == go_to:
+				#	if '/' in name:
+				#		nam = name.replace('/','-')
+				#	else:
+				#		nam = name
+				#	ui.reviewsWeb(srch_txt=nam,review_site='last.fm',action='search_by_name')
 			else:
 				menu = QtWidgets.QMenu(self)
 				#review = menu.addAction("Review")
 				submenuR = QtWidgets.QMenu(menu)
-				submenuR.setTitle("Reviews")
+				submenuR.setTitle("Find Information")
 				menu.addMenu(submenuR)
 				submenu = QtWidgets.QMenu(menu)
 				submenu.setTitle("Bookmark Options")
 				menu.addMenu(submenu)
 				#if bookmark == "True":
-				review1 = submenuR.addAction("MyAnimeList")
-				review2 = submenuR.addAction("Anime-Planet")
-				review3 = submenuR.addAction("Anime-Source")
-				review4 = submenuR.addAction("TVDB")
-				review5 = submenuR.addAction("ANN")
-				review6 = submenuR.addAction("AniDB")
-				review7 = submenuR.addAction("Google")
-				review8 = submenuR.addAction("Youtube")
+				submenu_arr_dict = {'mal':'MyAnimeList','ap':'Anime-Planet','ans':'Anime-Source','tvdb':'TVDB','ann':'ANN','anidb':'AniDB','g':'Google','yt':'Youtube','ddg':'DuckDuckGo','last.fm':'last.fm','zerochan':'Zerochan'}
+				reviews = []
+				for i in submenu_arr_dict:
+					reviews.append(submenuR.addAction(submenu_arr_dict[i]))
+				
 				addBookmark = submenu.addAction("Add Bookmark")
 				
 				bookmark_array = ['bookmark']
@@ -3021,7 +3020,10 @@ class List1(QtWidgets.QListWidget):
 					if action == item_m[i]:
 						item_name = item_m[i].text()
 						self.triggerBookmark(item_name)
-				
+				for i in range(len(reviews)):
+					if action == reviews[i]:
+						ui.reviewsWeb(srch_txt=name,review_site=list(submenu_arr_dict.keys())[list(submenu_arr_dict.values()).index(reviews[i].text())],action='context_menu')
+						
 				if action == new_pls:
 					print ("creating new bookmark category")
 					item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Playlist Name')
@@ -3042,11 +3044,7 @@ class List1(QtWidgets.QListWidget):
 					
 				elif action == addBookmark:
 					self.addBookmarkList()
-					"""
-					elif action == rmPoster:
-				
-					ui.label.clear()
-					"""
+					
 				elif action == thumbnail:
 					if (site == "Local" or site == 'PlayLists') or bookmark == "True" or opt == "History" or site == "Video":
 						ui.scrollArea.setFocus()
@@ -3059,44 +3057,17 @@ class List1(QtWidgets.QListWidget):
 							if '.txt' in i or '.jpg' in i:
 								t = os.path.join(TMPDIR,i)
 								os.remove(t)
-					
-				
-				elif action == review1:
-					ui.btnWebReviews.setCurrentIndex(1)
-					ui.reviewsWeb()
-				elif action == review2:	
-					ui.btnWebReviews.setCurrentIndex(2)
-					ui.reviewsWeb()
-				elif action == review3:	
-					ui.btnWebReviews.setCurrentIndex(3)
-					ui.reviewsWeb()
-				elif action == review4:	
-					ui.btnWebReviews.setCurrentIndex(4)
-					ui.reviewsWeb()
-				elif action == review5:	
-					ui.btnWebReviews.setCurrentIndex(5)
-					ui.reviewsWeb()
-				elif action == review6:	
-					ui.btnWebReviews.setCurrentIndex(6)
-					ui.reviewsWeb()
-				elif action == review7:	
-					ui.btnWebReviews.setCurrentIndex(7)
-					ui.reviewsWeb()
-				elif action == review8:	
-					ui.btnWebReviews.setCurrentIndex(8)
-					ui.reviewsWeb()
 				elif action == tvdb:
 					if self.currentItem():
 						ui.posterfound("")
 						r = self.currentRow()
-						
 						ui.copyImg()
 						ui.copySummary()
 						#ui.copyFanart()
 				elif action == history:
 					ui.setPreOpt()
 				elif action == tvdbM:
-					ui.reviewsMusic("TVDB:"+name)
+					ui.reviewsWeb(srch_txt=name,review_site='tvdb',action='context_menu')
 class List2(QtWidgets.QListWidget):
 	def __init__(self, parent):
 		super(List2, self).__init__(parent)
@@ -3114,6 +3085,9 @@ class List2(QtWidgets.QListWidget):
 	#if not self.hasFocus():
 	#	self.setFocus()
 	def mouseMoveEvent(self, event): 
+		global ui
+		if ui.auto_hide_dock and not ui.dockWidget_3.isHidden():
+			ui.dockWidget_3.hide()
 		self.setFocus()
 		
 	def dropEvent(self, event):
@@ -3236,7 +3210,7 @@ class List2(QtWidgets.QListWidget):
 				ui.list2.hide()
 				ui.goto_epn.hide()
 				ui.list1.show()
-				ui.frame.show()
+				#ui.frame.show()
 				ui.list1.setFocus()
 				show_hide_playlist = 0
 				show_hide_titlelist = 1
@@ -3594,7 +3568,7 @@ class List2(QtWidgets.QListWidget):
 			if ui.float_window.isHidden():
 				if ui.list1.isHidden():
 					ui.list1.show()
-					ui.frame.show()
+					#ui.frame.show()
 				ui.list1.setFocus()
 			else:
 				prev_r = self.currentRow() - 1
@@ -3611,7 +3585,8 @@ class List2(QtWidgets.QListWidget):
 				ui.epnfound()
 				if ui.list1.isHidden():
 					ui.list1.show()
-					ui.frame.show()
+					if not ui.goto_epn.isHidden():
+						ui.frame.show()
 				self.setFocus()
 			else:
 				nextr = self.currentRow() + 1
@@ -3725,7 +3700,7 @@ class List2(QtWidgets.QListWidget):
 				#ui.gridLayout.setContentsMargins(10,10,10,10)
 				ui.superGridLayout.setContentsMargins(10,10,10,10)
 				ui.list2.show()
-				ui.goto_epn.show()
+				#ui.goto_epn.show()
 				ui.btn20.show()
 				#if Player == "mpv":
 				if wget:
@@ -4199,7 +4174,7 @@ class List2(QtWidgets.QListWidget):
 						
 	def contextMenuEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,site,home,opt,finalUrlFound,epnArrList
-		global quitReally,epnArrList,name,hdr
+		global quitReally,epnArrList,name,hdr,ui
 		#print name
 		if site == "Music":
 			menu = QtWidgets.QMenu(self)
@@ -4252,7 +4227,7 @@ class List2(QtWidgets.QListWidget):
 				ui.update_list2()
 			elif action == view_list_thumbnail:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 128px;}
+				QListWidget:item {height: 64px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
@@ -4263,7 +4238,18 @@ class List2(QtWidgets.QListWidget):
 				ui.scrollArea1.setFocus()
 			
 			elif action == go_to:
-					ui.reviewsMusic("Last.Fm")
+					if ui.list3.currentItem():
+						nam1 = ''
+						if str(ui.list3.currentItem().text())=="Artist":
+							nam1 = str(ui.list1.currentItem().text())
+						else:
+							r = self.currentRow()
+							try:
+								nam1 = epnArrList[r].split('	')[2]
+							except:
+								nam1 = ''
+						print (nam1)
+						ui.reviewsWeb(srch_txt=nam1,review_site='last.fm',action='search_by_name')
 			elif action == fix_ord:
 				self.fix_order()
 			elif action == delInfo or action == delPosters or action == default:
@@ -4392,7 +4378,8 @@ class List2(QtWidgets.QListWidget):
 					self.init_offline_mode()
 			if goto_web_mode:
 				if action == goto_web:
-					ui.goto_web_directly(url_web)
+					#ui.goto_web_directly(url_web)
+					ui.reviewsWeb(srch_txt=url_web,review_site='yt',action='open')
 					#txt = action.text()
 					#if txt.lower() == 'open in youtube browser':
 					
@@ -4415,7 +4402,7 @@ class List2(QtWidgets.QListWidget):
 				ui.update_list2()
 			elif action == view_list_thumbnail:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 128px;}
+				QListWidget:item {height: 112px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
@@ -4473,7 +4460,8 @@ class List2(QtWidgets.QListWidget):
 			elif action == eplistM:
 				if ui.list1.currentItem():
 					name1 = (ui.list1.currentItem().text())
-					ui.reviewsMusic("TVDB:"+name1)
+					#ui.reviewsMusic("TVDB:"+name1)
+					ui.reviewsWeb(srch_txt=name1,review_site='tvdb',action='search_by_name')
 			elif action == eplist:
 				if self.currentItem():
 					self.find_info(0)
@@ -4752,11 +4740,16 @@ class QLineCustom(QtWidgets.QLineEdit):
 		print ("down")
 		global category,home,site,bookmark
 		
-		if (event.type()==QtCore.QEvent.KeyPress) and (event.key() == QtCore.Qt.Key_Down):
+		if (event.key() == QtCore.Qt.Key_Down):
 			print ("Down")
+			ui.list4.show()
 			ui.list4.setFocus()
+			self.show()
 		elif event.key() == QtCore.Qt.Key_Up:
+			ui.list4.show()
 			ui.list4.setFocus()
+			self.show()
+			
 		super(QLineCustom, self).keyPressEvent(event)
 		
 		
@@ -5208,7 +5201,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 					num = ui.list2.currentRow()
 					curR = num
 					
-					ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
+					ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 					
 					if '	' in epnArrList[num]:
 						new_epn = (epnArrList[num]).split('	')[0]
@@ -5224,7 +5217,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 						
 						idw = str(int(ui.tab_5.winId()))
 						ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-						ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+						##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
 						#ui.horizontalLayout10.addWidget(ui.tab_5)
 						if ui.tab_5.isHidden() or ui.tab_5.width==0:
 							ui.tab_5.show()
@@ -5296,8 +5289,8 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 						ui.epnfound()
 						if num < ui.list2.count():
 							ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
-							ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
-							ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
+							##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+							ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 						
 							#if ui.tab_5.isHidden() or ui.tab_5.width()==0:
 							print (ui.tab_5.width())
@@ -5568,10 +5561,12 @@ class tab5(QtWidgets.QWidget):
 			new_tray_widget.hide()
 			print('--float--activity--')
 	def mouseMoveEvent(self,event):
-		global Player,fullscr,pause_indicator,site,new_tray_widget
+		global Player,fullscr,pause_indicator,site,new_tray_widget,ui
 		self.setFocus()
 		pos = event.pos()
 		#print pos.y()
+		if ui.auto_hide_dock and not ui.dockWidget_3.isHidden():
+			ui.dockWidget_3.hide()
 		if not ui.float_window.isHidden() and new_tray_widget.remove_toolbar:
 			if not self.float_timer.isActive():
 				wid_height = int(ui.float_window.height()/3)
@@ -5970,6 +5965,9 @@ class tab5(QtWidgets.QWidget):
 					ui.gridLayout.setContentsMargins(0,0,0,0)
 					ui.superGridLayout.setContentsMargins(0,0,0,0)
 					#ui.frame1.setMaximumHeight(20)
+					#ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
+					#ui.superGridLayout.addWidget(ui.tab_5, 0, 0, 1, 1)
+					#ui.superGridLayout.addWidget(ui.frame1, 0, 1, 1, 1)
 					ui.text.hide()
 					ui.label.hide()
 					#if site != "Music":
@@ -5992,14 +5990,15 @@ class tab5(QtWidgets.QWidget):
 					#ui.tab_5.setParent(None)
 					
 					#ui.tab_5.showMaximized()
-					ui.tab_5.show()
-					ui.tab_5.setFocus()
+					self.show()
+					self.setFocus()
 					#ui.tab_5.showFullScreen()
 					if not ui.tab_2.isHidden():
 						ui.tab_2.hide()
 					#ui.gridLayout.showFullScreen()
 					if (Player == "mplayer" or Player=="mpv"):
 						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+					#ui.superGridLayout.insertWidget()
 					MainWindow.showFullScreen()
 					#self.showFullScreen()
 				else:
@@ -6009,7 +6008,7 @@ class tab5(QtWidgets.QWidget):
 					#ui.gridLayout.setContentsMargins(10,10,10,10)
 					ui.superGridLayout.setContentsMargins(10,10,10,10)
 					ui.list2.show()
-					ui.goto_epn.show()
+					#ui.goto_epn.show()
 					ui.btn20.show()
 					if wget.processId() > 0 or video_local_stream:
 						ui.progress.show()
@@ -6054,31 +6053,23 @@ class tab5(QtWidgets.QWidget):
 				ui.tab_5.hide()
 				if show_hide_titlelist == 1:
 					ui.list1.show()
-					ui.frame.show()
+					#ui.frame.show()
 				if show_hide_cover == 1:
 					ui.label.show()
 					ui.text.show()
 				if show_hide_titlelist == 1:
 					ui.list2.show()
-					ui.goto_epn.show()
+					#ui.goto_epn.show()
 				
 				ui.list2.setFocus()
 			else:
+				ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 				#ui.tab_5.setMinimumSize(0,0)
 				ui.gridLayout.setSpacing(10)
-				ui.frame1.hide()
+				#ui.frame1.hide()
 				ui.tab_5.hide()
 				i = 0
 				thumbnail_indicator[:]=[]
-				"""
-				if total_till > 0:
-					while(i<total_till):
-						t = "ui.label_"+str(i)+".deleteLater()"
-						exec (t)
-						i = i+1
-				"""
-				#total_till = 0
-				#browse_cnt = 0
 				if iconv_r_indicator:
 					iconv_r = iconv_r_indicator[0]
 				else:
@@ -6099,25 +6090,7 @@ class tab5(QtWidgets.QWidget):
 				print(ht,'--ht--',ui.scrollArea1.height())
 				ui.scrollArea1.verticalScrollBar().setValue(ht)
 				
-				"""
-				print ("width="+str(ui.tab_6.width()))
-				#ui.tab_6.setMaximumSize(10000,10000)
-				w = float((ui.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
-				width=str(int(w))
-				height=str(int(h))
-				ui.scrollArea1.verticalScrollBar().setValue(((curR+1)/iconv_r)*h+((curR+1)/iconv_r)*10)
-				"""
-				"""
-				print ("hello tab_6")
-				row = ui.list2.currentRow()
-				p1 = "ui.label_epn_"+str(row)+".y()"
-				ht = eval(p1)
-				print(ht,'--ht--',ui.scrollArea1.height())
-				QtGui.QApplication.processEvents()
-				print(ht,'--ht--',ui.scrollArea1.height())
-				ui.scrollArea1.verticalScrollBar().setValue(ht)
-				"""
+				
 			if wget:
 				if wget.processId() > 0:
 					#ui.goto_epn.hide()
@@ -6184,7 +6157,7 @@ except AttributeError:
 
 class Ui_MainWindow(object):
 	def setupUi(self, MainWindow):
-		global BASEDIR
+		global BASEDIR,screen_width
 		MainWindow.setObjectName(_fromUtf8("MainWindow"))
 		#MainWindow.resize(875, 600)
 		
@@ -6205,10 +6178,15 @@ class Ui_MainWindow(object):
 		self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
 		self.superTab.setMouseTracking(True)
 		self.superGridLayout.addWidget(self.superTab,0,1,1,1)
-		self.superGridLayout.setContentsMargins(10,10,10,10)
-		self.superGridLayout.setSpacing(10)
-		self.gridLayout.setSpacing(10)
-		self.gridLayout.setContentsMargins(0,0,0,0)
+		self.superGridLayout.setContentsMargins(5,5,5,5)
+		self.superGridLayout.setSpacing(0)
+		self.gridLayout.setSpacing(5)
+		self.gridLayout.setContentsMargins(5,5,5,5)
+		
+		#self.gridLayout.setColumnStretch(0,1)
+		#self.gridLayout.setColumnStretch(2,1)
+		#self.gridLayout.setColumnStretch(3,2)
+		
 		#self.horizontalLayout_3 = QtGui.QHBoxLayout(self.tab)
 		#self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
 		#Causes No FullScreen#
@@ -6242,22 +6220,33 @@ class Ui_MainWindow(object):
 		###########################
 		self.label = QtWidgets.QLabel(MainWindow)
 		#self.label.setSizePolicy(sizePolicy)
-		self.label.setMaximumSize(QtCore.QSize(280, 250))
-		self.label.setMinimumSize(QtCore.QSize(280, 250))
+		
 		#self.label.setMinimumSize(QtCore.QSize(300, 250))
 		self.label.setText(_fromUtf8(""))
 		self.label.setScaledContents(True)
 		self.label.setObjectName(_fromUtf8("label"))
-		self.text = QtWidgets.QTextBrowser(MainWindow)
+		#self.text = QtWidgets.QTextBrowser(MainWindow)
+		self.text = QtWidgets.QTextEdit(MainWindow)
+		self.text.setAcceptRichText(False)
 		self.text.setObjectName(_fromUtf8("text"))
+		self.text.copyAvailable.connect(self.text_editor_changed)
+		self.text_save_btn = QtWidgets.QPushButton(MainWindow)
+		self.text_save_btn.setText('Save')
+		self.text_save_btn.setMinimumSize(QtCore.QSize(30,25))
+		self.text_save_btn.clicked.connect(self.save_text_edit)
+		self.text_save_btn.hide()
+		self.text_save_btn_timer = QtCore.QTimer()
 		#self.text.setMaximumSize(QtCore.QSize(450, 250))
 		#self.text.setMinimumSize(QtCore.QSize(450, 250))
-		self.text.setMaximumWidth(280)
-		self.text.setMaximumHeight(250)
-		self.text.lineWrapMode()
+		self.text_save_btn_timer.timeout.connect(self.text_save_btn_hide)
+		self.text_save_btn_timer.setSingleShot(True)
 		
+		self.text.lineWrapMode()
+		#self.VerticalLayoutLabel.setStretch(2,1)
 		self.VerticalLayoutLabel.insertWidget(0,self.label,0)
 		self.VerticalLayoutLabel.insertWidget(1,self.text,0)
+		#self.VerticalLayoutLabel.setStretch(1,2)
+		self.VerticalLayoutLabel.addStretch(1)
 		#self.text.hide()
 		self.label.setAlignment(QtCore.Qt.AlignTop)
 		self.text.setAlignment(QtCore.Qt.AlignBottom)
@@ -6326,7 +6315,7 @@ class Ui_MainWindow(object):
 		self.list4.setObjectName(_fromUtf8("list4"))
 		#self.list4.setMaximumSize(QtCore.QSize(400,16777215))
 		self.list4.setMouseTracking(True)
-		self.verticalLayout_40.insertWidget(1,self.list4,0)
+		
 		self.list4.hide()
 		
 		self.list5 = List5(MainWindow)
@@ -6351,15 +6340,14 @@ class Ui_MainWindow(object):
 		self.frame.setObjectName(_fromUtf8("frame"))
 		self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.frame)
 		self.horizontalLayout_3.setObjectName(_fromUtf8("horizontalLayout_3"))
-		#self.horizontalLayout_3.setContentsMargins(0,5,0,5)
-		#self.horizontalLayout_3.setContentsMargins(1,1,1,1)
+		
 		self.backward = QtWidgets.QPushButton(self.frame)
 		self.backward.setObjectName(_fromUtf8("backward"))
 		self.horizontalLayout_3.addWidget(self.backward)
 		
 		self.hide_btn_list1 = QtWidgets.QPushButton(self.frame)
 		self.hide_btn_list1.setObjectName(_fromUtf8("hide_btn_list1"))
-		self.horizontalLayout_3.addWidget(self.hide_btn_list1)
+		
 		self.hide_btn_list1.setMinimumHeight(30)
 		self.hide_btn_list1_menu = QtWidgets.QMenu()
 		self.hide_btn_menu_option = ['Sort','Shuffle']
@@ -6371,15 +6359,23 @@ class Ui_MainWindow(object):
 		self.hide_btn_list1.setText('Order')
 		self.filter_btn = QtWidgets.QPushButton(self.frame)
 		self.filter_btn.setObjectName(_fromUtf8("filter_btn"))
-		self.horizontalLayout_3.addWidget(self.filter_btn)
+		
 		self.filter_btn.setMinimumHeight(30)
+		self.filter_btn.hide()
 		#self.go_page = QtGui.QLineEdit(self.frame)
+		
+		self.page_number = QtWidgets.QLineEdit(self.frame)
+		self.page_number.setObjectName(_fromUtf8("page_number"))
+		
+		self.page_number.setMaximumWidth(48)
+		self.page_number.setMinimumHeight(30)
+		
 		self.go_page = QLineCustom(self.frame)
 		self.go_page.setObjectName(_fromUtf8("go_page"))
 		self.go_page.setMinimumHeight(30)
-		self.horizontalLayout_3.addWidget(self.go_page)
-		self.go_page.hide()
-		
+		self.go_page.setPlaceholderText('Filter')
+		#self.go_page.hide()
+	
 		
 		
 		self.forward = QtWidgets.QPushButton(self.frame)
@@ -6387,6 +6383,13 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_3.addWidget(self.forward)
 		self.forward.hide()
 		self.backward.hide()
+		
+		self.horizontalLayout_3.insertWidget(2,self.page_number,0)
+		self.horizontalLayout_3.insertWidget(3,self.go_page,0)
+		self.horizontalLayout_3.insertWidget(4,self.filter_btn,0)
+		self.horizontalLayout_3.insertWidget(5,self.hide_btn_list1,0)
+		
+		
 		
 		#self.gridLayout.addWidget(self.frame, 1, 1, 1, 1)
 		#self.goto_epn = QtGui.QLineEdit(MainWindow)
@@ -6398,7 +6401,14 @@ class Ui_MainWindow(object):
 		self.goto_epn.setObjectName(_fromUtf8("goto_epn"))
 		self.horizontalLayout_goto_epn = QtWidgets.QHBoxLayout(self.goto_epn)
 		self.horizontalLayout_goto_epn.setObjectName(_fromUtf8("horizontalLayout_goto_epn"))
+		self.horizontalLayout_goto_epn.setContentsMargins(0,0,0,0)
+		self.horizontalLayout_goto_epn.setSpacing(5)
 		#self.gridLayout.addWidget(self.goto_epn, 1, 2, 1, 1)
+		self.horizontalLayout_3.setContentsMargins(0,0,0,0)
+		self.horizontalLayout_3.setSpacing(5)
+		
+		self.goto_epn.hide()
+		self.frame.hide()
 		
 		#self.progress = QtWidgets.QProgressBar(MainWindow)
 		self.progress = QProgressBarCustom(MainWindow,self)
@@ -6411,7 +6421,7 @@ class Ui_MainWindow(object):
 		self.progress.setTextVisible(True)
 		self.progress.hide()
 		self.progress.setToolTip("Click for more options")
-		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3'}
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3','pr':'\u226A','nxt':'\u226B','min':'\u2581','max':'\u25A2','close':'\u2715','resize':'M'}
 		self.check_symbol = '\u2714'
 		self.torrent_frame = QtWidgets.QFrame(MainWindow)
 		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
@@ -6487,31 +6497,34 @@ class Ui_MainWindow(object):
 		self.slider.setRange(0,100)
 		self.slider.setMouseTracking(True)
 		
-		self.list1.setMaximumWidth(300)
-		#self.list1.setMaximumHeight(250)
-		self.list2.setMaximumWidth(300)
-		#self.list2.setWordWrap(True)
-		#self.list2.setIconSize(QtCore.QSize(128,128))
+		width_allowed = int((screen_width)/4.5)
+		print(width_allowed,'--width--allowed--')
+		self.list1.setMaximumWidth(width_allowed)
+		self.list2.setMaximumWidth(width_allowed)
 		self.list2.setIconSize(QtCore.QSize(128,128))
-		#self.list2.setMaximumHeight(250)
-		self.frame.setMaximumWidth(300)
-		self.list4.setMaximumWidth(300)
-		self.list5.setMaximumWidth(300)
-		self.list6.setMaximumWidth(300)
-		self.goto_epn.setMaximumWidth(300)
+		self.frame.setMaximumWidth(width_allowed)
+		self.list4.setMaximumWidth(width_allowed)
+		self.list5.setMaximumWidth(width_allowed)
+		self.list6.setMaximumWidth(width_allowed)
+		self.goto_epn.setMaximumWidth(width_allowed)
+		self.text.setMaximumWidth(screen_width-2*width_allowed-280)
+		self.text.setMaximumHeight(250)
+		self.label.setMaximumSize(QtCore.QSize(280, 250))
+		self.label.setMinimumSize(QtCore.QSize(280, 250))
+		
 		self.list1.setWordWrap(True)
 		self.list1.setTextElideMode(QtCore.Qt.ElideRight)
 		self.list2.setWordWrap(True)
 		self.list2.setTextElideMode(QtCore.Qt.ElideRight)
-		#self.list3.setWordWrap(True)
 		self.list4.setWordWrap(True)
 		self.list4.setTextElideMode(QtCore.Qt.ElideRight)
 		self.list5.setWordWrap(True)
 		self.list5.setTextElideMode(QtCore.Qt.ElideRight)
 		self.list6.setWordWrap(True)
 		self.list6.setTextElideMode(QtCore.Qt.ElideRight)
-		
-		
+		#self.gridLayout.setAlignment(QtCore.Qt.AlignLeft)#Can cause video disappear in fullscreen mode
+		#self.superGridLayout.setAlignment(QtCore.Qt.AlignRight)Can cause video disappear in fullscreen mode
+		#self.verticalLayout_40.insertWidget(1,self.frame,0)
 		
 		self.player_opt = QtWidgets.QFrame(self.frame1)
 		self.player_opt.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -6582,13 +6595,29 @@ class Ui_MainWindow(object):
 		self.player_showhide_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_showhide_playlist.setObjectName(_fromUtf8("player_showhide_playlist"))
 		self.horizontalLayout_player_opt.insertWidget(10,self.player_showhide_playlist,0)
-		self.player_showhide_playlist.setText('\u2118')
+		#self.player_showhide_playlist.setText('\u2118')
+		self.player_showhide_playlist.setText('PL')
 		self.player_showhide_playlist.clicked.connect(lambda x=0:self.playerPlaylist("Show/Hide Playlist"))
 		self.player_showhide_playlist.setToolTip('Show/Hide Playlist')
 		
+		self.queue_manage = QtWidgets.QPushButton(self.goto_epn)
+		self.queue_manage.setObjectName(_fromUtf8("queue_manage"))
+		self.horizontalLayout_player_opt.insertWidget(11,self.queue_manage,0)
+		self.queue_manage.setText("Q")
+		self.queue_manage.setToolTip('Show/Hide Queue')
+		#self.queue_manage.setMinimumWidth(30)
+		self.queue_manage.clicked.connect(self.queue_manage_list)
+		
+		self.player_filter = QtWidgets.QPushButton(self.player_opt)
+		self.player_filter.setObjectName(_fromUtf8("player_filter"))
+		self.horizontalLayout_player_opt.insertWidget(12,self.player_filter,0)
+		self.player_filter.setText('Y')
+		self.player_filter.setToolTip('Show/Hide Filter and other options')
+		self.player_filter.clicked.connect(self.show_hide_filter_toolbar)
+		
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
-		self.horizontalLayout_player_opt.insertWidget(11,self.player_playlist,0)
+		self.horizontalLayout_player_opt.insertWidget(13,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
 		self.player_menu_option = ['Show/Hide Video','Show/Hide Cover And Summary','Show/Hide Title List','Show/Hide Playlist','Lock Playlist','Lock File','Shuffle','Stop After Current File','Continue(default Mode)','Start Media Server','Set As Default Background','Show/Hide Web Browser']
@@ -6602,10 +6631,7 @@ class Ui_MainWindow(object):
 		self.player_playlist.setCheckable(True)
 		
 		
-		self.queue_manage = QtWidgets.QPushButton(self.goto_epn)
-		self.queue_manage.setObjectName(_fromUtf8("queue_manage"))
-		self.horizontalLayout_goto_epn.insertWidget(0,self.queue_manage,0)
-		self.queue_manage.setText("Q")
+		
 		
 		self.mirror_change = QtWidgets.QPushButton(self.goto_epn)
 		self.mirror_change.setObjectName(_fromUtf8("mirror_change"))
@@ -6617,12 +6643,13 @@ class Ui_MainWindow(object):
 		self.goto_epn_filter.setObjectName(_fromUtf8("Filter Button"))
 		self.horizontalLayout_goto_epn.insertWidget(2,self.goto_epn_filter,0)
 		self.goto_epn_filter.setText("Filter")
+		self.goto_epn_filter.hide()
 		
 		self.goto_epn_filter_txt = QLineCustomEpn(self.goto_epn)
 		self.goto_epn_filter_txt.setObjectName(_fromUtf8("Filter Text"))
 		self.horizontalLayout_goto_epn.insertWidget(3,self.goto_epn_filter_txt,0)
-		self.goto_epn_filter.setText("Filter")
-		self.goto_epn_filter_txt.hide()
+		self.goto_epn_filter_txt.setPlaceholderText("Filter")
+		#self.goto_epn_filter_txt.hide()
 		
 		self.player_playlist1 = QtWidgets.QPushButton(self.goto_epn)
 		self.player_playlist1.setObjectName(_fromUtf8("player_playlist1"))
@@ -6640,11 +6667,11 @@ class Ui_MainWindow(object):
 		self.player_playlist1.setCheckable(True)
 		
 		self.frame1.setMinimumHeight(60)
-		self.frame.setMinimumHeight(60)
-		self.goto_epn.setMinimumHeight(60)
+		self.frame.setMinimumHeight(30)
+		self.goto_epn.setMinimumHeight(30)
 		self.frame1.setMaximumHeight(60)
-		self.frame.setMaximumHeight(60)
-		self.goto_epn.setMaximumHeight(60)
+		self.frame.setMaximumHeight(30)
+		self.goto_epn.setMaximumHeight(30)
 		
 		self.mirror_change.setMaximumHeight(30)
 		self.player_playlist1.setMaximumHeight(30)
@@ -6671,7 +6698,7 @@ class Ui_MainWindow(object):
 		self.tab_6 = tab6(MainWindow)
 		self.tab_6.setMouseTracking(True)
 		#self.tab_6 = QtGui.QWidget()
-		self.gridLayout.addWidget(self.tab_6)
+		#self.gridLayout.addWidget(self.tab_6)
 		#ui.gridLayout.addWidget(ui.tab_6, 0, 4, 1, 1)
 		self.tab_6.setObjectName(_fromUtf8("tab_6"))
 		#self.tabWidget1.addTab(self.tab_6, _fromUtf8(""))
@@ -6679,7 +6706,8 @@ class Ui_MainWindow(object):
 		self.tab_2 = QtWidgets.QWidget()
 		self.tab_2.setObjectName(_fromUtf8("tab_2"))
 		self.gridLayout.addWidget(self.tab_2,0,2,1,1)
-		self.gridLayout.addWidget(self.tab_6,0,2,1,1)
+		#self.superGridLayout.addWidget(self.tab_2,2,1,1,1)
+		self.gridLayout.addWidget(self.tab_6,0,1,1,1)
 		self.tab_2.hide()
 		#self.tab_2.setMinimumSize(900,400)
 		#MainWindow.setCentralWidget(self.centralwidget)
@@ -6751,7 +6779,8 @@ class Ui_MainWindow(object):
 		#self.text.setObjectName(_fromUtf8("text"))
 		#self.horizontalLayout.addWidget(self.text)
 		self.dockWidget_4.setWidget(self.dockWidgetContents_4)
-		###################################################
+		
+		###################  Browser Layout  ##############################
 		self.horizontalLayout_5 = QtWidgets.QVBoxLayout(self.tab_2)
 		#MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(8), self.dockWidget_4)
 		
@@ -6771,23 +6800,58 @@ class Ui_MainWindow(object):
 		self.btnWebHide = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebHide.setObjectName(_fromUtf8("btnWebHide"))
 		self.btnWebHide.setMaximumSize(200,50)
-		self.horizLayout_web.addWidget(self.btnWebHide)
+		self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
+		self.btnWebHide.setText(self.player_buttons['min'])
+		self.btnWebHide.clicked.connect(self.webHide)
 		
 		self.btnWebClose = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebClose.setObjectName(_fromUtf8("btnWebClose"))
 		self.btnWebClose.setMaximumSize(200,50)
-		self.horizLayout_web.addWidget(self.btnWebClose)
+		self.horizLayout_web.insertWidget(1,self.btnWebClose,0)
+		self.btnWebClose.setText(self.player_buttons['close'])
+		self.btnWebClose.clicked.connect(self.webClose)
+		
+		self.btnWebResize = QtWidgets.QPushButton(self.tab_2)
+		self.btnWebResize.setObjectName(_fromUtf8("btnWebResize"))
+		self.btnWebResize.setMaximumSize(200,50)
+		self.horizLayout_web.insertWidget(2,self.btnWebResize,0)
+		self.btnWebResize.setText(self.player_buttons['resize'])
+		self.btnWebResize.clicked.connect(self.webResize)
+		
+		self.btnWebPrev = QtWidgets.QPushButton(self.tab_2)
+		self.btnWebPrev.setObjectName(_fromUtf8("btnWebPrev"))
+		self.btnWebPrev.setMaximumSize(200,50)
+		self.horizLayout_web.insertWidget(3,self.btnWebPrev,0)
+		self.btnWebPrev.clicked.connect(self.go_prev_web_page)
+		self.btnWebPrev.setText(self.player_buttons['pr'])
+		
+		self.btnWebNext = QtWidgets.QPushButton(self.tab_2)
+		self.btnWebNext.setObjectName(_fromUtf8("btnWebNext"))
+		self.btnWebNext.setMaximumSize(200,50)
+		self.horizLayout_web.insertWidget(4,self.btnWebNext,0)
+		self.btnWebNext.clicked.connect(self.go_next_web_page)
+		self.btnWebNext.setText(self.player_buttons['nxt'])
 		
 		self.btnWebReviews = QtWidgets.QComboBox(self.tab_2)
 		self.btnWebReviews.setObjectName(_fromUtf8("btnWebReviews"))
-		self.horizLayout_web.addWidget(self.btnWebReviews)
+		self.horizLayout_web.insertWidget(5,self.btnWebReviews,0)
 		self.btnWebReviews.setMaximumSize(200,50)
 		
-		self.btnPls = QtWidgets.QPushButton(self.tab_2)
-		self.btnPls.setObjectName(_fromUtf8("btnPls"))
-		self.horizLayout_web.addWidget(self.btnPls)
-		self.btnPls.setMaximumSize(200,50)
-		self.btnPls.setText("Playlist")
+		self.btnGoWeb = QtWidgets.QPushButton(self.tab_2)
+		self.btnGoWeb.setObjectName(_fromUtf8("btnGoWeb"))
+		self.horizLayout_web.insertWidget(6,self.btnGoWeb,0)
+		self.btnGoWeb.setMaximumSize(200,50)
+		self.btnGoWeb.setText("Go")
+		self.btnGoWeb.clicked.connect(lambda x=0: self.reviewsWeb(action='btn_pushed'))
+		
+		self.btnWebReviews_search = QtWidgets.QLineEdit(self.tab_2)
+		self.btnWebReviews_search.setObjectName(_fromUtf8("btnWebReviews_search"))
+		self.horizLayout_web.insertWidget(7,self.btnWebReviews_search,0)
+		self.btnWebReviews_search.setMaximumSize(200,50)
+		self.btnWebReviews_search.setPlaceholderText('Search Web')
+		self.btnWebReviews_search.returnPressed.connect(lambda x=0:self.reviewsWeb(action='return_pressed'))
+		
+		#self.btnWebReviews_search.setMenu(self.btnweb_menu)
 		##################
 		
 		
@@ -6808,12 +6872,7 @@ class Ui_MainWindow(object):
 		#self.chk = QtGui.QComboBox(self.dockWidgetContents_3)
 		#self.chk.setGeometry(QtCore.QRect(40, 120, 91, 21))
 		#self.chk.setObjectName(_fromUtf8("chk"))
-		self.page_number = QtWidgets.QLineEdit(self.frame)
-		#self.page_number.setMaximumSize(QtCore.QSize(48, 16777215))
-		self.page_number.setObjectName(_fromUtf8("page_number"))
-		self.horizontalLayout_3.addWidget(self.page_number)
-		self.page_number.setMaximumWidth(48)
-		self.page_number.setMinimumHeight(30)
+		
 		
 		self.horizontalLayout10 = QtWidgets.QVBoxLayout(self.tab_6)
 		self.horizontalLayout10.setObjectName(_fromUtf8("horizontalLayout"))
@@ -7021,13 +7080,31 @@ class Ui_MainWindow(object):
 		self.comboView.setMinimumHeight(30)
 		self.btnHistory.setMinimumHeight(30)
 		
-		self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
-		self.gridLayout.addWidget(self.frame, 1, 2, 1, 1)
-		self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
-		#self.VerticalLayoutLabel_Dock3.setContentsMargins(30,10,30,10)
-		#self.gridLayout1.setSpacing(30)
-		#self.filt = mouseoverEvent(self)
-		#self.text.installEventFilter(self.filt)
+		
+		#gridLayout content: self.frame1,self.frame,self.goto_epn
+		#superGridLayout content : self.superTab,self.dockWidget_3
+		 
+		
+		self.superGridLayout.addWidget(self.frame1, 1, 1, 1, 1)
+		#self.superGridLayout.addWidget(self.tab_5, 0, 0, 1, 1)
+		#self.gridLayout.addWidget(self.frame1, 1,1 , 1, 1)
+		
+		self.verticalLayout_50.insertWidget(0,self.list2,0)
+		self.verticalLayout_50.insertWidget(1,self.list6,0)
+		self.verticalLayout_50.insertWidget(2,self.list5,0)
+		self.verticalLayout_50.insertWidget(3,self.goto_epn,0)
+		
+		
+		self.verticalLayout_40.insertWidget(0,self.list1,0)
+		self.verticalLayout_40.insertWidget(1,self.list4,0)
+		self.verticalLayout_40.insertWidget(2,self.frame,0)
+		self.verticalLayout_40.setSpacing(5)
+		self.verticalLayout_50.setSpacing(5)
+		
+		#self.gridLayout.addWidget(self.frame1, 1, 1, 1, 1)
+		#self.gridLayout.addWidget(self.frame, 1, 2, 1, 1)
+		#self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
+
 		self.frame_timer = QtCore.QTimer()
 		self.frame_timer.timeout.connect(self.frame_options)
 		self.frame_timer.setSingleShot(True)
@@ -7036,7 +7113,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,39)
+		self.version_number = (3,0,0,44)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -7078,7 +7155,7 @@ class Ui_MainWindow(object):
 		self.record_history = False
 		self.depth_list = 0
 		self.display_list = False
-		
+		self.tmp_web_srch = ''
 		self.update_proc = QtCore.QProcess()
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7097,6 +7174,9 @@ class Ui_MainWindow(object):
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
 		self.btn2.addItem(_fromUtf8(""))
+		self.btnWebReviews.addItem(_fromUtf8(""))
+		self.btnWebReviews.addItem(_fromUtf8(""))
+		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
 		self.btnWebReviews.addItem(_fromUtf8(""))
@@ -7164,7 +7244,7 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.goto_epn_filter, QtCore.SIGNAL(_fromUtf8("clicked()")),self.goto_epn_filter_on)
 		self.goto_epn_filter.clicked.connect(self.goto_epn_filter_on)
 		#QtCore.QObject.connect(self.queue_manage, QtCore.SIGNAL(_fromUtf8("clicked()")),self.queue_manage_list)
-		self.queue_manage.clicked.connect(self.queue_manage_list)
+		
 		#QtCore.QObject.connect(self.audio_track, QtCore.SIGNAL(_fromUtf8("clicked()")),self.toggleAudio)
 		self.audio_track.clicked.connect(self.toggleAudio)
 		#QtCore.QObject.connect(self.subtitle_track, QtCore.SIGNAL(_fromUtf8("clicked()")),self.toggleSubtitle)
@@ -7184,9 +7264,8 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.btn201, QtCore.SIGNAL(_fromUtf8("clicked()")), self.prev_thumbnails)
 		self.btn201.clicked.connect(self.prev_thumbnails)
 		#QtCore.QObject.connect(self.btnWebClose, QtCore.SIGNAL(_fromUtf8("clicked()")), self.webHide)
-		self.btnWebClose.clicked.connect(self.webClose)
-		self.btnWebHide.clicked.connect(self.webHide)
-		self.btnPls.clicked.connect(self.togglePlaylist)
+		
+		#self.btnPls.clicked.connect(self.togglePlaylist)
 		#QtCore.QObject.connect(self.go_opt, QtCore.SIGNAL(_fromUtf8("clicked()")), self.go_opt_options)
 		self.go_opt.clicked.connect(self.go_opt_options)
 		#QtCore.QObject.connect(self.btn10, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.browse_epn)
@@ -7208,9 +7287,9 @@ class Ui_MainWindow(object):
 		#QtCore.QObject.connect(self.comboView, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.viewPreference)
 		self.comboView.currentIndexChanged['int'].connect(self.viewPreference)
 		#QtCore.QObject.connect(self.btn2, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.reviews)
-		self.btn2.currentIndexChanged['int'].connect(self.reviews)
+		#self.btn2.currentIndexChanged['int'].connect(self.reviews)
 		#QtCore.QObject.connect(self.btnWebReviews, QtCore.SIGNAL(_fromUtf8("currentIndexChanged(int)")), self.reviewsWeb)
-		self.btnWebReviews.currentIndexChanged['int'].connect(self.reviewsWeb)
+		self.btnWebReviews.currentIndexChanged['int'].connect(lambda x: self.reviewsWeb(action='index_changed'))
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("itemDoubleClicked(QListWidgetItem*)")), self.listfound)
 		self.list1.itemDoubleClicked['QListWidgetItem*'].connect(self.list1_double_clicked)
 		#QtCore.QObject.connect(self.list1, QtCore.SIGNAL(_fromUtf8("currentRowChanged(int)")), self.history_highlight)
@@ -7291,8 +7370,8 @@ class Ui_MainWindow(object):
 		self.btn30.setItemText(6, _translate("MainWindow", "AnimeHi10", None))
 		self.btn30.setItemText(7, _translate("MainWindow", "KissAnime", None))
 		self.btn3.setText(_translate("MainWindow", "Library", None))
-		self.btnWebClose.setText(_translate("MainWindow", "Close", None))
-		self.btnWebHide.setText(_translate("MainWindow", "Hide", None))
+		#self.btnWebClose.setText(_translate("MainWindow", "Close", None))
+		#self.btnWebHide.setText(_translate("MainWindow", "Hide", None))
 		self.btn2.setItemText(0, _translate("MainWindow", "Reviews", None))
 		self.btn2.setItemText(1, _translate("MainWindow", "MyAnimeList", None))
 		self.btn2.setItemText(2, _translate("MainWindow", "Anime-Planet", None))
@@ -7311,6 +7390,9 @@ class Ui_MainWindow(object):
 		self.btnWebReviews.setItemText(6, _translate("MainWindow", "AniDB", None))
 		self.btnWebReviews.setItemText(7, _translate("MainWindow", "Google", None))
 		self.btnWebReviews.setItemText(8, _translate("MainWindow", "Youtube", None))
+		self.btnWebReviews.setItemText(9, _translate("MainWindow", "DuckDuckGo", None))
+		self.btnWebReviews.setItemText(10, _translate("MainWindow", "Zerochan", None))
+		self.btnWebReviews.setItemText(11, _translate("MainWindow", "last.fm", None))
 		self.chk.setItemText(0, _translate("MainWindow", "mpv", None))
 		#self.chk.setItemText(1, _translate("MainWindow", "Default", None))
 		self.chk.setItemText(1, _translate("MainWindow", "mplayer", None))
@@ -7374,6 +7456,61 @@ class Ui_MainWindow(object):
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
 		self.mpv_thumbnail_lock = False
+	def webResize(self):
+		global screen_width
+		wdt = self.tab_2.width()
+		if wdt <= 400:
+			self.tab_2.setMaximumWidth(screen_width)
+		else:
+			self.tab_2.setMaximumWidth(400)
+	def go_prev_web_page(self):
+		if self.web:
+			self.web.back()
+	def go_next_web_page(self):
+		if self.web:
+			self.web.forward()
+	def text_save_btn_hide(self):
+		self.text_save_btn.hide()
+	def save_text_edit(self):
+		txt = self.text.toPlainText()
+		self.text.clear()
+		self.copySummary(txt)
+	def text_editor_changed(self):
+		g = self.text.geometry()
+		txt = self.text.toPlainText()
+		print(g.x(),g.y())
+		
+		self.text_save_btn.setGeometry(g.x()+g.width()-30,g.y()-25,35,25)
+		self.text_save_btn.show()
+		
+		#if not self.text_save_btn_timer.isActive():
+		self.text_save_btn_timer.start(4000)
+		#self.copySummary(txt)
+	def show_hide_filter_toolbar(self):
+		if self.list1.isHidden() and self.list2.isHidden():
+			pass
+		elif not self.list1.isHidden() and self.list2.isHidden():
+			if self.frame.isHidden():
+				self.frame.show()
+			elif not self.frame.isHidden():
+				self.frame.hide()
+		elif self.list1.isHidden() and not self.list2.isHidden():
+			if self.goto_epn.isHidden():
+				self.goto_epn.show()
+			elif not self.goto_epn.isHidden():
+				self.goto_epn.hide()
+		elif not self.list1.isHidden() and not self.list2.isHidden():
+			if self.frame.isHidden() and not self.goto_epn.isHidden():
+				self.goto_epn.hide()
+			elif not self.frame.isHidden() and self.goto_epn.isHidden():
+				self.frame.hide()
+			elif not self.frame.isHidden() and not self.goto_epn.isHidden():
+				self.frame.hide()
+				self.goto_epn.hide()
+			elif self.frame.isHidden() and self.goto_epn.isHidden():
+				self.frame.show()
+				self.goto_epn.show()
+				
 		
 	def orient_dock(self,initial_start=None):
 		if initial_start:
@@ -7382,12 +7519,13 @@ class Ui_MainWindow(object):
 				self.btn_orient.setText(self.player_buttons['right'])
 				self.btn_orient.setToolTip('Orient Dock to Right')
 				self.orientation_dock = 'left'
-				self.superGridLayout.addWidget(self.dockWidget_3,0,0,1,1)
+				self.superGridLayout.addWidget(self.dockWidget_3,0,1,1,1)
 			else:
 				self.btn_orient.setText(self.player_buttons['left'])
 				self.btn_orient.setToolTip('Orient Dock to Left')
 				self.orientation_dock = 'right'
 				self.superGridLayout.addWidget(self.dockWidget_3,0,5,1,1)
+				#self.gridLayout.addWidget(self.dockWidget_3,0,3,1,1)
 		else:
 			txt = self.btn_orient.text()
 			if txt == self.player_buttons['right']:
@@ -7395,12 +7533,13 @@ class Ui_MainWindow(object):
 				self.btn_orient.setToolTip('Orient Dock to Left')
 				self.orientation_dock = 'right'
 				self.superGridLayout.addWidget(self.dockWidget_3,0,5,1,1)
+				#self.gridLayout.addWidget(self.dockWidget_3,0,3,1,1)
 			else:
 				self.player_buttons['left']
 				self.btn_orient.setText(self.player_buttons['right'])
 				self.btn_orient.setToolTip('Orient Dock to Right')
 				self.orientation_dock = 'left'
-				self.superGridLayout.addWidget(self.dockWidget_3,0,0,1,1)
+				self.superGridLayout.addWidget(self.dockWidget_3,0,1,1,1)
 			
 	def close_frame_btn(self):
 		txt = self.btn4.text()
@@ -7495,7 +7634,7 @@ class Ui_MainWindow(object):
 			curR = 0
 			#self.epnfound()
 			self.list1.show()
-			self.frame.show()
+			#self.frame.show()
 			
 			self.list1.setFocus()
 		else:
@@ -7503,7 +7642,7 @@ class Ui_MainWindow(object):
 				self.list1.hide()
 				self.frame.hide()
 				self.list2.show()
-				self.goto_epn.show()
+				#self.goto_epn.show()
 				self.list2.setFocus()
 				show_hide_titlelist = 0
 				show_hide_playlist = 1
@@ -7588,7 +7727,7 @@ class Ui_MainWindow(object):
 			self.goto_epn_filter_txt.setFocus()
 		else:
 			self.goto_epn_filter_txt.clear()
-			self.goto_epn_filter_txt.hide()
+			#self.goto_epn_filter_txt.hide()
 	def player_started_playing(self):
 		global player_start_now
 		player_start_now = 1
@@ -7741,32 +7880,25 @@ class Ui_MainWindow(object):
 						
 						if show_hide_titlelist == 1:
 							ui.list1.show()
-							ui.frame.show()
+							#ui.frame.show()
 						if show_hide_cover == 1:
 							ui.label.show()
 							ui.text.show()
 						if show_hide_titlelist == 1:
 							ui.list2.show()
-							ui.goto_epn.show()
+							#ui.goto_epn.show()
 						
 						ui.list2.setFocus()
 					else:
 						#ui.tab_5.setMinimumSize(0,0)
+						ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 						ui.gridLayout.setSpacing(10)
 						
-						ui.frame1.hide()
+						#ui.frame1.hide()
 						ui.tab_5.hide()
 						i = 0
 						thumbnail_indicator[:]=[]
-						"""
-						if total_till > 0:
-							while(i<total_till):
-								t = "ui.label_"+str(i)+".deleteLater()"
-								exec t
-								i = i+1
-						"""
-						#total_till = 0
-						#browse_cnt = 0
+						
 						if iconv_r_indicator:
 							iconv_r = iconv_r_indicator[0]
 						else:
@@ -7916,7 +8048,7 @@ class Ui_MainWindow(object):
 					show_hide_playlist = 0
 				else:
 					self.list2.show()
-					self.goto_epn.show()
+					#self.goto_epn.show()
 					show_hide_playlist = 1
 					if MainWindow.isFullScreen():
 						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
@@ -7930,7 +8062,7 @@ class Ui_MainWindow(object):
 				show_hide_titlelist = 0
 			else:
 				self.list1.show()
-				self.frame.show()
+				#self.frame.show()
 				show_hide_titlelist = 1
 				if MainWindow.isFullScreen():
 					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
@@ -8055,7 +8187,7 @@ class Ui_MainWindow(object):
 				self.list4.show()
 				self.go_page.clear()
 			else:
-				self.go_page.hide()
+				#self.go_page.hide()
 				self.list4.hide()
 				self.list1.setFocus()
 		elif not self.tab_6.isHidden():
@@ -8302,572 +8434,578 @@ class Ui_MainWindow(object):
 			font: bold 12px;color:black;background-image:url('1.png');
 		}
 		""")
-	def buttonStyle(self):
+	def buttonStyle(self,widget=None):
 		global home,BASEDIR
 		png_home = os.path.join(BASEDIR,'1.png')
-		ui.dockWidget_3.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-				
-				
-		ui.tab_6.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.tab_5.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		#ui.btn9.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.go_opt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		#ui.list1.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		#ui.list2.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
-		#ui.list3.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
-		ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		ui.frame1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
-		ui.torrent_frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.float_window.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		#ui.progress.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-		ui.player_opt.setStyleSheet("font:bold 11px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;height:20px")
-		
-		
-		ui.btn1.setStyleSheet("""QComboBox {
-	min-height:30px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	selection-color:yellow;
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	
-	}
+		if not widget:
+			ui.dockWidget_3.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+					
+					
+			ui.tab_6.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.tab_5.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			#ui.btn9.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebPrev.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnWebNext.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.go_opt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.list1.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			#ui.list2.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			#ui.list3.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			ui.text_save_btn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,60%);border:rgba(0,0,0,30%);border-radius:3px")
+			ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
+			ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			ui.frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
+			ui.frame1.setStyleSheet("font: bold 11px;color:white;background:rgba(0,0,0,60%);border:rgba(0,0,0,30%);border-radius:3px;")
+			ui.torrent_frame.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.float_window.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			#ui.progress.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			ui.player_opt.setStyleSheet("font:bold 11px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;height:20px")
+			
+			
+			ui.btn1.setStyleSheet("""QComboBox {
+			min-height:30px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			selection-color:yellow;
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			
+			}
 
-	QComboBox::focus {
-	
-	color:yellow;
-	
-	
-	}
+			QComboBox::focus {
+			
+			color:yellow;
+			
+			
+			}
 
 
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-	
-		ui.btnAddon.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	selection-color:yellow;
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	
-	}
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+		
+			ui.btnAddon.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			selection-color:yellow;
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			
+			}
 
-	
-	QComboBox::focus {
-	
-	color:yellow;
-	
-	
-	}
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-		
-		
-		ui.comboView.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	padding: 1px 1px 1px 1px;
-	font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	
-	}
+			
+			QComboBox::focus {
+			
+			color:yellow;
+			
+			
+			}
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+			
+			
+			ui.comboView.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			padding: 1px 1px 1px 1px;
+			font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			
+			}
 
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
 
-		ui.slider.setStyleSheet("""QSlider:groove:horizontal {
-	
-	height: 8px;
-	border:rgba(0,0,0,30%);
-	background:rgba(0,0,0,30%);
-	margin: 2px 0;
-	}
+			ui.slider.setStyleSheet("""QSlider:groove:horizontal {
+		
+			height: 8px;
+			border:rgba(0,0,0,30%);
+			background:rgba(0,0,0,30%);
+			margin: 2px 0;
+			}
 
-	QSlider:handle:horizontal {
-	background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);
-	border: 1px solid #5c5c5c;
-	
-	width: 2px;
-	margin: -2px 0; 
-	border-radius: 3px;
-	}
+			QSlider:handle:horizontal {
+			background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);
+			border: 1px solid #5c5c5c;
+			
+			width: 2px;
+			margin: -2px 0; 
+			border-radius: 3px;
+			}
 
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}
-		""")
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}
+				""")
 
-		ui.list1.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
+			ui.list1.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;
+			}
+			
+			QListWidget:item {
+			height: 30px;
+			
+			}
 		
-		QListWidget:item {
-		height: 30px;
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
+			
 		
-		}
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
-		
-		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-		
-	
-		""")
-		
-		ui.list4.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			""")
+			
+			ui.list4.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		ui.list5.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		ui.list6.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			""")
+			
+			ui.list5.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		
-		ui.scrollArea.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		
-	
-	
-		""")
-		
-		ui.scrollArea1.setStyleSheet("""QListWidget{
-		font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-	
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: yellow;
-		
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
+			""")
+			
+			ui.list6.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
 		
 		
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
 		
-	
-	
-		""")
 		
-		if self.list_with_thumbnail:
-			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-			QListWidget:item {height: 128px;}
-			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
-			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
-			QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+			""")
+			
+			
+			ui.scrollArea.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
+		
+		
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
+		
+		
+			""")
+			
+			ui.scrollArea1.setStyleSheet("""QListWidget{
+			font: Bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
+		
+		
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: yellow;
+			
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			
+			
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			
+		
+		
+			""")
+			
+			if self.list_with_thumbnail:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+				QListWidget:item {height: 112px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+			else:
+				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+				QListWidget:item {height: 30px;}
+				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+			
+			ui.list3.setStyleSheet("""QListWidget{
+			font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
+			}
+			
+			QListWidget:item {
+			height: 20px;
+			
+			}
+		
+			QListWidget:item:selected:active {
+			background:rgba(0,0,0,20%);
+			color: violet;
+			}
+			QListWidget:item:selected:inactive {
+			border:rgba(0,0,0,30%);
+			}
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			""")
+			
+			ui.progress.setStyleSheet("""QProgressBar{
+			font: bold 12px;
+			color:white;
+			background:rgba(0,0,0,30%);
+			border:rgba(0,0,0,1%) ;
+			border-radius: 1px;
+			text-align: center;}
+			
+			QProgressBar:chunk {
+			background-color: rgba(255,255,255,30%);
+			width: 10px;
+			margin: 0.5px;
+			}}""")
+			
+			ui.progressEpn.setStyleSheet("""QProgressBar{
+			font: bold 12px;
+			color:white;
+			background:rgba(0,0,0,30%);
+			border:rgba(0,0,0,1%) ;
+			border-radius: 1px;
+			text-align: center;
+			}
+			
+			QProgressBar:chunk {
+			background-color: rgba(255,255,255,30%);
+			width: 10px;
+			margin: 0.5px;
+			}}""")
+
+			ui.btnWebReviews.setStyleSheet("""QComboBox {
+			min-height:0px;
+			max-height:50px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:white;
+			
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+		
+			ui.btn30.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.btn2.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.btn3.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+			
+			ui.btn10.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""") 
+			
+			ui.chk.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			
+			font-size:9px;
+			padding: 1px 1px 1px 1px;
+			font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			width: 2px;
+			height: 2px;
+			}""") 
+
+			ui.comboBox20.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.comboBox30.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+
+			ui.btnOpt.setStyleSheet("""QComboBox {
+			min-height:20px;
+			max-height:63px;
+			border-radius: 3px;
+			font-size:10px;
+			padding: 1px 1px 1px 1px;
+			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+			}
+			QComboBox::drop-down {
+			width: 47px;
+			border: 0px;
+			color:black;
+			
+			}
+
+			QComboBox::down-arrow {
+			
+			width: 2px;
+			height: 2px;
+			}""")
+			
+			ui.label_torrent_stop.setStyleSheet("""
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}
+				""")
+			
+			ui.label_down_speed.setStyleSheet("""
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}
+				""")
+			
+			ui.label_up_speed.setStyleSheet("""
+			QToolTip {
+			font : Bold 10px;
+			color: white;
+			background:rgba(157,131,131,80%)
+			}""")
 		else:
-			ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-			QListWidget:item {height: 30px;}
-			QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
-			QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
-			QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
-		
-		ui.list3.setStyleSheet("""QListWidget{
-		font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;
-		}
-		
-		QListWidget:item {
-		height: 20px;
-		
-		}
-	
-		QListWidget:item:selected:active {
-		background:rgba(0,0,0,20%);
-		color: violet;
-		}
-		QListWidget:item:selected:inactive {
-		border:rgba(0,0,0,30%);
-		}
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		""")
-		
-		ui.progress.setStyleSheet("""QProgressBar{
-			
-					font: bold 12px;
-					color:white;
-					background:rgba(0,0,0,30%);
-					border:rgba(0,0,0,1%) ;
-					border-radius: 1px;
-		text-align: center;
-		}
-		QProgressBar:chunk {
-	background-color: rgba(255,255,255,30%);
-	width: 10px;
-	margin: 0.5px;
-	}
-		
-		
-		}
-	
-	
-	
-		""")
-		ui.progressEpn.setStyleSheet("""QProgressBar{
-			
-					font: bold 12px;
-					color:white;
-					background:rgba(0,0,0,30%);
-					border:rgba(0,0,0,1%) ;
-					border-radius: 1px;
-		text-align: center;
-		}
-		QProgressBar:chunk {
-	background-color: rgba(255,255,255,30%);
-	width: 10px;
-	margin: 0.5px;
-	}
-		
-		
-		}
-	
-	
-	
-		""")
-
-		ui.btnWebReviews.setStyleSheet("""QComboBox {
-	min-height:0px;
-	max-height:50px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:white;
-	
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-	
-		ui.btn30.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.btn2.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.btn3.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-		ui.btn10.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""") 
-		ui.chk.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	
-	font-size:9px;
-	padding: 1px 1px 1px 1px;
-	font:bold 12px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""") 
-
-		ui.comboBox20.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.comboBox30.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-
-		ui.btnOpt.setStyleSheet("""QComboBox {
-	min-height:20px;
-	max-height:63px;
-	border-radius: 3px;
-	font-size:10px;
-	padding: 1px 1px 1px 1px;
-	font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-	}
-	QComboBox::drop-down {
-	width: 47px;
-	border: 0px;
-	color:black;
-	
-	}
-
-	QComboBox::down-arrow {
-	
-	width: 2px;
-	height: 2px;
-	}""")
-		ui.label_torrent_stop.setStyleSheet("""
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}
-		""")
-		
-		ui.label_down_speed.setStyleSheet("""
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}
-		""")
-		
-		ui.label_up_speed.setStyleSheet("""
-	QToolTip {
-	font : Bold 10px;
-	color: white;
-	background:rgba(157,131,131,80%)
-	}""")
+			if widget == ui.list2:
+				if self.list_with_thumbnail:
+					ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+					QListWidget:item {height: 112px;}
+					QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+					QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+					QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
+				else:
+					ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;}
+					QListWidget:item {height: 30px;}
+					QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
+					QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
+					QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 		
 
 	def setPlayerFocus(self):
@@ -8891,8 +9029,8 @@ class Ui_MainWindow(object):
 			self.list2.show()
 			self.text.show()
 			self.label.show()
-			self.frame.show()
-			self.goto_epn.show()
+			#self.frame.show()
+			#self.goto_epn.show()
 			self.list1.setFocus()
 	def PlayEpn(self):
 		
@@ -10275,12 +10413,10 @@ class Ui_MainWindow(object):
 			
 			self.list1.show()
 			self.list2.show()
-		
 			self.label.show()
 			self.text.show()
 			self.frame.show()
 			self.dockWidget_3.show()
-		
 			self.goto_epn.show()
 			self.list1.setFocus()
 			self.frame1.show()
@@ -10315,10 +10451,10 @@ class Ui_MainWindow(object):
 		self.list1.show()
 		self.list2.show()
 		self.label.show()
-		self.frame.show()
+		#self.frame.show()
 		self.frame1.show()
 		self.text.show()
-		self.goto_epn.show()
+		#self.goto_epn.show()
 		view_layout = "List"
 		if mpvplayer:
 			if mpvplayer.processId() > 0:
@@ -10327,39 +10463,62 @@ class Ui_MainWindow(object):
 				self.list1.hide()
 				self.frame.hide()
 				self.tab_5.show()
+				
 	def webClose(self):
-		global view_layout
-		#homeN = home+'/src/default.html'
-		#self.web.load(QUrl(homeN))
-		#self.gridLayout.addWidget(self.goto_epn, 1, 3, 1, 1)
-		try:
-			self.web.close()
-			self.web.deleteLater()
-		except:
-			self.web = ''
-		self.web = ''
-		self.tab_2.hide()
-		#self.web.clear()
-		#self.web.close()
+		global view_layout,platform_name
 		
+		if not self.VerticalLayoutLabel.itemAt(2):
+			self.VerticalLayoutLabel.addStretch(2)
+			print('--stretch -- added--to --label and text widget--')
+		
+		self.tmp_web_srch = ''
+		
+		if platform_name == 'ubuntu':
+			self.web.setHtml('<html>Reviews:</html>')
+			print('--page--cleared--')
+		else:
+			try:
+				self.web.close()
+				self.web.deleteLater()
+			except Exception as e:
+				print(e)
+			self.web = ''
+			print('--web closed--')
+		self.tab_2.hide()
 		self.list1.show()
 		self.list2.show()
 		self.label.show()
 		self.text.show()
-		self.frame.show()
+		#self.frame.show()
 		self.frame1.show()
-		self.goto_epn.show()
+		#self.goto_epn.show()
+		
 	def webHide(self):
 		global mpvplayer
+		#if not self.VerticalLayoutLabel.itemAt(2):
+		#	self.VerticalLayoutLabel.addStretch(2)
+		#	print('--stretch -- added--to --label and text widget--')
+		
+		txt = self.btnWebHide.text()
+		if txt == self.player_buttons['min']:
+			self.horizontalLayout_player_opt.insertWidget(13,self.btnWebHide,0)
+			self.btnWebHide.setText(self.player_buttons['max'])
+		else:
+			self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
+			self.btnWebHide.setText(self.player_buttons['min'])
 		if mpvplayer.processId() > 0:
-			self.tab_2.hide()
+			if self.tab_2.isHidden():
+				self.tab_2.show()
+			else:
+				self.tab_2.hide()
 		else:
 			self.showHideBrowser()
+			
 		
 	def togglePlaylist(self):
 		if self.list2.isHidden():
 			self.list2.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 		else:
 			self.list2.hide()
 			self.goto_epn.hide()
@@ -10383,6 +10542,7 @@ class Ui_MainWindow(object):
 		if self.tab_2.isHidden():
 			self.HideEveryThing()
 			self.tab_2.show()
+			self.frame1.show()
 		else:
 			self.tab_6.hide()
 			self.tab_2.hide()
@@ -10390,9 +10550,9 @@ class Ui_MainWindow(object):
 			self.list2.show()
 			self.label.show()
 			self.text.show()
-			self.frame.show()
+			#self.frame.show()
 			self.frame1.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 		
 		
 	def IconView(self):
@@ -10458,9 +10618,9 @@ class Ui_MainWindow(object):
 			self.label.show()
 			self.list1.setFocus()
 			self.text.show()
-			self.frame.show()
+			#self.frame.show()
 			self.frame1.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 			#view_layout = "List"
 			
 	def IconViewEpn(self):
@@ -10473,17 +10633,7 @@ class Ui_MainWindow(object):
 		tmp_name[:]=[]
 		num = self.list2.currentRow()
 		i = 0
-		"""
-		if total_till_epn > 0:
-			while(i<total_till_epn):
-				t = "self.label_epn_"+str(i)+".deleteLater()"
 		
-				exec (t)
-		
-				i = i+1
-		#else:
-		total_till_epn = 0
-		"""
 		if self.tab_6.isHidden() or (viewMode == "Thumbnail" and site == "PlayLists"):
 			
 			self.list1.hide()
@@ -10492,16 +10642,16 @@ class Ui_MainWindow(object):
 			self.label.hide()
 			self.text.hide()
 			self.frame.hide()
-			self.frame1.hide()
+			#self.frame1.hide()
 			self.goto_epn.hide()
 			self.dockWidget_3.hide()
-			if mpvplayer:
-				if mpvplayer.processId()>0:
-					self.tab_5.show()
-					self.frame1.show()
-					iconv_r = 1
-					
-			self.gridLayout.addWidget(self.tab_6,0,2,1,1)		
+			if mpvplayer.processId()>0:
+				self.tab_5.show()
+				self.frame1.show()
+				iconv_r = 1
+				self.gridLayout.addWidget(self.tab_6,0,2,1,1)	
+			else:	
+				self.gridLayout.addWidget(self.tab_6,0,1,1,1)		
 			self.tab_6.show()
 			self.thumbnailEpn()
 			self.tab_2.hide()
@@ -10519,9 +10669,9 @@ class Ui_MainWindow(object):
 			self.label.show()
 			self.list1.setFocus()
 			self.text.show()
-			self.frame.show()
+			#self.frame.show()
 			self.frame1.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 				
 	def textShowHide(self):
 		global fullscrT,idwMain,idw
@@ -10545,7 +10695,7 @@ class Ui_MainWindow(object):
 		
 		if fullscrT == 0:
 			self.list2.show()
-			self.goto_epn.show()
+			#self.goto_epn.show()
 			#self.btnEpnList.hide()
 			#self.label.setMinimumSize(QtCore.QSize(350, 400))
 			self.tab_5.setFocus()
@@ -10792,40 +10942,42 @@ class Ui_MainWindow(object):
 			name = original_path_name[r]
 		if not os.path.isfile(picn):
 			picn = os.path.join(home,'default.jpg')
-		if os.path.isfile(picn) and opt == "History":
+		if os.path.isfile(picn) and opt == "History" and (site.lower()!= 'video' and site.lower()!= 'music' and site.lower()!= 'local'):
 			#thumbnail = '/tmp/AnimeWatch/'+name+'thumbnail.jpg'
 			#check again
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 			basewidth = 450
-			img = Image.open(str(picn))
-			wpercent = (basewidth / float(img.size[0]))
-			hsize = int((float(img.size[1]) * float(wpercent)))
-			
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(str(thumbnail))
-			if site == "SubbedAnime" or site == "DubbedAnime":
-				shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'poster.jpg'))
-				shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
-			else:
-				shutil.copy(picn,os.path.join(home,'History',site,name,'poster.jpg'))
-				shutil.copy(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
-			#self.listfound()
-		elif os.path.isfile(picn) and (site == "Local" or site == "Video") and opt != "History":
-			#thumbnail = '/tmp/AnimeWatch/'+name+'thumbnail.jpg'
+			try:
+				img = Image.open(str(picn))
+				wpercent = (basewidth / float(img.size[0]))
+				hsize = int((float(img.size[1]) * float(wpercent)))
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(str(thumbnail))
+				if site == "SubbedAnime" or site == "DubbedAnime":
+					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'poster.jpg'))
+					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
+				else:
+					shutil.copy(picn,os.path.join(home,'History',site,name,'poster.jpg'))
+					shutil.copy(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line 10933--')
+		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 			basewidth = 450
-			img = Image.open(str(picn))
-			wpercent = (basewidth / float(img.size[0]))
-			hsize = int((float(img.size[1]) * float(wpercent)))
-			
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(str(thumbnail))	
-			shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
-			shutil.copy(picn,os.path.join(home,'Local',name,'thumbnail.jpg'))
-			#self.listfound()
-			ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			try:
+				img = Image.open(str(picn))
+				wpercent = (basewidth / float(img.size[0]))
+				hsize = int((float(img.size[1]) * float(wpercent)))
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(str(thumbnail))	
+				shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
+				shutil.copy(picn,os.path.join(home,'Local',name,'thumbnail.jpg'))
+				#self.listfound()
+				ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line 10948--')
 		elif os.path.isfile(picn) and (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
 				nm = name
@@ -10870,30 +11022,36 @@ class Ui_MainWindow(object):
 		if site == "Local":
 			r = self.list1.currentRow()
 			name = original_path_name[r]
-		if os.path.isfile(picn) and opt == "History":
+		if os.path.isfile(picn) and opt == "History" and (site.lower()!= 'video' and site.lower()!= 'music' and site.lower()!= 'local'):
 			basewidth = screen_width
-			img = Image.open(picn)
-			wpercent = (basewidth / float(img.size[0]))
-			#hsize = int((float(img.size[1]) * float(wpercent)))
-			hsize = screen_height
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(picn)
-			if site == "SubbedAnime" or site == "DubbedAnime":
-				shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'fanart.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
-			else:
-				shutil.copy(picn,os.path.join(home,'History',site,name,'fanart.jpg'))
-				ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
-		elif os.path.isfile(picn) and (site == "Local" or site == "Video") and opt != "History":
+			try:
+				img = Image.open(picn)
+				wpercent = (basewidth / float(img.size[0]))
+				#hsize = int((float(img.size[1]) * float(wpercent)))
+				hsize = screen_height
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(picn)
+				if site == "SubbedAnime" or site == "DubbedAnime":
+					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'fanart.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
+				else:
+					shutil.copy(picn,os.path.join(home,'History',site,name,'fanart.jpg'))
+					ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line--11010--')
+		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			basewidth = screen_width
-			img = Image.open(picn)
-			wpercent = (basewidth / float(img.size[0]))
-			#hsize = int((float(img.size[1]) * float(wpercent)))
-			hsize = screen_height
-			img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-			img.save(picn)
-			shutil.copy(picn,os.path.join(home,'Local',name,'fanart.jpg'))
-			ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			try:
+				img = Image.open(picn)
+				wpercent = (basewidth / float(img.size[0]))
+				#hsize = int((float(img.size[1]) * float(wpercent)))
+				hsize = screen_height
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(picn)
+				shutil.copy(picn,os.path.join(home,'Local',name,'fanart.jpg'))
+				ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
+			except Exception as e:
+				print(e,'--line--11023--')
 			#ui.listfound()
 		elif (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
@@ -10919,7 +11077,7 @@ class Ui_MainWindow(object):
 				print(picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
 				ui.videoImage(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,'fanart.jpg'),'')
 			#ui.listfound()
-	def copySummary(self):
+	def copySummary(self,copy_sum=None):
 		global name,site,opt,pre_opt,home,siteName,original_path_name
 		print (site)
 		print (opt)
@@ -10938,12 +11096,14 @@ class Ui_MainWindow(object):
 			r = self.list1.currentRow()
 			name = original_path_name[r]
 			print(sumry,'---',name,'--copysummary---')
-		if os.path.isfile(sumry) and opt == "History":
+		if copy_sum:
+			write_files(sumry,copy_sum,False)
+		if os.path.isfile(sumry) and opt == "History" and (site != "Local" and site != "Video" and site != 'Music'):
 			if site == "SubbedAnime" or site == "DubbedAnime":
 				shutil.copy(sumry,os.path.join(home,'History',site,siteName,name,'summary.txt'))
 			else:
 				shutil.copy(sumry,os.path.join(home,'History',site,name,'summary.txt'))
-		elif os.path.isfile(sumry) and (site == "Local" or site == "Video") and opt != "History":
+		elif os.path.isfile(sumry) and (site == "Local" or site == "Video"):
 				shutil.copy(sumry,os.path.join(home,'Local',name,'summary.txt'))
 		elif (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
@@ -11889,8 +12049,8 @@ class Ui_MainWindow(object):
 			ui.listfound()
 			self.list1.setFocus()
 			self.list4.hide()
-			#self.go_page.clear()
-			self.go_page.hide()
+			self.go_page.clear()
+			#self.go_page.hide()
 		#self.list4.hide()
 	def search_list5_options(self):
 		global opt,site,name,base_url,name1,embed,pre_opt,bookmark,base_url_picn,base_url_summary
@@ -11905,6 +12065,7 @@ class Ui_MainWindow(object):
 			ui.epnfound()
 			#self.list2.setFocus()
 			self.list5.setFocus()
+			self.goto_epn_filter_txt.clear()
 			#self.go_page.clear()
 			#self.goto_epn_filter_txt.hide()
 		#self.list4.hide()
@@ -12157,7 +12318,15 @@ class Ui_MainWindow(object):
 			item = self.list1.item(row)
 			nam = str(item.text())
 			if item:
-				
+				if epnArrList:
+					icon_name = self.get_thumbnail_image_path(0,epnArrList[0])
+					icon_dir_path,thumb_name = os.path.split(icon_name)
+					thumb_path = os.path.join(home,'thumbnails')
+					print(icon_dir_path,'--thumbnail--path--')
+					if icon_dir_path.startswith(thumb_path):
+						if os.path.exists(icon_dir_path):
+							shutil.rmtree(icon_dir_path)
+							print(icon_dir_path,'--thumbnail--directory--deleted--')
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					dir_name =os.path.join(home,'History',site,siteName,nam)
 					print (dir_name	)
@@ -12210,7 +12379,7 @@ class Ui_MainWindow(object):
 	def epn_highlight(self):
 		global epnArrList,home,site
 		#self.text.hide()
-		self.list4.hide()
+		#self.list4.hide()
 		num = self.list2.currentRow()
 		if num < 0:
 			return 0
@@ -12627,6 +12796,12 @@ class Ui_MainWindow(object):
 			self.btnAddon.hide()
 		if not self.btnHistory.isHidden():
 			self.btnHistory.hide()
+		self.list3.clear()
+		self.list1.clear()
+		self.list2.clear()
+		self.label.clear()
+		self.text.clear()
+		
 		if site == "PlayLists":
 			bookmark = "False"
 			criteria = os.listdir(os.path.join(home,'Playlists'))
@@ -12634,8 +12809,6 @@ class Ui_MainWindow(object):
 			home_n = os.path.join(home,'Playlists')
 			criteria = naturallysorted(criteria)
 			#criteria = sorted(criteria,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),reverse=True)
-			self.list3.clear()
-			self.list1.clear()
 			original_path_name[:] = []
 			for i in criteria:
 				self.list1.addItem(i)
@@ -12662,13 +12835,7 @@ class Ui_MainWindow(object):
 			for i in bookmark_extra:
 				self.list3.addItem(i)
 		elif site == "Select":
-			self.list3.clear()
-			self.list1.clear()
-			self.list2.clear()
-			self.label.clear()
-			self.text.clear()
 			site = 'None'
-		
 		elif site == "Addons":
 			site = 'None'
 			self.btnAddon.show()
@@ -12688,11 +12855,6 @@ class Ui_MainWindow(object):
 		elif site == "YouTube":
 			site = 'None'
 			bookmark = "False"
-			self.list3.clear()
-			self.list1.clear()
-			self.list2.clear()
-			self.label.clear()
-			self.text.clear()
 			self.search()
 		else:
 			bookmark = "False"
@@ -12714,6 +12876,11 @@ class Ui_MainWindow(object):
 		rfr_url = ""
 		finalUrlFound = False
 		refererNeeded = False
+		self.list3.clear()
+		self.list1.clear()
+		self.list2.clear()
+		self.label.clear()
+		self.text.clear()
 		site = (self.btnAddon.currentText())
 		print(type(self.site_var),site,'--addon-changed--')
 		plugin_path = os.path.join(home,'src','Plugins',site+'.py')
@@ -12749,78 +12916,6 @@ class Ui_MainWindow(object):
 			if not os.path.exists(os.path.join(home,"History",site)):
 				os.makedirs(os.path.join(home,"History",site))
 			self.search()
-	
-	def reviewsMusic(self,val):
-		global name,nam,old_manager,new_manager,artist_name_mplayer,epnArrList,site,home,screen_width,quality,site,epnArrList
-		self.HideEveryThing()
-		#self.dockWidget_3.hide()
-		
-		self.tab_2.show()
-		if not self.web:
-			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
-			self.web.setObjectName(_fromUtf8("web"))
-			self.horizontalLayout_5.addWidget(self.web)
-		#self.web.show()
-		#old_manager = self.web.page().networkAccessManager()
-		if not QT_WEB_ENGINE:
-			nam = NetWorkManager()
-			self.web.page().setNetworkAccessManager(nam)
-		self.webStyle(self.web)
-		if site == "Music":
-			if str(self.list3.currentItem().text())=="Artist":
-				nam1 = str(self.list1.currentItem().text())
-			else:
-				r = self.list2.currentRow()
-				nam1 = epnArrList[r].split('	')[2]
-			print (nam1)
-		else:
-			nam1 = ""
-		if val == "Last.Fm":
-			self.web.load(QUrl("http://www.last.fm/search?q="+nam1))
-		elif "TVDB:" in val:
-			name1 = val.split(':')[-1]
-			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-	def reviews(self):
-		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
-		if not self.web:
-			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
-			
-			self.web.setObjectName(_fromUtf8("web"))
-			self.horizontalLayout_5.addWidget(self.web)
-		review_site = str(self.btn2.currentText())
-		#self.tabWidget1.setCurrentIndex(1)
-		self.HideEveryThing()
-		self.tab_2.show()
-		name = str(name)
-		name1 = re.sub('-| ','+',name)
-		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
-		key = self.line.text()
-		if key:
-			name1 = str(key)
-		#old_manager = self.web.page().networkAccessManager()
-		if not QT_WEB_ENGINE:
-			nam = NetWorkManager()
-			self.web.page().setNetworkAccessManager(nam)
-		self.webStyle(self.web)
-		if review_site == "Anime-Planet":
-			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
-		elif review_site == "MyAnimeList":
-			self.web.load(QUrl("http://myanimelist.net/anime.php?q="+name1))
-		elif review_site == "Anime-Source":
-			self.web.load(QUrl("http://www.anime-source.com/banzai/modules.php?name=NuSearch&type=all&action=search&info="+name1))
-		
-		elif review_site == "TVDB":
-			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-		elif review_site == "AniDB":
-			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
-		elif review_site == "ANN":
-			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
-		elif review_site == "Google":
-			self.web.load(QUrl("https://www.google.com/search?q="+name1))
-		elif review_site == "Reviews":
-			self.web.setHtml("<html>Reviews</html>")
-		#new_manager = NetWorkManager(old_manager)
-		#self.web.page().setNetworkAccessManager(old_manager)
 		
 	def goto_web_directly(self,url):
 		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
@@ -12866,9 +12961,17 @@ class Ui_MainWindow(object):
 		self.web.load(QUrl(url))
 		
 			
-	def reviewsWeb(self):
+	def reviewsWeb(self,srch_txt=None,review_site=None,action=None):
 		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
-		review_site = str(self.btnWebReviews.currentText())
+		new_url = ''
+		if srch_txt:
+			srch_txt = srch_txt.replace('"','')
+		web_arr_dict = {'mal':'MyAnimeList','ap':'Anime-Planet','ans':'Anime-Source','tvdb':'TVDB','ann':'ANN','anidb':'AniDB','g':'Google','yt':'Youtube','ddg':'DuckDuckGo','reviews':'Reviews','last.fm':'last.fm','zerochan':'Zerochan'}
+		
+		if not review_site:
+			review_site_tmp = self.btnWebReviews.currentText()
+			review_site = list(web_arr_dict.keys())[list(web_arr_dict.values()).index(review_site_tmp)]
+			
 		print(self.web,'0')
 		if not self.web and review_site:
 			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
@@ -12881,7 +12984,7 @@ class Ui_MainWindow(object):
 			else:
 				cur_location = self.web.url().toString()
 			print(cur_location,'--web--url--')
-			if 'youtube' in review_site.lower() and 'youtube' not in cur_location and QT_WEB_ENGINE:
+			if 'yt' in review_site.lower() and 'youtube' not in cur_location and QT_WEB_ENGINE:
 				self.web.close()
 				self.web.deleteLater()
 				self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
@@ -12891,23 +12994,53 @@ class Ui_MainWindow(object):
 		
 		self.list1.hide()
 		self.list2.hide()
-		self.label.hide()
 		self.dockWidget_3.hide()
+		self.label.hide()
 		self.text.hide()
+		print(self.VerticalLayoutLabel.itemAt(2),'--itemAt--')
+		if self.VerticalLayoutLabel.itemAt(2):
+			self.VerticalLayoutLabel.takeAt(2)
+			print('--stretch--deleted--')
 		self.frame.hide()
-		self.frame1.hide()
+		#self.frame1.hide()
 		self.tab_2.show()
 		self.goto_epn.hide()
 		name = str(name)
 		name1 = re.sub('-| ','+',name)
 		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
-		key = self.line.text()
-		self.line.clear()
+		key = ''
+		if action:
+			if action == 'return_pressed':
+				key = self.btnWebReviews_search.text()
+				self.btnWebReviews_search.clear()
+				self.tmp_web_srch = key
+				if review_site == 'reviews':
+					review_site = 'g'
+			elif action == 'context_menu' or action == 'search_by_name':
+				key = srch_txt
+				#try:
+				#	cur_site_index = self.btnWebReviews.findText(web_arr_dict[review_site])
+				#except Exception as e:
+				#	print(e)
+				#	cur_site_index = 0
+				#self.btnWebReviews.setCurrentIndex(cur_site_index)
+				#print(action,'---context--menu--')
+			elif action == 'index_changed' or action == 'btn_pushed':
+				if not self.tmp_web_srch:
+					key = name1
+				else:
+					key = self.tmp_web_srch
+			elif action == 'line_return_pressed':
+				key = self.line.text()
+				self.line.clear()
+		else:
+			key = self.line.text()
+			self.line.clear()
 		if key:
 			name1 = str(key)
 		#old_manager = self.web.page().networkAccessManager()
 		pl_list = False
-		new_url = ''
+		
 		if not name1:
 			if self.list1.currentItem():
 				name1 = self.list1.currentItem().text()
@@ -12930,80 +13063,45 @@ class Ui_MainWindow(object):
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
 		self.webStyle(self.web)
-		if review_site == "Anime-Planet":
+		if review_site == "ap":
 			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
-		elif review_site == "MyAnimeList":
+		elif review_site == "mal":
 			self.web.load(QUrl("http://myanimelist.net/anime.php?q="+name1))
-		elif review_site == "Anime-Source":
+		elif review_site == "ans":
 			self.web.load(QUrl("http://www.anime-source.com/banzai/modules.php?name=NuSearch&type=all&action=search&info="+name1))
-		elif review_site == "TVDB":
+		elif review_site == "tvdb":
 			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-		elif review_site == "AniDB":
+		elif review_site == "anidb":
 			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
-		elif review_site == "ANN":
+		elif review_site == "ann":
 			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
-		elif review_site == "Google":
+		elif review_site == "g":
 			self.web.load(QUrl("https://www.google.com/search?q="+name1))
-		elif review_site == "Youtube":
+		elif review_site == "ddg":
+			self.web.load(QUrl("https://duckduckgo.com/?q="+name1))
+		elif review_site == "yt":
 			if not name1:
 				name1 = 'GNU Linux FSF'
-			
-			if pl_list and new_url:
+			if pl_list and new_url and action != 'open':
 				self.web.load(QUrl(new_url))
+			elif action=='open':
+				self.web.load(QUrl(srch_txt))
 			else:
-				self.web.load(QUrl("https://www.youtube.com/results?search_query="+name1))
-		elif review_site == "Reviews":
+				self.web.load(QUrl("https://m.youtube.com/results?search_query="+name1))
+			print(srch_txt,'--yt--open--')
+		elif review_site == "last.fm":
+			self.web.load(QUrl("http://www.last.fm/search?q="+name1))
+		elif review_site == 'zerochan':
+			self.web.load(QUrl("http://www.zerochan.net/search?q="+name1))
+		elif review_site == "reviews":
 			self.web.setHtml('<html>Reviews:</html>')
-		#new_manager = NetWorkManager(old_manager)
-		#self.web.page().setNetworkAccessManager(old_manager)
-	def reviews(self):
-		global name,nam,old_manager,new_manager,home,screen_width,quality,site,epnArrList
-		if not self.web:
-			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
-			self.web.setObjectName(_fromUtf8("web"))
-			self.horizontalLayout_5.addWidget(self.web)
-		review_site = str(self.btnWebReviews.currentText())
-		#if review_site == "Reviews":
-		#	review_site = "MyAnimeList"
 		
-		#self.tabWidget1.setCurrentIndex(1)
-		self.list1.hide()
-		self.list2.hide()
-		self.label.hide()
-		self.dockWidget_3.hide()
-		self.text.hide()
-		self.frame.hide()
-		self.frame1.hide()
-		self.tab_2.show()
-		self.goto_epn.hide()
-		name = str(name)
-		name1 = re.sub('-| ','+',name)
-		name1 = re.sub('Dub|subbed|dubbed|online','',name1)
-		key = self.line.text()
-		if key:
-			name1 = str(key)
-		#old_manager = self.web.page().networkAccessManager()
-		if not QT_WEB_ENGINE:
-			nam = NetWorkManager()
-			self.web.page().setNetworkAccessManager(nam)
-		self.webStyle(self.web)
-		if review_site == "Anime-Planet":
-			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
-		elif review_site == "MyAnimeList":
-			self.web.load(QUrl("http://myanimelist.net/anime.php?q="+name1))
-		elif review_site == "Anime-Source":
-			self.web.load(QUrl("http://www.anime-source.com/banzai/modules.php?name=NuSearch&type=all&action=search&info="+name1))
-		
-		elif review_site == "TVDB":
-			self.web.load(QUrl("http://thetvdb.com/?string="+name1+"&searchseriesid=&tab=listseries&function=Search"))
-		elif review_site == "AniDB":
-			self.web.load(QUrl("http://anidb.net/perl-bin/animedb.pl?adb.search="+name1+"&show=animelist&do.search=search"))
-		elif review_site == "ANN":
-			self.web.load(QUrl("http://www.animenewsnetwork.com/encyclopedia/search/name?q="+name1))
-		elif review_site == "Google":
-			self.web.load(QUrl("https://www.google.com/search?q="+name1))
-		elif review_site == "Reviews":
-			self.web.setHtml('<html>Reviews:</html>')
+		if review_site:
+			try:
+				if web_arr_dict[review_site] == self.btnWebReviews.currentText():
+					self.btnWebReviews_search.setPlaceholderText('Search '+web_arr_dict[review_site])
+			except Exception as e:
+				print(e)
 		
 	def rawlist_highlight(self):
 		
@@ -13039,7 +13137,7 @@ class Ui_MainWindow(object):
 			summary_file = os.path.join(home,'History',site,siteName,name,'summary.txt')
 		elif site == "Local":
 			
-			name = original_path_name[r]
+			name = original_path_name[cur_row]
 			file_name = os.path.join(home,'Local',name,'Ep.txt')
 			picn1 = os.path.join(home,'Local',name,'poster.jpg')
 			fanart1 = os.path.join(home,'Local',name,'fanart.jpg')
@@ -13213,8 +13311,6 @@ class Ui_MainWindow(object):
 					else:
 						self.list1.addItem("Sorry No Search Function")
 				#del site_var
-			
-		
 		elif site == "Local":
 			self.mirror_change.hide()
 			criteria = ["List",'History','All']
@@ -13284,7 +13380,7 @@ class Ui_MainWindow(object):
 			if name_t:
 				name = name_t
 				self.btnWebReviews.setCurrentIndex(8)
-				self.reviewsWeb()
+				self.reviewsWeb(srch_txt=name,review_site='yt',action='line_return_pressed')
 			#if ui.btn1.currentText() == 'Addons' and addon_index >=0 and addon_index < ui.btnAddon.count():
 			#ui.btnAddon.setCurrentIndex(addon_index)
 		elif site == "DubbedAnime" or site == "SubbedAnime":
@@ -13650,7 +13746,7 @@ class Ui_MainWindow(object):
 						#f.write(i+'	'+j+'\n')
 						k_arr.append(i+'	'+j)
 					#f.close()
-					write_files(file_ep,k,line_by_line=True)
+					write_files(file_ep,k_arr,line_by_line=True)
 					file_sum = os.path.join(home,'History',site,name,'summary.txt')
 					#g = open(os.path.join(home,'History',site,name,'summary.txt'), 'w')
 					#try:
@@ -13903,7 +13999,7 @@ class Ui_MainWindow(object):
 					poster = os.path.join(music_dir_art_name,'poster.jpg')
 					fan = os.path.join(music_dir_art_name,'fanart.jpg')
 					thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
-					if not os.path.exists(poster) and srch != "offline" and artist_name_mplayer != "None" and artist_name_mplayer:	
+					if not os.path.exists(poster) and srch != "offline" and artist_name_mplayer.lower() != "none" and artist_name_mplayer:	
 						
 						self.threadPool.append( ThreadingExample(nm) )
 						self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
@@ -15505,7 +15601,8 @@ class Ui_MainWindow(object):
 		self.progress.setValue(100)
 		self.progress.hide()
 		if self.tab_2.isHidden():
-			self.goto_epn.show()
+			#self.goto_epn.show()
+			pass
 		type_int = False
 		if self.queue_url_list:
 			j = 0
@@ -15750,13 +15847,16 @@ class Ui_MainWindow(object):
 				#if "EndOfFile:" in a:
 				#if ("Exiting" in a or "EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
-					if (self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0):
+					#if ((self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0)) and not self.queue_url_list:
+					if self.player_setLoop_var:
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
 						#curR = self.list2.currentRow()
 					else:
 						if not self.queue_url_list:
+							if self.list2.count() == 0:
+								return 0
 							if curR == self.list2.count() - 1:
 								curR = 0
 								if site == "Music" and not self.playerPlaylist_setLoop_var:
@@ -15771,12 +15871,13 @@ class Ui_MainWindow(object):
 										self.listfound()
 							else:
 								curR = curR + 1
+							self.list2.setCurrentRow(curR)
 					mplayerLength = 0
 					self.total_file_size = 0
 					if mpv_start:
 						mpv_start.pop()
-					if not self.queue_url_list:
-						self.list2.setCurrentRow(curR)
+					#if not self.queue_url_list:
+					#	self.list2.setCurrentRow(curR)
 					#epn = self.list2.currentItem().text()
 					#epn = re.sub("#","",str(epn))
 					#mpvplayer.waitForReadyRead()
@@ -15985,7 +16086,8 @@ class Ui_MainWindow(object):
 					#	curR = self.list2.currentRow()
 					#else:
 						#quitReally == "no"
-					if (self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0):
+					#if ((self.player_setLoop_var and quitReally == 'no') or (self.list2.count() == 0)) and not self.queue_url_list:
+					if self.player_setLoop_var:
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
 						mpvplayer.write(t2)
 						return 0
@@ -15993,6 +16095,8 @@ class Ui_MainWindow(object):
 						
 					else:
 						if not self.queue_url_list:
+							if self.list2.count() == 0:
+								return 0
 							if curR == self.list2.count() - 1:
 								curR = 0
 								if site == "Music" and not self.playerPlaylist_setLoop_var:
@@ -16007,8 +16111,8 @@ class Ui_MainWindow(object):
 										self.listfound()
 							else:
 								curR = curR + 1
-					if not self.queue_url_list:
-						self.list2.setCurrentRow(curR)
+							self.list2.setCurrentRow(curR)
+						
 					if "HTTP error 403 Forbidden" in a:
 						print (a)
 						quitReally = "yes"
@@ -16247,7 +16351,8 @@ class Ui_MainWindow(object):
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 				#if '#' in finalUrl:
 				self.external_url = True
-			
+			if finalUrl.startswith('"http') or finalUrl.startswith('http'):
+				self.external_url = True
 		new_epn = self.epn_name_in_list
 	
 		
@@ -16307,8 +16412,8 @@ class Ui_MainWindow(object):
 						epnShow = '"' + "Queued:  "+ new_epn + '"'
 						t1 = bytes('\n'+'show_text '+(epnShow)+'\n','utf-8')
 						t2 = bytes('\n'+"loadfile "+(finalUrl)+" replace"+'\n','utf-8')
-						print (finalUrl,'---hello-----')
-						
+						#print (finalUrl,'---hello-----')
+						print(t2)
 						mpvplayer.write(t1)
 						mpvplayer.write(t2)
 						if self.mplayer_SubTimer.isActive():
@@ -16326,6 +16431,7 @@ class Ui_MainWindow(object):
 								pass
 						self.infoPlay(command)
 						self.external_url = False
+						print(command)
 				elif Player == "mpv":
 					command1 = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+finalUrl
 					try:
@@ -16334,22 +16440,28 @@ class Ui_MainWindow(object):
 					except:
 						command = command1
 				
-					if mpvplayer.processId()>0:
 						
-						try:
-							epnShow = '"' + "Queued:  "+ new_epn + '"'
-							t1 = bytes('\n'+'show-text '+epnShow+'\n','utf-8')
-							t2 = bytes('\n'+"loadfile "+finalUrl+'\n','utf-8')
-							print (finalUrl,'---hello-----')
-							mpvplayer.write(t1)
-							mpvplayer.write(t2)
-							if self.external_url:
-								#mpvplayer.write(b'\n set aid 1 \n')
-								self.external_url = False
-						except:
-							self.infoPlay(command)
+					if not self.external_url:
+						epnShow = '"' + "Queued:  "+ new_epn + '"'
+						t1 = bytes('\n'+'show-text '+epnShow+'\n','utf-8')
+						t2 = bytes('\n'+"loadfile "+finalUrl+'\n','utf-8')
+						#print (finalUrl,'---hello-----')
+						mpvplayer.write(t1)
+						mpvplayer.write(t2)
+						print(t2)
+						#if self.external_url:
+						#mpvplayer.write(b'\n set aid 1 \n')
+							
 					else:
+						mpvplayer.write(b'\n quit \n')
+						if mpvplayer.processId() > 0:
+							try:
+								subprocess.Popen(['killall','mpv'])
+							except:
+								pass
 						self.infoPlay(command)
+						self.external_url = False
+						print(command)
 			
 				print ("mpv=" + str(mpvplayer.processId()))
 				if site == "Music":
@@ -16444,6 +16556,8 @@ class Ui_MainWindow(object):
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 				epnShow = finalUrl
 				self.external_url = True
+			if epnShow.startswith('"http') or epnShow.startswith('http'):
+				self.external_url = True
 		else:
 			epnShow = self.queue_url_list.pop()
 			curR = curR - 1
@@ -16490,16 +16604,27 @@ class Ui_MainWindow(object):
 				epnShow = '"'+epnShow.replace('"','')+'"'
 				if epnShow.startswith('"http'):
 					epnShow = epnShow.replace('"','')
+					self.external_url = True
 				t2 = bytes('\n'+"loadfile "+epnShow+" replace"+'\n','utf-8')
-				print(t2)
+				
 				if Player == 'mpv':
-					mpvplayer.write(t2)
-					if self.external_url:
-						#mpvplayer.write(b'\n set aid 1 \n')
+					if not self.external_url:
+						mpvplayer.write(t2)
+						print(t2)
+					else:
+						mpvplayer.write(b'\n quit \n')
+						if mpvplayer.processId() > 0:
+							try:
+								subprocess.Popen(['killall','mpv'])
+							except:
+								pass
+						self.infoPlay(command)
 						self.external_url = False
+						print(command)
 				elif Player == "mplayer":
 					if not self.external_url:
 						mpvplayer.write(t2)
+						print(t2)
 						if self.mplayer_SubTimer.isActive():
 							self.mplayer_SubTimer.stop()
 						self.mplayer_SubTimer.start(2000)
@@ -16512,6 +16637,7 @@ class Ui_MainWindow(object):
 								pass
 						self.infoPlay(command)
 						self.external_url = False
+						print(command)
 			else:
 				print (command)
 				self.infoPlay(command)
@@ -17501,7 +17627,7 @@ class Ui_MainWindow(object):
 		if self.list1.isHidden() and not self.list2.isHidden():
 			if self.list1.count() > 0:
 				self.list1.show()
-				self.frame.show()
+				#self.frame.show()
 				show_hide_titlelist = 1
 				self.list2.hide()
 				self.goto_epn.hide()
@@ -17512,7 +17638,7 @@ class Ui_MainWindow(object):
 				self.frame.hide()
 				show_hide_titlelist = 0
 				self.list2.show()
-				self.goto_epn.show()
+				#self.goto_epn.show()
 				show_hide_playlist = 1
 	
 	
@@ -18035,7 +18161,7 @@ class Ui_MainWindow(object):
 				w=self.getTaglib(str(i))
 				try:
 					cur.execute('INSERT INTO Music VALUES(?,?,?,?,?,?,?,?,?,?,?)',w)
-					print ("Inserting")
+					#print ("Inserting")
 				except:
 					print (w)
 					print ("Duplicate")
@@ -18060,43 +18186,56 @@ class Ui_MainWindow(object):
 					QtWidgets.QApplication.processEvents()
 					#print "Inserting"
 				except:
-					print (w)
+					#print (w)
 					print ("Escaping")
 		conn.commit()
 		conn.close()
 		self.text.setText('Complete Tagging '+str(t))
 		QtWidgets.QApplication.processEvents()
 	def getTaglib(self,path):
-		t = taglib.File(path)
-		#print path
+		#t = taglib.File(path)
+		if SONG_TAGS:
+			if SONG_TAGS == 'taglib':
+				t = taglib.File(path)
+			elif SONG_TAGS == 'mutagen':
+				t = mutagen.File(path,easy=True)
+		else:
+			t = {}
 		m = []
 		try:
-			ar = t.tags['ARTIST']
+			if SONG_TAGS == 'taglib':
+				ar = t.tags['ARTIST']
+			elif SONG_TAGS == 'mutagen':
+				ar = t.tags['artist']
 			ar1 = ar[0]
-		except:
+		except Exception as e:
+			print(e,'--error--',path)
 			ar1 = "Unknown"
 		try:
-			ti = t.tags['TITLE']
+			if SONG_TAGS == 'taglib':
+				ti = t.tags['TITLE']
+			elif SONG_TAGS == 'mutagen':
+				ti = t.tags['title']
 			ti1 = ti[0]
-		except:
+		except Exception as e:
+			print(e,path)
 			#ti1 = path.split('/')[-1]
 			ti1 = os.path.basename(path)
 		
 		try:
-			al = t.tags['ALBUM']
+			if SONG_TAGS == 'taglib':
+				al = t.tags['ALBUM']
+			elif SONG_TAGS == 'mutagen':
+				al = t.tags['album']
 			al1 = al[0]
-		except:
+		except Exception as e:
+			print(e,path)
 			al1 = "Unknown"
-		#dir1 = str(path).rsplit('/',1)[0]
 		dir1,raw_title = os.path.split(path)
-		#print dir1
-		#print ar1
-		#print al1
-		#print ti1
 		
 		r = ti1+':'+ar1+':'+al1
 				
-		print (r)		
+		#print (r)		
 		
 		m.append(str(ti1))
 		m.append(str(ar1))
@@ -18162,7 +18301,7 @@ class Ui_MainWindow(object):
 			if os.path.exists(i) and (k in m_files) and not rows:
 				w=self.getTaglib(i)
 				cur.execute('INSERT INTO Music VALUES(?,?,?,?,?,?,?,?,?,?,?)',w)
-				print ("Not Inserted, Hence Inserting File = "+i)
+				#print ("Not Inserted, Hence Inserting File = "+i)
 			elif os.path.exists(i) and rows and (k in m_files):
 				print ("File Modified")
 				cur.execute('Delete FROM Music Where Path="'+i+'"')
@@ -18170,7 +18309,7 @@ class Ui_MainWindow(object):
 				
 				w=self.getTaglib(i)
 				cur.execute('INSERT INTO Music VALUES(?,?,?,?,?,?,?,?,?,?,?)',w)
-				print ("And Now Inserted File Again = "+i)
+				#print ("And Now Inserted File Again = "+i)
 			elif not os.path.exists(i) and rows:
 				cur.execute('Delete FROM Music Where Path="'+i+'"')
 				print ('Deleting File From Database : '+i)
@@ -18237,6 +18376,7 @@ class Ui_MainWindow(object):
 		
 	def music_mode_layout(self):
 		global layout_mode,screen_width,show_hide_cover,show_hide_player,show_hide_playlist,show_hide_titlelist,music_arr_setting,opt,new_tray_widget,tray
+		#ui.VerticalLayoutLabel.takeAt(2)
 		if not self.float_window.isHidden():
 			tray.right_menu._detach_video()
 			
@@ -18271,12 +18411,13 @@ class Ui_MainWindow(object):
 			show_hide_titlelist = 0
 			ui.list2.setCurrentRow(music_arr_setting[2])
 			ui.list2.show()
-			ui.goto_epn.show()
+			#ui.goto_epn.show()
 			show_hide_playlist = 1
 			ui.list2.setFocus()
-		
+		ui.buttonStyle(ui.list2)
 	def video_mode_layout(self):
 		global layout_mode,default_arr_setting,opt,new_tray_widget,tray
+		#ui.VerticalLayoutLabel.addStretch(1)
 		if not self.float_window.isHidden():
 			tray.right_menu._detach_video()
 		print('default Mode')
@@ -18290,9 +18431,9 @@ class Ui_MainWindow(object):
 		ui.audio_track.show()
 		ui.subtitle_track.show()
 		ui.list1.show()
-		ui.frame.show()
+		#ui.frame.show()
 		ui.list2.show()
-		ui.goto_epn.show()
+		#ui.goto_epn.show()
 		
 		print(default_arr_setting,'--default-setting--')
 		if default_arr_setting[0] > 0 and default_arr_setting[0] < ui.btn1.count():
@@ -18321,7 +18462,7 @@ class Ui_MainWindow(object):
 			ui.list2.setFocus()
 			
 		MainWindow.showMaximized()
-		
+		ui.buttonStyle(ui.list2)
 	def _set_window_frame(self):
 		global new_tray_widget
 		txt = ui.window_frame
@@ -18617,6 +18758,7 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 		print(pos)
 	
 	def onTrayIconActivated(self, reason):
+		print(reason,'--reason--')
 		if reason == QtWidgets.QSystemTrayIcon.Trigger:
 			if not ui.float_window.isHidden():
 				ui.float_window.hide()
@@ -18657,7 +18799,7 @@ def main():
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
-	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path,wait_player
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path,wait_player,platform_name
 	
 	
 	wait_player = False
@@ -18938,7 +19080,7 @@ def main():
 					if tmp_mode.lower() == 'true':
 						ui.list_with_thumbnail = True
 						ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 128px;}
+				QListWidget:item {height: 112px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
@@ -19290,6 +19432,8 @@ def main():
 	print(platform_name)
 	tray = SystemAppIndicator()
 	tray.show()
+	#m_event = MyEventFilter()
+	#tray.installEventFilter(m_event)
 	new_tray_widget = FloatWindowWidget()
 	if ui.window_frame == 'false':
 		ui._set_window_frame()
@@ -19346,14 +19490,14 @@ def main():
 	
 	if show_hide_playlist == 1:
 		ui.list2.show()
-		ui.goto_epn.show()
+		#ui.goto_epn.show()
 	elif show_hide_playlist == 0:
 		ui.list2.hide()
 		ui.goto_epn.hide()
 			
 	if show_hide_titlelist == 1:
 		ui.list1.show()
-		ui.frame.show()
+		#ui.frame.show()
 	elif show_hide_titlelist == 0:
 		ui.list1.hide()
 		ui.frame.hide()
