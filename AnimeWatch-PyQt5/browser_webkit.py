@@ -157,8 +157,8 @@ class Browser(QtWebKitWidgets.QWebView):
 			#self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.innerHtml='';")
 			self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);")
 			self.wait_player = True
-			#self.clicked_link(self.current_link)
-			QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
+			self.clicked_link(self.current_link)
+			#QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
 			self.timer.start(1000)
 	
 	def player_wait(self):
@@ -296,8 +296,8 @@ class Browser(QtWebKitWidgets.QWebView):
 				#self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.innerHtml='';")
 				self.page().mainFrame().evaluateJavaScript("var element = document.getElementById('player');element.parentNode.removeChild(element);")
 				self.wait_player = True
-				#self.clicked_link(self.current_link)
-				QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
+				self.clicked_link(self.current_link)
+				#QtCore.QTimer.singleShot(1, partial(self.clicked_link,self.current_link))
 				self.timer.start(1000)
 				
 				

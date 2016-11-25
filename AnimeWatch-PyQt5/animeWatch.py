@@ -556,21 +556,23 @@ def naturallysorted(l):
 
 class MyEventFilter(QtCore.QObject):
 	def eventFilter(self, receiver, event):
-		if(event.type() == QtCore.QEvent.MouseMove):
-			#MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-				pos = event.pos()
-				#print "x="+str(pos.x())
-				#print pos.y()
-				#widget = MainWindow.childAt(event.pos())
-				#if widget:
-				#	print widget.objectName()
-				#print str(widget.objectName())
-				if pos.x() == 0:
-					ui.dockWidget_3.show()
-				elif pos.x() > 300:
-					ui.dockWidget_3.hide()
-					ui.list1.setFocus()
-				return True
+		global tray,MainWindow,ui
+		#print(event.pos(),event.type())
+		print(event)
+		if event.type():
+			if(event.type() == QtCore.QEvent.ToolTip):
+				#MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+					pos = event.pos()
+					#print "x="+str(pos.x())
+					#print pos.y()
+					#widget = MainWindow.childAt(event.pos())
+					#if widget:
+					#	print widget.objectName()
+					#print str(widget.objectName())
+					print(pos)
+					if MainWindow.isHidden() and ui.float_window.isHidden():
+						tray.right_menu._detach_video()
+					return 0
 		else:
 		#Call Base Class Method to Continue Normal Event Processing
 			return super(MyEventFilter,self).eventFilter(receiver, event)
@@ -10461,24 +10463,28 @@ class Ui_MainWindow(object):
 				self.list1.hide()
 				self.frame.hide()
 				self.tab_5.show()
+				
 	def webClose(self):
-		global view_layout
+		global view_layout,platform_name
 		
 		if not self.VerticalLayoutLabel.itemAt(2):
 			self.VerticalLayoutLabel.addStretch(2)
 			print('--stretch -- added--to --label and text widget--')
 		
 		self.tmp_web_srch = ''
-		try:
-			self.web.close()
-			self.web.deleteLater()
-		except:
-			self.web = ''
-		self.web = ''
-		self.tab_2.hide()
-		#self.web.clear()
-		#self.web.close()
 		
+		if platform_name == 'ubuntu':
+			self.web.setHtml('<html>Reviews:</html>')
+			print('--page--cleared--')
+		else:
+			try:
+				self.web.close()
+				self.web.deleteLater()
+			except Exception as e:
+				print(e)
+			self.web = ''
+			print('--web closed--')
+		self.tab_2.hide()
 		self.list1.show()
 		self.list2.show()
 		self.label.show()
@@ -10486,6 +10492,7 @@ class Ui_MainWindow(object):
 		#self.frame.show()
 		self.frame1.show()
 		#self.goto_epn.show()
+		
 	def webHide(self):
 		global mpvplayer
 		#if not self.VerticalLayoutLabel.itemAt(2):
@@ -18751,6 +18758,7 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 		print(pos)
 	
 	def onTrayIconActivated(self, reason):
+		print(reason,'--reason--')
 		if reason == QtWidgets.QSystemTrayIcon.Trigger:
 			if not ui.float_window.isHidden():
 				ui.float_window.hide()
@@ -18791,7 +18799,7 @@ def main():
 	global pict_arr,name_arr,summary_arr,total_till,tmp_name,browse_cnt,label_arr,hist_arr,nxtImg_cnt,view_layout,quitReally,toggleCache,status,wget,mplayerLength,type_arr,playlist_show,img_arr_artist
 	global cache_empty,buffering_mplayer,slider_clicked,epnArrList,interval,total_seek,iconv_r,path_final_Url,memory_num_arr,mpv_indicator,pause_indicator,icon_size_arr,default_option_arr,original_path_name
 	global thumbnail_indicator,opt_movies_indicator,epn_name_in_list,cur_label_num,iconv_r_indicator,tab_6_size_indicator,viewMode,tab_6_player,audio_id,sub_id,site_arr,siteName,finalUrlFound,refererNeeded,base_url_picn,base_url_summary,nameListArr,update_start,lastDir,screen_width,screen_height,total_till_epn,mpv_start
-	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path,wait_player
+	global show_hide_cover,show_hide_playlist,show_hide_titlelist,server,show_hide_player,layout_mode,current_playing_file_path,music_arr_setting,default_arr_setting,video_local_stream,local_torrent_file_path,wait_player,platform_name
 	
 	
 	wait_player = False
@@ -19424,6 +19432,8 @@ def main():
 	print(platform_name)
 	tray = SystemAppIndicator()
 	tray.show()
+	#m_event = MyEventFilter()
+	#tray.installEventFilter(m_event)
 	new_tray_widget = FloatWindowWidget()
 	if ui.window_frame == 'false':
 		ui._set_window_frame()
