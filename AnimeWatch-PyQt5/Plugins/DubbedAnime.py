@@ -416,6 +416,15 @@ def mp4starUrl(content,site):
 			u = re.sub("'"+v+'[^,]*','',o[0])
 			u = u.replace("'",'')
 			u = u.replace(",",'')
+	elif site == 'uploadcrazy':
+		v = m['http']
+		o = re.findall('"'+v+':[^"]*',content)
+		print(o)
+		if o:
+			print(o)
+			u = re.sub('"','',o[0])
+			u = u.replace("'",'')
+			u = u.replace(",",'')
 	else:
 		n = m['https']
 		v = m['url']
@@ -483,11 +492,14 @@ def mp4starUrl(content,site):
 
 def uploadcrazy(url):
 	content = ccurlNew(url)
+	"""
 	m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
 	if m:
 		url = re.sub('file: "','',m[0])
 	else:
 		url = ""
+	"""
+	url = mp4starUrl(content,'uploadcrazy')
 	return url
 	
 def newMp4star(url):
