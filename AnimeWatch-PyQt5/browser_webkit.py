@@ -23,8 +23,7 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets
 import sys
-import urllib
-import urllib3
+import urllib.parse
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -615,7 +614,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				title = os.path.join(self.ui.tmp_download_folder,title)
 				#title = '/tmp/AnimeWatch/'+title
 			#command = "wget -c --user-agent="+'"'+self.hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+title+'"'
-			command = wget_string(finalUrl,title)
+			command = wget_string(finalUrl,title,self.ui.get_fetch_library)
 			print (command)		
 			self.ui.infoWget(command,0)
 			

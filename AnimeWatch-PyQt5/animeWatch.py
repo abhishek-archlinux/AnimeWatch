@@ -30,8 +30,7 @@ sys.path.append(BASEDIR)
 
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets
 
-import urllib
-import urllib3
+import urllib.parse
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -3303,8 +3302,13 @@ class List2(QtWidgets.QListWidget):
 					else:
 						if os.path.exists(os.path.join(home,'History',site,name,'Ep.txt')):
 							file_path = os.path.join(home,'History',site,name,'Ep.txt')
-					if file_path:
-						ui.replace_lineByIndex(file_path,'','',row)
+					if file_path and epnArrList:
+						#ui.replace_lineByIndex(file_path,'','',row)
+						item = self.item(row)
+						self.takeItem(row)
+						del epnArrList[row]
+						del item
+						write_files(file_path,epnArrList,line_by_line=True)
 						ui.update_list2()
 					else:
 						pass
@@ -6957,7 +6961,7 @@ class Ui_MainWindow(object):
 		#self.horizontalLayout_30.insertWidget(1,self.btn201, 0)
 		self.float_window = QtWidgets.QLabel()
 		self.float_window_layout = QtWidgets.QVBoxLayout(self.float_window)
-		self.float_window.setMinimumSize(250,200)
+		self.float_window.setMinimumSize(200,100)
 		self.float_window.hide()
 		self.float_window_dim = [20,40,250,200]
 		self.float_window.setScaledContents(True)
@@ -7113,7 +7117,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (3,0,0,44)
+		self.version_number = (3,0,0,46)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -7156,6 +7160,7 @@ class Ui_MainWindow(object):
 		self.depth_list = 0
 		self.display_list = False
 		self.tmp_web_srch = ''
+		self.get_fetch_library = 'pycurl'
 		self.update_proc = QtCore.QProcess()
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -13152,7 +13157,7 @@ class Ui_MainWindow(object):
 		#print "file_name="+file_name
 		
 		if os.path.exists(file_name) and site!="PlayLists":
-			print(site,siteName,name,file_name)
+			#print(site,siteName,name,file_name)
 			#lines = tuple(open(file_name, 'r'))
 			lines = open_files(file_name,True)
 				#with open(home+'/History/'+site+'/'+name+'/Ep.txt') as f:
@@ -13220,6 +13225,7 @@ class Ui_MainWindow(object):
 					summary = summary+'\n\n'+txt1+'\n\n'+txt2
 			self.text.clear()
 			self.text.insertPlainText(summary)
+			self.list2.clear()
 		
 			
 	def searchNew(self):
@@ -14954,7 +14960,7 @@ class Ui_MainWindow(object):
 						
 						if finalUrl.startswith('http'):
 							#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
-							command = wget_string(finalUrl,npn)
+							command = wget_string(finalUrl,npn,self.get_fetch_library)
 							print (command)
 					
 							self.infoWget(command,0)
@@ -14962,13 +14968,13 @@ class Ui_MainWindow(object):
 			elif refererNeeded == True and downloadVideo == 1:
 			
 			
-				rfr = "--referer="+finalUrl[1]
+				rfr = finalUrl[1]
 				print (rfr)
 				url1 = re.sub('#','',finalUrl[0])
 				print (url1)
 				url1 = str(url1)
 				#command = "wget -c --user-agent="+'"'+hdr+'" '+rfr+' "'+url1+'"'+" -O "+os.path.join(TMPDIR,new_epn)
-				command = wget_string(url1,os.path.join(TMPDIR,new_epn),rfr)
+				command = wget_string(url1,os.path.join(TMPDIR,new_epn),self.get_fetch_library,rfr)
 				print (command)
 					
 				self.infoWget(command,0)
@@ -15510,7 +15516,7 @@ class Ui_MainWindow(object):
 			if type(finalUrl) is not list:
 				finalUrl = finalUrl.replace('"','')
 			else:
-				rfr = "--referer="+finalUrl[1]
+				rfr = finalUrl[1]
 				print (rfr)
 				finalUrl = re.sub('#|"','',finalUrl[0])
 				print (finalUrl)
@@ -15541,10 +15547,10 @@ class Ui_MainWindow(object):
 			if finalUrl.startswith('http'):
 				if not referer:
 					#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
-					command = wget_string(finalUrl,npn)
+					command = wget_string(finalUrl,npn,self.get_fetch_library)
 				else:
 					#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
-					command = wget_string(finalUrl,npn,rfr)
+					command = wget_string(finalUrl,npn,self.get_fetch_library,rfr)
 				print (command)
 				self.infoWget(command,0)
 		downloadVideo = 0
@@ -15552,34 +15558,73 @@ class Ui_MainWindow(object):
 	def dataReadyW(self,p):
 		global wget,new_epn,quitReally,curR,epn,opt,base_url,Player,site,sizeFile
 		#wget.waitForReadyRead()
+		print('----------------')
 		try:
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
+			print(a)
+			#print(p.readAllStandardOutput())
 		except:
 			a =''
+		#print(a)
 		#sizeFile = '0'
-		if "Length:" in a:
-			l = re.findall('[(][^)]*[)]',a)
-			if l:
-				sizeFile = l[0]
-			
-		if "%" in a:
-			m = re.findall('[0-9][^\n]*',a)
-			if m:
-				#print m[0]
-				n = re.findall('[^%]*',m[0])
-				if n:
+		if self.get_fetch_library.lower() == 'wget':
+			if "Length:" in a:
+				l = re.findall('[(][^)]*[)]',a)
+				if l:
+					sizeFile = l[0]
+				
+			if "%" in a:
+				m = re.findall('[0-9][^\n]*',a)
+				if m:
+					#print m[0]
+					n = re.findall('[^%]*',m[0])
+					if n:
+						try:
+							val = int(n[0])
+						except:
+							val = 0
+						self.progress.setValue(val)
 					try:
-						val = int(n[0])
+						out = str(m[0])+" "+sizeFile
 					except:
-						val = 0
-					self.progress.setValue(val)
-				try:
-					out = str(m[0])+" "+sizeFile
-				except:
-					out = str(m[0])+" "+'0'
-				#self.goto_epn.setText(out)
-				self.progress.setFormat(out)
+						out = str(m[0])+" "+'0'
+					#self.goto_epn.setText(out)
+					self.progress.setFormat(out)
+		else:
+			#a = a.strip()
+			b = a.split(' ')
+			c = []
+			for i in b:
+				if i:
+					c.append(i)
 			
+			d = []
+			for j in range(len(c)):
+				if j == 2 or j==4 or j==5 or j==6 or j == 7 or j ==8 or j == 9:
+					pass
+				else:
+					d.append(c[j])
+			if d:
+				try:
+					if ':' not in d[0] and len(d) > 3:
+						percent = int(d[0])
+						self.progress.setValue(percent)
+				except Exception as e:
+					print(e)
+			word = ' '.join(d)
+			#print(word)
+			#print(c)
+			if len(c)<=3 and len(c)>=2:
+				self.curl_progress_end = c[-2]+' '+c[-1]
+			elif len(c)>=3:
+				if ':' not in c[0]:
+					self.curl_progress_init = c[0]+'% '+c[1]+' '+c[3]
+				if 'k' in c[-1]:
+					self.curl_progress_end = c[-2]+' '+c[-1]
+			#if len(d)>3:
+			#	if ':' not in d[-1]:
+			word = self.curl_progress_init+' '+self.curl_progress_end
+			self.progress.setFormat(word)
 	
 				
 	def startedW(self):
@@ -15630,7 +15675,7 @@ class Ui_MainWindow(object):
 				if type(finalUrl) is not list:
 					finalUrl = finalUrl.replace('"','')
 				else:
-					rfr = "--referer="+finalUrl[1]
+					rfr = finalUrl[1]
 					print (rfr)
 					finalUrl = re.sub('#|"','',finalUrl[0])
 					print (finalUrl)
@@ -15647,10 +15692,10 @@ class Ui_MainWindow(object):
 				if finalUrl.startswith('http'):
 					if not referer:
 						#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+finalUrl+'"'+" -O "+'"'+npn+'"'
-						command = wget_string(finalUrl,npn)
+						command = wget_string(finalUrl,npn,self.get_fetch_library)
 					else:
 						#command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+finalUrl+'"'+" -O "+'"'+npn+'"'
-						command = wget_string(finalUrl,npn,rfr)
+						command = wget_string(finalUrl,npn,self.get_fetch_library,rfr)
 					print (command)
 					self.infoWget(command,0)
 		
@@ -15661,8 +15706,8 @@ class Ui_MainWindow(object):
 		#	self.horizontalLayout_5.addWidget(self.progress)
 		wget = QtCore.QProcess()
 		wget.setProcessChannelMode(QtCore.QProcess.MergedChannels)
-		
-		
+		self.curl_progress_init = ''
+		self.curl_progress_end = ''
 		wget.started.connect(self.startedW)
 		wget.readyReadStandardOutput.connect(partial(self.dataReadyW,wget))
 		#self.tab_5.setFocus()
@@ -19287,11 +19332,15 @@ def main():
 			elif 'DEFAULT_DOWNLOAD_LOCATION' in i:
 				j = re.sub('\n','',j)
 				ui.default_download_location = j
+			elif 'GET_LIBRARY' in i:
+				j = re.sub('\n','',j)
+				ui.get_fetch_library = j
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
 		f.write("\nDEFAULT_DOWNLOAD_LOCATION="+TMPDIR)
 		f.write("\nTMP_REMOVE=no")
+		f.write("\nGET_LIBRARY=pycurl")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001
@@ -19318,6 +19367,8 @@ def main():
 		os.makedirs(os.path.join(home,"thumbnails"))
 	if not os.path.exists(os.path.join(home,"Local")):
 		os.makedirs(os.path.join(home,"Local"))
+	if not os.path.exists(os.path.join(home,"tmp")):
+		os.makedirs(os.path.join(home,"tmp"))
 	if not os.path.exists(os.path.join(home,"Bookmark")):
 		os.makedirs(os.path.join(home,"Bookmark"))
 		bookmark_array = ['bookmark','Watching','Completed','Incomplete','Later','Interesting','Music-Videos']

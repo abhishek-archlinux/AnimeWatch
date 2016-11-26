@@ -21,7 +21,6 @@ along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
 """
 import sys
 import urllib
-import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -91,11 +90,7 @@ class musicArtist():
 			print (name)
 			print (url)
 		
-		#url = urllib.unquote(url).decode('utf-8')
-		#try:
-		#	url = urllib.unquote(url).decode('utf-8')
-		#except:
-		#	url = urllib.unquote(url).encode('utf-8')
+		
 		if url.startswith('http'):
 			url = url
 		else:

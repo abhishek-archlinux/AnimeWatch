@@ -2,20 +2,68 @@ import os
 import shutil
 from tempfile import mkstemp,mkdtemp
 import urllib
-import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import subprocess
-
-USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-
+import re
+from get_functions import wget_string,get_ca_certificate
+		
 def send_notification(txt):
 	if os.name == 'posix':
 		try:
 			subprocess.Popen(['notify-send',txt])
 		except Exception as e:
 			print(e)
-		
+			
+def open_files(file_path,lines_read=True):
+	if os.path.exists(file_path):
+		if lines_read:
+			lines = ''
+			try:
+				f = open(file_path,'r')
+				lines = f.readlines()
+				f.close()
+			except UnicodeDecodeError as e:
+				try:
+					print(e)
+					f = open(file_path,encoding='utf-8',mode='r')
+					lines = f.readlines()
+					f.close()
+				except UnicodeDecodeError as e:
+					print(e)
+					f = open(file_path,encoding='ISO-8859-1',mode='r')
+					lines = f.readlines()
+					f.close()
+			except Exception as e:
+				print(e)
+				print("Can't Decode")
+		else:
+			lines = ''
+			try:
+				f = open(file_path,'r')
+				lines = f.read()
+				f.close()
+			except UnicodeDecodeError as e:
+				try:
+					print(e)
+					f = open(file_path,encoding='utf-8',mode='r')
+					lines = f.read()
+					f.close()
+				except UnicodeDecodeError as e:
+					print(e)
+					f = open(file_path,encoding='ISO-8859-1',mode='r')
+					lines = f.read()
+					f.close()
+			except Exception as e:
+				print(e)
+				lines = "Can't Decode"
+	else:
+		if lines_read:
+			lines = []
+		else:
+			lines = 'Not Available'
+	return lines
+
 def get_config_options(file_name,value_field):
 	req_val = ''
 	if os.path.exists(file_name):
@@ -31,7 +79,17 @@ def get_config_options(file_name,value_field):
 				req_val = j
 				break
 	return req_val
-	
+
+
+def naturallysorted(l): 
+	convert = lambda text: int(text) if text.isdigit() else text.lower() 
+	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+	return sorted(l, key = alphanum_key)
+
+def replace_all(text, di):
+	for i, j in di.iteritems():
+		text = text.replace(i, j)
+	return text
 
 def get_tmp_dir():
 	TMPDIR = ''
@@ -50,45 +108,14 @@ def get_tmp_dir():
 		TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
 	return TMPDIR
 		
+		
 
-def open_files(file_path,lines_read=True):
-	if os.path.exists(file_path):
-		if lines_read:
-			lines = []
-			try:
-				try:
-					f = open(file_path,'r')
-					lines = f.readlines()
-					f.close()
-				except:
-					f = open(file_path,encoding='utf-8',mode='r')
-					lines = f.readlines()
-					f.close()
-			except:
-				pass
-				
-		else:
-			lines = ''
-			try:
-				try:
-					f = open(file_path,'r')
-					lines = f.read()
-					f.close()
-				except:
-					f = open(file_path,encoding='utf-8',mode='r')
-					lines = f.read()
-					f.close()
-			except:
-				lines = "Can't Decode"
-	else:
-		if lines_read:
-			lines = []
-		else:
-			lines = 'Not Available'
-	return lines
 
 def write_files(file_name,content,line_by_line):
-	fh, tmp_new_file = mkstemp()
+	if os.name == 'nt':
+		tmp_new_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp','tmp_write.txt')
+	else:
+		fh, tmp_new_file = mkstemp()
 	file_exists = False
 	write_operation = True
 	if os.path.exists(file_name):
@@ -197,178 +224,22 @@ def write_files(file_name,content,line_by_line):
 			else:
 				print(e,' : write operation on '+file_name+' failed hence original restored, but remove '+tmp_new_file+' manually')
 
-def wget_string(url,dest,rfr=None):
-	hdr = USER_AGENT
-	if not rfr:
-		if os.name == 'posix':
-			command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
-		elif os.name == 'nt':
-			ca_cert = get_ca_certificate()
-			if ca_cert:
-				cert = "--ca-certificate="+'"'+ca_cert+'"'
-				command = "wget -c "+cert+" --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
-			else:
-				command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+'"'+url+'"'+" -O "+'"'+dest+'"'
-	else:
-		if os.name == 'posix':
-			command = "wget -c --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
-		elif os.name == 'nt':
-			ca_cert = get_ca_certificate()
-			if ca_cert:
-				cert = "--ca-certificate="+'"'+ca_cert+'"'
-				command = "wget -c "+cert+" --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
-			else:
-				command = "wget -c --no-check-certificate --read-timeout=60 --user-agent="+'"'+hdr+'" '+rfr+' "'+url+'"'+" -O "+'"'+dest+'"'
-	return command
-	
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
 
+get_lib = get_config_options(os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','other_options.txt'),'GET_LIBRARY')
 
+if get_lib.lower() == 'pycurl':
+	from get_functions import ccurl
+	print('--using pycurl--')
+elif get_lib.lower() == 'curl':
+	from get_functions import ccurlCmd as ccurl
+	print('--using curl--')
+elif get_lib.lower() == 'wget':
+	from get_functions import ccurlWget as ccurl
+	print('--using wget--')
+else:
+	from get_functions import ccurl
+	print('--using default pycurl--')
 
-
-def ccurl(url,external_cookie=None):
-	hdr = USER_AGENT
-	if 'youtube.com' in url:
-		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
-	print(url)
-	c = pycurl.Curl()
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	postfield = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		print(curl_opt,url,'----------------------------------')
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie' or curl_opt == '-e':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
-			cookie_file = nUrl.split('#')[2]
-		elif curl_opt == '-d':
-			post = nUrl.split('#')[2]
-			post = post.replace('"','')
-			post = post.replace("'",'')
-			post1 = post.split('=')[0]
-			post2 = post.split('=')[1]
-			post_data = {str(post1):str(post2)}
-			postfield = urllib.parse.urlencode(post_data)
-			print(postfield,'--postfields--')
-	url = str(url)
-	#c.setopt(c.URL, url)
-	try:
-		c.setopt(c.URL, url)
-	except UnicodeEncodeError:
-		c.setopt(c.URL, url.encode('utf-8'))
-	storage = BytesIO()
-	if os.name == 'nt':
-		ca_cert = get_ca_certificate()
-		if ca_cert:
-			c.setopt(c.CAINFO, ca_cert)
-		else:
-			c.setopt(c.SSL_VERIFYPEER,False)
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		try:
-			f = open(picn_op,'wb')
-			c.setopt(c.WRITEDATA, f)
-		except:
-			return 0
-		
-		try:
-			c.perform()
-			c.close()
-		except:
-			print('failure in obtaining image try again')
-			pass
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-e':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		elif curl_opt == '-d':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.POSTFIELDS,postfield)
-		elif curl_opt == '-b':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		try:
-			c.perform()
-			c.close()
-			content = storage.getvalue()
-			content = getContentUnicode(content)
-		except:
-			print('curl failure try again')
-			content = ''
-		return content
-
-def get_ca_certificate():
-	ca_cert = ''
-	if os.name == 'nt':
-		try:
-			import certifi
-			ca_cert = certifi.where()
-		except Exception as e:
-			print(e)
-	return ca_cert
 		
 		
 		
