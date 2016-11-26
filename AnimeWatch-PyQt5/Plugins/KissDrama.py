@@ -1,6 +1,5 @@
 import sys
 import urllib
-import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -18,6 +17,7 @@ from os.path import expanduser
 import fileinput
 import codecs
 import base64
+from player_functions import ccurl,naturallysorted
 try:
 	from headlessBrowser import BrowseUrl
 except:
@@ -26,103 +26,6 @@ except:
 def cloudfare(url,quality,c):
 	web = BrowseUrl(url,quality,c)
 
-
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
-	
-def ccurl(url):
-	global hdr,tmp_working_dir
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	print(url)
-	c = pycurl.Curl()
-	c.setopt(c.FOLLOWLOCATION, True)
-	c.setopt(c.USERAGENT, hdr)
-	if os.name == 'nt':
-		from player_functions import get_ca_certificate
-		ca_cert = get_ca_certificate()
-		if ca_cert:
-			c.setopt(c.CAINFO, ca_cert)
-		else:
-			c.setopt(c.SSL_VERIFYPEER,False)
-	curl_opt = ''
-	picn_op = ''
-	nUrl = url
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-			
-	cookie_file = os.path.join(tmp_working_dir,'kcookieD.txt')
-	if os.path.exists(cookie_file):
-		c.setopt(c.COOKIEFILE,cookie_file)
-	else:
-		print('inside ccurl')
-		cloudfare(url,'',cookie_file)
-		c.setopt(c.COOKIEFILE, cookie_file)
-	url = str(url)
-	try:
-		c.setopt(c.URL, url)
-	except UnicodeEncodeError:
-		c.setopt(c.URL, url.encode('utf-8'))
-	storage = BytesIO()
-	if curl_opt == '-o':
-		f = open(picn_op,'wb')
-		c.setopt(c.WRITEDATA, f)
-		c.perform()
-		c.close()
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		else:
-			c.setopt(c.WRITEFUNCTION, storage.write)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		content = getContentUnicode(content)
-		return content
-def progressBar(cmd):
-	
-	content = subprocess.check_output(cmd)
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	
-	return (content)
-
-
-def naturallysorted(l): 
-	convert = lambda text: int(text) if text.isdigit() else text.lower() 
-	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
-	return sorted(l, key = alphanum_key)
-
-def replace_all(text, di):
-	for (i, j,) in di.iteritems():
-		text = text.replace(i, j)
-
-	return text
-
-
-
 class KissDrama():
 	def __init__(self,tmp):
 		global tmp_working_dir
@@ -130,23 +33,27 @@ class KissDrama():
 		tmp_working_dir = tmp
 		self.tmp_dir = tmp
 		self.cookie_file = os.path.join(tmp,'kcookieD.txt')
+		if not os.path.exists(self.cookie_file):
+			f = open(self.cookie_file,'w')
+			f.close()
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
 			
-	def ccurlN(self,content,url):
+	def ccurlN(self,url):
+		content = ccurl(url+'#-b#'+self.cookie_file)
 		if 'checking_browser' in content:
 			if os.path.exists(self.cookie_file):
 				os.remove(self.cookie_file)
-			content = ccurl(url)
+			cloudfare(url,'',self.cookie_file)
+			content = ccurl(url+'#-b#'+self.cookie_file)
 		return content
 		
 	def search(self,name):
 		
 		if name != '':
 			url = 'http://kissasian.com/Search/Drama/?keyword=' + name
-			content = ccurl(url)
-			content = self.ccurlN(content,url)
+			content = self.ccurlN(url)
 			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -160,6 +67,7 @@ class KissDrama():
 				j = j + 1
 
 			return m
+			
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		
 		
@@ -169,8 +77,7 @@ class KissDrama():
 		
 		url = 'http://kissasian.com/Drama/' + name
 		print(url)
-		content = ccurl(url)
-		content = self.ccurlN(content,url)
+		content = self.ccurlN(url)
 		#f = open('/tmp/AnimeWatch/1.txt','w')
 		#f.write(content)
 		#f.close()
@@ -192,7 +99,7 @@ class KissDrama():
 				print(img[0])
 			if not os.path.isfile(picn):
 				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieD.txt','-A',self.hdr,'-o',picn,img[0]])
-				ccurl(img[0]+'#'+'-o'+'#'+picn)
+				ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 		except:
 			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
@@ -291,65 +198,13 @@ class KissDrama():
 			final = ''
 			print('No Link Available or Clear The Cache')
 		
-		"""
-		content = ccurl(url)
-		print(content)
-		soup = BeautifulSoup(content,'lxml')
-		#f = open('/tmp/AnimeWatch/k.txt','w')
-		#f.write(content)
-		#f.close()
-		m = soup.findAll('select',{'id':'selectQuality'})
-		print(m)
-		arr = []
-		for i in m:
-			j = i.findAll('option')
-			for k in j:
-				l = k['value']
-				arr.append(str(base64.b64decode(l).decode('utf-8')))
-		print(arr)
-		for i in arr:
-			if 'itag=18' in i:
-				sd = i
-			elif 'itag=22' in i:
-				hd = i
-			elif 'itag=37' in i:
-				full_hd = i
-			elif 'itag=59' in i:
-				sd480 = i
-			elif '=m18' in i:
-				sd = i
-			elif '=m22' in i:
-				hd = i
-		
-		if quality == "hd" and hd:
-			sd = hd
-		elif quality == 'sd480p' and sd480:
-			sd = sd480
-		
-		if not sd:
-			if sd480:
-				sd = sd480
-			elif hd:
-				sd = hd
-		
-		#content = subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookieD.txt','-L','-I','-A',self.hdr,sd])
-		content = ccurl(sd+'#'+'-I')
-		m = self.urlResolve(content)
-		#print(m
-		if m:
-			#print(m
-			final = m[-1]
-		
-		print(final)
-		"""
 		return final
 		
 	def getCompleteList(self,opt,genre_num):
 		
 		if opt == 'Genre' and genre_num == 0:
 			url = 'http://kissasian.com/DramaList/'
-			content = ccurl(url)
-			content = self.ccurlN(content,url)
+			content = self.ccurlN(url)
 			m = re.findall('/Genre/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -367,8 +222,7 @@ class KissDrama():
 		elif opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate':
 			url = 'http://kissasian.com/DramaList/' + opt
 			pgn = 1
-			content = ccurl(url)
-			content = self.ccurlN(content,url)
+			content = self.ccurlN(url)
 			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -385,8 +239,7 @@ class KissDrama():
 		if genre_num == 1:
 			url = 'http://kissasian.com/Genre/' + opt
 			pgn = 1
-			content = ccurl(url)
-			content = self.ccurlN(content,url)
+			content = self.ccurlN(url)
 			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -409,8 +262,7 @@ class KissDrama():
 			else:
 				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
 				#print(url
-			content = ccurl(url)
-			content = self.ccurlN(content,url)
+			content = self.ccurlN(url)
 			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
@@ -433,8 +285,7 @@ class KissDrama():
 				url = 'http://kissasian.com/DramaList/' + opt + '?page=' + pgnum
 			else:
 				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
-			content = ccurl(url)
-			content = self.ccurlN(content,url)
+			content = self.ccurlN(url)
 			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
