@@ -5572,16 +5572,17 @@ class tab5(QtWidgets.QWidget):
 		if ui.auto_hide_dock and not ui.dockWidget_3.isHidden():
 			ui.dockWidget_3.hide()
 		if not ui.float_window.isHidden() and new_tray_widget.remove_toolbar:
-			if not self.float_timer.isActive():
-				wid_height = int(ui.float_window.height()/3)
-				new_tray_widget.setMaximumHeight(wid_height)
-				new_tray_widget.show()
-				print('--float--timer--')
-				self.float_timer.start(5000)
-			else:
-				#print('--stopping--float--timer--and--starting--again--')
+			if self.float_timer.isActive():
 				self.float_timer.stop()
-				self.float_timer.start(5000)
+			wid_height = int(ui.float_window.height()/3)
+			new_tray_widget.setMaximumHeight(wid_height)
+			new_tray_widget.show()
+			print('--float--timer--')
+			self.float_timer.start(3000)
+			#else:
+			#	#print('--stopping--float--timer--and--starting--again--')
+			#	self.float_timer.stop()
+			#	self.float_timer.start(5000)
 		if (Player == "mplayer" or Player=="mpv"):
 			if self.arrow_timer.isActive():
 				self.arrow_timer.stop()
@@ -15717,9 +15718,15 @@ class Ui_MainWindow(object):
 	def dataReady(self,p):
 		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site,wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked,fullscr,total_seek,artist_name_mplayer,layout_mode,server,new_tray_widget,video_local_stream
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num,sub_id,audio_id,current_playing_file_path,wget
+		#if len(self.epn_name_in_list) > 40:
+		#self.epn_name_in_list = self.epn_name_in_list[:40]
 		try:
-			a = str(p.readAllStandardOutput(),'utf-8').strip()
+			a = str(p.readAllStandardOutput(),'utf-8').strip('\r\n')
+			#a_str = a.split(' ')
 			#print(a)
+			#print(a_str)
+			#print(a)
+			
 			if 'icy info:' in a.lower() or 'icy-title:' in a.lower():
 				if 'icy info:' in a.lower():
 					song_title = re.search("'[^']*",a)
@@ -15731,7 +15738,8 @@ class Ui_MainWindow(object):
 				mplayerLength = 1
 				self.epn_name_in_list = self.epn_name_in_list.strip()
 				server._emitMeta('internet-radio#'+self.epn_name_in_list,site,epnArrList)
-		except:
+		except Exception as e:
+			print(e)
 			a = ""
 		#el = time.process_time() - tt
 		#print(el)
@@ -16027,43 +16035,63 @@ class Ui_MainWindow(object):
 							if self.frame_timer.isActive():
 								self.frame_timer.stop()
 							self.frame_timer.start(1000)
+					#print(a)
 					if "PAUSE" in a:
-						
+						print(a,'Pause A')
+						c = None
+						c_int = 0
 						if "%" in a:
 							#print a
-							m = re.findall('[0-9]*%',a)
-							c = m[-1]
-						else:
-							c = "0%"
+							#m = re.findall('[0-9]*%',a)
+							m = a.split(' ')
+							print(m)
+							if m:
+								try:
+									c = m[-1]
+									if len(c) > 3:
+										c = "0%"
+									c_int = int(c.replace('%','')) 
+								except Exception as e:
+									print(e,'--percent cache error--')
 						try:
 							t = str(self.progressEpn.text())
-						#if "Paused" in t:
-						
-							#t = re.sub('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 10s[)] ','',t)
-							#t = t.replace('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 10s[)] ','')
-							t = re.sub('[(]Paused[)] | Cache: [0-9]*%|[(]Paused Caching..Wait 5s[)] ','',t)
+							if c and c_int:
+								t = re.sub('Cache:[0-9]*%','',t)
+							t = t.strip()
+							if '(Paused) ' in t:
+								t = t.replace('(Paused) ','')
+							if '(Paused Caching..Wait) ' in t:
+								t = t.replace('(Paused Caching..Wait) ','')
 						except:
 							t = ""
-						
+						#print(t,' --t val--')
 						if buffering_mplayer == "yes":
-							print(video_local_stream,'--video--local--stream--')
-							out = "(Paused Caching..Wait 5s) " + t+" Cache: "+c
-							if (not self.mplayer_timer.isActive()) and (not video_local_stream):
+							#print(video_local_stream,'--video--local--stream--')
+							print('buffering mplayer')
+							if 'Cache:' not in t:
+								out = "(Paused Caching..Wait) "+t+' Cache:'+c
+							else:
+								out = "(Paused Caching..Wait) "+t
+							if (not self.mplayer_timer.isActive()) and (not video_local_stream) and c_int > 0:
 								self.mplayer_timer.start(5000)
 							#buffering_mplayer = "no"
 						else:
-							
-							#out = "(Paused) "+t+" Cache: "+c
-							out = "(Paused) "+t
-						
+							if c_int and c:
+								out = "(Paused) "+t+' Cache:'+c
+							else:
+								out = "(Paused) "+t
+						#print(out,'--out--')
 					else:
 						if "%" in a:
 							#print a
-							m = re.findall('[0-9]*%',a)
+							#m = re.findall('[0-9]*%',a)
+							m = a.split(' ')
 							try:
-								c = m[3]
+								c = m[-2]
+								#if len(c) > 3:
+								#	c = "0%"
 							except:
-								c = m[-1]
+								c = "0%"
 						else:
 							c = "0%"
 					
@@ -16091,7 +16119,7 @@ class Ui_MainWindow(object):
 						else:
 							out_time = str(datetime.timedelta(milliseconds=int(l))) + " / " + str(datetime.timedelta(milliseconds=int(mplayerLength)))
 							
-							out = out_time + " ["+self.epn_name_in_list+"]"
+							out = out_time + " ["+self.epn_name_in_list+"]" +' Cache:'+c
 							
 						if not new_tray_widget.isHidden():
 							new_tray_widget.update_signal.emit(out_time)
@@ -16189,8 +16217,8 @@ class Ui_MainWindow(object):
 						
 					elif quitReally == "yes": 
 						self.list2.setFocus()
-		except:
-			pass
+		except Exception as e:
+			print(e,'--dataready--exception--')
 		
 		
 				
@@ -16238,6 +16266,8 @@ class Ui_MainWindow(object):
 		if mpvplayer.processId()>0:
 			mpvplayer.kill()
 		print('--line--15666--')
+		if command.startswith('mplayer'):
+			command = command.replace('-msglevel all=4:statusline=5:global=6','-msglevel statusline=5:global=6')
 		mpvplayer = QtCore.QProcess()
 		self.mpvplayer_val = mpvplayer
 		mpvplayer.setProcessChannelMode(QtCore.QProcess.MergedChannels)
@@ -16246,6 +16276,7 @@ class Ui_MainWindow(object):
 		#self.tab_5.setFocus()
 		mpvplayer.finished.connect(self.finished)
 		QtCore.QTimer.singleShot(1000, partial(mpvplayer.start, command))
+		print(command)
 	
 	def adjust_thumbnail_window(self,row):
 		global thumbnail_indicator
