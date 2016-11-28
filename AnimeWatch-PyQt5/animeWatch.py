@@ -580,6 +580,31 @@ class MyEventFilter(QtCore.QObject):
 			return super(MyEventFilter,self).eventFilter(receiver, event)
 
 
+class EventFilterFloatWindow(QtCore.QObject):
+	def eventFilter(self, receiver, event):
+		global tray,MainWindow,ui,new_tray_widget
+		#print(event.pos(),event.type())
+		#print(event)
+		if event.type():
+			#print("event is {0} with id {1}".format(event,event.type()))
+			if(event.type() == QtCore.QEvent.Enter):
+				if ui.tab_5.float_timer.isActive():
+					ui.tab_5.float_timer.stop()
+				if new_tray_widget.hasFocus():
+					print('focus')
+				else:
+					print('unFocus')
+				return 0
+			elif(event.type() == QtCore.QEvent.Leave):
+				if new_tray_widget.remove_toolbar:
+					if ui.tab_5.float_timer.isActive():
+						ui.tab_5.float_timer.stop()
+					ui.tab_5.float_timer.start(10)
+				return 0
+			else:
+				return super(EventFilterFloatWindow,self).eventFilter(receiver, event)
+		else:
+			return super(EventFilterFloatWindow,self).eventFilter(receiver, event)
 
 class ScaledLabel(QtWidgets.QLabel):
 	def __init__(self, *args, **kwargs):
@@ -3207,7 +3232,7 @@ class List2(QtWidgets.QListWidget):
 					ui.list6.addItem(txt)
 	def keyPressEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
-		global site,opt,pre_opt,name,siteName,Player,total_till,video_local_stream
+		global site,opt,pre_opt,name,siteName,Player,total_till,video_local_stream,MainWindow
 		if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Left:
 			ui.tab_5.setFocus()
 		elif event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Up:
@@ -3679,65 +3704,72 @@ class List2(QtWidgets.QListWidget):
 			#mpvplayer.write('\n'+'add sub-pos +1'+'\n')
 		
 			#fullscr = 1 - fullscr
-			if not MainWindow.isFullScreen():
-				ui.gridLayout.setSpacing(0)
-				ui.superGridLayout.setSpacing(0)
-				ui.gridLayout.setContentsMargins(0,0,0,0)
-				ui.superGridLayout.setContentsMargins(0,0,0,0)
-				#ui.frame1.setMaximumHeight(20)
-				ui.text.hide()
-				ui.label.hide()
-				#if site != "Music":
-				ui.frame1.hide()
-				ui.tab_6.hide()
-				ui.goto_epn.hide()
-				ui.btn20.hide()
-				if wget:
-					if wget.processId() > 0:
-						ui.progress.hide()
-				ui.list2.hide()
-				ui.list6.hide()
-				ui.list1.hide()
-				ui.frame.hide()
-				#ui.text.hide()
-				#ui.label.hide()
-				#ui.tab_5.setParent(None)
-				
-				#ui.tab_5.showMaximized()
-				ui.tab_5.show()
-				ui.tab_5.setFocus()
-				#ui.tab_5.showFullScreen()
-				
-				#ui.gridLayout.showFullScreen()
-				if (Player == "mplayer" or Player=="mpv"):
-					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
-				MainWindow.showFullScreen()
-				
-			else:
-				
-				ui.gridLayout.setSpacing(10)
-				ui.superGridLayout.setSpacing(10)
-				#ui.gridLayout.setContentsMargins(10,10,10,10)
-				ui.superGridLayout.setContentsMargins(10,10,10,10)
-				ui.list2.show()
-				#ui.goto_epn.show()
-				ui.btn20.show()
-				#if Player == "mpv":
-				if wget:
-					if wget.processId() > 0:
-						ui.goto_epn.hide()
-						ui.progress.show()
-					
-				ui.frame1.show()
-				if Player == "mplayer" or Player=="mpv":
-					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-				MainWindow.showNormal()
-				MainWindow.showMaximized()
-				if total_till != 0:
-					ui.tab_6.show()
-					ui.list2.hide()
+			if not MainWindow.isHidden():
+				if not MainWindow.isFullScreen():
+					ui.gridLayout.setSpacing(0)
+					ui.superGridLayout.setSpacing(0)
+					ui.gridLayout.setContentsMargins(0,0,0,0)
+					ui.superGridLayout.setContentsMargins(0,0,0,0)
+					#ui.frame1.setMaximumHeight(20)
+					ui.text.hide()
+					ui.label.hide()
+					#if site != "Music":
+					ui.frame1.hide()
+					ui.tab_6.hide()
 					ui.goto_epn.hide()
-				#ui.tab_5.showNormal()
+					ui.btn20.hide()
+					if wget:
+						if wget.processId() > 0:
+							ui.progress.hide()
+					ui.list2.hide()
+					ui.list6.hide()
+					ui.list1.hide()
+					ui.frame.hide()
+					#ui.text.hide()
+					#ui.label.hide()
+					#ui.tab_5.setParent(None)
+					
+					#ui.tab_5.showMaximized()
+					ui.tab_5.show()
+					ui.tab_5.setFocus()
+					#ui.tab_5.showFullScreen()
+					
+					#ui.gridLayout.showFullScreen()
+					if (Player == "mplayer" or Player=="mpv"):
+						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
+					MainWindow.showFullScreen()
+					
+				else:
+					
+					ui.gridLayout.setSpacing(10)
+					ui.superGridLayout.setSpacing(10)
+					#ui.gridLayout.setContentsMargins(10,10,10,10)
+					ui.superGridLayout.setContentsMargins(10,10,10,10)
+					ui.list2.show()
+					#ui.goto_epn.show()
+					ui.btn20.show()
+					#if Player == "mpv":
+					if wget:
+						if wget.processId() > 0:
+							ui.goto_epn.hide()
+							ui.progress.show()
+						
+					ui.frame1.show()
+					if Player == "mplayer" or Player=="mpv":
+						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+					MainWindow.showNormal()
+					MainWindow.showMaximized()
+					if total_till != 0:
+						ui.tab_6.show()
+						ui.list2.hide()
+						ui.goto_epn.hide()
+					#ui.tab_5.showNormal()
+			else:
+				if not ui.float_window.isHidden():
+					if not ui.float_window.isFullScreen():
+						ui.float_window.showFullScreen()
+					else:
+						ui.float_window.showNormal()
 	
 	def find_info(self,var):
 			global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,site,siteName,finalUrlFound
@@ -4191,10 +4223,10 @@ class List2(QtWidgets.QListWidget):
 							"""
 							write_files(file_path,epnArrList,line_by_line=True)
 			
-						
+				
 	def contextMenuEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo,startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url,new_epn,site,home,opt,finalUrlFound,epnArrList
-		global quitReally,epnArrList,name,hdr,ui
+		global quitReally,epnArrList,name,hdr,ui,new_tray_widget
 		#print name
 		if site == "Music":
 			menu = QtWidgets.QMenu(self)
@@ -4244,6 +4276,11 @@ class List2(QtWidgets.QListWidget):
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = False
+				if not ui.float_window.isHidden():
+					if new_tray_widget.cover_mode.text() == ui.player_buttons['down']: 
+						self.setMaximumHeight(30)
+					else:
+						self.setMaximumHeight(16777215)
 				ui.update_list2()
 			elif action == view_list_thumbnail:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
@@ -4252,10 +4289,13 @@ class List2(QtWidgets.QListWidget):
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = True
+				if not ui.float_window.isHidden():
+					self.setMaximumHeight(16777215)
 				ui.update_list2()
 			elif action == thumb:
-				ui.IconViewEpn()
-				ui.scrollArea1.setFocus()
+				if self.currentItem() and ui.float_window.isHidden():
+					ui.IconViewEpn()
+					ui.scrollArea1.setFocus()
 			
 			elif action == go_to:
 					if ui.list3.currentItem():
@@ -4419,6 +4459,11 @@ class List2(QtWidgets.QListWidget):
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = False
+				if not ui.float_window.isHidden():
+					if new_tray_widget.cover_mode.text() == ui.player_buttons['down']: 
+						self.setMaximumHeight(30)
+					else:
+						self.setMaximumHeight(16777215)
 				ui.update_list2()
 			elif action == view_list_thumbnail:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
@@ -4427,6 +4472,9 @@ class List2(QtWidgets.QListWidget):
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
 				ui.list_with_thumbnail = True
+				if not ui.float_window.isHidden():
+					#if new_tray_widget.cover_mode.text() == ui.player_buttons['down']: 
+					self.setMaximumHeight(16777215)
 				ui.update_list2()
 			elif action == remove:
 				r = 0
@@ -4486,7 +4534,7 @@ class List2(QtWidgets.QListWidget):
 				if self.currentItem():
 					self.find_info(0)
 			elif action == thumb:
-				if self.currentItem():
+				if self.currentItem() and ui.float_window.isHidden():
 					ui.IconViewEpn()
 					ui.scrollArea1.setFocus()
 			elif action == fix_ord:
@@ -5590,11 +5638,14 @@ class tab5(QtWidgets.QWidget):
 		if not ui.float_window.isHidden() and new_tray_widget.remove_toolbar:
 			if self.float_timer.isActive():
 				self.float_timer.stop()
-			wid_height = int(ui.float_window.height()/3)
+			if new_tray_widget.cover_mode.text() == ui.player_buttons['up']:
+				wid_height = int(ui.float_window.height()/3)
+			else:
+				wid_height = int(ui.float_window.height())
 			new_tray_widget.setMaximumHeight(wid_height)
 			new_tray_widget.show()
-			print('--float--timer--')
-			self.float_timer.start(3000)
+			#print('--float--timer--')
+			self.float_timer.start(1000)
 			#else:
 			#	#print('--stopping--float--timer--and--starting--again--')
 			#	self.float_timer.stop()
@@ -6442,7 +6493,7 @@ class Ui_MainWindow(object):
 		self.progress.setTextVisible(True)
 		self.progress.hide()
 		self.progress.setToolTip("Click for more options")
-		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3','pr':'\u226A','nxt':'\u226B','min':'\u2581','max':'\u25A2','close':'\u2715','resize':'M'}
+		self.player_buttons = {'play':'\u25B8','pause':'\u2225','stop':'\u25FE','prev':'\u2190','next':'\u2192','lock':'\u21BA','unlock':'\u21C4','quit':'\u2127','attach':'\u2022','left':'\u21A2','right':'\u21A3','pr':'\u226A','nxt':'\u226B','min':'\u2581','max':'\u25A2','close':'\u2715','resize':'M','up':'\u21E1','down':'\u21E3'}
 		self.check_symbol = '\u2714'
 		self.torrent_frame = QtWidgets.QFrame(MainWindow)
 		self.torrent_frame.setMaximumSize(QtCore.QSize(300,16777215))
@@ -6518,17 +6569,17 @@ class Ui_MainWindow(object):
 		self.slider.setRange(0,100)
 		self.slider.setMouseTracking(True)
 		
-		width_allowed = int((screen_width)/4.5)
-		print(width_allowed,'--width--allowed--')
-		self.list1.setMaximumWidth(width_allowed)
-		self.list2.setMaximumWidth(width_allowed)
+		self.width_allowed = int((screen_width)/4.5)
+		print(self.width_allowed,'--width--allowed--')
+		self.list1.setMaximumWidth(self.width_allowed)
+		self.list2.setMaximumWidth(self.width_allowed)
 		self.list2.setIconSize(QtCore.QSize(128,128))
-		self.frame.setMaximumWidth(width_allowed)
-		self.list4.setMaximumWidth(width_allowed)
-		self.list5.setMaximumWidth(width_allowed)
-		self.list6.setMaximumWidth(width_allowed)
-		self.goto_epn.setMaximumWidth(width_allowed)
-		self.text.setMaximumWidth(screen_width-2*width_allowed-280)
+		self.frame.setMaximumWidth(self.width_allowed)
+		self.list4.setMaximumWidth(self.width_allowed)
+		self.list5.setMaximumWidth(self.width_allowed)
+		self.list6.setMaximumWidth(self.width_allowed)
+		self.goto_epn.setMaximumWidth(self.width_allowed)
+		self.text.setMaximumWidth(screen_width-2*self.width_allowed-280)
 		self.text.setMaximumHeight(250)
 		self.label.setMaximumHeight(250)
 		self.label.setMaximumWidth(280)
@@ -7238,7 +7289,7 @@ class Ui_MainWindow(object):
 		
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+F"), MainWindow, self.searchAnime)
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+Z"), MainWindow, self.IconView)
-		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+X"), MainWindow, self.showHideBrowser)
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+X"), MainWindow, self.webHide)
 		QtWidgets.QShortcut(QtGui.QKeySequence("ESC"), MainWindow, self.HideEveryThing)
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+1"), MainWindow, lambda x=1:self.change_fanart_aspect(1))
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+2"), MainWindow, lambda x=1:self.change_fanart_aspect(2))
@@ -10438,41 +10489,64 @@ class Ui_MainWindow(object):
 			
 	
 	
-	def HideEveryThing(self):
+	def HideEveryThing(self,hide_var=None):
 		global fullscrT,idwMain,idw,view_layout
 		fullscrT = 1 - fullscrT
-		#if not self.dockWidget_4.isFloating():
-		#		self.dockWidget_4.setFloating(True)
 		
-		
-		
-		if fullscrT == 1:
-			
-			self.tab_2.hide()
-			self.tab_6.hide()
-			self.list1.hide()
-			self.list2.hide()
-			self.tab_5.hide()
-			self.label.hide()
-			self.text.hide()
-			self.frame.hide()
-			self.dockWidget_3.hide()
-			self.tab_6.hide()
-			self.tab_2.hide()
-			self.goto_epn.hide()
-			self.list1.setFocus()
-			self.frame1.hide()
+		if hide_var:
+			if hide_var == 'hide':
+				self.tab_2.hide()
+				self.tab_6.hide()
+				self.list1.hide()
+				self.list2.hide()
+				self.tab_5.hide()
+				self.label.hide()
+				self.text.hide()
+				self.frame.hide()
+				self.dockWidget_3.hide()
+				self.tab_6.hide()
+				self.tab_2.hide()
+				self.goto_epn.hide()
+				self.list1.setFocus()
+				self.frame1.hide()
+			elif hide_var == 'unhide':
+				self.list1.show()
+				self.list2.show()
+				self.label.show()
+				self.text.show()
+				self.frame.show()
+				self.dockWidget_3.show()
+				self.goto_epn.show()
+				self.list1.setFocus()
+				self.frame1.show()
 		else:
-			
-			self.list1.show()
-			self.list2.show()
-			self.label.show()
-			self.text.show()
-			self.frame.show()
-			self.dockWidget_3.show()
-			self.goto_epn.show()
-			self.list1.setFocus()
-			self.frame1.show()
+			if fullscrT == 1:
+				
+				self.tab_2.hide()
+				self.tab_6.hide()
+				self.list1.hide()
+				self.list2.hide()
+				self.tab_5.hide()
+				self.label.hide()
+				self.text.hide()
+				self.frame.hide()
+				self.dockWidget_3.hide()
+				self.tab_6.hide()
+				self.tab_2.hide()
+				self.goto_epn.hide()
+				self.list1.setFocus()
+				self.frame1.hide()
+			else:
+				
+				self.list1.show()
+				self.list2.show()
+				self.label.show()
+				self.text.show()
+				self.frame.show()
+				self.dockWidget_3.show()
+				self.goto_epn.show()
+				self.list1.setFocus()
+				self.frame1.show()
 		
 	def thumbnailHide(self,context):
 		global view_layout,total_till,mpvplayer,browse_cnt,iconv_r,memory_num_arr,thumbnail_indicator,iconv_r_indicator,total_till_epn
@@ -10593,7 +10667,7 @@ class Ui_MainWindow(object):
 		
 		
 		if self.tab_2.isHidden():
-			self.HideEveryThing()
+			self.HideEveryThing(hide_var='hide')
 			self.tab_2.show()
 			self.frame1.show()
 		else:
@@ -11160,9 +11234,19 @@ class Ui_MainWindow(object):
 		if site == "Local":
 			r = self.list1.currentRow()
 			name = str(self.list1.currentItem().text())
-		if site == "Music":
-			#sumry = '/tmp/AnimeWatch/'+name+'-bio.txt'
-			sumry = os.path.join(TMPDIR,name+'-bio.txt')
+		elif site == "Music":
+			nm = ''
+			if str(self.list3.currentItem().text()) == "Artist":
+				nm = name
+			else:
+				try:
+					r = ui.list2.currentRow()
+				
+					nm = epnArrList[r].split('	')[2]
+				except:
+					nm = ""
+				
+			sumry = os.path.join(TMPDIR,nm+'-bio.txt')
 		else:
 			#sumry = '/tmp/AnimeWatch/'+name+'-summary.txt'
 			sumry = os.path.join(TMPDIR,name+'-summary.txt')
@@ -11181,14 +11265,14 @@ class Ui_MainWindow(object):
 				shutil.copy(sumry,os.path.join(home,'Local',name,'summary.txt'))
 		elif (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
-					nm = name
+				nm = name
 			else:
-					try:
-						r = ui.list2.currentRow()
-					
-						nm = epnArrList[r].split('	')[2]
-					except:
-						nm = ""
+				try:
+					r = ui.list2.currentRow()
+				
+					nm = epnArrList[r].split('	')[2]
+				except:
+					nm = ""
 			if nm and os.path.exists(os.path.join(home,'Music','Artist',nm)):
 				#sumry = '/tmp/AnimeWatch/'+nm+'-bio.txt'
 				sumry = os.path.join(TMPDIR,nm+'-bio.txt')
@@ -12206,7 +12290,7 @@ class Ui_MainWindow(object):
 	
 	
 	def update_list2(self):
-		global epnArrList,site,refererNeeded,finalUrlFound
+		global epnArrList,site,refererNeeded,finalUrlFound,new_tray_widget
 		update_pl_thumb = True
 		if not epnArrList:
 			return 0
@@ -12255,6 +12339,10 @@ class Ui_MainWindow(object):
 			QtCore.QTimer.singleShot(10, partial(self.set_icon_list2,epnArrList,self.list_with_thumbnail,update_pl_thumb))
 		else:
 			QtCore.QTimer.singleShot(100, partial(self.set_icon_list2,epnArrList,self.list_with_thumbnail,update_pl_thumb))
+		
+			#elif new_tray_widget.cover_mode.text() == self.player_buttons['up']:
+				
+				
 		#if self.list_with_thumbnail:
 		#	thread_update = updateListThread(epnArrList)
 		#	thread_update.start()
@@ -14149,7 +14237,7 @@ class Ui_MainWindow(object):
 		try:
 			image_dir,image_name = os.path.split(fanart)
 			original_fanart = os.path.join(image_dir,'original-fanart.jpg')
-			
+			print('videoimage picn file is {0}'.format(picn))
 			if os.path.isfile(str(picn)):
 				if not os.path.isfile(fanart):
 					if not os.path.exists(original_fanart):
@@ -14176,7 +14264,7 @@ class Ui_MainWindow(object):
 					self.label.setPixmap(img.scaled(w,h,QtCore.Qt.KeepAspectRatio))
 					#self.label.setPixmap(img)
 				if not self.float_window.isHidden():
-					self.float_window.setPixmap(img)
+					self.float_window.setPixmap(img.scaled(w,h,QtCore.Qt.KeepAspectRatio))
 		except Exception as e:
 			print(e,'--error--in processing image--VideoImage 13883')
 		self.text.clear()
@@ -16193,7 +16281,7 @@ class Ui_MainWindow(object):
 							else:
 								out = "(Paused Caching..Wait) "+t
 							if (not self.mplayer_timer.isActive()) and (not video_local_stream) and c_int > 0:
-								self.mplayer_timer.start(5000)
+								self.mplayer_timer.start(1000)
 							#buffering_mplayer = "no"
 						else:
 							if c_int and c:
@@ -18676,7 +18764,7 @@ class FloatWindowWidget(QtWidgets.QWidget):
 	update_signal = pyqtSignal(str)
 	def __init__(self):
 		QtWidgets.QWidget.__init__(self)
-		global epnArrList,tray
+		global epnArrList,tray,ui
 		self.update_signal.connect(self.update_progress)
 		self.remove_toolbar = True
 		#self.setMaximumHeight(200)
@@ -18700,6 +18788,8 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		
 		self.progress = QtWidgets.QLineEdit(self)
 		self.progress.setAlignment(QtCore.Qt.AlignCenter)
+		
+		
 		
 		self.f = QtWidgets.QFrame(self)
 		self.f.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -18744,23 +18834,30 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.h_mode.setToolTip('Keep Toolbar')
 		self.h_mode.clicked.connect(self.lock_toolbar)
 		
+		self.cover_mode = QtWidgets.QPushButton(self)
+		self.cover_mode.setText(ui.player_buttons['up'])
+		self.cover_mode.setToolTip('Cover Entire Frame')
+		self.cover_mode.clicked.connect(self.cover_frame)
+		
 		self.horiz.insertWidget(0,self.h_mode,0)
-		self.horiz.insertWidget(1,self.pr,0)
-		self.horiz.insertWidget(2,self.ne,0)
-		self.horiz.insertWidget(3,self.p,0)
-		self.horiz.insertWidget(4,self.st,0)
-		self.horiz.insertWidget(5,self.lock,0)
-		self.horiz.insertWidget(6,self.attach,0)
-		self.horiz.insertWidget(7,self.qt,0)
+		self.horiz.insertWidget(1,self.cover_mode,0)
+		self.horiz.insertWidget(2,self.pr,0)
+		self.horiz.insertWidget(3,self.ne,0)
+		self.horiz.insertWidget(4,self.p,0)
+		self.horiz.insertWidget(5,self.st,0)
+		self.horiz.insertWidget(6,self.lock,0)
+		self.horiz.insertWidget(7,self.attach,0)
+		self.horiz.insertWidget(8,self.qt,0)
 		
+		#self.tf = QtWidgets.QFrame(self)
 		
-		
+		#self.lay.insertWidget(0,self.tf,0)
 		self.lay.insertWidget(0,self.f,0)
-		#self.lay.insertWidget(3,self.l,0)
-		self.lay.insertWidget(2,self.progress,0)
-		self.lay.insertWidget(3,self.title,0)
-		self.lay.insertWidget(4,self.title1,0)
-		
+		self.lay.addStretch(1)
+		self.lay.insertWidget(3,self.progress,0)
+		self.lay.insertWidget(4,self.title,0)
+		self.lay.insertWidget(5,self.title1,0)
+		#self.tf = self.lay.itemAt(1)
 		
 		self.horiz.setSpacing(0)
 		self.horiz.setContentsMargins(0,0,0,0)
@@ -18774,11 +18871,38 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.hide()
 		
 		self.f.setStyleSheet("font: bold 15px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:25px;")
+		#self.tf.setStyleSheet("font: bold 15px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:500px;")
 		#
 		self.title.setStyleSheet("font:bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
 		self.title1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
 		self.progress.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
 		
+		#self.tf.setMinimumHeight(500)
+		
+	def mouseMoveEvent(self,event):
+		if ui.tab_5.float_timer.isActive():
+			ui.tab_5.float_timer.stop()
+			
+	def cover_frame(self):
+		if not ui.list_with_thumbnail:
+			ui.list2.setMaximumHeight(30)
+		else:
+			ui.list2.setMaximumHeight(16777215)
+		txt = self.cover_mode.text()
+		if txt == ui.player_buttons['up']:
+			wid_height = (ui.float_window.height())
+			new_tray_widget.setMaximumHeight(wid_height)
+			new_tray_widget.show()
+			self.cover_mode.setText(ui.player_buttons['down'])
+			self.cover_mode.setToolTip('Restore Default')
+			
+		else:
+			wid_height = int(ui.float_window.height()/3)
+			new_tray_widget.setMaximumHeight(wid_height)
+			new_tray_widget.show()
+			self.cover_mode.setText(ui.player_buttons['up'])
+			self.cover_mode.setToolTip('Cover Entire Frame')
+			
 	def lock_toolbar(self):
 		txt = self.h_mode.text()
 		if txt == '--':
@@ -18793,7 +18917,7 @@ class FloatWindowWidget(QtWidgets.QWidget):
 			self.h_mode.setText('--')
 			self.h_mode.setToolTip('Keep Toolbar')
 			self.remove_toolbar = True
-			ui.tab_5.float_timer.start(10)
+			ui.tab_5.float_timer.start(1000)
 			
 	@pyqtSlot(str)
 	def update_progress(self,var):
@@ -18882,7 +19006,7 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			ui.float_window.show()
 			
 	def _detach_video(self):
-		global new_tray_widget
+		global new_tray_widget,curR
 		txt = self.d_vid.text()
 		ui.float_window_open = True
 		if txt.lower() == '&detach video':
@@ -18895,7 +19019,14 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			ui.float_window.setGeometry(ui.float_window_dim[0],ui.float_window_dim[1],ui.float_window_dim[2],ui.float_window_dim[3])
 			ui.list2.setFlow(QtWidgets.QListWidget.LeftToRight)
 			ui.list2.setMaximumWidth(16777215)
-			new_tray_widget.lay.insertWidget(1,ui.list2,0)
+			new_tray_widget.lay.insertWidget(2,ui.list2,0)
+			if not ui.list_with_thumbnail:
+				ui.list2.setMaximumHeight(30)
+			if ui.list2.count() >0:
+				r = ui.list2.currentRow()
+				if r >= 0:
+					ui.list2.setCurrentRow(0)
+					ui.list2.setCurrentRow(r)
 		else:
 			self.d_vid.setText('&Detach Video')
 			ui.gridLayout.addWidget(ui.tab_5,0,1,1,1)
@@ -18904,9 +19035,11 @@ class RightClickMenuIndicator(QtWidgets.QMenu):
 			MainWindow.show()
 			self.h_mode.setText('&Hide')
 			ui.list2.setFlow(QtWidgets.QListWidget.TopToBottom)
-			ui.list2.setMaximumWidth(300)
+			ui.list2.setMaximumWidth(ui.width_allowed)
+			print("list1 width is {0}".format(ui.list1.width()))
+			ui.list2.setMaximumHeight(16777215)
 			ui.verticalLayout_50.insertWidget(0,ui.list2,0)
-			
+		
 	def _hide_mode(self):
 		txt = self.h_mode.text()
 		if not ui.float_window.isHidden():
@@ -19652,6 +19785,14 @@ def main():
 	#m_event = MyEventFilter()
 	#tray.installEventFilter(m_event)
 	new_tray_widget = FloatWindowWidget()
+	try:
+		m_event = EventFilterFloatWindow()
+		new_tray_widget.installEventFilter(m_event)
+		print('Event Filter Installed in new_tray_widget')
+	except Exception as e:
+		print("Error in Tray Widget Event Filter with error message {0}".format(e))
+	
+	#new_tray_widget.setMouseTracking(True)
 	if ui.window_frame == 'false':
 		ui._set_window_frame()
 	#except:
