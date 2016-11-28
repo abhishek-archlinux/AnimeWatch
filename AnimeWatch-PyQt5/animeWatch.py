@@ -76,8 +76,9 @@ print(TMPDIR,OSNAME)
 from shutil import move
 from os import remove, close
 import time
-from PIL import Image 
 import PIL
+from PIL import Image,ImageOps 
+
 import random
 from os.path import expanduser
 import textwrap
@@ -169,6 +170,8 @@ def change_config_file(ip,port):
 	f.close()
 
 def set_mainwindow_palette(fanart):
+	if not os.path.isfile(fanart):
+		fanart = ui.default_background
 	if os.path.isfile(fanart):
 		palette	= QtGui.QPalette()
 		palette.setBrush(QtGui.QPalette.Background,QtGui.QBrush(QtGui.QPixmap(fanart)))
@@ -2959,23 +2962,18 @@ class List1(QtWidgets.QListWidget):
 								elif action == delFanart:
 									m=os.listdir(dir_n)
 									for i in m:
-										if i.startswith('fanart'):
+										if i.startswith('fanart') or i.startswith('original-fanart'):
 											os.remove(os.path.join(dir_n,i))
 									m = os.listdir(TMPDIR)
 									for i in m:
-										if i.startswith('fanart'):
+										if i.startswith('fanart') or i.startswith('original-fanart'):
 											t = os.path.join(TMPDIR,i)
 											os.remove(t)
 								elif action == default:
 									shutil.copy(default_wall,picn)
 									shutil.copy(default_wall,fanart)
 									ui.videoImage(picn,os.path.join(home,'Music','Artist',nam,'thumbnail.jpg'),fanart,'')
-				#elif action == go_to:
-				#	if '/' in name:
-				#		nam = name.replace('/','-')
-				#	else:
-				#		nam = name
-				#	ui.reviewsWeb(srch_txt=nam,review_site='last.fm',action='search_by_name')
+				
 			else:
 				menu = QtWidgets.QMenu(self)
 				#review = menu.addAction("Review")
@@ -3013,6 +3011,8 @@ class List1(QtWidgets.QListWidget):
 				
 				cache = menu.addAction("Clear Cache")
 				del_history = menu.addAction("Delete (Only For History)")
+				rem_fanart = menu.addAction("Remove Fanart")
+				rem_poster = menu.addAction("Remove poster")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
 				
 				for i in range(len(item_m)):
@@ -3067,6 +3067,22 @@ class List1(QtWidgets.QListWidget):
 					ui.setPreOpt()
 				elif action == tvdbM:
 					ui.reviewsWeb(srch_txt=name,review_site='tvdb',action='context_menu')
+				elif action == rem_fanart:
+					path = ui.get_current_directory()
+					fanart = os.path.join(path,'fanart.jpg')
+					fanart_original = os.path.join(path,'original-fanart.jpg')
+					if os.path.exists(fanart):
+						os.remove(fanart)
+					if os.path.exists(fanart_original):
+						os.remove(fanart_original)
+				elif action == rem_poster:
+					path = ui.get_current_directory()
+					fanart = os.path.join(path,'poster.jpg')
+					fanart_original = os.path.join(path,'thumbnail.jpg')
+					if os.path.exists(fanart):
+						os.remove(fanart)
+					if os.path.exists(fanart_original):
+						os.remove(fanart_original)
 class List2(QtWidgets.QListWidget):
 	def __init__(self, parent):
 		super(List2, self).__init__(parent)
@@ -4231,7 +4247,7 @@ class List2(QtWidgets.QListWidget):
 				ui.update_list2()
 			elif action == view_list_thumbnail:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 64px;}
+				QListWidget:item {height: 112px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
 				QMenu{font: bold 12px;color:black;background-image:url('1.png');}""")
@@ -6514,8 +6530,11 @@ class Ui_MainWindow(object):
 		self.goto_epn.setMaximumWidth(width_allowed)
 		self.text.setMaximumWidth(screen_width-2*width_allowed-280)
 		self.text.setMaximumHeight(250)
-		self.label.setMaximumSize(QtCore.QSize(280, 250))
-		self.label.setMinimumSize(QtCore.QSize(280, 250))
+		self.label.setMaximumHeight(250)
+		self.label.setMaximumWidth(280)
+		self.label.setMinimumWidth(280)
+		#self.label.setMaximumSize(QtCore.QSize(280, 250))
+		#self.label.setMinimumSize(QtCore.QSize(280, 250))
 		
 		self.list1.setWordWrap(True)
 		self.list1.setTextElideMode(QtCore.Qt.ElideRight)
@@ -7162,6 +7181,8 @@ class Ui_MainWindow(object):
 		self.display_list = False
 		self.tmp_web_srch = ''
 		self.get_fetch_library = 'pycurl'
+		self.image_fit_option_val = 1
+		self.tmp_folder_remove = 'no'
 		self.update_proc = QtCore.QProcess()
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -7219,6 +7240,10 @@ class Ui_MainWindow(object):
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+Z"), MainWindow, self.IconView)
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+X"), MainWindow, self.showHideBrowser)
 		QtWidgets.QShortcut(QtGui.QKeySequence("ESC"), MainWindow, self.HideEveryThing)
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+1"), MainWindow, lambda x=1:self.change_fanart_aspect(1))
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+2"), MainWindow, lambda x=1:self.change_fanart_aspect(2))
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+3"), MainWindow, lambda x=1:self.change_fanart_aspect(3))
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+4"), MainWindow, lambda x=1:self.change_fanart_aspect(4))
 		#QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Enter), self.list2, self.epnfound)
 		#return1 = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.list1)
 		#return2 = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.list2)
@@ -7462,6 +7487,27 @@ class Ui_MainWindow(object):
 		self.lock_process = False
 		#self.trigger_play = QtCore.QObject.connect(self.line, QtCore.SIGNAL(("update(QString)")), self.player_started_playing)
 		self.mpv_thumbnail_lock = False
+	
+	
+	def change_fanart_aspect(self,var):
+		dir_name = self.get_current_directory()
+		fanart = os.path.join(dir_name,'fanart.jpg')
+		poster = os.path.join(dir_name,'poster.jpg')
+		thumbnail = os.path.join(dir_name,'thumbnail.jpg')
+		summary = ''
+		picn = os.path.join(dir_name,'original-fanart.jpg')
+		self.image_fit_option_val = var
+		print(picn)
+		if not os.path.exists(picn) and os.path.exists(fanart):
+			shutil.copy(fanart,picn)
+		elif not os.path.exists(picn) and os.path.exists(poster):
+			shutil.copy(poster,picn)
+		if os.path.exists(picn):
+			print("\npicn={0},fanart={1},image_fit_option={2}\n".format(picn,fanart,self.image_fit_option_val))
+			self.image_fit_option(picn,fanart,self.image_fit_option_val)
+			set_mainwindow_palette(fanart)
+			
+		
 	def webResize(self):
 		global screen_width
 		wdt = self.tab_2.width()
@@ -7469,6 +7515,7 @@ class Ui_MainWindow(object):
 			self.tab_2.setMaximumWidth(screen_width)
 		else:
 			self.tab_2.setMaximumWidth(400)
+			
 	def go_prev_web_page(self):
 		if self.web:
 			self.web.back()
@@ -10931,7 +10978,42 @@ class Ui_MainWindow(object):
 			self.label.clear()
 			if os.path.isfile(thumb):
 					os.remove(thumb)
-				
+					
+	def get_current_directory(self):
+		global name,site,opt,pre_opt,home,siteName,epnArrList,original_path_name
+		print (site)
+		print (opt)
+		print (pre_opt)
+		print(name)
+		if '/' in name:
+			name = name.replace('/','-')
+		path = ""
+		if site == "Local":
+			r = self.list1.currentRow()
+			name = original_path_name[r]
+		
+		if opt == "History" and (site.lower()!= 'video' and site.lower()!= 'music' and site.lower()!= 'local'):
+			if site == "SubbedAnime" or site == "DubbedAnime":
+				path= os.path.join(home,'History',site,siteName,name)
+			else:
+				path = os.path.join(home,'History',site,name)
+		elif (site == "Local" or site == "Video"):
+			path = os.path.join(home,'Local',name)
+		elif (site == "Music"):
+			print(name)
+			
+			try:
+				r = ui.list2.currentRow()
+			
+				nm = epnArrList[r].split('	')[2]
+			except:
+				nm = ""
+			if nm:
+				path = os.path.join(home,'Music','Artist',nm)
+			print("current directory is {0} and name is {1}".format(path,nm))
+		print("current directory is {0} and name is {1}".format(path,name))
+		return path
+		
 	def copyImg(self):
 		global name,site,opt,pre_opt,home,siteName,epnArrList,original_path_name
 		print (site)
@@ -10952,34 +11034,27 @@ class Ui_MainWindow(object):
 			#thumbnail = '/tmp/AnimeWatch/'+name+'thumbnail.jpg'
 			#check again
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
-			basewidth = 450
 			try:
-				img = Image.open(str(picn))
-				wpercent = (basewidth / float(img.size[0]))
-				hsize = int((float(img.size[1]) * float(wpercent)))
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(thumbnail))
+				self.image_fit_option(picn,thumbnail,450)
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'poster.jpg'))
-					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'))
+					if os.path.exists(thumbnail):
+						shutil.copy(thumbnail,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'))
 					ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
 				else:
 					shutil.copy(picn,os.path.join(home,'History',site,name,'poster.jpg'))
-					shutil.copy(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'))
+					if os.path.exists(thumbnail):
+						shutil.copy(thumbnail,os.path.join(home,'History',site,name,'thumbnail.jpg'))
 					ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
 			except Exception as e:
 				print(e,'--line 10933--')
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
-			basewidth = 450
 			try:
-				img = Image.open(str(picn))
-				wpercent = (basewidth / float(img.size[0]))
-				hsize = int((float(img.size[1]) * float(wpercent)))
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(thumbnail))	
+				self.image_fit_option(picn,thumbnail,450)
 				shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
-				shutil.copy(picn,os.path.join(home,'Local',name,'thumbnail.jpg'))
+				if os.path.exists(thumbnail):
+					shutil.copy(thumbnail,os.path.join(home,'Local',name,'thumbnail.jpg'))
 				#self.listfound()
 				ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
 			except Exception as e:
@@ -10999,16 +11074,11 @@ class Ui_MainWindow(object):
 				thumbnail = os.path.join(TMPDIR,nm+'-thumbnail.jpg')
 				#picn = '/tmp/AnimeWatch/'+nm+'.jpg'
 				#thumbnail = '/tmp/AnimeWatch/'+nm+'-thumbnail.jpg'
-				basewidth = 450
 				try:
-					img = Image.open(str(picn))
-					wpercent = (basewidth / float(img.size[0]))
-					hsize = int((float(img.size[1]) * float(wpercent)))
-					
-					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-					img.save(str(thumbnail))	
+					self.image_fit_option(picn,thumbnail,450)
 					shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'poster.jpg'))
-					shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'))
+					if os.path.exists(thumbnail):
+						shutil.copy(thumbnail,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'))
 					ui.videoImage(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,'fanart.jpg'),'')
 					#self.listfound()
 				except Exception as e:
@@ -11028,32 +11098,30 @@ class Ui_MainWindow(object):
 		if site == "Local":
 			r = self.list1.currentRow()
 			name = original_path_name[r]
+		if self.image_fit_option_val in range(1,4):
+			img_opt = self.image_fit_option_val
+		else:
+			img_opt = 1
 		if os.path.isfile(picn) and opt == "History" and (site.lower()!= 'video' and site.lower()!= 'music' and site.lower()!= 'local'):
-			basewidth = screen_width
 			try:
-				img = Image.open(picn)
-				wpercent = (basewidth / float(img.size[0]))
-				#hsize = int((float(img.size[1]) * float(wpercent)))
-				hsize = screen_height
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(picn)
+				
+				
 				if site == "SubbedAnime" or site == "DubbedAnime":
+					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'original-fanart.jpg'))
+					self.image_fit_option(picn,picn,img_opt)
 					shutil.copy(picn,os.path.join(home,'History',site,siteName,name,'fanart.jpg'))
 					ui.videoImage(picn,os.path.join(home,'History',site,siteName,name,'thumbnail.jpg'),os.path.join(home,'History',site,siteName,name,'fanart.jpg'),'')
 				else:
+					shutil.copy(picn,os.path.join(home,'History',site,name,'original-fanart.jpg'))
+					self.image_fit_option(picn,picn,img_opt)
 					shutil.copy(picn,os.path.join(home,'History',site,name,'fanart.jpg'))
 					ui.videoImage(picn,os.path.join(home,'History',site,name,'thumbnail.jpg'),os.path.join(home,'History',site,name,'fanart.jpg'),'')
 			except Exception as e:
 				print(e,'--line--11010--')
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
-			basewidth = screen_width
 			try:
-				img = Image.open(picn)
-				wpercent = (basewidth / float(img.size[0]))
-				#hsize = int((float(img.size[1]) * float(wpercent)))
-				hsize = screen_height
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(picn)
+				shutil.copy(picn,os.path.join(home,'Local',name,'original-fanart.jpg'))
+				self.image_fit_option(picn,picn,img_opt)
 				shutil.copy(picn,os.path.join(home,'Local',name,'fanart.jpg'))
 				ui.videoImage(picn,os.path.join(home,'Local',name,'thumbnail.jpg'),os.path.join(home,'Local',name,'fanart.jpg'),'')
 			except Exception as e:
@@ -11061,6 +11129,9 @@ class Ui_MainWindow(object):
 			#ui.listfound()
 		elif (site == "Music"):
 			if str(self.list3.currentItem().text()) == "Artist":
+					#if self.list2.currentItem():
+					#	nm = self.list2.currentItem().text()
+					#else:
 					nm = name
 			else:
 					try:
@@ -11072,16 +11143,13 @@ class Ui_MainWindow(object):
 			if nm and os.path.exists(os.path.join(home,'Music','Artist',nm)):
 				#picn = '/tmp/AnimeWatch/'+nm+'.jpg'
 				picn = os.path.join(TMPDIR,nm+'.jpg')
-				basewidth = screen_width
-				img = Image.open(picn)
-				wpercent = (basewidth / float(img.size[0]))
-				#hsize = int((float(img.size[1]) * float(wpercent)))
-				hsize = screen_height
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(picn)
+				shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'original-fanart.jpg'))
+				self.image_fit_option(picn,picn,img_opt)
 				shutil.copy(picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
 				print(picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
 				ui.videoImage(picn,os.path.join(home,'Music','Artist',nm,'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,'fanart.jpg'),'')
+				
+				
 			#ui.listfound()
 	def copySummary(self,copy_sum=None):
 		global name,site,opt,pre_opt,home,siteName,original_path_name
@@ -14014,37 +14082,82 @@ class Ui_MainWindow(object):
 					else:
 						self.videoImage(poster,thumb,fan,summary)
 						
-	def videoImage(self,picn,thumbnail,fanart,summary):
+	def image_fit_option(self,picn,fanart,fit_size=None):
+		# fit_size = 1. Fit to Screen
+		# fit_size = 2. Fit to Width
+		# fit_size = 3. Fit to Height
+		# fit_size > 3. Custom Width
 		global screen_height,screen_width
-		#self.label.clear()
-		try:
-			if os.path.isfile(str(picn)):
-				if not os.path.isfile(fanart):
+		
+		if fit_size:
+			if (fit_size == 1 or fit_size == 2) or fit_size > 4:
+				if fit_size == 1 or fit_size == 2:
 					basewidth = screen_width
-					try:
-						img = Image.open(str(picn))
-					except Exception as e:
-						print(e,'Error in opening image, videoImage,---13849')
-						picn = os.path.join(home,'default.jpg')
-						img = Image.open(str(picn))
-					wpercent = (basewidth / float(img.size[0]))
-					#hsize = int((float(img.size[1]) * float(wpercent)))
+				else:
+					basewidth = fit_size
+				try:
+					img = Image.open(str(picn))
+				except Exception as e:
+					print(e,'Error in opening image, videoImage,---13849')
+					picn = os.path.join(home,'default.jpg')
+					img = Image.open(str(picn))
+				if fit_size == 1:
 					hsize = screen_height
-					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-					img.save(str(fanart))
-				if not os.path.isfile(thumbnail):
-					basewidth = 450
-					try:
-						img = Image.open(str(picn))
-					except Exception as e:
-						print(e,'Error in opening image, videoImage,---13861')
-						picn = os.path.join(home,'default.jpg')
-						img = Image.open(str(picn))
+				else:
 					wpercent = (basewidth / float(img.size[0]))
 					hsize = int((float(img.size[1]) * float(wpercent)))
+				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+				img.save(str(fanart))
+			elif fit_size == 3:
+				baseheight = screen_height
+				try:
+					img = Image.open(str(picn))
+				except Exception as e:
+					print(e,'Error in opening image, videoImage,---13849')
+					picn = os.path.join(home,'default.jpg')
+					img = Image.open(str(picn))
+				wpercent = (baseheight / float(img.size[1]))
+				wsize = int((float(img.size[0]) * float(wpercent)))
+				img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
+				img.save(str(fanart))
+			elif fit_size == 4:
+				baseheight = screen_height
+				try:
+					img = Image.open(str(picn))
+				except Exception as e:
+					print(e,'Error in opening image, videoImage,---13849')
+					picn = os.path.join(home,'default.jpg')
+					img = Image.open(str(picn))
+				wpercent = (baseheight / float(img.size[1]))
+				wsize = int((float(img.size[0]) * float(wpercent)))
+				sz = (wsize,baseheight)
+				img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
+				bg = Image.new('RGBA', (screen_width,screen_height))
+				offset = (int((screen_width-wsize)/2),int((screen_height-baseheight)/2))
+				bg.paste(img,offset)
+				#new_img = ImageOps.fit(img, sz, Image.ANTIALIAS, centering=(0.5,0.5))
+				bg.save(str(fanart),'JPEG',quality=100)
+			
+	def videoImage(self,picn,thumbnail,fanart,summary):
+		global screen_height,screen_width
+		if self.image_fit_option_val in range(1,4):
+			img_opt = self.image_fit_option_val
+		else:
+			img_opt = 1
+		
+		self.label.clear()
+		try:
+			image_dir,image_name = os.path.split(fanart)
+			original_fanart = os.path.join(image_dir,'original-fanart.jpg')
+			
+			if os.path.isfile(str(picn)):
+				if not os.path.isfile(fanart):
+					if not os.path.exists(original_fanart):
+						shutil.copy(picn,original_fanart)
+					self.image_fit_option(picn,fanart,img_opt)
+				if not os.path.isfile(thumbnail):
+					self.image_fit_option(picn,thumbnail,450)
 					
-					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-					img.save(str(thumbnail))
 				picn = thumbnail	
 				tmp = '"background-image: url('+fanart+')"'
 				
@@ -14054,7 +14167,14 @@ class Ui_MainWindow(object):
 				#self.dockWidget_3.hide()
 
 				img = QtGui.QPixmap(picn, "1")
-				self.label.setPixmap(img)
+				w = img.width()
+				h = img.height()
+				if h < 250:
+					#self.label.setMinimumWidth(280)
+					self.label.setPixmap(img)
+				else:
+					self.label.setPixmap(img.scaled(w,h,QtCore.Qt.KeepAspectRatio))
+					#self.label.setPixmap(img)
 				if not self.float_window.isHidden():
 					self.float_window.setPixmap(img)
 		except Exception as e:
@@ -19366,12 +19486,27 @@ def main():
 			elif 'GET_LIBRARY' in i:
 				j = re.sub('\n','',j)
 				ui.get_fetch_library = j
+			elif 'TMP_REMOVE' in i:
+				j = re.sub('\n','',j)
+				if j == 'yes' or j == 'no':
+					ui.tmp_folder_remove = j
+				else:
+					ui.tmp_folder_remove = 'no'
+			elif 'IMAGE_FIT_OPTION' in i:
+				j = re.sub('\n','',j)
+				try:
+					k = int(j)
+				except Exception as e:
+					print(e)
+					k = 1
+				ui.image_fit_option_val = k
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
 		f.write("\nDEFAULT_DOWNLOAD_LOCATION="+TMPDIR)
 		f.write("\nTMP_REMOVE=no")
 		f.write("\nGET_LIBRARY=pycurl")
+		f.write("\nIMAGE_FIT_OPTION=1")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001
