@@ -31,19 +31,12 @@ from bs4 import BeautifulSoup
 import random
 from os.path import expanduser
 import datetime
-from player_functions import ccurl
+from player_functions import ccurl,naturallysorted
 
-
-def naturallysorted(l): 
-	convert = lambda text: int(text) if text.isdigit() else text.lower() 
-	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
-	return sorted(l, key = alphanum_key)
-	
-
- 
 class musicArtist():
 	def __init__(self):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		
 	def getContentUnicode(self,content):
 		if isinstance(content,bytes):
 			print("I'm byte")
@@ -56,11 +49,12 @@ class musicArtist():
 			content = str(content)
 			print("I'm unicode")
 		return content
+		
 	def ccurlT(self,url,rfr):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		
 		content = ccurl(url)
 		return content
+		
 	def search(self,name,name_url):
 		if not name_url:
 			name = name.replace(' ','+')

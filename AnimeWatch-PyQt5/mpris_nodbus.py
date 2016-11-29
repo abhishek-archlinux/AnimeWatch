@@ -111,8 +111,6 @@ class MprisServer():
 		except:
 			pass
 		
-		
-		
 		art_url_name = '256px.'+os.path.basename(art_url)
 		path_thumb,new_title = os.path.split(art_url)
 		abs_path_thumb = os.path.join(path_thumb,art_url_name)

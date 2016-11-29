@@ -19,7 +19,6 @@ MPRIS_OBJECT_PATH = '/org/mpris/MediaPlayer2'
 MPRIS_MEDIAPLAYER_INTERFACE = 'org.mpris.MediaPlayer2'
 MPRIS_MEDIAPLAYER_PLAYER_INTERFACE = 'org.mpris.MediaPlayer2.Player'
 
-
 class MprisServer(dbus.service.Object):
 	def __init__(self,ui,home,tr_ay,new_tr):
 		global tray,new_tray_widget
@@ -102,8 +101,6 @@ class MprisServer(dbus.service.Object):
 	def PropertiesChanged(self, interface, changed_properties,
 				  invalidated_properties=[]):
 		pass
-
-	   
 
 	@pyqtSlot(str,str,list)
 	def _emitMeta(self,info,site,epnArrList):
@@ -281,9 +278,3 @@ class MprisServer(dbus.service.Object):
 			% interface
 	)
 
-
-
-
-		
-			
-	

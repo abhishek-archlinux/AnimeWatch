@@ -35,8 +35,6 @@ import subprocess,re
 from player_functions import send_notification
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
-	
-	
 		
 	def do_GET(self):
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path,tmp_dir_folder
@@ -107,8 +105,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			f = open(file_name,'wb')
 			f.close()
 		
-		
-		
 		f = open(file_name,'rb')
 		i = cnt
 		total = 0
@@ -133,8 +129,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				time.sleep(2)
 				if ses.is_paused() or os.path.exists(tmp_pl_file):
 					break
-		
-		
 		f.close()
 		if os.path.exists(tmp_pl_file):
 			os.remove(tmp_pl_file)
@@ -198,8 +192,6 @@ class TorrentThread(QtCore.QThread):
 		cnt1 = self.cnt
 		cnt_limit = self.cnt_limit
 		s = self.handle.status()
-		#progress.show()
-		#progress.setFormat('hello')
 		
 		while (not self.session.is_paused()):
 			#print(self.session.is_paused())

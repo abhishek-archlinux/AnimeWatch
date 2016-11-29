@@ -47,11 +47,6 @@ from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtS
                           pyqtProperty)
 
 
-
-
-
-		
-
 class downloadThread(QtCore.QThread):
     
 	def __init__(self,url,ui,file_path):
@@ -89,10 +84,7 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 	def interceptRequest(self,info):
 		t = info.requestUrl()
 		urlLnk = t.url()
-		
-		
 		lower_path = urlLnk.lower()
-		
 		block_list = ["doubleclick.net",'adnxs','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
 		block = False
 		for l in block_list:
@@ -157,16 +149,12 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		print(cache_path,'--cache--path--')
 		if not os.path.exists(cache_path):
 			os.makedirs(cache_path)
-		#self.page().profile().setCachePath('/tmp/AnimeWatch')
-		#self.page().profile().setPersistentStoragePath('/tmp/AnimeWatch')
 		self.page().profile().setCachePath(cache_path)
 		self.page().profile().setPersistentStoragePath(cache_path)
 		self.page().linkHovered.connect(self.custom_links)
 		self.urlChanged.connect(self.url_changed)
 		self.hoveredLink = ''
 		self.media_url = ''
-		#self.loadFinished.connect(self._load_finished)
-		#self.loadStarted.connect(self._load_started)
 		self.titleChanged.connect(self.title_changed)
 		self.loadProgress.connect(self.load_progress)
 		self.current_link = ''
@@ -216,22 +204,6 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		if 'youtube.com' in self.url().url():
 			self.sub_url = ''
 			self.playlist_dict = {}
-			"""
-			if 'ttsurl' in var:
-				self.sub_url = ''
-				tts_url = re.search('ttsurl[^,]*',var)
-				if tts_url:
-					tts_url_val = tts_url.group()
-					#tts_url_val = urllib.parse.unquote(tts_url_val)
-					print(tts_url_val,'----tts--url--val---')
-					tts_url_val = tts_url_val.replace('\\\\','')
-					tts_url_val = tts_url_val.replace('u0026','&')
-					tts_url_val = tts_url_val.replace('//','')
-					tts_url_val = tts_url_val.replace('\\','')
-					tts_final = tts_url_val.split(':')[1].strip().replace('"','')
-					self.sub_url = 'https://www.youtube.com'+tts_final+'&lang=en&fmt=vtt'
-					print(self.sub_url,'--sub-url--')
-			"""
 			soup = BeautifulSoup(var,'lxml')
 			m = soup.find('div',{'id':'player'})
 			
@@ -402,18 +374,6 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 	@pyqtSlot(str,str,str)
 	def got_curl_html(self,title,url,file_path):
 		t = title + '	'+url+'	'+'NONE'
-		"""
-		if os.stat(file_path).st_size == 0:
-			f = open(file_path,'w')
-		else:
-			f = open(file_path,'a')
-			t = '\n'+t
-		try:
-			f.write(str(t))
-		except:
-			f.write(t)
-		f.close()
-		"""
 		write_files(file_path,t,line_by_line=True)
 		self.ui.update_playlist(file_path)
 		
@@ -424,11 +384,6 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			value = value[1:]
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		new_pl = False
-		#if not os.path.exists(file_path):
-		#	f = open(file_path,'w')
-		#	new_pl = True
-		#else:
-		#	f = open(file_path,'a')
 		j = 0
 		new_arr = []
 		for i in self.playlist_dict:
@@ -473,18 +428,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				url = url.replace(o_url,n_url)
 				print(url,o_url,n_url)
 		t = title + '	'+url+'	'+'NONE'
-		"""
-		if os.stat(file_path).st_size == 0:
-			f = open(file_path,'w')
-		else:
-			f = open(file_path,'a')
-			t = '\n'+t
-		try:
-			f.write(str(t))
-		except:
-			f.write(t)
-		f.close()
-		"""
+		
 		write_files(file_path,t,line_by_line=True)
 		self.ui.update_playlist(file_path)
 	def contextMenuEvent(self, event):

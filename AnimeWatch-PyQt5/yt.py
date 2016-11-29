@@ -117,28 +117,21 @@ def get_yt_sub(url,name,dest_dir,tmp_dir):
 			url = 'https://m.youtube.com/watch?v='+d['v']
 		except:
 			pass
-	
-	#out = "/tmp/AnimeWatch/youtube-sub"
-	#out = os.path.join(tmp_dir_sub,'youtube-sub')
 	fh,TMPFILE = mkstemp(suffix=None,prefix='youtube-sub')
-	#sub_name = out.split('/')[-1]
 	dir_name,sub_name = os.path.split(TMPFILE)
 	print(TMPFILE,'---------output--------dest---------',dest_dir_sub,'--',dir_name,' ---',sub_name)
-	#subprocess.call(['youtube-dl','--all-sub','--skip-download','--output',out,url])
 	command = "youtube-dl --all-sub --skip-download --output "+TMPFILE+" "+url
 	print(command)
 	
 	yt_sub_process = QtCore.QProcess()
 	yt_sub_process.started.connect(yt_sub_started)
 	yt_sub_process.readyReadStandardOutput.connect(partial(yt_sub_dataReady,yt_sub_process))
-	#self.tab_5.setFocus()
 	yt_sub_process.finished.connect(yt_sub_finished)
 	QtCore.QTimer.singleShot(1000, partial(yt_sub_process.start, command))
 
 def yt_sub_started():
 	print('Getting Sub')
 	txt_notify = "Trying To Get External Subtitles Please Wait!"
-	#subprocess.Popen(['notify-send',txt_notify])
 	send_notification(txt_notify)
 	
 def yt_sub_dataReady(p):
@@ -152,9 +145,6 @@ def yt_sub_finished():
 	global name_epn,dest_dir_sub,tmp_dir_sub,TMPFILE
 	name = name_epn
 	dest_dir = dest_dir_sub
-	#sub_name = os.path.basename(TMPFILE)
-	#print(name,dest_dir)
-	#dir_name = '/tmp/AnimeWatch/'
 	dir_name,sub_name = os.path.split(TMPFILE)
 	print(dir_name,sub_name)
 	m = os.listdir(dir_name)

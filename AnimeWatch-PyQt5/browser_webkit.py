@@ -49,8 +49,6 @@ from PyQt5.QtCore import (QCoreApplication, QObject, Q_CLASSINFO, pyqtSlot,pyqtS
                           pyqtProperty)
 
 
-
-
 class downloadThread(QtCore.QThread):
     
 	def __init__(self,url,ui,file_path):
@@ -337,18 +335,6 @@ class Browser(QtWebKitWidgets.QWebView):
 		if '/' in title:
 			title = title.replace('/','-')
 		t = title + '	'+url+'	'+'NONE'
-		"""
-		if os.stat(file_path).st_size == 0:
-			f = open(file_path,'w')
-		else:
-			f = open(file_path,'a')
-			t = '\n'+t
-		try:
-			f.write(str(t))
-		except:
-			f.write(t)
-		f.close()
-		"""
 		write_files(file_path,t,line_by_line=True)
 		self.ui.update_playlist(file_path)
 		
@@ -359,11 +345,6 @@ class Browser(QtWebKitWidgets.QWebView):
 			value = value[1:]
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		new_pl = False
-		#if not os.path.exists(file_path):
-		#	f = open(file_path,'w')
-		#	new_pl = True
-		#else:
-		#	f = open(file_path,'a')
 		j = 0
 		new_arr = []
 		for i in self.playlist_dict:
@@ -376,12 +357,7 @@ class Browser(QtWebKitWidgets.QWebView):
 			n_url = 'https://m.youtube.com/watch?v='+yt_id
 			w = title+'	'+n_url+'	'+'NONE'
 			new_arr.append(w)
-			#if new_pl and j==0:
-			#	f.write(w)
-			#else:
-			#	f.write('\n'+w)
 			j = j+1
-		#f.close()
 		write_files(file_path,new_arr,line_by_line=True)
 		self.get_playlist = False
 		
@@ -419,18 +395,6 @@ class Browser(QtWebKitWidgets.QWebView):
 				pass
 		print(title,url,file_path)
 		t = title + '	'+url+'	'+'NONE'
-		"""
-		if os.stat(file_path).st_size == 0:
-			f = open(file_path,'w')
-		else:
-			f = open(file_path,'a')
-			t = '\n'+t
-		try:
-			f.write(str(t))
-		except:
-			f.write(t)
-		f.close()
-		"""
 		write_files(file_path,t,line_by_line=True)
 		self.ui.update_playlist(file_path)
 		

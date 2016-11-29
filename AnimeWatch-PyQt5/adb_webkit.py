@@ -41,8 +41,6 @@ class NetWorkManager(QNetworkAccessManager):
 				block = True
 				break
 		if block:
-			#print ("Skipping")
-			#print (request.url().toString())
 			return QNetworkAccessManager.createRequest(self, QNetworkAccessManager.GetOperation, QtNetwork.QNetworkRequest(QtCore.QUrl()))
 		else:
 			return QNetworkAccessManager.createRequest(self, op, request, device)

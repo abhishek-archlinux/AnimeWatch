@@ -185,7 +185,7 @@ def ccurlCmd(url,external_cookie=None):
 			post = post.replace('"','')
 			post = post.replace("'",'')
 			extra = post
-			
+	print("\ndebug info for ccurlCmd url ={0} \n curl_opt = {1} \n extra = {2}\n".format(url,curl_opt,extra))
 	command = ccurl_string_get(url,curl_opt,extra)
 	content = ''
 	print(' '.join(command))
@@ -448,6 +448,7 @@ def ccurl(url,external_cookie=None):
 			print('curl failure try again')
 			content = ''
 		return content
+
 
 def get_ca_certificate():
 	ca_cert = ''

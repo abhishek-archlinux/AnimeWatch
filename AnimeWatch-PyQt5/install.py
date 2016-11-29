@@ -47,10 +47,6 @@ if os.path.exists(nHome):
 		if os.path.isfile(k):
 			os.remove(k)
 
-
-
-
-
 cwd = os.getcwd()
 m = os.listdir(cwd)
 for i in m:
