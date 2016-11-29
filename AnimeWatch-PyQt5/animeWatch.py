@@ -14142,7 +14142,7 @@ class Ui_MainWindow(object):
 					nm = artist_name_mplayer
 			except:
 				nm = ""
-			print (nm)
+			print ("Name of Artist is {0}".format(nm))
 			if nm:
 				if '/' in nm:
 					nm = nm.replace('/','-')
@@ -14167,9 +14167,25 @@ class Ui_MainWindow(object):
 						self.threadPool.append( ThreadingExample(nm) )
 						self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
 						self.threadPool[len(self.threadPool)-1].start()
-					else:
+					elif os.path.exists(poster) or os.path.exists(fan) or os.path.exists(thumb):
 						self.videoImage(poster,thumb,fan,summary)
-						
+					else:
+						try:
+							r = self.list2.currentRow()
+							thumb_path = self.get_thumbnail_image_path(r,epnArrList[r])
+							if os.path.exists(thumb_path):
+								self.videoImage(thumb_path,thumb_path,thumb_path,'')
+						except Exception as e:
+							print('No Thumbnail Available: {0}'.format(e))
+			else:
+				try:
+					r = self.list2.currentRow()
+					thumb_path = self.get_thumbnail_image_path(r,epnArrList[r])
+					if os.path.exists(thumb_path):
+						self.videoImage(thumb_path,thumb_path,thumb_path,'')
+				except Exception as e:
+					print('No Thumbnail Available: {0}'.format(e))
+					
 	def image_fit_option(self,picn,fanart,fit_size=None):
 		# fit_size = 1. Fit to Screen
 		# fit_size = 2. Fit to Width
@@ -14250,7 +14266,10 @@ class Ui_MainWindow(object):
 				tmp = '"background-image: url('+fanart+')"'
 				
 				tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
-				QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
+				if (picn == thumbnail == fanart):
+					pass
+				else:
+					QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
 				
 				#self.dockWidget_3.hide()
 
@@ -14413,7 +14432,7 @@ class Ui_MainWindow(object):
 			if self.mplayer_SubTimer.isActive():
 				self.mplayer_SubTimer.stop()
 			self.mplayer_SubTimer.start(2000)
-			print('..function play_file_now gapless mode..')
+			print('..function play_file_now gapless mode..{0}'.format(finalUrl))
 		else:
 			if mpvplayer.processId()>0:
 				mpvplayer.kill()
@@ -14443,7 +14462,7 @@ class Ui_MainWindow(object):
 		else:
 			return False
 	def if_file_path_exists_then_play(self,row,list_widget,play_now=None):
-		global site,downloadVideo,wget,video_local_stream,artist_name_mplayer
+		global site,downloadVideo,wget,video_local_stream,artist_name_mplayer,epnArrList
 		
 		file_path_name_mp4, file_path_name_mkv = self.get_file_name(row,list_widget)
 		
@@ -14464,6 +14483,14 @@ class Ui_MainWindow(object):
 					if self.is_artist_exists(row):
 						self.musicBackground(row,'get now')
 						self.updateMusicCount('count',finalUrl)
+					else:
+						try:
+							thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+							print("thumbnail path = {0}".format(thumb_path))
+							if os.path.exists(thumb_path):
+								self.videoImage(thumb_path,thumb_path,thumb_path,'')
+						except Exception as e:
+							print('Error in getting Thumbnail: {0}'.format(e))
 				else:
 					self.mark_addons_history_list('mark',row)
 				return True
@@ -14541,6 +14568,16 @@ class Ui_MainWindow(object):
 					self.updateVideoCount('mark',finalUrl)
 				elif site.lower() == 'local':
 					self.mark_addons_history_list('mark',row)
+					
+				if site.lower() == 'video' or site.lower() == 'local':
+					try:
+						thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+						print("thumbnail path = {0}".format(thumb_path))
+						if os.path.exists(thumb_path):
+							self.videoImage(thumb_path,thumb_path,thumb_path,'')
+					except Exception as e:
+						print('Error in getting Thumbnail - localvideogetinlist: {0}'.format(e))
+					
 				return True
 			else:
 				if os.path.exists(file_path_name_mp4):
@@ -14799,24 +14836,7 @@ class Ui_MainWindow(object):
 						txt = self.check_symbol + epnArrList[row]
 					txt = txt.replace('_',' ',1)
 					self.list2.item(row).setText(txt)
-					"""
-					lines = tuple(open(file_path, 'r'))
-					self.list2.clear()
-					k = 0
-					epnArrList[:]=[]
-					for i in lines:
-						i = i.replace('\n','')
-						epnArrList.append(i)
-						if '	' in i:
-							i = i.split('	')[0]
-							if i.startswith('#'):
-								i = i.replace('#',self.check_symbol,1)
-								self.list2.addItem((i))
-								self.list2.item(k).setFont(QtGui.QFont('SansSerif', 10,italic=True))
-							else:
-								self.list2.addItem((i))
-						k = k+1
-					"""
+					
 			if site == "SubbedAnime":
 				code = 6
 			
@@ -16805,6 +16825,15 @@ class Ui_MainWindow(object):
 					current_playing_file_path = finalUrl.replace('"','')
 				else:
 					current_playing_file_path = finalUrl
+			if site.lower() == 'video' or site.lower() == 'local' or site.lower() == 'playlists':
+				try:
+					r = self.list2.currentRow()
+					thumb_path = self.get_thumbnail_image_path(r,epnArrList[r])
+					print("thumbnail path = {0}".format(thumb_path))
+					if os.path.exists(thumb_path):
+						self.videoImage(thumb_path,thumb_path,thumb_path,'')
+				except Exception as e:
+					print('Error in getting Thumbnail - localvideogetinlist: {0}'.format(e))
 	def getQueueInList(self):
 		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw,sub_id,audio_id,Player,server,current_playing_file_path,quality
 		try:
@@ -19108,20 +19137,88 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 				else:
 					MainWindow.hide()
 					self.right_menu.h_mode.setText('&Show')
-			"""
-			geom = self.geometry()
-			x = geom.x()
-			y = geom.y()
-			print(x,y)
-			if (x+280) > screen_width:
-				t = (x+280)-screen_width
-				x = x-t
-			if (y+340) > screen_height:
-				t = (y+40)-screen_height
-				y = y-t
-			new_tray_widget.setGeometry(x,y,280,340)
-			"""
 			
+def watch_external_video(var):
+	global ui,epnArrList,quitReally,video_local_stream,curR
+	t = var
+	print (t)
+	if ("file:///" in t or t.startswith('/')) and not t.endswith('.torrent') and not 'magnet:' in t:
+		quitReally="no"
+		print (t)
+		#new_epn = t.split('/')[-1]
+		t = os.path.normpath(t)
+		new_epn = os.path.basename(t)
+		#t = '"'+t+'"'
+		ui.epn_name_in_list = urllib.parse.unquote(new_epn)
+		t = t.replace('file:///','/')
+		ui.watchDirectly(urllib.parse.unquote('"'+t+'"'),'','no')
+		ui.dockWidget_3.hide()
+		site = "None"
+		ui.btn1.setCurrentIndex(0)
+		m = []
+		path_Local_Dir,name = os.path.split(t)
+		for r,d,f in os.walk(path_Local_Dir):
+			for z in f:
+				if '.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z or '.flv' in z or '.flac' in z:
+					m.append(os.path.join(r,z))
+		m=naturallysorted(m)
+		#print m
+		epnArrList[:]=[]
+		j = 0
+		row = 0
+		t = t.replace('"','')
+		t=urllib.parse.unquote(t)
+		
+		e = os.path.basename(t)
+		
+		for i in m:
+			i1 = i
+			#i = i.split('/')[-1]
+			i = os.path.basename(i)
+			epnArrList.append(i+'	'+i1)
+			ui.list2.addItem((i))
+			i = i
+			if i == e:
+				row = j
+			j =j+1
+		ui.list2.setCurrentRow(row)
+		curR = row
+	elif t.endswith('.torrent'):
+		ui.torrent_type = 'file'
+		video_local_stream = True
+		site = 'None'
+		t = t.replace('file:///','/')
+		t=urllib.parse.unquote(t)
+		#print(t)
+		#t = os.getcwd()+'/'+t
+		print(t)
+		local_torrent_file_path = t
+		info = lt.torrent_info(t)
+		file_arr = []
+		ui.list2.clear()
+		epnArrList[:]=[]
+		QtWidgets.QApplication.processEvents()
+		for f in info.files():
+			file_path = f.path
+			print(file_path)
+			file_path = os.path.basename(file_path)
+			epnArrList.append(file_path+'	'+t)
+			ui.list2.addItem((file_path))
+	elif 'magnet:' in t:
+		t = re.search('magnet:[^"]*',t).group()
+		site = 'None'
+		ui.torrent_type = 'magnet'
+		video_local_stream = True
+		ui.local_torrent_open(t)
+	else:
+		quitReally="yes"
+		new_epn = os.path.basename(t)
+		t = '"'+t+'"'
+		ui.epn_name_in_list = urllib.parse.unquote(new_epn)
+		site = 'None'
+		ui.watchDirectly(urllib.parse.unquote(t),'','no')
+		ui.dockWidget_3.hide()
+	
 def main():
 	global ui,MainWindow,tray,hdr,name,pgn,genre_num,site,name,epn,base_url,name1,embed,epn_goto,list1_items,opt,mirrorNo,mpv,queueNo,playMpv,mpvAlive,pre_opt,insidePreopt,posterManually,labelGeometry,tray,new_tray_widget
 	global downloadVideo,list2_items,quality,indexQueue,Player,startPlayer,rfr_url,category,fullscr,mpvplayer,curR,idw,idwMain,home,home1,player_focus,fullscrT,artist_name_mplayer
@@ -19688,9 +19785,6 @@ def main():
 		f = open(os.path.join(home,"Playlists","Default"),"w")
 		f.close()
 	
-	#if os.path.exists('/usr/share/AnimeWatch'):
-	#	sys.path.append('/usr/share/AnimeWatch')
-	
 	if os.path.exists(os.path.join(home,'src','Plugins')):
 		sys.path.append(os.path.join(home,'src','Plugins'))
 		print ("plugins")
@@ -19780,8 +19874,11 @@ def main():
 	
 	platform_name = os.getenv('DESKTOP_SESSION')
 	print(platform_name)
-	tray = SystemAppIndicator()
-	tray.show()
+	try:
+		tray = SystemAppIndicator()
+		tray.show()
+	except Exception as e:
+		print('System Tray Failed with Exception: {0}'.format(e))
 	#m_event = MyEventFilter()
 	#tray.installEventFilter(m_event)
 	new_tray_widget = FloatWindowWidget()
@@ -19792,54 +19889,25 @@ def main():
 	except Exception as e:
 		print("Error in Tray Widget Event Filter with error message {0}".format(e))
 	
-	#new_tray_widget.setMouseTracking(True)
 	if ui.window_frame == 'false':
 		ui._set_window_frame()
-	#except:
-	#pass
 	
-	#try:
-	server = MprisServer(ui,home,tray,new_tray_widget)
-		
-	#except:
-	#	pass
+	try:
+		server = MprisServer(ui,home,tray,new_tray_widget)
+	except Exception as e:
+		print("can't open Mpris plugin, Exception raised: {0}".format(e))
 	
 	if layout_mode == "Music":
 		try:
 			t1 = tray.geometry().height()
 		except:
 			t1 = 65
-			
 		MainWindow.setGeometry(ui.music_mode_dim[0],ui.music_mode_dim[1],ui.music_mode_dim[2],ui.music_mode_dim[3])
-		
-		"""
-		print(t1,'tray--geometry\n')
-		if t1 > 64:
-			pos_y = 22
-		else:
-			t2 = QtWidgets.QApplication.style().pixelMetric(QtWidgets.QStyle.PM_TitleBarHeight)
-			t = t1+t2
-			print(t,'--title-bar-ht--')
-			pos_y = t1
-		if w_wdt == screen_width:
-			w_wdt = 900
-			w_ht = 350
-		ui.sd_hd.hide()
-		ui.audio_track.hide()
-		ui.subtitle_track.hide()
-		ui.player_loop_file.show()
-		
-		#ui.options('layout_mode_music_startup')
-		MainWindow.setGeometry(pos_x,pos_y,w_wdt,w_ht)
-		"""
-	
 	else:
 		ui.sd_hd.show()
 		ui.audio_track.show()
 		ui.subtitle_track.show()
-		#ui.player_loop_file.hide()
 		MainWindow.showMaximized()
-	
 	
 	show_hide_titlelist = arr_setting[0]
 	show_hide_playlist = arr_setting[1]
@@ -19866,87 +19934,7 @@ def main():
 	
 	
 	if len(sys.argv) == 2:
-		t = sys.argv[1]
-		print (t)
-		if ("file:///" in t or t.startswith('/')) and not t.endswith('.torrent') and not 'magnet:' in t:
-			quitReally="no"
-			print (t)
-			#new_epn = t.split('/')[-1]
-			new_epn = os.path.basename(t)
-			t = '"'+t+'"'
-			ui.epn_name_in_list = urllib.parse.unquote(new_epn)
-			t = t.replace('file:///','/')
-			ui.watchDirectly(urllib.parse.unquote(t),'','no')
-			ui.dockWidget_3.hide()
-			site = "None"
-			ui.btn1.setCurrentIndex(0)
-			
-			path_Local_Dir,name = os.path.split(t)
-			for r,d,f in os.walk(path_Local_Dir):
-				for z in f:
-					if '.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z or '.flv' in z or '.flac' in z:
-						m.append(os.path.join(r,z))
-			m=naturallysorted(m)
-			#print m
-			epnArrList[:]=[]
-			j = 0
-			row = 0
-			t = t.replace('"','')
-			t=urllib.parse.unquote(t)
-			
-			e = os.path.basename(e)
-			
-			for i in m:
-				i1 = i
-				#i = i.split('/')[-1]
-				i = os.path.basename(i)
-				epnArrList.append(i+'	'+i1)
-				ui.list2.addItem((i))
-				i = i
-				if i == e:
-					row = j
-				j =j+1
-			ui.list2.setCurrentRow(row)
-			curR = row
-		elif t.endswith('.torrent'):
-			ui.torrent_type = 'file'
-			video_local_stream = True
-			site = 'None'
-			t = t.replace('file:///','/')
-			t=urllib.parse.unquote(t)
-			#print(t)
-			#t = os.getcwd()+'/'+t
-			print(t)
-			local_torrent_file_path = t
-			info = lt.torrent_info(t)
-			file_arr = []
-			ui.list2.clear()
-			epnArrList[:]=[]
-			QtWidgets.QApplication.processEvents()
-			for f in info.files():
-				file_path = f.path
-				print(file_path)
-				#if '/' in f.path:
-				#	file_path = file_path.split('/')[-1]
-				file_path = os.path.basename(file_path)
-				epnArrList.append(file_path+'	'+t)
-				ui.list2.addItem((file_path))
-		elif 'magnet:' in t:
-			t = re.search('magnet:[^"]*',t).group()
-			site = 'None'
-			ui.torrent_type = 'magnet'
-			video_local_stream = True
-			ui.local_torrent_open(t)
-		else:
-			quitReally="yes"
-			#new_epn = t.split('/')[-1]
-			new_epn = os.path.basename(t)
-			t = '"'+t+'"'
-			ui.epn_name_in_list = urllib.parse.unquote(new_epn)
-			#t = t.replace('file:///','/')
-			site = 'None'
-			ui.watchDirectly(urllib.parse.unquote(t),'','no')
-			ui.dockWidget_3.hide()
+		watch_external_video(sys.argv[1])
 	ui.quality_val = quality
 	#x = tray.showMessage
 	#x('hi','hello',1)
