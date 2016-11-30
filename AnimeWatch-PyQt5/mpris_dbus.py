@@ -133,9 +133,10 @@ class MprisServer(dbus.service.Object):
 					t = epnArrList[self.ui.list2.currentRow()].split('	')[0]
 					t = t.replace('#','')
 					print(art,t)
-				if (site == 'Music' and self.ui.list3.currentItem()) or (site == 'PlayLists'): 
-					if (site == 'Music' and self.ui.list3.currentItem().text().lower() == 'playlist') or (site == 'PlayLists'):
-						
+				if ((site == 'Music' and self.ui.list3.currentItem()) 
+						or (site == 'PlayLists')): 
+					if ((site == 'Music' and self.ui.list3.currentItem().text().lower() == 'playlist') 
+							or (site == 'PlayLists')):
 						artist = art
 						if artist.lower() == 'none':
 							artist = t.replace('#','')
@@ -163,10 +164,8 @@ class MprisServer(dbus.service.Object):
 						if artist.startswith(self.ui.check_symbol):
 							artist = artist[1:]
 						art_u = os.path.join(self.home,'Music','Artist',artist,'poster.jpg')
-						
-					
-					
-			except:
+			except Exception as e:
+				print(e,'--mpris-dbus-error--')
 				title = "AnimeWatch"
 				artist = "AnimeWatch"
 		else:
@@ -196,10 +195,8 @@ class MprisServer(dbus.service.Object):
 			art_u = self.ui.get_thumbnail_image_path(r,epnArrList[r])
 			if os.path.exists(art_u):
 				art_url = art_u
-		except:
-			pass
-		
-		
+		except Exception as e:
+			print(e,'--no--art--url--or-path--')
 		
 		art_url_name = '256px.'+os.path.basename(art_url)
 		path_thumb,new_title = os.path.split(art_url)
@@ -213,9 +210,8 @@ class MprisServer(dbus.service.Object):
 				hsize = 256
 				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
 				img.save(str(abs_path_thumb))
-		except:
-			pass
-			
+		except Exception as e:
+			print(e,"--image--can't be processed--")
 		
 		props = dbus.Dictionary({'Metadata': dbus.Dictionary({
 		    'xesam:artist': artist,

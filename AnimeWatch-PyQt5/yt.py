@@ -54,31 +54,49 @@ def get_yt_url(url,quality):
 	try:
 		if os.name == 'posix':
 			if quality == 'sd480p':
-				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
+				final_url = subprocess.check_output(
+							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							'18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
 			elif quality == 'sd':
-				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
+				final_url = subprocess.check_output(
+							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							'18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
 			elif quality == 'hd':
 				try:
-					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','22','-g','--playlist-end','1',url])
+					final_url = subprocess.check_output(
+								['youtube-dl','--youtube-skip-dash-manifest',
+								'-f','22','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
 				except:
-					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url])
+					final_url = subprocess.check_output(
+								['youtube-dl','--youtube-skip-dash-manifest',
+								'-f','18','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
 		else:
 			if quality == 'sd480p':
-				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url],shell=True)
+				final_url = subprocess.check_output(
+							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							'18','-g','--playlist-end','1',url],shell=True)
 				final_url = str(final_url,'utf-8')
 			elif quality == 'sd':
-				final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url],shell=True)
+				final_url = subprocess.check_output(
+							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							'18','-g','--playlist-end','1',url],shell=True)
 				final_url = str(final_url,'utf-8')
 			elif quality == 'hd':
 				try:
-					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','22','-g','--playlist-end','1',url],shell=True)
+					final_url = subprocess.check_output(
+								['youtube-dl','--youtube-skip-dash-manifest',
+								'-f','22','-g','--playlist-end','1',url],
+								shell=True)
 					final_url = str(final_url,'utf-8')
 				except:
-					final_url = subprocess.check_output(['youtube-dl','--youtube-skip-dash-manifest','-f','18','-g','--playlist-end','1',url],shell=True)
+					final_url = subprocess.check_output(
+								['youtube-dl','--youtube-skip-dash-manifest',
+								'-f','18','-g','--playlist-end','1',url],
+								shell=True)
 					final_url = str(final_url,'utf-8')
 	except Exception as e:
 		print(e,'--error in processing youtube url--')
@@ -119,7 +137,7 @@ def get_yt_sub(url,name,dest_dir,tmp_dir):
 			pass
 	fh,TMPFILE = mkstemp(suffix=None,prefix='youtube-sub')
 	dir_name,sub_name = os.path.split(TMPFILE)
-	print(TMPFILE,'---------output--------dest---------',dest_dir_sub,'--',dir_name,' ---',sub_name)
+	print(TMPFILE,'--output-dest--',dest_dir_sub,'--',dir_name,' ---',sub_name)
 	command = "youtube-dl --all-sub --skip-download --output "+TMPFILE+" "+url
 	print(command)
 	
@@ -157,7 +175,8 @@ def yt_sub_finished():
 	for i in m:
 		#j = os.path.join(dir_name,i)
 		src_path = os.path.join(dir_name,i)
-		if i.startswith(sub_name) and i.endswith('.vtt') and os.stat(src_path).st_size != 0:
+		if (i.startswith(sub_name) and i.endswith('.vtt') 
+				and os.stat(src_path).st_size != 0):
 			k1 = i.rsplit('.',2)[1]
 			k2 = i.rsplit('.',2)[2]
 			ext = k1+'.'+k2

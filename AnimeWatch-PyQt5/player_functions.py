@@ -7,6 +7,7 @@ from io import StringIO,BytesIO
 import subprocess
 import re
 from get_functions import wget_string,get_ca_certificate
+
 		
 def send_notification(txt):
 	if os.name == 'posix':
@@ -14,6 +15,7 @@ def send_notification(txt):
 			subprocess.Popen(['notify-send',txt])
 		except Exception as e:
 			print(e)
+
 			
 def open_files(file_path,lines_read=True):
 	if os.path.exists(file_path):
@@ -64,6 +66,7 @@ def open_files(file_path,lines_read=True):
 			lines = 'Not Available'
 	return lines
 
+
 def get_config_options(file_name,value_field):
 	req_val = ''
 	if os.path.exists(file_name):
@@ -83,13 +86,15 @@ def get_config_options(file_name,value_field):
 
 def naturallysorted(l): 
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
-	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
+	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key)] 
 	return sorted(l, key = alphanum_key)
+
 
 def replace_all(text, di):
 	for i, j in di.iteritems():
 		text = text.replace(i, j)
 	return text
+
 
 def get_tmp_dir():
 	TMPDIR = ''
@@ -101,21 +106,16 @@ def get_tmp_dir():
 				TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
 			else:
 				TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
-			
 		else:
 			TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
-	except:
+	except Exception as e:
+		print(e,'--error-in--creating--TEMP--Directory--') 
 		TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
 	return TMPDIR
-		
-		
 
 
 def write_files(file_name,content,line_by_line):
-	if os.name == 'nt':
-		tmp_new_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp','tmp_write.txt')
-	else:
-		fh, tmp_new_file = mkstemp()
+	tmp_new_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp','tmp_write.txt')
 	file_exists = False
 	write_operation = True
 	if os.path.exists(file_name):
@@ -190,8 +190,6 @@ def write_files(file_name,content,line_by_line):
 						f = open(file_name,'ab')
 						f.write(('\n'+content).encode('utf-8'))
 						f.close()
-					
-					
 			else:
 				f = open(file_name, 'w')
 				bin_mode = False
@@ -212,20 +210,16 @@ def write_files(file_name,content,line_by_line):
 			shutil.copy(tmp_new_file,file_name)
 			print('copying ',tmp_new_file,' to ',file_name)
 	if os.path.exists(tmp_new_file):
-		try:
-			os.remove(tmp_new_file)
-			if write_operation:
-				print('write operation on: '+file_name+' successful and successfully removed temp file: '+tmp_new_file)
-			else:
-				print('write operation on: '+file_name+' failed hence restored original and successfully removed temp file: '+tmp_new_file)
-		except Exception as e:
-			if write_operation:
-				print(e,' : write operation on '+file_name+' successful but remove '+tmp_new_file+' manually')
-			else:
-				print(e,' : write operation on '+file_name+' failed hence original restored, but remove '+tmp_new_file+' manually')
+		if write_operation:
+			print('write operation on '+file_name+' successful')
+		else:
+			print('write operation on '+file_name+' failed hence original restored')
 
 
-get_lib = get_config_options(os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','other_options.txt'),'GET_LIBRARY')
+get_lib = get_config_options(
+			os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','other_options.txt'),
+			'GET_LIBRARY')
+
 
 if get_lib.lower() == 'pycurl':
 	from get_functions import ccurl

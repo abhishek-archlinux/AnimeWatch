@@ -6,7 +6,9 @@ import pycurl
 from io import StringIO,BytesIO
 import subprocess
 
+
 USER_AGENT = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+
 
 def wget_string(url,dest,get_lib,rfr=None):
 	hdr = USER_AGENT
@@ -23,6 +25,7 @@ def wget_string(url,dest,get_lib,rfr=None):
 			command = wget_string_get(url,dest,'-De',rfr,'',download_manager=True)
 	command = ' '.join(command)
 	return command
+
 	
 def ccurl_string_get(url,opt,extra,download_manager=None):
 	hdr = USER_AGENT
@@ -177,7 +180,8 @@ def ccurlCmd(url,external_cookie=None):
 		elif curl_opt == '-Ie' or curl_opt == '-e':
 			rfr = nUrl.split('#')[2]
 			extra = rfr
-		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib' or curl_opt == '-c':
+		elif (curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' 
+				or curl_opt == '-Ib' or curl_opt == '-c'):
 			cookie_file = nUrl.split('#')[2]
 			extra = cookie_file
 		elif curl_opt == '-d':
@@ -199,6 +203,7 @@ def ccurlCmd(url,external_cookie=None):
 		print(e,'--ccurl--error--')
 	content = getContentUnicode(content)
 	return content
+
 
 def read_file_complete(file_path):
 	if os.path.exists(file_path):
@@ -224,6 +229,7 @@ def read_file_complete(file_path):
 	else:
 		content = 'Not Able to Download'
 	return content
+
 
 def ccurlWget(url,external_cookie=None):
 	hdr = USER_AGENT
@@ -253,7 +259,8 @@ def ccurlWget(url,external_cookie=None):
 		elif curl_opt == '-Ie' or curl_opt == '-e':
 			rfr = nUrl.split('#')[2]
 			extra = rfr
-		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib' or curl_opt == '-c':
+		elif (curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' 
+				or curl_opt == '-Ib' or curl_opt == '-c'):
 			cookie_file = nUrl.split('#')[2]
 			extra = cookie_file
 		elif curl_opt == '-d':
@@ -300,10 +307,11 @@ def ccurlWget(url,external_cookie=None):
 		os.remove(tmp_log)
 		print('removed ',tmp_log)
 	if '-I' in curl_opt:
-		print('***************----------\n',content,'\n-------------*************')
+		print('***************----------\n',content,'\n-------------*********')
 	elif curl_opt == '-d':
 		print(type(content))
 	return content
+
 	
 def ccurl(url,external_cookie=None):
 	hdr = USER_AGENT
@@ -328,7 +336,8 @@ def ccurl(url,external_cookie=None):
 			picn_op = nUrl.split('#')[2]
 		elif curl_opt == '-Ie' or curl_opt == '-e':
 			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib' or curl_opt == '-c':
+		elif (curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' 
+				or curl_opt == '-Ib' or curl_opt == '-c'):
 			cookie_file = nUrl.split('#')[2]
 		elif curl_opt == '-d':
 			post = nUrl.split('#')[2]
@@ -365,7 +374,6 @@ def ccurl(url,external_cookie=None):
 			c.setopt(c.WRITEDATA, f)
 		except:
 			return 0
-		
 		try:
 			c.perform()
 			c.close()

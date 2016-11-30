@@ -34,8 +34,9 @@ import datetime
 from player_functions import ccurl,naturallysorted
 
 class musicArtist():
+	
 	def __init__(self):
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+		self.hdr = ''
 		
 	def getContentUnicode(self,content):
 		if isinstance(content,bytes):
@@ -51,7 +52,6 @@ class musicArtist():
 		return content
 		
 	def ccurlT(self,url,rfr):
-		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		content = ccurl(url)
 		return content
 		
