@@ -107,21 +107,7 @@ class MprisServer():
 		except Exception as e:
 			print(e,'--no-dbus--error--')
 		
-		art_url_name = '256px.'+os.path.basename(art_url)
-		path_thumb,new_title = os.path.split(art_url)
-		abs_path_thumb = os.path.join(path_thumb,art_url_name)
-		try:
-			if not os.path.exists(abs_path_thumb) and os.path.exists(art_url):
-				basewidth = 256
-				img = Image.open(str(art_url))
-				wpercent = (basewidth / float(img.size[0]))
-				#hsize = int((float(img.size[1]) * float(wpercent)))
-				hsize = 256
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(abs_path_thumb))
-		except Exception as e:
-			print(e,"--no--dbus-error--image--processing--")
-
+		abs_path_thumb = art_url
 		if title == artist:
 			if len(title) > 38:
 				title = title[:36]+'..'

@@ -114,8 +114,9 @@ try:
 	import dbus.service
 	import dbus.mainloop.pyqt5
 	from mpris_dbus import MprisServer
-except:
+except Exception as e:
 	from mpris_nodbus import MprisServer
+	print(e,'No mpris server')
 
 try:
 	import libtorrent as lt
@@ -444,6 +445,7 @@ class ThreadingThumbnail(QtCore.QThread):
 				if (self.path.startswith('http') and 
 					(self.path.endswith('.jpg') or self.path.endswith('.png'))):
 					ccurl(self.path+'#'+'-o'+'#'+self.picn)
+					ui.image_fit_option(self.picn,self.picn,fit_size=6,widget=ui.label)
 				else:
 					ui.generate_thumbnail_method(self.picn,self.inter,self.path)
 			except Exception as e:
@@ -698,7 +700,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							ui.thumbnail_label_update()
 						if iconv_r > 1:
 							w = float((ui.tab_6.width()-60)/iconv_r)
-							h = float((9*w)/16)
+							#h = float((9*w)/16)
+							h = int(w/ui.image_aspect_allowed)
 							width=str(int(w))
 							height=str(int(h))
 							ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r)-1)*h+((curR+1)/iconv_r)*10)
@@ -715,7 +718,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							ui.thumbnail_label_update()
 						if iconv_r > 1:
 							w = float((ui.tab_6.width()-60)/iconv_r)
-							h = float((9*w)/16)
+							#h = float((9*w)/16)
+							h = int(w/ui.image_aspect_allowed)
 							width=str(int(w))
 							height=str(int(h))
 							ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r)-1)*h+((curR+1)/iconv_r)*10)
@@ -781,7 +785,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							ui.gridLayout.setSpacing(0)
 							ui.frame1.show()
 						else:
-							ui.gridLayout.setSpacing(10)
+							ui.gridLayout.setSpacing(5)
 							ui.frame1.hide()
 					elif event.key() == QtCore.Qt.Key_Space:
 						buffering_mplayer = "no"
@@ -883,15 +887,16 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						else:
 							mpvplayer.write(b'\n add video-zoom +0.01 \n')
 					elif event.key() == QtCore.Qt.Key_W:
-						if Player == "mplayer":
-							w=self.width()
-							w = w - (0.05*w)
-							h = self.height()
-							h = h - (0.05*h)
-							self.setMaximumSize(w,h)
-							self.setMinimumSize(w,h)
-						else:
-							mpvplayer.write(b'\n add video-zoom -0.01 \n')
+						if mpvplayer.processId() > 0:
+							if Player == "mplayer":
+								w=self.width()
+								w = w - (0.05*w)
+								h = self.height()
+								h = h - (0.05*h)
+								self.setMaximumSize(w,h)
+								self.setMinimumSize(w,h)
+							else:
+								mpvplayer.write(b'\n add video-zoom -0.01 \n')
 					elif event.key() == QtCore.Qt.Key_R:
 						if Player == "mplayer":
 							mpvplayer.write(b'\n sub_pos -1 \n')
@@ -934,155 +939,169 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							iconv_r = iconv_r_indicator[0]
 						quitReally = "yes"
 						mpvplayer.write(b'\n quit \n')
-						if '	' in epnArrList[cur_label_num]:
-							nameEpn = (str(epnArrList[cur_label_num])).split('	')[0]
-					
+						if ui.video_mode_index == 5:
+							pass
 						else:
-							#nameEpn = (str(epnArrList[cur_label_num])).split('/')[-1]
-							nameEpn = os.path.basename(epnArrList[cur_label_num])
-						length_1 = ui.list2.count()
-						q3="ui.label_epn_"+str(length_1+cur_label_num)+".setText(nameEpn)"
-						exec (q3)
-						if MainWindow.isFullScreen():
-							ui.gridLayout.setSpacing(10)
-							#ui.gridLayout.setContentsMargins(10,10,10,10)
-							ui.superGridLayout.setContentsMargins(10,10,10,10)
-							if wget:
-								if wget.processId() > 0:
-									ui.goto_epn.hide()
-									ui.progress.show()
-							ui.frame2.show()
-							MainWindow.showNormal()
-							MainWindow.showMaximized()
-							i = 0
-							while(i<total_till):
-								if i!=cur_label_num:
-									p1="ui.label_epn_"+str(i)+".show()"
-									exec (p1)
-								else:
-									w = float((ui.tab_6.width()-60)/iconv_r)
-									h = float((9*w)/16)
-									width=str(int(w))
-									height=str(int(h))
-									p2="ui.label_epn_"+str(i)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
-									p3="ui.label_epn_"+str(i)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
-									exec (p2)
-									exec (p3)
-								i = i+1
-						else:
-							ui.thumbnail_label_update()
-						QtWidgets.QApplication.processEvents()
-						QtWidgets.QApplication.processEvents()
-						#if fullscr == 1:
-						p1="ui.label_epn_"+str(cur_label_num)+".y()"
-						yy=eval(p1)
-						ui.scrollArea1.verticalScrollBar().setValue(yy)
-					elif event.key() == QtCore.Qt.Key_F:
-						if iconv_r_indicator:
-							iconv_r = iconv_r_indicator[0]
-						fullscr = 1 - fullscr
-						if not MainWindow.isFullScreen():
-							#ui.gridLayout.setSpacing(0)
-							ui.label.hide()
-							ui.text.hide()
-							ui.frame1.hide()
-							#ui.tab_6.hide()
-							ui.goto_epn.hide()
-							ui.btn10.hide()
-							#ui.btn20.hide()
-							ui.frame2.hide()
-							if wget:
-								if wget.processId() > 0:
-									ui.progress.hide()
-							ui.list2.hide()
-							ui.list6.hide()
-							ui.list1.hide()
-							ui.frame.hide()
-							#ui.text.hide()
-							#ui.label.hide()
-							#ui.tab_5.setParent(None)
-							ui.gridLayout.setContentsMargins(0,0,0,0)
-							ui.superGridLayout.setContentsMargins(0,0,0,0)
-							ui.gridLayout1.setContentsMargins(0,0,0,0)
-							ui.gridLayout2.setContentsMargins(0,0,0,0)
-							ui.horizontalLayout10.setContentsMargins(0,0,0,0)
-							ui.horizontalLayout10.setSpacing(0)
-							ui.gridLayout.setSpacing(0)
-							ui.gridLayout1.setSpacing(0)
-							ui.gridLayout2.setSpacing(0)
-							ui.tab_6.show()
-							ui.tab_6.setFocus()
-							p1="ui.label_epn_"+str(cur_label_num)+".setFocus()"
-							exec (p1)
-							#ui.tab_5.showFullScreen()
-							#ui.gridLayout.showFullScreen()
-							MainWindow.showFullScreen()
-							i = 0
-							while(i<total_till_epn):
-								if i!=cur_label_num:
-									p1="ui.label_epn_"+str(i)+".hide()"
-									exec (p1)
-								else:
-									w = float(MainWindow.width())
-									h = float((9*w)/16)
-									width=str(int(w))
-									height=str(int(h))
-									p2="ui.label_epn_"+str(i)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
-									p3="ui.label_epn_"+str(i)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
-									exec (p2)
-									exec (p3)
-								i = i+1
-							#QtGui.QApplication.processEvents()
-						else:
-							ui.gridLayout.setSpacing(10)
-							#ui.gridLayout.setContentsMargins(10,10,10,10)
-							ui.superGridLayout.setContentsMargins(10,10,10,10)
-							ui.gridLayout1.setSpacing(10)
-							ui.gridLayout1.setContentsMargins(10,10,10,10)
-							ui.gridLayout2.setSpacing(10)
-							ui.gridLayout2.setContentsMargins(10,10,10,10)
-							ui.horizontalLayout10.setContentsMargins(10,10,10,10)
-							ui.horizontalLayout10.setSpacing(10)
-							if wget:
-								if wget.processId() > 0:
-									ui.goto_epn.hide()
-									ui.progress.show()
-							#ui.btn20.show()
-							ui.frame2.show()
-							MainWindow.showNormal()
-							MainWindow.showMaximized()
-							i = 0
-							while(i<total_till_epn):
-								if i!=cur_label_num:
-									p1="ui.label_epn_"+str(i)+".show()"
-									exec (p1)
-								else:
-									w = float((ui.tab_6.width()-60)/iconv_r)
-									h = float((9*w)/16)
-									width=str(int(w))
-									height=str(int(h))
-									p2="ui.label_epn_"+str(i)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
-									p3="ui.label_epn_"+str(i)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
-									exec (p2)
-									exec (p3)
-								i = i+1
-							#QtGui.QApplication.processEvents()
-							ui.thumbnail_label_update()
+							if '	' in epnArrList[cur_label_num]:
+								nameEpn = (str(epnArrList[cur_label_num])).split('	')[0]
+						
+							else:
+								#nameEpn = (str(epnArrList[cur_label_num])).split('/')[-1]
+								nameEpn = os.path.basename(epnArrList[cur_label_num])
+							length_1 = ui.list2.count()
+							q3="ui.label_epn_"+str(length_1+cur_label_num)+".setText(nameEpn)"
+							exec (q3)
+							if MainWindow.isFullScreen():
+								ui.gridLayout.setSpacing(5)
+								#ui.gridLayout.setContentsMargins(10,10,10,10)
+								ui.superGridLayout.setContentsMargins(5,5,5,5)
+								if wget:
+									if wget.processId() > 0:
+										ui.goto_epn.hide()
+										ui.progress.show()
+								ui.frame2.show()
+								MainWindow.showNormal()
+								MainWindow.showMaximized()
+								i = 0
+								while(i<total_till):
+									if i!=cur_label_num:
+										p1="ui.label_epn_"+str(i)+".show()"
+										exec (p1)
+									else:
+										w = float((ui.tab_6.width()-60)/iconv_r)
+										#h = float((9*w)/16)
+										h = int(w/ui.image_aspect_allowed)
+										width=str(int(w))
+										height=str(int(h))
+										p2="ui.label_epn_"+str(i)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
+										p3="ui.label_epn_"+str(i)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
+										exec (p2)
+										exec (p3)
+									i = i+1
+							else:
+								ui.thumbnail_label_update()
 							QtWidgets.QApplication.processEvents()
 							QtWidgets.QApplication.processEvents()
+							#if fullscr == 1:
 							p1="ui.label_epn_"+str(cur_label_num)+".y()"
 							yy=eval(p1)
 							ui.scrollArea1.verticalScrollBar().setValue(yy)
+					elif event.key() == QtCore.Qt.Key_F:
+						if ui.video_mode_index == 5:
+							pass
+						else:
+							if iconv_r_indicator:
+								iconv_r = iconv_r_indicator[0]
+							fullscr = 1 - fullscr
+							if not MainWindow.isFullScreen():
+								#ui.gridLayout.setSpacing(0)
+								ui.label.hide()
+								ui.text.hide()
+								ui.frame1.hide()
+								#ui.tab_6.hide()
+								ui.goto_epn.hide()
+								ui.btn10.hide()
+								#ui.btn20.hide()
+								ui.frame2.hide()
+								if wget:
+									if wget.processId() > 0:
+										ui.progress.hide()
+								ui.list2.hide()
+								ui.list6.hide()
+								ui.list1.hide()
+								ui.frame.hide()
+								#ui.text.hide()
+								#ui.label.hide()
+								#ui.tab_5.setParent(None)
+								ui.gridLayout.setContentsMargins(0,0,0,0)
+								ui.superGridLayout.setContentsMargins(0,0,0,0)
+								ui.gridLayout1.setContentsMargins(0,0,0,0)
+								ui.gridLayout2.setContentsMargins(0,0,0,0)
+								ui.horizontalLayout10.setContentsMargins(0,0,0,0)
+								ui.horizontalLayout10.setSpacing(0)
+								ui.gridLayout.setSpacing(0)
+								ui.gridLayout1.setSpacing(0)
+								ui.gridLayout2.setSpacing(0)
+								ui.superGridLayout.setSpacing(0)
+								ui.tab_6.show()
+								ui.tab_6.setFocus()
+								p1="ui.label_epn_"+str(cur_label_num)+".setFocus()"
+								exec (p1)
+								#ui.tab_5.showFullScreen()
+								#ui.gridLayout.showFullScreen()
+								MainWindow.showFullScreen()
+								i = 0
+								while(i<total_till_epn):
+									if i!=cur_label_num:
+										p1="ui.label_epn_"+str(i)+".hide()"
+										exec (p1)
+									else:
+										w = float(MainWindow.width())
+										h = float((9*w)/16)
+										#h = int(w/ui.image_aspect_allowed)
+										width=str(int(w))
+										height=str(int(h))
+										p2="ui.label_epn_"+str(i)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
+										p3="ui.label_epn_"+str(i)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
+										exec (p2)
+										exec (p3)
+									i = i+1
+								#QtGui.QApplication.processEvents()
+							else:
+								ui.gridLayout.setSpacing(5)
+								#ui.gridLayout.setContentsMargins(10,10,10,10)
+								ui.superGridLayout.setContentsMargins(5,5,5,5)
+								ui.gridLayout1.setSpacing(5)
+								ui.gridLayout1.setContentsMargins(5,5,5,5)
+								ui.gridLayout2.setSpacing(5)
+								ui.gridLayout2.setContentsMargins(5,5,5,5)
+								ui.horizontalLayout10.setContentsMargins(10,10,10,10)
+								ui.horizontalLayout10.setSpacing(10)
+								if wget:
+									if wget.processId() > 0:
+										ui.goto_epn.hide()
+										ui.progress.show()
+								#ui.btn20.show()
+								ui.frame2.show()
+								ui.frame1.show()
+								MainWindow.showNormal()
+								MainWindow.showMaximized()
+								i = 0
+								while(i<total_till_epn):
+									if i!=cur_label_num:
+										p1="ui.label_epn_"+str(i)+".show()"
+										exec (p1)
+									else:
+										w = float((ui.tab_6.width()-60)/iconv_r)
+										#h = float((9*w)/16)
+										h = int(w/ui.image_aspect_allowed)
+										width=str(int(w))
+										height=str(int(h))
+										p2="ui.label_epn_"+str(i)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
+										p3="ui.label_epn_"+str(i)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
+										exec (p2)
+										exec (p3)
+									i = i+1
+								#QtGui.QApplication.processEvents()
+								ui.thumbnail_label_update()
+								QtWidgets.QApplication.processEvents()
+								QtWidgets.QApplication.processEvents()
+								p1="ui.label_epn_"+str(cur_label_num)+".y()"
+								yy=eval(p1)
+								ui.scrollArea1.verticalScrollBar().setValue(yy)
 		super(ExtendedQLabelEpn, self).keyPressEvent(event)				
 						
 	def mouseMoveEvent(self,event):
 		self.setFocus()
 		pos = event.pos()
 		if Player == "mplayer" or Player=="mpv":
-			if self.arrow_timer.isActive():
-				self.arrow_timer.stop()
-			self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-			self.arrow_timer.start(2000)
+			try:
+				if self.arrow_timer.isActive():
+					self.arrow_timer.stop()
+				self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+				self.arrow_timer.start(2000)
+			except Exception as e:
+				print(e)
 		if MainWindow.isFullScreen():
 			ht = self.height()
 			#print "height="+str(ht)
@@ -1094,16 +1113,25 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				ui.frame1.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
 			elif pos.y() <= ht-32 and not ui.frame1.isHidden() :
 				ui.frame1.hide()
-				ui.gridLayout.setSpacing(10)
+				ui.gridLayout.setSpacing(5)
 	
-	def mouseReleaseEvent(self, ev):
+	def change_video_mode(self,var_mode,c_row):
+		#Mode 1: Default mode
+		#Mode 2: Show video in thumbnail mode
+		#Mode 3: show video in list mode
 		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR
 		global interval,iconv_r,total_till,browse_cnt,site,epn_name_in_list
 		global memory_num_arr,thumbnail_indicator,mpvplayer,iconv_r_indicator
 		global tab_6_size_indicator,tab_6_player,site,finalUrlFound
 		global artist_name_mplayer,server,quality
 		
-		if ev.button() == QtCore.Qt.LeftButton:
+		global path_final_Url,memory_num_arr
+		global total_seek,cur_label_num,tab_6_player
+		global icon_size_arr,iconv_r,iconv_r_indicator,home,siteName
+		global refererNeeded,ui,current_playing_file_path
+		finalUrl = ''
+		curR = c_row
+		if var_mode == 1:
 			ui.label_search.clear()
 			tab_6_player = "False"
 			if tab_6_size_indicator:
@@ -1113,11 +1141,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			ui.gridLayout.setSpacing(0)
 			if (site == "Local" or site == "PlayLists" or site == "Music" or 
 				site == "Video" or site == "None"):
-				quitReally = "no"
-				t=str(self.objectName())
-				t = re.sub('label_epn_','',t)
-				num = int(t)
-				curR = num
+				num = curR
 				ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
 				#ui.gridLayout.addWidget(ui.frame1, 1, 0, 1, 1)
 				#ui.tab_5.setMinimumSize(500,400)
@@ -1178,12 +1202,9 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					
 					elif site == "Video":
 						ui.updateVideoCount('mark',finalUrl)
+					current_playing_file_path = finalUrl
 			else:
-					quitReally = "no"
-					t=str(self.objectName())
-					t = re.sub('label_epn_','',t)
-					num = int(t)
-					curR = num
+					num = curR
 					if '	' in epnArrList[num]:
 						new_epn = (epnArrList[num]).split('	')[0]
 					else:
@@ -1217,16 +1238,16 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			else:
 				newTitle = ui.check_symbol+ui.epn_name_in_list	
 			sumry = "<html><h1>"+ui.epn_name_in_list+"</h1></html>"
-			q3="txt = ui.label_epn_"+str(title_num)+".text()"
+			q3="txt = ui.label_epn_"+str(title_num)+".toPlainText()"
 			exec (q3)
-			q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"			
-			exec (q4)
+			#q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"			
+			#exec (q4)
 			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
 			exec (q3)
-			p8="ui.label_epn_"+str(title_num)+".home(True)"
-			exec (p8)
-			p8="ui.label_epn_"+str(title_num)+".deselect()"
-			exec (p8)
+			#p8="ui.label_epn_"+str(title_num)+".home(True)"
+			#exec (p8)
+			#p8="ui.label_epn_"+str(title_num)+".deselect()"
+			#exec (p8)
 			t= ui.epn_name_in_list[:20]
 			ui.labelFrame2.setText(t)
 			QtWidgets.QApplication.processEvents()
@@ -1238,7 +1259,369 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				server._emitMeta("Play",site,epnArrList)
 			except:
 				pass
+			# Default Mode Ends Here#
+		elif var_mode == 2 or var_mode == 3:
+			if mpvplayer:
+				if mpvplayer.processId()>0:
+					mpvplayer.kill()
+					ui.tab_5.hide()
+					ui.tab_6.setMaximumSize(10000,10000)
+			tab_6_player = "True"
+			self.arrow_timer = QtCore.QTimer()
+			self.arrow_timer.timeout.connect(self.arrow_hide)
+			self.arrow_timer.setSingleShot(True)
+
+			self.mplayer_OsdTimer = QtCore.QTimer()
+			self.mplayer_OsdTimer.timeout.connect(self.osd_hide)
+			self.mplayer_OsdTimer.setSingleShot(True)
+
+			self.seek_timer = QtCore.QTimer()
+			self.seek_timer.timeout.connect(self.seek_mplayer)
+			self.seek_timer.setSingleShot(True)
 			
+			num = curR
+			cur_label_num = num
+			self.setFocus()
+			ui.gridLayout2.setAlignment(QtCore.Qt.AlignCenter)
+			
+			if var_mode == 3:
+				w = float(ui.thumbnail_video_width)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
+				width=str(int(w))
+				height=str(int(h))
+				
+				p2="ui.label_epn_"+str(cur_label_num)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
+				p3="ui.label_epn_"+str(cur_label_num)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
+				exec (p2)
+				exec (p3)
+				QtWidgets.QApplication.processEvents()
+				QtWidgets.QApplication.processEvents()
+				p2="ui.label_epn_"+str(cur_label_num)+".y()"
+				p3="ui.label_epn_"+str(cur_label_num)+".x()"
+				yy= eval(p2)
+				xy= eval(p3)
+				p2="ui.label_epn_"+str(cur_label_num)+".width()"
+				p3="ui.label_epn_"+str(cur_label_num)+".height()"
+				wdt=eval(p2)
+				hgt=eval(p3)
+							
+				ui.scrollArea1.horizontalScrollBar().setValue(xy-10)
+				ui.scrollArea1.verticalScrollBar().setValue(yy-10)
+			
+			quitReally = "no"
+			ui.list2.setCurrentRow(num)
+			p4="ui.label_epn_"+str(num)+".setMouseTracking(True)"
+			exec (p4)
+			#ui.gridLayout.addWidget(ui.tab_5, 0, 0, 1, 1)
+			ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
+			if '	' in epnArrList[num]:
+				finalUrl = '"'+(epnArrList[num]).split('	')[1]+'"'
+				new_epn = (epnArrList[num]).split('	')[0]
+				ui.epn_name_in_list = new_epn
+			else:
+				finalUrl = '"'+epnArrList[num]+'"'
+				new_epn = os.path.basename(epnArrList[num])
+				ui.epn_name_in_list = new_epn
+			"""
+			if (site != "Local" and site!="PlayLists" and site!="Music" 
+					and site!="Video"):
+				ui.epnfound_return()
+				if type(path_final_Url) is not list:
+					finalUrl = path_final_Url
+				else:
+					rfr_url = path_final_Url[1]
+					rfr = "--referrer="+rfr_url
+					finalUrl = path_final_Url[0]
+			finalUrl = finalUrl.replace('#','')
+			if site == "PlayLists":
+				finalUrl = finalUrl.replace('""','"')
+			print (finalUrl)
+			if 'youtube.com' in finalUrl:
+				ui.external_url = True
+				finalUrl = finalUrl.replace('"','')
+				finalUrl = get_yt_url(finalUrl,quality).strip()
+				if '#' in finalUrl:
+					audio_url = finalUrl.split('#')[0]
+					video_url = finalUrl.split('#')[1]
+					if Player == 'mpv':
+						finalUrl = "--audio-file="+audio_url+' '+video_url
+					elif Player == 'mplayer':
+						finalUrl = '-audiofile '+audio_url+' '+video_url
+			"""
+			finalUrl = ui.epn_return(num)
+			if num < ui.list2.count():
+				ui.list2.setCurrentRow(num)
+				p1 = "ui.label_epn_"+str(num)+".winId()"
+				mn=int(eval(p1))
+				idw = str(mn)
+				#ui.tab_5.setFocus()
+				ui.frame1.show()
+				finalUrl = str(finalUrl)
+				if Player == "mplayer":
+					#if (site == "Local" or site == "Music" 
+					#		or site == "PlayLists" or site == "Video"):
+					#	command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+					#else:
+					command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+					print (command)
+					ui.infoPlay(command)
+				elif Player == "mpv":
+					if (site == "Local" or site == "Music" 
+							or site == "PlayLists" or site == "Video"):
+						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+					else:
+						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+					print (command)
+					ui.infoPlay(command)	
+			print ("horiz="+str(ui.scrollArea1.horizontalScrollBar().maximum()))
+			#ui.scrollArea1.horizontalScrollBar().setValue((((curR+1)%iconv_r)-1)*w1)
+			#ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r))*h1)
+			ui.labelFrame2.setText(ui.epn_name_in_list)
+			#Mode 2,3 Ends Here#
+		elif var_mode == 4:
+			if mpvplayer:
+				if mpvplayer.processId()>0:
+					mpvplayer.kill()
+					ui.tab_5.hide()
+					ui.tab_6.setMaximumSize(10000,10000)
+			iconv_r = 1
+			ui.tab_6.setMaximumSize(ui.width_allowed,1000) # (400,1000) earlier
+			
+			ui.thumbnail_label_update()
+			#QtGui.QApplication.processEvents()
+			#ui.tab_6.setMaximumSize(10000,10000)
+			tab_6_player = "True"
+			self.arrow_timer = QtCore.QTimer()
+			self.arrow_timer.timeout.connect(self.arrow_hide)
+			self.arrow_timer.setSingleShot(True)
+
+			self.mplayer_OsdTimer = QtCore.QTimer()
+			self.mplayer_OsdTimer.timeout.connect(self.osd_hide)
+			self.mplayer_OsdTimer.setSingleShot(True)
+
+			self.seek_timer = QtCore.QTimer()
+			self.seek_timer.timeout.connect(self.seek_mplayer)
+			self.seek_timer.setSingleShot(True)
+			
+			num = curR
+			cur_label_num = num
+			self.setFocus()
+			ui.gridLayout2.setAlignment(QtCore.Qt.AlignCenter)
+			w = float(ui.thumbnail_video_width)
+			#h = float((9*w)/16)
+			h = int(w/ui.image_aspect_allowed)
+			width=str(int(w))
+			height=str(int(h))
+			
+			p2="ui.label_epn_"+str(cur_label_num)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
+			p3="ui.label_epn_"+str(cur_label_num)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
+			exec (p2)
+			exec (p3)
+			QtWidgets.QApplication.processEvents()
+			QtWidgets.QApplication.processEvents()
+			p2="ui.label_epn_"+str(cur_label_num)+".y()"
+			p3="ui.label_epn_"+str(cur_label_num)+".x()"
+			yy=eval(p2)
+			xy=eval(p3)
+			p2="ui.label_epn_"+str(cur_label_num)+".width()"
+			p3="ui.label_epn_"+str(cur_label_num)+".height()"
+			wdt=eval(p2)
+			hgt=eval(p3)
+						
+			ui.scrollArea1.horizontalScrollBar().setValue(xy-10)
+			ui.scrollArea1.verticalScrollBar().setValue(yy-10)
+			
+			quitReally = "no"
+			ui.list2.setCurrentRow(num)
+			p4="ui.label_epn_"+str(num)+".setMouseTracking(True)"
+			exec (p4)
+			#ui.gridLayout.addWidget(ui.tab_5, 0, 0, 1, 1)
+			ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
+			if '	' in epnArrList[num]:
+				finalUrl = '"'+(epnArrList[num]).split('	')[1]+'"'
+				new_epn = (epnArrList[num]).split('	')[0]
+				ui.epn_name_in_list = new_epn
+			else:
+				finalUrl = '"'+epnArrList[num]+'"'
+				#ui.epn_name_in_list = new_epn
+				new_epn = os.path.basename(epnArrList[num])
+				ui.epn_name_in_list = new_epn
+			"""
+			if site != "Local" and site != "PlayLists":
+				ui.epnfound_return()
+				if type(path_final_Url) is not list:
+					finalUrl = path_final_Url
+				else:
+					rfr_url = path_final_Url[1]
+					rfr = "--referrer="+rfr_url
+					finalUrl = path_final_Url[0]
+			finalUrl = finalUrl.replace('#','')
+			if site == "PlayLists":
+				finalUrl = finalUrl.replace('""','"')
+			if 'youtube.com' in finalUrl:
+				ui.external_url = True
+				finalUrl = finalUrl.replace('"','')
+				finalUrl = get_yt_url(finalUrl,quality).strip()
+				if '#' in finalUrl:
+					audio_url = finalUrl.split('#')[0]
+					video_url = finalUrl.split('#')[1]
+					if Player == 'mpv':
+						finalUrl = "--audio-file="+audio_url+' '+video_url
+					elif Player == 'mplayer':
+						finalUrl = '-audiofile '+audio_url+' '+video_url
+			"""
+			finalUrl = ui.epn_return(num)
+			if num < ui.list2.count():
+				ui.list2.setCurrentRow(num)
+				p1 = "ui.label_epn_"+str(num)+".winId()"
+				mn=int(eval(p1))
+				idw = str(mn)
+				#ui.tab_5.setFocus()
+				ui.frame1.show()
+				finalUrl = str(finalUrl)
+				if Player == "mplayer":
+					#if (site == "Local" or site == "Music" 
+					#		or site == "PlayLists" or site == "Video"):
+					#	command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+					#else:
+					command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+					print (command)
+					ui.infoPlay(command)
+				elif Player == "mpv":
+					if (site == "Local" or site == "Music" 
+							or site == "PlayLists" or site == "Video"):
+						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+					else:	
+						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+					print (command)
+					ui.infoPlay(command)	
+			print ("horiz="+str(ui.scrollArea1.horizontalScrollBar().maximum()))
+			#ui.scrollArea1.horizontalScrollBar().setValue((((curR+1)%iconv_r)-1)*w1)
+			#ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r))*h1)
+			ui.labelFrame2.setText(ui.epn_name_in_list)
+		elif var_mode == 5:
+			
+				
+			tab_6_player = "True"
+			self.arrow_timer = QtCore.QTimer()
+			self.arrow_timer.timeout.connect(self.arrow_hide)
+			self.arrow_timer.setSingleShot(True)
+
+			self.mplayer_OsdTimer = QtCore.QTimer()
+			self.mplayer_OsdTimer.timeout.connect(self.osd_hide)
+			self.mplayer_OsdTimer.setSingleShot(True)
+
+			self.seek_timer = QtCore.QTimer()
+			self.seek_timer.timeout.connect(self.seek_mplayer)
+			self.seek_timer.setSingleShot(True)
+			
+			num = curR
+			cur_label_num = num
+			self.setFocus()
+			quitReally = "no"
+			ui.list2.setCurrentRow(num)
+			p4="ui.label.setMouseTracking(True)"
+			exec (p4)
+			
+			if '	' in epnArrList[num]:
+				finalUrl = '"'+(epnArrList[num]).split('	')[1]+'"'
+				new_epn = (epnArrList[num]).split('	')[0]
+				ui.epn_name_in_list = new_epn
+			else:
+				finalUrl = '"'+epnArrList[num]+'"'
+				new_epn = os.path.basename(epnArrList[num])
+				ui.epn_name_in_list = new_epn
+			finalUrl = ui.epn_return(num)
+			tmp_idw = str(int(ui.label.winId()))
+			if tmp_idw != idw:
+				if mpvplayer.processId()>0:
+					mpvplayer.kill()
+					mpvplayer = QtCore.QProcess()
+					ui.tab_5.hide()
+					ui.tab_6.setMaximumSize(10000,10000)
+					if Player == 'mplayer':
+						try:
+							subprocess.Popen(['killall','mplayer'])
+						except Exception as e:
+							print(e)
+							
+			if mpvplayer.processId() > 0:
+				ui.play_file_now(finalUrl)
+			else:
+				if num < ui.list2.count():
+					ui.list2.setCurrentRow(num)
+					p1 = "ui.label.winId()"
+					mn=int(eval(p1))
+					idw = str(mn)
+					#ui.tab_5.setFocus()
+					ui.frame1.show()
+					finalUrl = str(finalUrl)
+					if Player == "mplayer":
+						#if (site == "Local" or site == "Music" 
+						#		or site == "PlayLists" or site == "Video"):
+						#	command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+						#else:
+						command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
+						print (command)
+						ui.infoPlay(command)
+					elif Player == "mpv":
+						if (site == "Local" or site == "Music" 
+								or site == "PlayLists" or site == "Video"):
+							command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+						else:
+							command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
+						print (command)
+						ui.infoPlay(command)				
+			#Mode 2 Ends Here#
+			
+		current_playing_file_path = finalUrl
+		
+	def mouseReleaseEvent(self, ev):
+		global quitReally,curR,idw,mpvplayer
+		if ev.button() == QtCore.Qt.LeftButton:
+			quitReally = "no"
+			t=str(self.objectName())
+			if t == 'label':
+				num = ui.list2.currentRow()
+				curR = num
+				ui.video_mode_index = 5
+				p1 = "ui.label.winId()"
+				mn=int(eval(p1))
+				#idw = str(mn)
+				tmp_idw = str(mn)
+			else:
+				t = re.sub('label_epn_','',t)
+				num = int(t)
+				curR = num
+				p1 = "ui.label_epn_"+str(num)+".winId()"
+				mn=int(eval(p1))
+				#idw = str(mn)
+				tmp_idw = str(mn)
+				if ui.video_mode_index == 5:
+					ui.video_mode_index = 1
+					ui.comboBoxMode.setCurrentIndex(0)
+			if tmp_idw == idw:
+				if mpvplayer.processId() > 0:
+					ui.playerPlayPause()
+				else:
+					self.change_video_mode(ui.video_mode_index,num)
+			else:
+				self.change_video_mode(ui.video_mode_index,num)
+				
+	def play_within_poster(self):
+		global quitReally,curR,idw,mpvplayer,ui
+		quitReally = "no"
+		num = ui.list2.currentRow()
+		if num >= 0:
+			curR = num
+			ui.video_mode_index = 5
+			p1 = "ui.label.winId()"
+			mn=int(eval(p1))
+			#idw = str(mn)
+			tmp_idw = str(mn)
+			self.change_video_mode(ui.video_mode_index,num)
+				
 	def triggerPlaylist(self,val):
 		global epn,epn_name_in_list,path_final_Url,home,site,pre_opt,base_url
 		global embed,name,epnArrList,opt,curR,refererNeeded
@@ -1303,7 +1686,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		global quitReally,mpvplayer,Local,path_final_Url,memory_num_arr
 		global epn_name_in_list,total_seek,cur_label_num,tab_6_player
 		global icon_size_arr,iconv_r,iconv_r_indicator,home,siteName
-		global finalUrlFound,refererNeeded
+		global finalUrlFound,refererNeeded,ui
 		total_seek = 0
 		t=str(self.objectName())
 		t = re.sub('label_epn_','',t)
@@ -1347,235 +1730,12 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					print (ui.queue_url_list)
 					write_files(file_path,epnArrList[r],line_by_line=True)
 		elif action == watch:
-				if mpvplayer:
-					if mpvplayer.processId()>0:
-						mpvplayer.kill()
-						ui.tab_5.hide()
-						ui.tab_6.setMaximumSize(10000,10000)
-				tab_6_player = "True"
-				self.arrow_timer = QtCore.QTimer()
-				self.arrow_timer.timeout.connect(self.arrow_hide)
-				self.arrow_timer.setSingleShot(True)
-	
-				self.mplayer_OsdTimer = QtCore.QTimer()
-				self.mplayer_OsdTimer.timeout.connect(self.osd_hide)
-				self.mplayer_OsdTimer.setSingleShot(True)
-	
-				self.seek_timer = QtCore.QTimer()
-				self.seek_timer.timeout.connect(self.seek_mplayer)
-				self.seek_timer.setSingleShot(True)
-				
-				curR = num
-				cur_label_num = num
-				self.setFocus()
-				ui.gridLayout2.setAlignment(QtCore.Qt.AlignCenter)
-				
-				w = float(800)
-				h = float((9*w)/16)
-				width=str(int(w))
-				height=str(int(h))
-				
-				p2="ui.label_epn_"+str(cur_label_num)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
-				p3="ui.label_epn_"+str(cur_label_num)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
-				exec (p2)
-				exec (p3)
-				QtWidgets.QApplication.processEvents()
-				QtWidgets.QApplication.processEvents()
-				p2="ui.label_epn_"+str(cur_label_num)+".y()"
-				p3="ui.label_epn_"+str(cur_label_num)+".x()"
-				yy= eval(p2)
-				xy= eval(p3)
-				p2="ui.label_epn_"+str(cur_label_num)+".width()"
-				p3="ui.label_epn_"+str(cur_label_num)+".height()"
-				wdt=eval(p2)
-				hgt=eval(p3)
-							
-				ui.scrollArea1.horizontalScrollBar().setValue(xy-10)
-				ui.scrollArea1.verticalScrollBar().setValue(yy-10)
-				
-				quitReally = "no"
-				ui.list2.setCurrentRow(num)
-				p4="ui.label_epn_"+str(num)+".setMouseTracking(True)"
-				exec (p4)
-				#ui.gridLayout.addWidget(ui.tab_5, 0, 0, 1, 1)
-				ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
-				if '	' in epnArrList[num]:
-					finalUrl = '"'+(epnArrList[num]).split('	')[1]+'"'
-					new_epn = (epnArrList[num]).split('	')[0]
-					ui.epn_name_in_list = new_epn
-				else:
-					finalUrl = '"'+epnArrList[num]+'"'
-					new_epn = os.path.basename(epnArrList[num])
-					ui.epn_name_in_list = new_epn
-				if (site != "Local" and site!="PlayLists" and site!="Music" 
-						and site!="Video"):
-					ui.epnfound_return()
-					if type(path_final_Url) is not list:
-						finalUrl = path_final_Url
-					else:
-						rfr_url = path_final_Url[1]
-						rfr = "--referrer="+rfr_url
-						finalUrl = path_final_Url[0]
-				finalUrl = finalUrl.replace('#','')
-				if site == "PlayLists":
-					finalUrl = finalUrl.replace('""','"')
-				print (finalUrl)
-				if 'youtube.com' in finalUrl:
-					ui.external_url = True
-					finalUrl = finalUrl.replace('"','')
-					finalUrl = get_yt_url(finalUrl,quality).strip()
-					if '#' in finalUrl:
-						audio_url = finalUrl.split('#')[0]
-						video_url = finalUrl.split('#')[1]
-						if Player == 'mpv':
-							finalUrl = "--audio-file="+audio_url+' '+video_url
-						elif Player == 'mplayer':
-							finalUrl = '-audiofile '+audio_url+' '+video_url
-				if num < ui.list2.count():
-					ui.list2.setCurrentRow(num)
-					p1 = "ui.label_epn_"+str(num)+".winId()"
-					mn=int(eval(p1))
-					idw = str(mn)
-					#ui.tab_5.setFocus()
-					ui.frame1.show()
-					finalUrl = str(finalUrl)
-					if Player == "mplayer":
-						if (site == "Local" or site == "Music" 
-								or site == "PlayLists" or site == "Video"):
-							command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-						else:
-							command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-						print (command)
-						ui.infoPlay(command)
-					elif Player == "mpv":
-						if (site == "Local" or site == "Music" 
-								or site == "PlayLists" or site == "Video"):
-							command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
-						else:
-							command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
-						print (command)
-						ui.infoPlay(command)	
-				print ("horiz="+str(ui.scrollArea1.horizontalScrollBar().maximum()))
-				#ui.scrollArea1.horizontalScrollBar().setValue((((curR+1)%iconv_r)-1)*w1)
-				#ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r))*h1)
-				ui.labelFrame2.setText(ui.epn_name_in_list)
+			ui.video_mode_index = 2
+			self.change_video_mode(2,num)
 		elif action == watch1:
 			#if site=="Local":
-				if mpvplayer:
-					if mpvplayer.processId()>0:
-						mpvplayer.kill()
-						ui.tab_5.hide()
-						ui.tab_6.setMaximumSize(10000,10000)
-				iconv_r = 1
-				ui.tab_6.setMaximumSize(400,1000)
-				ui.thumbnail_label_update()
-				#QtGui.QApplication.processEvents()
-				#ui.tab_6.setMaximumSize(10000,10000)
-				tab_6_player = "True"
-				self.arrow_timer = QtCore.QTimer()
-				self.arrow_timer.timeout.connect(self.arrow_hide)
-				self.arrow_timer.setSingleShot(True)
-	
-				self.mplayer_OsdTimer = QtCore.QTimer()
-				self.mplayer_OsdTimer.timeout.connect(self.osd_hide)
-				self.mplayer_OsdTimer.setSingleShot(True)
-	
-				self.seek_timer = QtCore.QTimer()
-				self.seek_timer.timeout.connect(self.seek_mplayer)
-				self.seek_timer.setSingleShot(True)
-				
-				curR = num
-				cur_label_num = num
-				self.setFocus()
-				ui.gridLayout2.setAlignment(QtCore.Qt.AlignCenter)
-				w = float(800)
-				h = float((9*w)/16)
-				width=str(int(w))
-				height=str(int(h))
-				
-				p2="ui.label_epn_"+str(cur_label_num)+".setMaximumSize(QtCore.QSize("+width+","+height+"))"
-				p3="ui.label_epn_"+str(cur_label_num)+".setMinimumSize(QtCore.QSize("+width+","+height+"))"
-				exec (p2)
-				exec (p3)
-				QtWidgets.QApplication.processEvents()
-				QtWidgets.QApplication.processEvents()
-				p2="ui.label_epn_"+str(cur_label_num)+".y()"
-				p3="ui.label_epn_"+str(cur_label_num)+".x()"
-				yy=eval(p2)
-				xy=eval(p3)
-				p2="ui.label_epn_"+str(cur_label_num)+".width()"
-				p3="ui.label_epn_"+str(cur_label_num)+".height()"
-				wdt=eval(p2)
-				hgt=eval(p3)
-							
-				ui.scrollArea1.horizontalScrollBar().setValue(xy-10)
-				ui.scrollArea1.verticalScrollBar().setValue(yy-10)
-				
-				quitReally = "no"
-				ui.list2.setCurrentRow(num)
-				p4="ui.label_epn_"+str(num)+".setMouseTracking(True)"
-				exec (p4)
-				#ui.gridLayout.addWidget(ui.tab_5, 0, 0, 1, 1)
-				ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
-				if '	' in epnArrList[num]:
-					finalUrl = '"'+(epnArrList[num]).split('	')[1]+'"'
-					new_epn = (epnArrList[num]).split('	')[0]
-					ui.epn_name_in_list = new_epn
-				else:
-					finalUrl = '"'+epnArrList[num]+'"'
-					#ui.epn_name_in_list = new_epn
-					new_epn = os.path.basename(epnArrList[num])
-					ui.epn_name_in_list = new_epn
-				if site != "Local" and site != "PlayLists":
-					ui.epnfound_return()
-					if type(path_final_Url) is not list:
-						finalUrl = path_final_Url
-					else:
-						rfr_url = path_final_Url[1]
-						rfr = "--referrer="+rfr_url
-						finalUrl = path_final_Url[0]
-				finalUrl = finalUrl.replace('#','')
-				if site == "PlayLists":
-					finalUrl = finalUrl.replace('""','"')
-				if 'youtube.com' in finalUrl:
-					ui.external_url = True
-					finalUrl = finalUrl.replace('"','')
-					finalUrl = get_yt_url(finalUrl,quality).strip()
-					if '#' in finalUrl:
-						audio_url = finalUrl.split('#')[0]
-						video_url = finalUrl.split('#')[1]
-						if Player == 'mpv':
-							finalUrl = "--audio-file="+audio_url+' '+video_url
-						elif Player == 'mplayer':
-							finalUrl = '-audiofile '+audio_url+' '+video_url
-				if num < ui.list2.count():
-					ui.list2.setCurrentRow(num)
-					p1 = "ui.label_epn_"+str(num)+".winId()"
-					mn=int(eval(p1))
-					idw = str(mn)
-					#ui.tab_5.setFocus()
-					ui.frame1.show()
-					finalUrl = str(finalUrl)
-					if Player == "mplayer":
-						if (site == "Local" or site == "Music" 
-								or site == "PlayLists" or site == "Video"):
-							command = "mplayer -identify -nocache -idle -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-						else:
-							command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-						print (command)
-						ui.infoPlay(command)
-					elif Player == "mpv":
-						if (site == "Local" or site == "Music" 
-								or site == "PlayLists" or site == "Video"):
-							command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
-						else:	
-							command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
-						print (command)
-						ui.infoPlay(command)	
-				print ("horiz="+str(ui.scrollArea1.horizontalScrollBar().maximum()))
-				#ui.scrollArea1.horizontalScrollBar().setValue((((curR+1)%iconv_r)-1)*w1)
-				#ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r))*h1)
-				ui.labelFrame2.setText(ui.epn_name_in_list)
+			ui.video_mode_index = 3
+			self.change_video_mode(3,num)
 		elif action == stop:
 			quitReally = "yes"
 			if mpvplayer:
@@ -2466,6 +2626,7 @@ class List1(QtWidgets.QListWidget):
 				del_history = menu.addAction("Delete (Only For History)")
 				rem_fanart = menu.addAction("Remove Fanart")
 				rem_poster = menu.addAction("Remove poster")
+				refresh_poster = menu.addAction("Refresh posters")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
 				
 				for i in range(len(item_m)):
@@ -2541,7 +2702,11 @@ class List1(QtWidgets.QListWidget):
 						os.remove(fanart)
 					if os.path.exists(fanart_original):
 						os.remove(fanart_original)
-						
+				elif action == refresh_poster:
+					path = ui.get_current_directory()
+					fanart_original = os.path.join(path,'thumbnail.jpg')
+					if os.path.exists(fanart_original):
+						os.remove(fanart_original)
 						
 class List2(QtWidgets.QListWidget):
 	
@@ -2657,7 +2822,7 @@ class List2(QtWidgets.QListWidget):
 		global startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url
 		global new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
 		global site,opt,pre_opt,name,siteName,Player,total_till
-		global video_local_stream,MainWindow,mpvplayer
+		global video_local_stream,MainWindow,mpvplayer,idw
 		
 		if (event.modifiers() == QtCore.Qt.ControlModifier 
 				and event.key() == QtCore.Qt.Key_Left):
@@ -2672,7 +2837,20 @@ class List2(QtWidgets.QListWidget):
 			curR = self.currentRow()
 			queueNo = queueNo + 1
 			mpvAlive = 0
+			if mpvplayer.processId() > 0:
+				if idw != str(int(ui.tab_5.winId())):
+					mpvplayer.kill()
+					if Player == 'mplayer' and mpvplayer.processId() > 0:
+						try:
+							killall(['killall','mplayer'])
+						except Exception as e:
+							print(e)
+					#del mpvplayer
+					mpvplayer = QtCore.QProcess()
+				idw = str(int(ui.tab_5.winId()))
 			ui.epnfound()
+			if ui.auto_hide_dock:
+				ui.dockWidget_3.hide()
 		elif event.key() == QtCore.Qt.Key_Backspace:
 			if ui.list1.isHidden() and ui.list1.count() > 0:
 				ui.list2.hide()
@@ -2969,18 +3147,23 @@ class List2(QtWidgets.QListWidget):
 				curR = self.currentRow()
 				queueNo = queueNo + 1
 				mpvAlive = 0
-				ui.epnfound()
+				#ui.epnfound()
+				ui.label.play_within_poster()
 				if ui.list1.isHidden():
 					ui.list1.show()
 					if not ui.goto_epn.isHidden():
 						ui.frame.show()
 				self.setFocus()
+				ui.label.show()
+				ui.text.show()
 			else:
 				nextr = self.currentRow() + 1
 				if nextr == self.count():
 					self.setCurrentRow(self.count()-1)
 				else:
 					self.setCurrentRow(nextr)
+			if ui.auto_hide_dock:
+				ui.dockWidget_3.hide()
 		elif event.key() == QtCore.Qt.Key_O:
 			self.init_offline_mode()
 		elif event.key() == QtCore.Qt.Key_2: 
@@ -3061,10 +3244,10 @@ class List2(QtWidgets.QListWidget):
 					
 				else:
 					
-					ui.gridLayout.setSpacing(10)
-					ui.superGridLayout.setSpacing(10)
+					ui.gridLayout.setSpacing(5)
+					ui.superGridLayout.setSpacing(0)
 					#ui.gridLayout.setContentsMargins(10,10,10,10)
-					ui.superGridLayout.setContentsMargins(10,10,10,10)
+					ui.superGridLayout.setContentsMargins(5,5,5,5)
 					ui.list2.show()
 					ui.btn20.show()
 					if wget:
@@ -3334,7 +3517,7 @@ class List2(QtWidgets.QListWidget):
 							img_url= i.replace('\n','')
 							
 							self.downloadWget.append(downloadThread(img_url+'#'+'-o'+'#'+dest))
-							self.downloadWget[len(self.downloadWget)-1].finished.connect(self.download_thread_finished)
+							self.downloadWget[len(self.downloadWget)-1].finished.connect(lambda x=dest: self.download_thread_finished(dest))
 						r = r+1
 				ui.update_list2()
 			if self.downloadWget:
@@ -3343,8 +3526,10 @@ class List2(QtWidgets.QListWidget):
 					if i < length:
 						self.downloadWget[i].start()
 						
-	def download_thread_finished(self):
-		print ("Process Ended")
+	def download_thread_finished(self,dest):
+		print ("Download tvdb image: {0} :completed".format(dest))
+		ui.image_fit_option(dest,dest,fit_size=6,widget=ui.label)
+		print ("Image: {0} : aspect ratio changed".format(dest))
 		self.downloadWget_cnt = self.downloadWget_cnt+1
 		if self.downloadWget_cnt == 5:
 			self.downloadWget = self.downloadWget[5:]
@@ -3595,7 +3780,7 @@ class List2(QtWidgets.QListWidget):
 								elif action == delPosters:
 									m=os.listdir(dir_n)
 									for i in m:
-										if i.endswith('.jpg'):
+										if i.endswith('.jpg') or i.endswith('256px') or i.endswith('128px'):
 											os.remove(os.path.join(dir_n,i))
 									m = os.listdir(TMPDIR)
 									for i in m:
@@ -4179,7 +4364,8 @@ class QtGuiQWidgetScroll(QtWidgets.QScrollArea):
 				ui.thumbnail_label_update()
 			if iconv_r > 1:
 				w = float((ui.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
 				width=str(int(w))
 				height=str(int(h))
 				ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r)-1)*h+((curR+1)/iconv_r)*10)
@@ -4194,7 +4380,8 @@ class QtGuiQWidgetScroll(QtWidgets.QScrollArea):
 				ui.thumbnail_label_update()
 			if iconv_r > 1:
 				w = float((ui.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
 				width=str(int(w))
 				height=str(int(h))
 				ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r)-1)*h+((curR+1)/iconv_r)*10)
@@ -4339,7 +4526,8 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 				ui.thumbnail_label_update()
 			if iconv_r > 1:
 				w = float((ui.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
 				width=str(int(w))
 				height=str(int(h))
 				ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r)-1)*h+((curR+1)/iconv_r)*10)
@@ -4356,7 +4544,8 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 				ui.thumbnail_label_update()
 			if iconv_r > 1:
 				w = float((ui.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
 				width=str(int(w))
 				height=str(int(h))
 				ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r)-1)*h+((curR+1)/iconv_r)*10)
@@ -4514,10 +4703,10 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 				exec (q4)
 				q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
 				exec (q3)
-				p8="ui.label_epn_"+str(title_num)+".home(True)"
-				exec (p8)
-				p8="ui.label_epn_"+str(title_num)+".deselect()"
-				exec (p8)
+				#p8="ui.label_epn_"+str(title_num)+".home(True)"
+				#exec (p8)
+				#p8="ui.label_epn_"+str(title_num)+".deselect()"
+				#exec (p8)
 				QtWidgets.QApplication.processEvents()		
 			super(QtGuiQWidgetScroll1, self).keyPressEvent(event)
 
@@ -4616,9 +4805,9 @@ class tab6(QtWidgets.QWidget):
 				ui.tab_6.setFocus()
 				MainWindow.showFullScreen()
 			else:
-				ui.gridLayout.setSpacing(10)
+				ui.gridLayout.setSpacing(5)
 				#ui.gridLayout.setContentsMargins(10,10,10,10)
-				ui.superGridLayout.setContentsMargins(10,10,10,10)
+				ui.superGridLayout.setContentsMargins(5,5,5,5)
 				ui.gridLayout1.setSpacing(10)
 				ui.gridLayout1.setContentsMargins(10,10,10,10)
 				ui.gridLayout2.setSpacing(10)
@@ -4701,6 +4890,13 @@ class tab5(QtWidgets.QWidget):
 			new_tray_widget.hide()
 			print('--float--activity--')
 			
+	def mouseReleaseEvent(self,event):
+		global mpvplayer
+		print(event.type())
+		if event.button() == QtCore.Qt.LeftButton:
+			if mpvplayer.processId() > 0:
+				ui.playerPlayPause()
+		
 	def mouseMoveEvent(self,event):
 		global Player,fullscr,pause_indicator,site,new_tray_widget,ui
 		self.setFocus()
@@ -4731,7 +4927,7 @@ class tab5(QtWidgets.QWidget):
 			elif pos.y() <= ht-32 and not ui.frame1.isHidden():
 				if site!="Music":
 					ui.frame1.hide()
-				ui.gridLayout.setSpacing(10)
+				ui.gridLayout.setSpacing(5)
 				
 	def ccurlHead(self,url):
 		global rfr_url
@@ -4852,7 +5048,7 @@ class tab5(QtWidgets.QWidget):
 				ui.gridLayout.setSpacing(0)
 				ui.frame1.show()
 			else:
-				ui.gridLayout.setSpacing(10)
+				ui.gridLayout.setSpacing(5)
 				ui.frame1.hide()
 		elif event.key() == QtCore.Qt.Key_Space:
 			txt = ui.player_play_pause.text()
@@ -5062,9 +5258,9 @@ class tab5(QtWidgets.QWidget):
 						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
 					MainWindow.showFullScreen()
 				else:
-					ui.gridLayout.setSpacing(10)
-					ui.superGridLayout.setSpacing(10)
-					ui.superGridLayout.setContentsMargins(10,10,10,10)
+					ui.gridLayout.setSpacing(5)
+					ui.superGridLayout.setSpacing(0)
+					ui.superGridLayout.setContentsMargins(5,5,5,5)
 					ui.list2.show()
 					ui.btn20.show()
 					if wget.processId() > 0 or video_local_stream:
@@ -5114,7 +5310,7 @@ class tab5(QtWidgets.QWidget):
 			else:
 				ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 				#ui.tab_5.setMinimumSize(0,0)
-				ui.gridLayout.setSpacing(10)
+				ui.gridLayout.setSpacing(5)
 				#ui.frame1.hide()
 				ui.tab_5.hide()
 				i = 0
@@ -5141,9 +5337,9 @@ class tab5(QtWidgets.QWidget):
 				MainWindow.showNormal()
 				MainWindow.showMaximized()
 				MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-				ui.gridLayout.setSpacing(10)
-				ui.superGridLayout.setSpacing(10)
-				ui.superGridLayout.setContentsMargins(10,10,10,10)
+				ui.gridLayout.setSpacing(5)
+				ui.superGridLayout.setSpacing(0)
+				ui.superGridLayout.setContentsMargins(5,5,5,5)
 			if not ui.tab_2.isHidden():
 				ui.list2.hide()
 				ui.goto_epn.hide()
@@ -5253,12 +5449,13 @@ class Ui_MainWindow(object):
 		#self.horizontalLayout_4 = QtGui.QHBoxLayout(self.tab_3)
 		#self.horizontalLayout_4.setObjectName(_fromUtf8("horizontalLayout_4"))
 		###########################
-		self.label = QtWidgets.QLabel(MainWindow)
+		#self.label = QtWidgets.QLabel(MainWindow)
+		self.label = ExtendedQLabelEpn(MainWindow)
 		#self.label.setSizePolicy(sizePolicy)
 		
 		#self.label.setMinimumSize(QtCore.QSize(300, 250))
 		self.label.setText(_fromUtf8(""))
-		self.label.setScaledContents(True)
+		#self.label.setScaledContents(True)
 		self.label.setObjectName(_fromUtf8("label"))
 		#self.text = QtWidgets.QTextBrowser(MainWindow)
 		self.text = QtWidgets.QTextEdit(MainWindow)
@@ -5283,7 +5480,7 @@ class Ui_MainWindow(object):
 		#self.VerticalLayoutLabel.setStretch(1,2)
 		self.VerticalLayoutLabel.addStretch(1)
 		#self.text.hide()
-		self.label.setAlignment(QtCore.Qt.AlignTop)
+		self.label.setAlignment(QtCore.Qt.AlignCenter)
 		self.text.setAlignment(QtCore.Qt.AlignBottom)
 		self.VerticalLayoutLabel.setAlignment(QtCore.Qt.AlignBottom)
 		self.VerticalLayoutLabel.setSpacing(5)
@@ -5524,9 +5721,10 @@ class Ui_MainWindow(object):
 		
 		self.slider.setRange(0,100)
 		self.slider.setMouseTracking(True)
-		
+		aspect = (screen_width/screen_height)
 		self.width_allowed = int((screen_width)/4.5)
-		self.height_allowed = int((screen_height)/3)
+		self.height_allowed = int((screen_height)/3.3)
+		self.image_aspect_allowed = (self.width_allowed/self.height_allowed)
 		print(self.width_allowed,'--width--allowed--')
 		self.list1.setMaximumWidth(self.width_allowed)
 		self.list2.setMaximumWidth(self.width_allowed)
@@ -5540,9 +5738,10 @@ class Ui_MainWindow(object):
 		self.text.setMaximumHeight(self.height_allowed)
 		self.text.setMinimumWidth(self.width_allowed)
 		self.label.setMaximumHeight(self.height_allowed)
+		self.label.setMinimumHeight(self.height_allowed)
 		self.label.setMaximumWidth(self.width_allowed)
 		self.label.setMinimumWidth(self.width_allowed)
-		
+		self.thumbnail_video_width = int(self.width_allowed*2.5)
 		#self.label.setMaximumSize(QtCore.QSize(280, 250))
 		#self.label.setMinimumSize(QtCore.QSize(280, 250))
 		
@@ -5960,7 +6159,7 @@ class Ui_MainWindow(object):
 		self.gridLayout1.addWidget(self.btn10, 0, 0, 1, 1)
 		#self.gridLayout1.setAlignment(QtCore.Qt.AlignCenter)
 		
-		#######################################################
+		#########################Thumbnail Mode##############################
 		self.horizontalLayout_20 = QtWidgets.QHBoxLayout()
 		self.horizontalLayout_20.setObjectName(_fromUtf8("horizontalLayout_20"))
 		self.gridLayout1.addLayout(self.horizontalLayout_20, 0, 1, 1, 1)
@@ -5984,6 +6183,10 @@ class Ui_MainWindow(object):
 		self.comboBox30 = QtWidgets.QComboBox(self.scrollAreaWidgetContents)
 		self.comboBox30.setObjectName(_fromUtf8("comboBox30"))
 		self.horizontalLayout_30.insertWidget(0,self.comboBox30, 0)
+		
+		self.comboBoxMode = QtWidgets.QComboBox(self.scrollAreaWidgetContents)
+		self.comboBoxMode.setObjectName(_fromUtf8("comboBoxMode"))
+		#self.horizontalLayout_30.insertWidget(0,self.comboBox30, 0)
 		
 		self.btn20 = QtWidgets.QPushButton(self.scrollAreaWidgetContents)
 		self.btn20.setObjectName(_fromUtf8("btn20"))
@@ -6020,10 +6223,12 @@ class Ui_MainWindow(object):
 		self.float_window_layout.setSpacing(0)
 		
 		self.horizontalLayout10.insertWidget(2,self.frame2, 0)
+		
 		self.horizontalLayout_101.insertWidget(0,self.btn20, 0)
-		self.horizontalLayout_101.insertWidget(1,self.labelFrame2,0)
-		self.horizontalLayout_101.insertWidget(2,self.btn201, 0)
-		self.horizontalLayout_101.insertWidget(3,self.label_search, 0)
+		self.horizontalLayout_101.insertWidget(1,self.comboBoxMode, 0)
+		self.horizontalLayout_101.insertWidget(2,self.labelFrame2,0)
+		self.horizontalLayout_101.insertWidget(3,self.btn201, 0)
+		self.horizontalLayout_101.insertWidget(4,self.label_search, 0)
 		
 		####################################################
 		#self.btn20.hide()
@@ -6207,6 +6412,7 @@ class Ui_MainWindow(object):
 		self.get_fetch_library = 'pycurl'
 		self.image_fit_option_val = 1
 		self.tmp_folder_remove = 'no'
+		self.video_mode_index = 1
 		self.update_proc = QtCore.QProcess()
 		self.btn30.addItem(_fromUtf8(""))
 		self.btn30.addItem(_fromUtf8(""))
@@ -6252,6 +6458,10 @@ class Ui_MainWindow(object):
 		self.comboView.addItem(_fromUtf8(""))
 		self.comboView.addItem(_fromUtf8(""))
 		self.comboView.addItem(_fromUtf8(""))
+		self.comboBoxMode.addItem(_fromUtf8(""))
+		self.comboBoxMode.addItem(_fromUtf8(""))
+		self.comboBoxMode.addItem(_fromUtf8(""))
+		self.comboBoxMode.addItem(_fromUtf8(""))
 		QtWidgets.QShortcut(QtGui.QKeySequence("Shift+F"), 
 							MainWindow, self.fullscreenToggle)
 		QtWidgets.QShortcut(QtGui.QKeySequence("Shift+L"), 
@@ -6267,6 +6477,8 @@ class Ui_MainWindow(object):
 							self.show_hide_filter_toolbar)
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+Z"), MainWindow, 
 							self.IconView)
+		QtWidgets.QShortcut(QtGui.QKeySequence("Shift+Z"), MainWindow, 
+							self.IconViewEpn)
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+X"), MainWindow, 
 							self.webHide)
 		QtWidgets.QShortcut(QtGui.QKeySequence("ESC"), MainWindow, 
@@ -6333,6 +6545,7 @@ class Ui_MainWindow(object):
 		self.btn30.currentIndexChanged['int'].connect(self.ka1)
 		self.comboBox20.currentIndexChanged['int'].connect(self.browserView_view)
 		self.comboView.currentIndexChanged['int'].connect(self.viewPreference)
+		self.comboBoxMode.currentIndexChanged['int'].connect(self.set_video_mode)
 		self.btnWebReviews.currentIndexChanged['int'].connect(
 				lambda x: self.reviewsWeb(action='index_changed')
 				)
@@ -6430,8 +6643,12 @@ class Ui_MainWindow(object):
 		self.comboView.setItemText(0, _translate("MainWindow", "View Mode", None))
 		self.comboView.setItemText(1, _translate("MainWindow", "List", None))
 		self.comboView.setItemText(2, _translate("MainWindow", "Thumbnail", None))
-		self.btn20.setText(_translate("MainWindow", "Close", None))
-		self.btn201.setText(_translate("MainWindow", "Prev", None))
+		self.btn20.setText(_translate("MainWindow",self.player_buttons['close'], None))
+		self.btn201.setText(_translate("MainWindow", self.player_buttons['prev'], None))
+		self.comboBoxMode.setItemText(0,'Mode 1 (Default)')
+		self.comboBoxMode.setItemText(1,'Mode 2')
+		self.comboBoxMode.setItemText(2,'Mode 3')
+		self.comboBoxMode.setItemText(3,'Mode 4')
 		
 		self.thumb_timer = QtCore.QTimer()
 		self.mplayer_OsdTimer = QtCore.QTimer()
@@ -6456,6 +6673,17 @@ class Ui_MainWindow(object):
 		self.lock_process = False
 		self.mpv_thumbnail_lock = False
 	
+	def set_video_mode(self):
+		txt = self.comboBoxMode.currentText()
+		txt = txt.lower()
+		if txt == 'mode 1 (default)':
+			self.video_mode_index = 1
+		elif txt == 'mode 2':
+			self.video_mode_index = 2
+		elif txt == 'mode 3':
+			self.video_mode_index = 3
+		elif txt == 'mode 4':
+			self.video_mode_index = 4
 	
 	def change_fanart_aspect(self,var):
 		dir_name = self.get_current_directory()
@@ -6475,7 +6703,7 @@ class Ui_MainWindow(object):
 				"\npicn={0},fanart={1},image_fit_option={2}\n".format(
 				picn,fanart,self.image_fit_option_val)
 				)
-			self.image_fit_option(picn,fanart,self.image_fit_option_val)
+			self.image_fit_option(picn,fanart,fit_size=self.image_fit_option_val)
 			set_mainwindow_palette(fanart)
 			
 		
@@ -6599,8 +6827,33 @@ class Ui_MainWindow(object):
 		new_tmp = '"'+TMPDIR+'"'
 		if not self.mpv_thumbnail_lock:
 			if OSNAME == 'posix':
+				wd = str(ui.width_allowed)
 				subprocess.call(["ffmpegthumbnailer","-i",path,"-o",picn,
-								"-t",str(inter),'-q','10','-s','350'])
+								"-t",str(inter),'-q','10','-s',wd])
+				
+				if os.path.exists(picn) and os.stat(picn).st_size:
+					self.image_fit_option(picn,picn,fit_size=6,widget=self.label)
+					"""
+					basewidth = self.label.width()
+					baseheight = self.label.height()
+					bg = Image.new('RGBA', (basewidth,baseheight))
+					try:
+						img = Image.open(str(picn))
+						w = img.size[0]
+						h = img.size[1]
+						if h > baseheight:
+							wp = float(baseheight/h)
+							nbw = int(float(wp)*float(basewidth))
+							img = img.resize((nbw,baseheight), PIL.Image.ANTIALIAS)
+							offset = (int((basewidth-nbw)/2),0)
+						else:
+							offset = (0,int((baseheight-h)/2))
+						bg.paste(img,offset)
+						bg.save(str(picn),'JPEG',quality=100)
+					except Exception as e:
+						print(e,'Error in opening image, videoImage,---6617')
+				else:
+					print('No Video Stream for thumbnail generation')"""
 			else:
 				if inter.endswith('s'):
 					inter = inter[:-1]
@@ -6909,7 +7162,7 @@ class Ui_MainWindow(object):
 	def playerStop(self):
 			global quitReally,mpvplayer,thumbnail_indicator,total_till,browse_cnt
 			global iconv_r_indicator,iconv_r,curR,wget,Player,show_hide_cover
-			global show_hide_playlist,show_hide_titlelist,video_local_stream
+			global show_hide_playlist,show_hide_titlelist,video_local_stream,new_tray_widget
 			
 			if mpvplayer:
 				if mpvplayer.processId() > 0:
@@ -6918,7 +7171,7 @@ class Ui_MainWindow(object):
 					self.player_play_pause.setText(self.player_buttons['play'])
 					if ui.tab_6.isHidden():
 						if not ui.float_window.isHidden():
-							pass
+							new_tray_widget.show()
 						else:
 							ui.tab_5.showNormal()
 							ui.tab_5.hide()
@@ -6936,7 +7189,7 @@ class Ui_MainWindow(object):
 					else:
 						#ui.tab_5.setMinimumSize(0,0)
 						ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
-						ui.gridLayout.setSpacing(10)
+						ui.gridLayout.setSpacing(5)
 						#ui.frame1.hide()
 						ui.tab_5.hide()
 						i = 0
@@ -6951,7 +7204,8 @@ class Ui_MainWindow(object):
 						print ("width="+str(ui.tab_6.width()))
 						#ui.tab_6.setMaximumSize(10000,10000)
 						w = float((ui.tab_6.width()-60)/iconv_r)
-						h = float((9*w)/16)
+						#h = float((9*w)/16)
+						h = int(w/ui.image_aspect_allowed)
 						width=str(int(w))
 						height=str(int(h))
 						ui.scrollArea1.verticalScrollBar().setValue(((curR+1)/iconv_r)*h+((curR+1)/iconv_r)*10)
@@ -6964,9 +7218,9 @@ class Ui_MainWindow(object):
 						MainWindow.showNormal()
 						MainWindow.showMaximized()
 						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-						self.gridLayout.setSpacing(10)
-						self.superGridLayout.setSpacing(10)
-						self.superGridLayout.setContentsMargins(10,10,10,10)
+						self.gridLayout.setSpacing(5)
+						self.superGridLayout.setSpacing(0)
+						self.superGridLayout.setContentsMargins(5,5,5,5)
 						
 	def shufflePlaylist(self):
 		global epnArrList,site
@@ -7072,19 +7326,19 @@ class Ui_MainWindow(object):
 				show_hide_player = 1
 		elif val == "Show/Hide Playlist":
 			v = str(self.action_player_menu[3].text())
-			if self.tab_6.isHidden():
-				if not self.list2.isHidden():
-					self.list2.hide()
-					self.goto_epn.hide()
-					show_hide_playlist = 0
-				else:
-					self.list2.show()
-					#self.goto_epn.show()
-					show_hide_playlist = 1
-					if MainWindow.isFullScreen():
-						MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+			#if self.tab_6.isHidden():
+			if not self.list2.isHidden():
+				self.list2.hide()
+				self.goto_epn.hide()
+				show_hide_playlist = 0
 			else:
-				self.tab_6.hide()
+				self.list2.show()
+				#self.goto_epn.show()
+				show_hide_playlist = 1
+				if MainWindow.isFullScreen():
+					MainWindow.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+			#else:
+			#	self.tab_6.hide()
 		elif val == "Show/Hide Title List":
 			v = str(self.action_player_menu[2].text())
 			if not self.list1.isHidden():
@@ -7364,7 +7618,8 @@ class Ui_MainWindow(object):
 		if mpvplayer:
 			if mpvplayer.processId()>0 and fullscr != 1: 
 				w = float(800)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
 				p2="ui.label_"+str(cur_label_num)+".x()"
 				p3="ui.label_"+str(cur_label_num)+".y()"
 				posx=eval(p2)
@@ -7448,7 +7703,7 @@ class Ui_MainWindow(object):
 		print ("Frame Hiding" )
 		if MainWindow.isFullScreen():
 			ui.frame1.hide()
-			ui.gridLayout.setSpacing(10)
+			ui.gridLayout.setSpacing(5)
 			
 	def webStyle(self,web):
 		web.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
@@ -7475,6 +7730,7 @@ class Ui_MainWindow(object):
 			ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.go_opt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.text.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
+			#ui.label.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)")
 			ui.text_save_btn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,60%);border:rgba(0,0,0,30%);border-radius:3px")
 			ui.goto_epn.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,25%);border:rgba(0,0,0,30%);border-radius:3px;")
 			ui.line.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
@@ -8244,9 +8500,18 @@ class Ui_MainWindow(object):
 		except:
 			picn = "No.jpg"
 		if br_cnt_opt == "image":
+			#if 'poster.jpg' in picn:
+			#	picn_new = picn.replace('poster.jpg','thumbnail.jpg')
+			#	if os.path.exists(picn_new):
+			#		picn = picn_new
+			
 			if picn != "No.jpg" and os.path.exists(picn):
+				#picn_d = Image.open(picn)
+				#w = str(picn_d.size[0])
+				#h = str(picn_d.size[1])
 				img = QtGui.QPixmap(picn, "1")
 				q1="self.label_"+str(browse_cnt)+".setPixmap(img)"
+				#q1 = "self.label_{0}.setPixmap(img.scaled({1},{2},QtCore.Qt.KeepAspectRatio))".format(str(browse_cnt),w,h)
 				exec (q1)
 			if site == "Local":
 				name1 = name.split('@')[-1]
@@ -8260,10 +8525,10 @@ class Ui_MainWindow(object):
 				sumry = "<html><h1>"+str(name1)+"</h1><head/><body><p>"+str(summary)+"</p>"+"</body></html>"
 			q4="self.label_"+str(length+browse_cnt)+".setToolTip((sumry))"			
 			exec (q4)
-			p8="self.label_"+str(length+browse_cnt)+".home(True)"
-			exec (p8)
-			p8="self.label_"+str(length+browse_cnt)+".deselect()"
-			exec (p8)
+			#p8="self.label_"+str(length+browse_cnt)+".home(True)"
+			#exec (p8)
+			#p8="self.label_"+str(length+browse_cnt)+".deselect()"
+			#exec (p8)
 			total_till = total_till+2
 			if total_till%(2*iconv_r) == 0:
 				QtWidgets.QApplication.processEvents()
@@ -8301,14 +8566,15 @@ class Ui_MainWindow(object):
 					length = self.list1.count()
 				
 			if iconv_r == 1 and not self.tab_5.isHidden():
-				self.tab_6.setMaximumSize(300,10000)
+				self.tab_6.setMaximumSize(self.width_allowed,10000)
 			else:
 				self.tab_6.setMaximumSize(10000,10000)
 			print ("width="+str(self.tab_6.width()))
 			
 			if iconv_r > 1:
 				w = float((self.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/self.image_aspect_allowed)
 				if self.tab_5.isHidden() and mpvplayer:
 					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
@@ -8316,10 +8582,12 @@ class Ui_MainWindow(object):
 						else:
 							l = self.tab_6.width()-60
 						w = float(l)
-						h = float((9*w)/16)
+						#h = float((9*w)/16)
+						h = int(w/self.image_aspect_allowed)
 			elif iconv_r == 1:
 				w = float(self.tab_6.width()-60)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/self.image_aspect_allowed)
 				
 			width = str(int(w))
 			height = str(int(h))
@@ -8364,16 +8632,20 @@ class Ui_MainWindow(object):
 					exec (p5)
 					exec (p6)
 					if value_str == "deleted":
-						p1="self.label_"+str(length+i)+" = QtWidgets.QLineEdit(self.scrollAreaWidgetContents)"
+						p1="self.label_"+str(length+i)+" = QtWidgets.QTextEdit(self.scrollAreaWidgetContents)"
 						p7 = "l_"+str(length+i)+" = weakref.ref(self.label_"+str(length+i)+")"
 						exec (p1)
 						exec (p7)
 						print ("creating")
 					p2="self.label_"+str(length+i)+".setMinimumWidth("+width+")"
+					p3="self.label_"+str(length+i)+".setMaximumHeight("+height+")"
+					p4 = "self.label_"+str(length+i)+".lineWrapMode()"
 					p5="self.label_"+str(length+i)+".setObjectName(_fromUtf8("+'"'+"label_"+str(length+i)+'"'+"))"
 					p6="self.gridLayout1.addWidget(self.label_"+str(length+i)+","+str(j1)+","+str(k)+", 1, 1,QtCore.Qt.AlignCenter)"
 					p8="self.label_"+str(length+i)+".setAlignment(QtCore.Qt.AlignCenter)"
 					exec (p2)
+					exec (p3)
+					exec (p4)
 					exec (p5)
 					exec (p6)
 					exec (p8)
@@ -8401,14 +8673,15 @@ class Ui_MainWindow(object):
 			self.scrollArea.hide()
 			self.scrollArea1.show()
 			if iconv_r == 1 and not self.tab_5.isHidden():
-				self.tab_6.setMaximumSize(300,10000)
+				self.tab_6.setMaximumSize(self.width_allowed,10000)
 			else:
 				self.tab_6.setMaximumSize(10000,10000)
 			print ("width="+str(self.tab_6.width()))
 			
 			if iconv_r > 1:
 				w = float((self.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/self.image_aspect_allowed)
 				if self.tab_5.isHidden() and mpvplayer:
 					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
@@ -8416,12 +8689,13 @@ class Ui_MainWindow(object):
 						else:
 							l = self.tab_6.width()-60
 						w = float(l)
-						h = float((9*w)/16)
+						#h = float((9*w)/16)
+						h = int(w/self.image_aspect_allowed)
 			elif iconv_r == 1:
 				w = float(self.tab_6.width()-60)
 				#w = float(self.tab_6.width())
-				h = float((9*w)/16)
-				
+				#h = float((9*w)/16)
+				h = int(w/self.image_aspect_allowed)
 			width = str(int(w))
 			height = str(int(h))
 			print ("self.width="+width)
@@ -8492,14 +8766,15 @@ class Ui_MainWindow(object):
 			self.scrollArea.hide()
 			self.scrollArea1.show()
 			if iconv_r == 1 and not self.tab_5.isHidden():
-				self.tab_6.setMaximumSize(300,10000)
+				self.tab_6.setMaximumSize(self.width_allowed,10000)
 			else:
 				self.tab_6.setMaximumSize(10000,10000)
 			print ("width="+str(self.tab_6.width()))
 			
 			if iconv_r > 1:
 				w = float((self.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/self.image_aspect_allowed)
 				if self.tab_5.isHidden() and mpvplayer:
 					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
@@ -8507,10 +8782,12 @@ class Ui_MainWindow(object):
 						else:
 							l = self.tab_6.width()-60
 						w = float(l)
-						h = float((9*w)/16)
+						#h = float((9*w)/16)
+						h = int(w/self.image_aspect_allowed)
 			elif iconv_r == 1:
 				w = float(self.tab_6.width()-60)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/self.image_aspect_allowed)
 			width = str(int(w))
 			height = str(int(h))
 			print ("self.width="+width)
@@ -8605,7 +8882,7 @@ class Ui_MainWindow(object):
 				if os.path.exists(picn):
 					if os.stat(picn).st_size == 0:
 						art_n =title.split('	')[2]
-						pic = os.path.join(home,'Music','Artist',art_n,'poster.jpg')
+						pic = os.path.join(home,'Music','Artist',art_n,'thumbnail.jpg')
 						if os.path.exists(pic):
 							picn = pic
 		elif site == "PlayLists":
@@ -8681,13 +8958,14 @@ class Ui_MainWindow(object):
 			self.scrollArea.hide()
 			self.scrollArea1.show()
 			if iconv_r == 1 and not self.tab_5.isHidden():
-				self.tab_6.setMaximumSize(300,10000)
+				self.tab_6.setMaximumSize(self.width_allowed,10000)
 			else:
 				self.tab_6.setMaximumSize(10000,10000)
 			print ("width="+str(self.tab_6.width()))
 			if iconv_r > 1:
 				w = float((self.tab_6.width()-60)/iconv_r)
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
 				if self.tab_5.isHidden() and mpvplayer:
 					if mpvplayer.processId() > 0:
 						if tab_6_size_indicator:
@@ -8695,11 +8973,13 @@ class Ui_MainWindow(object):
 						else:
 							l = self.tab_6.width()-60
 						w = float(l)
-						h = float((9*w)/16)
+						#h = float((9*w)/16)
+						h = int(w/self.image_aspect_allowed)
 			elif iconv_r == 1:
 				w = float(self.tab_6.width()-60)
 				#w = float(self.tab_6.width())
-				h = float((9*w)/16)
+				#h = float((9*w)/16)
+				h = int(w/ui.image_aspect_allowed)
 			width = str(int(w))
 			height = str(int(h))
 			if icon_size_arr:
@@ -8747,18 +9027,22 @@ class Ui_MainWindow(object):
 				k = 0
 			
 				while(i<length1):
-					p1="self.label_epn_"+str(i)+" = QtWidgets.QLineEdit(self.scrollAreaWidgetContents1)"
+					p1="self.label_epn_"+str(i)+" = QtWidgets.QTextEdit(self.scrollAreaWidgetContents1)"
 					p7 = "l_"+str(i)+" = weakref.ref(self.label_epn_"+str(i)+")"
 					p2="self.label_epn_"+str(i)+".setMinimumWidth("+width+")"
 					p5="self.label_epn_"+str(i)+".setObjectName(_fromUtf8("+'"'+"label_epn_"+str(i)+'"'+"))"
 					p6="self.gridLayout2.addWidget(self.label_epn_"+str(i)+","+str(j)+","+str(k)+", 1, 1,QtCore.Qt.AlignCenter)"
 					p8="self.label_epn_"+str(i)+".setAlignment(QtCore.Qt.AlignCenter)"
-					exec (p1)
-					exec (p7)
-					exec (p2)
-					exec (p5)
-					exec (p6)
-					exec (p8)
+					p9="self.label_epn_"+str(i)+".setMaximumHeight("+height+")"
+					p10="self.label_epn_"+str(i)+".lineWrapMode()"
+					exec(p1)
+					exec(p7)
+					exec(p2)
+					exec(p5)
+					exec(p6)
+					exec(p8)
+					exec(p9)
+					exec(p10)
 					i=i+1
 					k = k+1
 					if k == iconv_r:
@@ -8895,14 +9179,14 @@ class Ui_MainWindow(object):
 						q1="self.label_epn_"+str(browse_cnt)+".setPixmap(img)"
 						exec (q1)
 					sumry = "<html><h1>"+nameEpn+"</h1></html>"
-					q4="self.label_epn_"+str(length+browse_cnt)+".setToolTip((sumry))"			
-					exec (q4)
+					#q4="self.label_epn_"+str(length+browse_cnt)+".setToolTip((sumry))"			
+					#exec (q4)
 					q3="self.label_epn_"+str(length+browse_cnt)+".setText((nameEpn))"
 					exec (q3)
-					p8="self.label_epn_"+str(length+browse_cnt)+".home(True)"
-					exec (p8)
-					p8="self.label_epn_"+str(length+browse_cnt)+".deselect()"
-					exec (p8)
+					#p8="self.label_epn_"+str(length+browse_cnt)+".home(True)"
+					#exec (p8)
+					#p8="self.label_epn_"+str(length+browse_cnt)+".deselect()"
+					#exec (p8)
 					QtWidgets.QApplication.processEvents()
 					browse_cnt = browse_cnt+1
 
@@ -8919,10 +9203,21 @@ class Ui_MainWindow(object):
 		category = "Animes" 
 		
 	def epnClicked(self):
-		global queueNo,mpvAlive,curR
+		global queueNo,mpvAlive,curR,idw,Player,mpvplayer,ui
 		curR = self.list2.currentRow()
 		queueNo = queueNo + 1
 		mpvAlive = 0
+		if mpvplayer.processId() > 0:
+				if idw != str(int(ui.tab_5.winId())):
+					mpvplayer.kill()
+					if Player == 'mplayer' and mpvplayer.processId() > 0:
+						try:
+							killall(['killall','mplayer'])
+						except Exception as e:
+							print(e)
+					#del mpvplayer
+					mpvplayer = QtCore.QProcess()
+					idw = str(int(ui.tab_5.winId()))
 		self.epnfound()
 	
 	def mpvNextEpnList(self):
@@ -9312,7 +9607,7 @@ class Ui_MainWindow(object):
 		tmp_name[:]=[]
 		num = self.list2.currentRow()
 		i = 0
-		
+		print(viewMode,site,'--viewmode--')
 		if (self.tab_6.isHidden() or (viewMode == "Thumbnail" 
 				and site == "PlayLists")):
 			self.list1.hide()
@@ -9604,7 +9899,7 @@ class Ui_MainWindow(object):
 				and site.lower()!= 'local')):
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 			try:
-				self.image_fit_option(picn,thumbnail,450)
+				self.image_fit_option(picn,thumbnail,fit_size=450)
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					shutil.copy(picn,
 								os.path.join(home,'History',site,siteName,name,
@@ -9636,7 +9931,7 @@ class Ui_MainWindow(object):
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 			try:
-				self.image_fit_option(picn,thumbnail,450)
+				self.image_fit_option(picn,thumbnail,fit_size=450)
 				shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
 				if os.path.exists(thumbnail):
 					shutil.copy(thumbnail,
@@ -9662,7 +9957,7 @@ class Ui_MainWindow(object):
 				picn = os.path.join(TMPDIR,nm+'.jpg')
 				thumbnail = os.path.join(TMPDIR,nm+'-thumbnail.jpg')
 				try:
-					self.image_fit_option(picn,thumbnail,450)
+					self.image_fit_option(picn,thumbnail,fit_size=450)
 					shutil.copy(picn,
 								os.path.join(home,'Music','Artist',nm,
 								'poster.jpg'))
@@ -9703,7 +9998,7 @@ class Ui_MainWindow(object):
 					shutil.copy(picn,
 								os.path.join(home,'History',site,siteName,name,
 								'original-fanart.jpg'))
-					self.image_fit_option(picn,picn,img_opt)
+					self.image_fit_option(picn,picn,fit_size=img_opt)
 					shutil.copy(picn,
 								os.path.join(home,'History',site,siteName,name,
 								'fanart.jpg'))
@@ -9716,7 +10011,7 @@ class Ui_MainWindow(object):
 					shutil.copy(picn,
 								os.path.join(home,'History',site,name,
 								'original-fanart.jpg'))
-					self.image_fit_option(picn,picn,img_opt)
+					self.image_fit_option(picn,picn,fit_size=img_opt)
 					shutil.copy(picn,
 								os.path.join(home,'History',site,name,
 								'fanart.jpg'))
@@ -9732,7 +10027,7 @@ class Ui_MainWindow(object):
 				shutil.copy(picn,
 							os.path.join(home,'Local',name,
 							'original-fanart.jpg'))
-				self.image_fit_option(picn,picn,img_opt)
+				self.image_fit_option(picn,picn,fit_size=img_opt)
 				shutil.copy(picn,
 							os.path.join(home,'Local',name,'fanart.jpg'))
 				ui.videoImage(
@@ -9757,7 +10052,7 @@ class Ui_MainWindow(object):
 				shutil.copy(picn,
 							os.path.join(home,'Music','Artist',nm,
 							'original-fanart.jpg'))
-				self.image_fit_option(picn,picn,img_opt)
+				self.image_fit_option(picn,picn,fit_size=img_opt)
 				shutil.copy(picn,
 							os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
 				print(picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
@@ -9951,7 +10246,7 @@ class Ui_MainWindow(object):
 						img_url = "http:"+img_url
 						command = "wget --user-agent="+'"'+hdr+'" '+'"'+img_url+'"'+" -O "+'"'+dest+'"'
 						self.downloadWget.append(downloadThread(img_url+'#'+'-o'+'#'+dest))
-						self.downloadWget[len(self.downloadWget)-1].finished.connect(self.download_thread_finished)
+						self.downloadWget[len(self.downloadWget)-1].finished.connect(lambda x=dest: self.download_thread_finished(dest))
 					
 			if self.downloadWget:
 				length = len(self.downloadWget)
@@ -9959,8 +10254,10 @@ class Ui_MainWindow(object):
 					if i < length:
 						self.downloadWget[i].start()
 				
-	def download_thread_finished(self):
-		print ("Process Ended")
+	def download_thread_finished(self,dest):
+		print ("Download tvdb image: {0} :completed".format(dest))
+		self.image_fit_option(dest,dest,fit_size=6,widget=self.label)
+		print ("Image: {0} : aspect ratio changed".format(dest))
 		self.downloadWget_cnt = self.downloadWget_cnt+1
 		if self.downloadWget_cnt == 5:
 			self.downloadWget = self.downloadWget[5:]
@@ -10959,7 +11256,7 @@ class Ui_MainWindow(object):
 								picnD = os.path.join(home,'thumbnails',site,name_t)
 						else:
 							picnD = os.path.join(home,'thumbnails',site,name_t)
-						print(picnD,'=picnD')
+						#print(picnD,'=picnD')
 						if not os.path.exists(picnD):
 							try:
 								os.makedirs(picnD)
@@ -10998,10 +11295,8 @@ class Ui_MainWindow(object):
 					except:
 						picn = os.path.join(picnD,str(a1))+'.jpg'
 				if os.path.exists(picn):
-					img = QtGui.QPixmap(picn, "1")			
-					self.label.setPixmap(img)
+					self.label.setPixmap(QtGui.QPixmap(picn, "1"))
 				else:
-					#self.label.clear()
 					pass
 				
 	def thumbnail_generated(self):
@@ -12309,7 +12604,7 @@ class Ui_MainWindow(object):
 					
 	def musicBackground(self,val,srch):
 		global name,epnArrList,artist_name_mplayer,site
-		
+		print(val,srch,'--music--background--')
 		if self.list3.currentItem() and site.lower() == 'music':
 			if self.list3.currentItem().text().lower() == "artist":
 				artist_mode = True
@@ -12368,34 +12663,34 @@ class Ui_MainWindow(object):
 				print(music_dir_art_name,'--music-dir-art-name--')
 				if not os.path.exists(music_dir_art_name):
 					os.makedirs(music_dir_art_name)
+				#else:
+				art_list = os.listdir(music_dir_art_name)
+				sumr = os.path.join(music_dir_art_name,'bio.txt')
+				if os.path.exists(sumr):
+					summary = open_files(sumr,False)
 				else:
-					art_list = os.listdir(music_dir_art_name)
-					sumr = os.path.join(music_dir_art_name,'bio.txt')
-					if os.path.exists(sumr):
-						summary = open_files(sumr,False)
-					else:
-						summary = "Not Available"
-						
-					poster = os.path.join(music_dir_art_name,'poster.jpg')
-					fan = os.path.join(music_dir_art_name,'fanart.jpg')
-					thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
+					summary = "Not Available"
 					
-					if (not os.path.exists(poster) and srch != "offline" 
-							and artist_name_mplayer.lower() != "none" 
-							and artist_name_mplayer):	
-						self.threadPool.append( ThreadingExample(nm) )
-						self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
-						self.threadPool[len(self.threadPool)-1].start()
-					elif os.path.exists(poster) or os.path.exists(fan) or os.path.exists(thumb):
-						self.videoImage(poster,thumb,fan,summary)
-					else:
-						try:
-							r = self.list2.currentRow()
-							thumb_path = self.get_thumbnail_image_path(r,epnArrList[r])
-							if os.path.exists(thumb_path):
-								self.videoImage(thumb_path,thumb_path,thumb_path,'')
-						except Exception as e:
-							print('No Thumbnail Available: {0}'.format(e))
+				poster = os.path.join(music_dir_art_name,'poster.jpg')
+				fan = os.path.join(music_dir_art_name,'fanart.jpg')
+				thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
+				
+				if (not os.path.exists(poster) and srch != "offline" 
+						and artist_name_mplayer.lower() != "none" 
+						and artist_name_mplayer):	
+					self.threadPool.append( ThreadingExample(nm) )
+					self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
+					self.threadPool[len(self.threadPool)-1].start()
+				elif os.path.exists(poster) or os.path.exists(fan) or os.path.exists(thumb):
+					self.videoImage(poster,thumb,fan,summary)
+				else:
+					try:
+						r = self.list2.currentRow()
+						thumb_path = self.get_thumbnail_image_path(r,epnArrList[r])
+						if os.path.exists(thumb_path):
+							self.videoImage(thumb_path,thumb_path,thumb_path,'')
+					except Exception as e:
+						print('No Thumbnail Available: {0}'.format(e))
 			else:
 				try:
 					r = self.list2.currentRow()
@@ -12405,66 +12700,138 @@ class Ui_MainWindow(object):
 				except Exception as e:
 					print('No Thumbnail Available: {0}'.format(e))
 					
-	def image_fit_option(self,picn,fanart,fit_size=None):
-		# fit_size = 1. Fit to Screen
-		# fit_size = 2. Fit to Width
-		# fit_size = 3. Fit to Height
-		# fit_size = 4. Fit to Height with black border
-		# fit_size > 4. Custom Width
+	def image_fit_option(self,picn,fanart,fit_size=None,widget=None):
+		# fit_size = 1. Fit to Screen (Doesn't Preserve aspect ratio (A.R.))
+		# fit_size = 2. Fit to Screen Width (Preserve A.R.)
+		# fit_size = 3. Fit to Screen Height (Preserve A.R.)
+		# fit_size = 4. Fit to Screen Height with black border (Preserve A.R.)
+		# fit_size = 5. Fit to Screen Height (Left Side) with black border
+		# fit_size = 6. Fit to given widget size and preserve aspect ratio
 		global screen_height,screen_width
-		
-		if fit_size:
-			if (fit_size == 1 or fit_size == 2) or fit_size > 5:
-				if fit_size == 1 or fit_size == 2:
-					basewidth = screen_width
-				else:
-					basewidth = fit_size
-				try:
-					img = Image.open(str(picn))
-				except Exception as e:
-					print(e,'Error in opening image, videoImage,---13849')
-					picn = os.path.join(home,'default.jpg')
-					img = Image.open(str(picn))
-				if fit_size == 1:
-					hsize = screen_height
-				else:
+		try:
+			if fit_size:
+				if (fit_size == 1 or fit_size == 2) or fit_size > 6:
+					if fit_size == 1 or fit_size == 2:
+						basewidth = screen_width
+					else:
+						basewidth = fit_size
+					try:
+						img = Image.open(str(picn))
+					except Exception as e:
+						print(e,'Error in opening image, videoImage,---13849')
+						picn = os.path.join(home,'default.jpg')
+						img = Image.open(str(picn))
+					if fit_size == 1:
+						hsize = screen_height
+					else:
+						wpercent = (basewidth / float(img.size[0]))
+						hsize = int((float(img.size[1]) * float(wpercent)))
+					img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
+					img.save(str(fanart))
+				elif fit_size == 3:
+					baseheight = screen_height
+					try:
+						img = Image.open(str(picn))
+					except Exception as e:
+						print(e,'Error in opening image, videoImage,---13849')
+						picn = os.path.join(home,'default.jpg')
+						img = Image.open(str(picn))
+					wpercent = (baseheight / float(img.size[1]))
+					wsize = int((float(img.size[0]) * float(wpercent)))
+					img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
+					img.save(str(fanart))
+				elif fit_size == 4 or fit_size == 5:
+					baseheight = screen_height
+					try:
+						img = Image.open(str(picn))
+					except Exception as e:
+						print(e,'Error in opening image, videoImage,---13849')
+						picn = os.path.join(home,'default.jpg')
+						img = Image.open(str(picn))
+					wpercent = (baseheight / float(img.size[1]))
+					wsize = int((float(img.size[0]) * float(wpercent)))
+					sz = (wsize,baseheight)
+					img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
+					bg = Image.new('RGBA', (screen_width,screen_height))
+					if fit_size == 4:
+						offset = (int((screen_width-wsize)/2),int((screen_height-baseheight)/2))
+					else:
+						offset = (int((0)),int((screen_height-baseheight)/2))
+					bg.paste(img,offset)
+					#new_img = ImageOps.fit(img, sz, Image.ANTIALIAS, centering=(0.5,0.5))
+					bg.save(str(fanart),'JPEG',quality=100)
+				elif fit_size == 6:
+					if widget:
+						if widget == self.label:
+							basewidth = widget.maximumWidth()
+							baseheight = widget.maximumHeight()
+						else:
+							basewidth = widget.width()
+							baseheight = widget.height()
+					else:
+						basewidth = self.float_window.width()
+						baseheight = self.float_window.height()
+					#mask = Image.new('L', (100, 100), 0)
+					bg = Image.new('RGBA', (basewidth,baseheight))
+					try:
+						img = Image.open(str(picn))
+					except Exception as e:
+						print(e,'Error in opening image, videoImage,---13849')
+						picn = os.path.join(home,'default.jpg')
+						img = Image.open(str(picn))
 					wpercent = (basewidth / float(img.size[0]))
 					hsize = int((float(img.size[1]) * float(wpercent)))
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(fanart))
-			elif fit_size == 3:
-				baseheight = screen_height
-				try:
-					img = Image.open(str(picn))
-				except Exception as e:
-					print(e,'Error in opening image, videoImage,---13849')
-					picn = os.path.join(home,'default.jpg')
-					img = Image.open(str(picn))
-				wpercent = (baseheight / float(img.size[1]))
-				wsize = int((float(img.size[0]) * float(wpercent)))
-				img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
-				img.save(str(fanart))
-			elif fit_size == 4 or fit_size == 5:
-				baseheight = screen_height
-				try:
-					img = Image.open(str(picn))
-				except Exception as e:
-					print(e,'Error in opening image, videoImage,---13849')
-					picn = os.path.join(home,'default.jpg')
-					img = Image.open(str(picn))
-				wpercent = (baseheight / float(img.size[1]))
-				wsize = int((float(img.size[0]) * float(wpercent)))
-				sz = (wsize,baseheight)
-				img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
-				bg = Image.new('RGBA', (screen_width,screen_height))
-				if fit_size == 4:
-					offset = (int((screen_width-wsize)/2),int((screen_height-baseheight)/2))
-				else:
-					offset = (int((0)),int((screen_height-baseheight)/2))
-				bg.paste(img,offset)
-				#new_img = ImageOps.fit(img, sz, Image.ANTIALIAS, centering=(0.5,0.5))
-				bg.save(str(fanart),'JPEG',quality=100)
-			
+					sz = (basewidth,hsize)
+					if hsize > baseheight:
+						wp = float(baseheight/hsize)
+						nbw = int(float(wp)*float(basewidth))
+						img = img.resize((nbw,baseheight), PIL.Image.ANTIALIAS)
+						offset = (int((basewidth-nbw)/2),0)
+					else:
+						img = img.resize((basewidth,hsize), PIL.Image.ANTIALIAS)
+						offset = (0,int((baseheight-hsize)/2))
+					bg.paste(img,offset)
+					if widget:
+						if widget == self.label:
+							bg.save(str(fanart),'JPEG',quality=100)
+						elif widget == self.float_window:
+							tmp_img = (os.path.join(TMPDIR,'tmp.jpg'))
+							bg.save(str(tmp_img),'JPEG',quality=100)
+							return tmp_img
+					else:
+						tmp_img = (os.path.join(TMPDIR,'tmp.jpg'))
+						bg.save(str(tmp_img),'JPEG',quality=100)
+						return tmp_img
+		except Exception as e:
+			print(e,':Error in resizing and changing aspect ratio --12560--')
+	
+	def change_aspect_only(self,picn):
+		global screen_height,screen_width
+		basewidth = self.label.maximumWidth()
+		baseheight = self.label.maximumHeight()
+		#mask = Image.new('L', (100, 100), 0)
+		try:
+			img = Image.open(str(picn))
+		except Exception as e:
+			print(e,'Error in opening image, videoImage,---13849')
+			picn = os.path.join(home,'default.jpg')
+			img = Image.open(str(picn))
+		wpercent = (basewidth / float(img.size[0]))
+		hsize = int((float(img.size[1]) * float(wpercent)))
+		sz = (basewidth,hsize)
+		if hsize > baseheight:
+			wp = float(baseheight/hsize)
+			nbw = int(float(wp)*float(basewidth))
+			img = img.resize((nbw,baseheight), PIL.Image.ANTIALIAS)
+		else:
+			img = img.resize((basewidth,hsize), PIL.Image.ANTIALIAS)
+		
+		tmp_img = (os.path.join(TMPDIR,'new_tmp.jpg'))
+		img.save(str(tmp_img),'JPEG',quality=100)
+		return tmp_img
+				
+		
+	
 	def videoImage(self,picn,thumbnail,fanart,summary):
 		global screen_height,screen_width
 		if self.image_fit_option_val in range(1,4):
@@ -12473,6 +12840,7 @@ class Ui_MainWindow(object):
 			img_opt = 1
 		
 		self.label.clear()
+		print(self.label.maximumWidth(),'--max--width--label--')
 		try:
 			image_dir,image_name = os.path.split(fanart)
 			original_fanart = os.path.join(image_dir,'original-fanart.jpg')
@@ -12481,30 +12849,34 @@ class Ui_MainWindow(object):
 				if not os.path.isfile(fanart):
 					if not os.path.exists(original_fanart):
 						shutil.copy(picn,original_fanart)
-					self.image_fit_option(picn,fanart,img_opt)
+					self.image_fit_option(picn,fanart,fit_size=img_opt)
 				if not os.path.isfile(thumbnail):
-					self.image_fit_option(picn,thumbnail,450)
-					
-				picn = thumbnail	
-				#tmp = '"background-image: url('+fanart+')"'
-				
-				#tmp1 = '"font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%)"'
+					#self.image_fit_option(picn,thumbnail,fit_size=450)
+					self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
+				poster = picn
+				picn = thumbnail
 				if (picn == thumbnail == fanart):
 					pass
 				else:
 					QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,fanart))
-
-				img = QtGui.QPixmap(picn, "1")
-				w = img.width()
-				h = img.height()
-				if h < 250:
-					self.label.setPixmap(img)
-				else:
-					self.label.setPixmap(img.scaled(w,h,QtCore.Qt.KeepAspectRatio))
+				if 'poster.jpg' in poster:
+					picn = self.change_aspect_only(poster)
 					
+				#else:
+				self.label.setPixmap(QtGui.QPixmap(picn, "1"))
 				if not self.float_window.isHidden():
-					self.float_window.setPixmap(img.scaled(w,h,QtCore.Qt.KeepAspectRatio))
-					
+					picn = self.image_fit_option(
+						picn,fanart,fit_size=6,widget=self.float_window
+						)
+					self.float_window.setPixmap(QtGui.QPixmap(picn,"1"))
+			else:
+					if os.path.exists(self.default_background):
+						dir_n,p = os.path.split(self.default_background)
+						new_jpg =  os.path.join(dir_n,'default_poster.jpg')
+						if not os.path.exists(new_jpg):
+							picn = self.change_aspect_only(self.default_background)
+							shutil.copy(picn,new_jpg)
+						self.label.setPixmap(QtGui.QPixmap(new_jpg, "1"))
 		except Exception as e:
 			print(e,'--error--in processing image--VideoImage 13883')
 			
@@ -12605,7 +12977,7 @@ class Ui_MainWindow(object):
 	def play_file_now(self,file_name):
 		global Player,epn_name_in_list,mpvplayer,idw,quitReally,mplayerLength
 		global current_playing_file_path
-		
+			
 		mplayerLength = 0
 		quitReally = 'no'
 		print(file_name)
@@ -12873,7 +13245,10 @@ class Ui_MainWindow(object):
 			mpvplayer = QtCore.QProcess()
 	
 		if epn_goto == 0 and site != "PlayLists" and downloadVideo == 0:
-			epn = (self.list2.currentItem().text())
+			if self.list2.currentItem():
+				epn = (self.list2.currentItem().text())
+			else:
+				return 0
 			self.epn_name_in_list = epn
 			if not epn:
 				return 0
@@ -14508,10 +14883,10 @@ class Ui_MainWindow(object):
 			exec (q4)
 			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
 			exec (q3)
-			p8="ui.label_epn_"+str(title_num)+".home(True)"
-			exec (p8)
-			p8="ui.label_epn_"+str(title_num)+".deselect()"
-			exec (p8)
+			#p8="ui.label_epn_"+str(title_num)+".home(True)"
+			#exec (p8)
+			#p8="ui.label_epn_"+str(title_num)+".deselect()"
+			#exec (p8)
 			QtWidgets.QApplication.processEvents()
 			
 			p1 = "ui.label_epn_"+str(row)+".y()"
