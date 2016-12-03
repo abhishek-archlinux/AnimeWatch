@@ -1238,8 +1238,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			else:
 				newTitle = ui.check_symbol+ui.epn_name_in_list	
 			sumry = "<html><h1>"+ui.epn_name_in_list+"</h1></html>"
-			q3="txt = ui.label_epn_"+str(title_num)+".toPlainText()"
-			exec (q3)
+			#q3="txt = ui.label_epn_"+str(title_num)+".toPlainText()"
+			#exec (q3)
 			#q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"			
 			#exec (q4)
 			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
@@ -1952,7 +1952,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							"--start="+str(interval)+"%","--frames=1",
 							path_final_Url]
 							)
-					tpm_img = os.path.join(TMPDIR,'00000001.jpg')
+					tmp_img = os.path.join(TMPDIR,'00000001.jpg')
 					if os.path.exists(tmp_img):
 						shutil.copy(tmp_img,picn)
 						os.remove(tmp_img)
@@ -3149,10 +3149,10 @@ class List2(QtWidgets.QListWidget):
 				mpvAlive = 0
 				#ui.epnfound()
 				ui.label.play_within_poster()
-				if ui.list1.isHidden():
-					ui.list1.show()
-					if not ui.goto_epn.isHidden():
-						ui.frame.show()
+				#if ui.list1.isHidden():
+				#	ui.list1.show()
+				#	if not ui.goto_epn.isHidden():
+				#		ui.frame.show()
 				self.setFocus()
 				ui.label.show()
 				ui.text.show()
@@ -4499,7 +4499,10 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 				ui.labelFrame2.setText((ui.list2.currentItem().text()).split('	')[0])
 			ui.label.hide()
 			ui.text.hide()
-		
+			
+	#def mouseMoveEvent(self,event):
+	#	self.setFocus()
+	#	print('--scrollarea1 mouse move--')
 	def keyPressEvent(self, event):
 		global epnArrList,new_epn,Player,idw,mpvplayer,quitReally,curR,interval
 		global iconv_r,total_till,browse_cnt,site,epn_name_in_list
@@ -4594,6 +4597,10 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 					ui.prev_thumbnails()
 					ui.scrollArea.setFocus()
 			elif event.key() == QtCore.Qt.Key_Return:
+				num = ui.list2.currentRow()
+				exec_str = 'ui.label_epn_{0}.change_video_mode({1},{2})'.format(num,ui.video_mode_index,num)
+				exec(exec_str)
+				"""
 				ui.text.hide()
 				ui.label.hide()
 				tab_6_player = "False"
@@ -4708,6 +4715,7 @@ class QtGuiQWidgetScroll1(QtWidgets.QScrollArea):
 				#p8="ui.label_epn_"+str(title_num)+".deselect()"
 				#exec (p8)
 				QtWidgets.QApplication.processEvents()		
+				"""
 			super(QtGuiQWidgetScroll1, self).keyPressEvent(event)
 
 
@@ -4755,6 +4763,13 @@ class tab6(QtWidgets.QWidget):
 						QtWidgets.QApplication.processEvents()
 				elif not ui.scrollArea1.isHidden():
 						ui.thumbnail_label_update()
+						
+	def mouseMoveEvent(self,event):
+		print('Tab_6')
+		if not ui.scrollArea1.isHidden():
+			ui.scrollArea1.setFocus()
+		elif not ui.scrollArea.isHidden():
+			ui.scrollArea.setFocus()
 		
 	def keyPressEvent(self, event):
 		global mpvplayer,Player,wget,cycle_pause,cache_empty,buffering_mplayer
@@ -5480,9 +5495,9 @@ class Ui_MainWindow(object):
 		#self.VerticalLayoutLabel.setStretch(1,2)
 		self.VerticalLayoutLabel.addStretch(1)
 		#self.text.hide()
-		self.label.setAlignment(QtCore.Qt.AlignCenter)
-		self.text.setAlignment(QtCore.Qt.AlignBottom)
-		self.VerticalLayoutLabel.setAlignment(QtCore.Qt.AlignBottom)
+		self.label.setAlignment(QtCore.Qt.AlignCenter|QtCore.Qt.AlignBottom)
+		self.text.setAlignment(QtCore.Qt.AlignCenter)
+		self.VerticalLayoutLabel.setAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignBottom)
 		self.VerticalLayoutLabel.setSpacing(5)
 		self.VerticalLayoutLabel.setContentsMargins(0,0,0,0)
 		#self.text.hide()
@@ -5651,7 +5666,7 @@ class Ui_MainWindow(object):
 			'left':'\u21A2','right':'\u21A3','pr':'\u226A',
 			'nxt':'\u226B','min':'\u2581','max':'\u25A2',
 			'close':'\u2715','resize':'M','up':'\u21E1',
-			'down':'\u21E3'
+			'down':'\u21E3','browser':'\u25CC'
 			}
 								
 		self.check_symbol = '\u2714'
@@ -5723,7 +5738,7 @@ class Ui_MainWindow(object):
 		self.slider.setMouseTracking(True)
 		aspect = (screen_width/screen_height)
 		self.width_allowed = int((screen_width)/4.5)
-		self.height_allowed = int((screen_height)/3.3)
+		self.height_allowed = (self.width_allowed/aspect) #int((screen_height)/3.3)
 		self.image_aspect_allowed = (self.width_allowed/self.height_allowed)
 		print(self.width_allowed,'--width--allowed--')
 		self.list1.setMaximumWidth(self.width_allowed)
@@ -5850,9 +5865,18 @@ class Ui_MainWindow(object):
 		self.player_filter.setToolTip('Show/Hide Filter and other options')
 		self.player_filter.clicked.connect(self.show_hide_filter_toolbar)
 		
+		self.btnWebHide = QtWidgets.QPushButton(self.player_opt)
+		self.btnWebHide.setObjectName(_fromUtf8("btnWebHide"))
+		#self.btnWebHide.setMaximumSize(200,50)
+		#self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
+		# btnWebHide Added to Main Control Toolbar#
+		self.horizontalLayout_player_opt.insertWidget(13,self.btnWebHide,0)
+		self.btnWebHide.setText(self.player_buttons['browser'])
+		self.btnWebHide.clicked.connect(self.webHide)
+		
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
-		self.horizontalLayout_player_opt.insertWidget(13,self.player_playlist,0)
+		self.horizontalLayout_player_opt.insertWidget(14,self.player_playlist,0)
 		self.player_playlist.setText("More")
 		self.player_menu = QtWidgets.QMenu()
 		self.player_menu_option = [
@@ -6038,12 +6062,7 @@ class Ui_MainWindow(object):
 		self.horizLayout_web.setObjectName(_fromUtf8("horizLayout_web"))
 		self.horizontalLayout_5.addLayout(self.horizLayout_web)
 		
-		self.btnWebHide = QtWidgets.QPushButton(self.tab_2)
-		self.btnWebHide.setObjectName(_fromUtf8("btnWebHide"))
-		self.btnWebHide.setMaximumSize(200,50)
-		self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
-		self.btnWebHide.setText(self.player_buttons['min'])
-		self.btnWebHide.clicked.connect(self.webHide)
+		
 		
 		self.btnWebClose = QtWidgets.QPushButton(self.tab_2)
 		self.btnWebClose.setObjectName(_fromUtf8("btnWebClose"))
@@ -6493,6 +6512,12 @@ class Ui_MainWindow(object):
 							lambda x=1:self.change_fanart_aspect(4))
 		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+5"), MainWindow, 
 							lambda x=1:self.change_fanart_aspect(5))
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+6"), MainWindow, 
+							lambda x=1:self.change_fanart_aspect(6))
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+7"), MainWindow, 
+							lambda x=1:self.change_fanart_aspect(7))
+		QtWidgets.QShortcut(QtGui.QKeySequence("Ctrl+8"), MainWindow, 
+							lambda x=1:self.change_fanart_aspect(8))
 		#QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Enter), self.list2, self.epnfound)
 		#return1 = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.list1)
 		#return2 = QtGui.QShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Return), self.list2)
@@ -7171,7 +7196,7 @@ class Ui_MainWindow(object):
 					self.player_play_pause.setText(self.player_buttons['play'])
 					if ui.tab_6.isHidden():
 						if not ui.float_window.isHidden():
-							new_tray_widget.show()
+							pass
 						else:
 							ui.tab_5.showNormal()
 							ui.tab_5.hide()
@@ -7187,29 +7212,33 @@ class Ui_MainWindow(object):
 								#ui.goto_epn.show()
 							ui.list2.setFocus()
 					else:
-						#ui.tab_5.setMinimumSize(0,0)
-						ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
-						ui.gridLayout.setSpacing(5)
-						#ui.frame1.hide()
-						ui.tab_5.hide()
-						i = 0
-						thumbnail_indicator[:]=[]
-						if iconv_r_indicator:
-							iconv_r = iconv_r_indicator[0]
+						if not ui.float_window.isHidden():
+							pass
 						else:
-							iconv_r = 4
-						#ui.thumbnailEpn()
-						ui.thumbnail_label_update()
-						ui.frame2.show()
-						print ("width="+str(ui.tab_6.width()))
-						#ui.tab_6.setMaximumSize(10000,10000)
-						w = float((ui.tab_6.width()-60)/iconv_r)
-						#h = float((9*w)/16)
-						h = int(w/ui.image_aspect_allowed)
-						width=str(int(w))
-						height=str(int(h))
-						ui.scrollArea1.verticalScrollBar().setValue(((curR+1)/iconv_r)*h+((curR+1)/iconv_r)*10)
-						print ("hello tab_6")
+							#ui.tab_6.setFocus()
+							#ui.tab_5.setMinimumSize(0,0)
+							ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
+							ui.gridLayout.setSpacing(5)
+							#ui.frame1.hide()
+							ui.tab_5.hide()
+							i = 0
+							thumbnail_indicator[:]=[]
+							if iconv_r_indicator:
+								iconv_r = iconv_r_indicator[0]
+							else:
+								iconv_r = 4
+							#ui.thumbnailEpn()
+							ui.thumbnail_label_update()
+							ui.frame2.show()
+							print ("width="+str(ui.tab_6.width()))
+							#ui.tab_6.setMaximumSize(10000,10000)
+							w = float((ui.tab_6.width()-60)/iconv_r)
+							#h = float((9*w)/16)
+							h = int(w/ui.image_aspect_allowed)
+							width=str(int(w))
+							height=str(int(h))
+							ui.scrollArea1.verticalScrollBar().setValue(((curR+1)/iconv_r)*h+((curR+1)/iconv_r)*10)
+							print ("hello tab_6")
 					if wget:
 						if wget.processId() > 0:
 							ui.goto_epn.hide()
@@ -8437,7 +8466,7 @@ class Ui_MainWindow(object):
 							j = i.strip()
 							k = os.path.basename(j)
 							m.append(k)
-					picn = os.path.join(home,'Local',name,'poster.jpg')
+					picn = os.path.join(home,'Local',name,'thumbnail.jpg')
 					m.append(picn)
 					if os.path.exists(
 							os.path.join(home,'Local',name,'summary.txt')):
@@ -8448,7 +8477,7 @@ class Ui_MainWindow(object):
 					else:
 						m.append("Summary Not Available")
 		elif site == "Video":
-					picn = os.path.join(home,'Local',name,'poster.jpg')
+					picn = os.path.join(home,'Local',name,'thumbnail.jpg')
 					m.append(picn)
 					if os.path.exists(os.path.join(home,'Local',name,'summary.txt')):
 						summary = open_files(
@@ -8460,6 +8489,7 @@ class Ui_MainWindow(object):
 		elif site == "Music":
 					picn = os.path.join(home,'Music','Artist',name,'thumbnail.jpg')
 					m.append(picn)
+					print(picn)
 					if os.path.exists(os.path.join(home,'Music','Artist',name,'bio.txt')):
 						summary = open_files(
 								os.path.join(home,'Music','Artist',name,'bio.txt'),
@@ -8529,6 +8559,8 @@ class Ui_MainWindow(object):
 			#exec (p8)
 			#p8="self.label_"+str(length+browse_cnt)+".deselect()"
 			#exec (p8)
+			p8="self.label_"+str(length+browse_cnt)+".setAlignment(QtCore.Qt.AlignCenter)"
+			exec(p8)
 			total_till = total_till+2
 			if total_till%(2*iconv_r) == 0:
 				QtWidgets.QApplication.processEvents()
@@ -8642,14 +8674,15 @@ class Ui_MainWindow(object):
 					p4 = "self.label_"+str(length+i)+".lineWrapMode()"
 					p5="self.label_"+str(length+i)+".setObjectName(_fromUtf8("+'"'+"label_"+str(length+i)+'"'+"))"
 					p6="self.gridLayout1.addWidget(self.label_"+str(length+i)+","+str(j1)+","+str(k)+", 1, 1,QtCore.Qt.AlignCenter)"
-					p8="self.label_"+str(length+i)+".setAlignment(QtCore.Qt.AlignCenter)"
-					exec (p2)
-					exec (p3)
-					exec (p4)
-					exec (p5)
-					exec (p6)
-					exec (p8)
-					
+					#p8="self.label_"+str(length+i)+".setAlignment(QtCore.Qt.AlignCenter)"
+					p9="self.label_"+str(length+i)+".setReadOnly(True)"
+					exec(p2)
+					exec(p3)
+					exec(p4)
+					exec(p5)
+					exec(p6)
+					#exec(p8)
+					exec(p9)
 					if value_str == "deleted":
 						self.display_image(i,"image")
 						
@@ -9005,13 +9038,15 @@ class Ui_MainWindow(object):
 					p4="self.label_epn_"+str(i)+".setScaledContents(True)"
 					p5="self.label_epn_"+str(i)+".setObjectName(_fromUtf8("+'"'+"label_epn_"+str(i)+'"'+"))"
 					p6="self.gridLayout2.addWidget(self.label_epn_"+str(i)+","+str(j)+","+str(k)+", 1, 1,QtCore.Qt.AlignCenter)"
-					exec (p1)
-					exec (p7)
-					exec (p2)
-					exec (p3)
+					p8 = "self.label_epn_{0}.setAlignment(QtCore.Qt.AlignCenter|QtCore.Qt.AlignBottom)".format(str(i))
+					exec(p1)
+					exec(p7)
+					exec(p2)
+					exec(p3)
 					exec (p4)
-					exec (p5)
-					exec (p6)
+					exec(p5)
+					exec(p6)
+					exec(p8)
 					i=i+1
 					k = k+1
 					if k == iconv_r:
@@ -9025,24 +9060,26 @@ class Ui_MainWindow(object):
 				else:
 					j = 2*iconv_r
 				k = 0
-			
+				hei_ght= str(int((int(height)/2)))
 				while(i<length1):
 					p1="self.label_epn_"+str(i)+" = QtWidgets.QTextEdit(self.scrollAreaWidgetContents1)"
 					p7 = "l_"+str(i)+" = weakref.ref(self.label_epn_"+str(i)+")"
 					p2="self.label_epn_"+str(i)+".setMinimumWidth("+width+")"
 					p5="self.label_epn_"+str(i)+".setObjectName(_fromUtf8("+'"'+"label_epn_"+str(i)+'"'+"))"
 					p6="self.gridLayout2.addWidget(self.label_epn_"+str(i)+","+str(j)+","+str(k)+", 1, 1,QtCore.Qt.AlignCenter)"
-					p8="self.label_epn_"+str(i)+".setAlignment(QtCore.Qt.AlignCenter)"
-					p9="self.label_epn_"+str(i)+".setMaximumHeight("+height+")"
+					#p8="self.label_epn_"+str(i)+".setAlignment(QtCore.Qt.AlignCenter)"
+					p9="self.label_epn_"+str(i)+".setMaximumHeight("+hei_ght+")"
 					p10="self.label_epn_"+str(i)+".lineWrapMode()"
+					p11="self.label_epn_"+str(i)+".setReadOnly(True)"
 					exec(p1)
 					exec(p7)
 					exec(p2)
 					exec(p5)
 					exec(p6)
-					exec(p8)
+					#exec(p8)
 					exec(p9)
 					exec(p10)
+					exec(p11)
 					i=i+1
 					k = k+1
 					if k == iconv_r:
@@ -9105,7 +9142,7 @@ class Ui_MainWindow(object):
 							if os.path.exists(picn):
 								if os.stat(picn).st_size == 0:
 									art_n =(epnArrList[browse_cnt]).split('	')[2]
-									pic = os.path.join(home,'Music','Artist',art_n,'poster.jpg')
+									pic = os.path.join(home,'Music','Artist',art_n,'thumbnail.jpg')
 									if os.path.exists(pic):
 										picn = pic
 					elif site == "PlayLists":
@@ -9175,14 +9212,20 @@ class Ui_MainWindow(object):
 					if nameEpn.startswith('#'):
 						nameEpn = nameEpn.replace('#',self.check_symbol,1)
 					if os.path.exists(picn):
+						
 						img = QtGui.QPixmap(picn, "1")
 						q1="self.label_epn_"+str(browse_cnt)+".setPixmap(img)"
 						exec (q1)
+						#q1 = "self.label_epn_{0}.setPixmap(img.scaled({1},{2},QtCore.Qt.KeepAspectRatio))".format(
+						#		str(browse_cnt),w,h)
+						#exec(q1)
 					sumry = "<html><h1>"+nameEpn+"</h1></html>"
 					#q4="self.label_epn_"+str(length+browse_cnt)+".setToolTip((sumry))"			
 					#exec (q4)
 					q3="self.label_epn_"+str(length+browse_cnt)+".setText((nameEpn))"
 					exec (q3)
+					q3="self.label_epn_"+str(length+browse_cnt)+".setAlignment(QtCore.Qt.AlignCenter)"
+					exec(q3)
 					#p8="self.label_epn_"+str(length+browse_cnt)+".home(True)"
 					#exec (p8)
 					#p8="self.label_epn_"+str(length+browse_cnt)+".deselect()"
@@ -9497,18 +9540,26 @@ class Ui_MainWindow(object):
 		#if not self.VerticalLayoutLabel.itemAt(2):
 		#	self.VerticalLayoutLabel.addStretch(2)
 		#	print('--stretch -- added--to --label and text widget--')
-		txt = self.btnWebHide.text()
-		if txt == self.player_buttons['min']:
-			self.horizontalLayout_player_opt.insertWidget(13,self.btnWebHide,0)
-			self.btnWebHide.setText(self.player_buttons['max'])
-		else:
-			self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
-			self.btnWebHide.setText(self.player_buttons['min'])
+		#txt = self.btnWebHide.text()
+		#if txt == self.player_buttons['min']:
+		#	self.horizontalLayout_player_opt.insertWidget(13,self.btnWebHide,0)
+		#	self.btnWebHide.setText(self.player_buttons['max'])
+		#else:
+		#	self.horizLayout_web.insertWidget(0,self.btnWebHide,0)
+		#	self.btnWebHide.setText(self.player_buttons['min'])
 		if mpvplayer.processId() > 0:
 			if self.tab_2.isHidden():
 				self.tab_2.show()
+				self.list1.hide()
+				self.list2.hide()
+				self.label.hide()
+				self.text.hide()
 			else:
 				self.tab_2.hide()
+				if site == 'Music':
+					self.list2.show()
+					self.label.show()
+					self.text.show()
 		else:
 			self.showHideBrowser()
 			
@@ -9905,6 +9956,7 @@ class Ui_MainWindow(object):
 								os.path.join(home,'History',site,siteName,name,
 								'poster.jpg'))
 					if os.path.exists(thumbnail):
+						self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
 						shutil.copy(thumbnail,
 									os.path.join(home,'History',site,siteName,
 									name,'thumbnail.jpg'))
@@ -9918,6 +9970,7 @@ class Ui_MainWindow(object):
 								os.path.join(home,'History',site,name,
 								'poster.jpg'))
 					if os.path.exists(thumbnail):
+						self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
 						shutil.copy(thumbnail,
 									os.path.join(home,'History',site,name,
 									'thumbnail.jpg'))
@@ -9934,6 +9987,7 @@ class Ui_MainWindow(object):
 				self.image_fit_option(picn,thumbnail,fit_size=450)
 				shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
 				if os.path.exists(thumbnail):
+					self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
 					shutil.copy(thumbnail,
 								os.path.join(home,'Local',name,'thumbnail.jpg'))
 				#self.listfound()
@@ -9962,6 +10016,7 @@ class Ui_MainWindow(object):
 								os.path.join(home,'Music','Artist',nm,
 								'poster.jpg'))
 					if os.path.exists(thumbnail):
+						self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
 						shutil.copy(thumbnail,
 									os.path.join(home,'Music','Artist',nm,
 									'thumbnail.jpg'))
@@ -9986,8 +10041,11 @@ class Ui_MainWindow(object):
 		if site == "Local":
 			r = self.list1.currentRow()
 			name = original_path_name[r]
-		if self.image_fit_option_val in range(1,4):
-			img_opt = self.image_fit_option_val
+		if self.image_fit_option_val in range(1,9):
+			if self.image_fit_option_val != 6:
+				img_opt = self.image_fit_option_val
+			else:
+				img_opt = 1
 		else:
 			img_opt = 1
 		if (os.path.isfile(picn) and opt == "History" 
@@ -10331,7 +10389,8 @@ class Ui_MainWindow(object):
 									picn = thumb
 									self.label.clear()
 									if os.path.isfile(picn):
-										img = QtGui.QPixmap(picn, "1")
+										picn_tmp = self.change_aspect_only(picn)
+										img = QtGui.QPixmap(picn_tmp, "1")
 										self.label.setPixmap(img)
 						elif img_arr_artist:
 							thumb = os.path.join(TMPDIR,nm+'.jpg')
@@ -10342,7 +10401,8 @@ class Ui_MainWindow(object):
 							picn = thumb
 							self.label.clear()
 							if os.path.isfile(picn):
-								img = QtGui.QPixmap(picn, "1")
+								picn_tmp = self.change_aspect_only(picn)
+								img = QtGui.QPixmap(picn_tmp, "1")
 								self.label.setPixmap(img)
 			else:
 				if site == "Video":
@@ -10407,7 +10467,8 @@ class Ui_MainWindow(object):
 								ccurl(url+'#'+'-o'+'#'+picn)
 								self.label.clear()
 								if os.path.isfile(picn):
-									img = QtGui.QPixmap(picn, "1")
+									picn_tmp = self.change_aspect_only(picn)
+									img = QtGui.QPixmap(picn_tmp, "1")
 									self.label.setPixmap(img)
 							else:
 								self.videoImage(picn,thumb,fanart,'')
@@ -10556,7 +10617,8 @@ class Ui_MainWindow(object):
 							picn = thumb
 							self.label.clear()
 							if os.path.isfile(picn):
-								img = QtGui.QPixmap(picn, "1")
+								picn_tmp = self.change_aspect_only(picn)
+								img = QtGui.QPixmap(picn_tmp, "1")
 								self.label.setPixmap(img)
 							lines[0] = "#" + url1 + '\n'
 							f = open(poster_text,'w')
@@ -10603,7 +10665,8 @@ class Ui_MainWindow(object):
 							picn = thumb
 							self.label.clear()
 							if os.path.isfile(picn):
-								img = QtGui.QPixmap(picn, "1")
+								picn_tmp = self.change_aspect_only(picn)
+								img = QtGui.QPixmap(picn_tmp, "1")
 								self.label.setPixmap(img)
 						else:
 							poster_text = os.path.join(TMPDIR,name+'-poster.txt')
@@ -11768,6 +11831,10 @@ class Ui_MainWindow(object):
 	def reviewsWeb(self,srch_txt=None,review_site=None,action=None):
 		global name,nam,old_manager,new_manager,home,screen_width,quality
 		global site,epnArrList
+		
+		btn_hide = self.horizontalLayout_player_opt.itemAt(14)
+		print(btn_hide,'--hide--btn--')
+		
 		new_url = ''
 		if srch_txt:
 			srch_txt = srch_txt.replace('"','')
@@ -12659,6 +12726,12 @@ class Ui_MainWindow(object):
 			if nm:
 				if '/' in nm:
 					nm = nm.replace('/','-')
+				nm = nm.replace('"','')
+				nm = nm.replace("'","")
+				if nm.lower()!= 'none' and not nm.startswith('http'):
+					artist_name_mplayer = nm
+				else:
+					artist_name_mplayer = ''
 				music_dir_art_name = os.path.join(home,'Music','Artist',nm)
 				print(music_dir_art_name,'--music-dir-art-name--')
 				if not os.path.exists(music_dir_art_name):
@@ -12674,10 +12747,11 @@ class Ui_MainWindow(object):
 				poster = os.path.join(music_dir_art_name,'poster.jpg')
 				fan = os.path.join(music_dir_art_name,'fanart.jpg')
 				thumb = os.path.join(music_dir_art_name,'thumbnail.jpg')
-				
+				print(poster,srch,artist_name_mplayer)
 				if (not os.path.exists(poster) and srch != "offline" 
 						and artist_name_mplayer.lower() != "none" 
 						and artist_name_mplayer):	
+					print('--starting--thread--')
 					self.threadPool.append( ThreadingExample(nm) )
 					self.threadPool[len(self.threadPool)-1].finished.connect(lambda x=nm: self.finishedM(nm))
 					self.threadPool[len(self.threadPool)-1].start()
@@ -12704,13 +12778,18 @@ class Ui_MainWindow(object):
 		# fit_size = 1. Fit to Screen (Doesn't Preserve aspect ratio (A.R.))
 		# fit_size = 2. Fit to Screen Width (Preserve A.R.)
 		# fit_size = 3. Fit to Screen Height (Preserve A.R.)
-		# fit_size = 4. Fit to Screen Height with black border (Preserve A.R.)
-		# fit_size = 5. Fit to Screen Height (Left Side) with black border
+		# fit_size = 4. Fit to Screen Height and (screen-width - playlist_width) 
+		# 		with black border (Preserve A.R.)
+		# fit_size = 5. Fit to Screen Height with black border (Preserve A.R.)
 		# fit_size = 6. Fit to given widget size and preserve aspect ratio
+		# fit_size = 7. Fit to Screen Height (Left Side) with black border gap 
+		#		between two posters
+		# fit_size = 8. Fit to Screen Height (Left Side) with black border
+		
 		global screen_height,screen_width
 		try:
 			if fit_size:
-				if (fit_size == 1 or fit_size == 2) or fit_size > 6:
+				if (fit_size == 1 or fit_size == 2) or fit_size > 100:
 					if fit_size == 1 or fit_size == 2:
 						basewidth = screen_width
 					else:
@@ -12739,8 +12818,26 @@ class Ui_MainWindow(object):
 					wpercent = (baseheight / float(img.size[1]))
 					wsize = int((float(img.size[0]) * float(wpercent)))
 					img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
-					img.save(str(fanart))
-				elif fit_size == 4 or fit_size == 5:
+					#bg = Image.new('RGBA', (wsize+20,baseheight))
+					#offset = (0,0)
+					#bg.paste(img,offset)
+					img.save(str(fanart),'JPEG',quality=100)
+				elif fit_size == 7:
+					baseheight = screen_height
+					try:
+						img = Image.open(str(picn))
+					except Exception as e:
+						print(e,'Error in opening image, videoImage,---13849')
+						picn = os.path.join(home,'default.jpg')
+						img = Image.open(str(picn))
+					wpercent = (baseheight / float(img.size[1]))
+					wsize = int((float(img.size[0]) * float(wpercent)))
+					img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
+					bg = Image.new('RGBA', (wsize+20,baseheight))
+					offset = (0,0)
+					bg.paste(img,offset)
+					bg.save(str(fanart),'JPEG',quality=100)
+				elif fit_size == 5 or fit_size == 8:
 					baseheight = screen_height
 					try:
 						img = Image.open(str(picn))
@@ -12753,25 +12850,27 @@ class Ui_MainWindow(object):
 					sz = (wsize,baseheight)
 					img = img.resize((wsize, baseheight), PIL.Image.ANTIALIAS)
 					bg = Image.new('RGBA', (screen_width,screen_height))
-					if fit_size == 4:
+					if fit_size == 5:
 						offset = (int((screen_width-wsize)/2),int((screen_height-baseheight)/2))
 					else:
 						offset = (int((0)),int((screen_height-baseheight)/2))
 					bg.paste(img,offset)
 					#new_img = ImageOps.fit(img, sz, Image.ANTIALIAS, centering=(0.5,0.5))
 					bg.save(str(fanart),'JPEG',quality=100)
-				elif fit_size == 6:
-					if widget:
+				elif fit_size == 6 or fit_size == 4:
+					if widget and fit_size == 6:
 						if widget == self.label:
 							basewidth = widget.maximumWidth()
 							baseheight = widget.maximumHeight()
 						else:
 							basewidth = widget.width()
 							baseheight = widget.height()
+					elif fit_size == 4:
+						basewidth = screen_width - self.width_allowed
+						baseheight = screen_height
 					else:
 						basewidth = self.float_window.width()
 						baseheight = self.float_window.height()
-					#mask = Image.new('L', (100, 100), 0)
 					bg = Image.new('RGBA', (basewidth,baseheight))
 					try:
 						img = Image.open(str(picn))
@@ -12791,13 +12890,15 @@ class Ui_MainWindow(object):
 						img = img.resize((basewidth,hsize), PIL.Image.ANTIALIAS)
 						offset = (0,int((baseheight-hsize)/2))
 					bg.paste(img,offset)
-					if widget:
+					if widget and fit_size == 6:
 						if widget == self.label:
 							bg.save(str(fanart),'JPEG',quality=100)
 						elif widget == self.float_window:
 							tmp_img = (os.path.join(TMPDIR,'tmp.jpg'))
 							bg.save(str(tmp_img),'JPEG',quality=100)
 							return tmp_img
+					elif fit_size == 4:
+						bg.save(str(fanart),'JPEG',quality=100)
 					else:
 						tmp_img = (os.path.join(TMPDIR,'tmp.jpg'))
 						bg.save(str(tmp_img),'JPEG',quality=100)
@@ -12834,8 +12935,11 @@ class Ui_MainWindow(object):
 	
 	def videoImage(self,picn,thumbnail,fanart,summary):
 		global screen_height,screen_width
-		if self.image_fit_option_val in range(1,4):
-			img_opt = self.image_fit_option_val
+		if self.image_fit_option_val in range(1,9):
+			if self.image_fit_option_val !=6:
+				img_opt = self.image_fit_option_val
+			else:
+				img_opt = 1
 		else:
 			img_opt = 1
 		
@@ -12862,7 +12966,7 @@ class Ui_MainWindow(object):
 				if 'poster.jpg' in poster:
 					picn = self.change_aspect_only(poster)
 					
-				#else:
+				print(picn)
 				self.label.setPixmap(QtGui.QPixmap(picn, "1"))
 				if not self.float_window.isHidden():
 					picn = self.image_fit_option(
@@ -13053,7 +13157,7 @@ class Ui_MainWindow(object):
 					self.play_file_now(file_path_name_mkv)
 					finalUrl = file_path_name_mkv
 				finalUrl = '"'+finalUrl+'"'
-				if site.lower() == 'playlists':
+				if (site.lower() == 'playlists'):
 					if self.is_artist_exists(row):
 						self.musicBackground(row,'get now')
 						self.updateMusicCount('count',finalUrl)
@@ -13096,6 +13200,7 @@ class Ui_MainWindow(object):
 						r = row
 					finalUrl = '"'+finalUrl+'"'
 					self.musicBackground(r,'Search')
+					print(r,'--search--musicbackground--')
 					self.updateMusicCount('count',finalUrl)
 					return True
 				else:
@@ -13345,6 +13450,8 @@ class Ui_MainWindow(object):
 				self.playlistUpdate()
 				if 'youtube.com' in finalUrl:
 					finalUrl = get_yt_url(finalUrl,quality).strip()
+				#if is_artist_exists(row):
+					
 		elif finalUrlFound == True:
 				row_num = self.list2.currentRow()
 			
@@ -14174,7 +14281,8 @@ class Ui_MainWindow(object):
 				picn = thumb
 				self.label.clear()
 				if os.path.isfile(picn):
-					img = QtGui.QPixmap(picn, "1")
+					picn_tmp = self.change_aspect_only(picn)
+					img = QtGui.QPixmap(picn_tmp, "1")
 					self.label.setPixmap(img)
 		
 	def finishedM(self,nm):
@@ -16806,17 +16914,18 @@ class Ui_MainWindow(object):
 			
 		ui.music_mode_dim_show = True
 		ui.list_with_thumbnail = False
-		
+		ui.image_fit_option_val = 4
 		MainWindow.hide()
 		print('Music Mode')
 		layout_mode = "Music"
 		print(ui.music_mode_dim,'--music--mode--')
 		MainWindow.showNormal()
-		MainWindow.setGeometry(
-				ui.music_mode_dim[0],ui.music_mode_dim[1],
-				ui.music_mode_dim[2],ui.music_mode_dim[3]
-				)
-		MainWindow.show()
+		#MainWindow.setGeometry(
+		#		ui.music_mode_dim[0],ui.music_mode_dim[1],
+		#		ui.music_mode_dim[2],ui.music_mode_dim[3]
+		#		)
+		MainWindow.showMaximized()
+		#MainWindow.show()
 		ui.text.show()
 		ui.label.show()
 		show_hide_cover = 1
@@ -18049,6 +18158,7 @@ def main():
 				ui.music_mode_dim[0],ui.music_mode_dim[1],
 				ui.music_mode_dim[2],ui.music_mode_dim[3]
 				)
+		ui.image_fit_option_val = 4
 	else:
 		ui.sd_hd.show()
 		ui.audio_track.show()
