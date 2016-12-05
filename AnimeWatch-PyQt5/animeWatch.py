@@ -785,16 +785,26 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						else:
 							mpvplayer.write(b'\n osd-msg-bar seek -10 \n')
 						self.frameShowHide()
-					elif event.key() == QtCore.Qt.Key_0:
+					elif event.key() == QtCore.Qt.Key_BracketRight:
 						if Player == "mplayer":
 								mpvplayer.write(b'\n seek +90 \n')
 						else:
 								mpvplayer.write(b'\n osd-msg-bar seek +90 \n')
-					elif event.key() == QtCore.Qt.Key_9:
+					elif event.key() == QtCore.Qt.Key_BracketLeft:
 						if Player == "mplayer":
 								mpvplayer.write(b'\n seek -5 \n')
 						else:
 								mpvplayer.write(b'\n osd-msg-bar seek -5 \n')
+					elif event.key() == QtCore.Qt.Key_0:
+						if Player == "mplayer":
+								mpvplayer.write(b'\n volume +5 \n')
+						else:
+								mpvplayer.write(b'\n add ao-volume +5 \n')
+					elif event.key() == QtCore.Qt.Key_9:
+						if Player == "mplayer":
+								mpvplayer.write(b'\n volume -5 \n')
+						else:
+								mpvplayer.write(b'\n add ao-volume -5 \n')
 					elif event.key() == QtCore.Qt.Key_A:
 						mpvplayer.write(b'\n cycle_values video-aspect "16:9" "4:3" "2.35:1" "-1" \n')
 					elif event.key() == QtCore.Qt.Key_N:
@@ -1389,10 +1399,6 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			else:
 				newTitle = ui.check_symbol+ui.epn_name_in_list	
 			sumry = "<html><h1>"+ui.epn_name_in_list+"</h1></html>"
-			#q3="txt = ui.label_epn_"+str(title_num)+".toPlainText()"
-			#exec (q3)
-			#q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"			
-			#exec (q4)
 			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
 			exec (q3)
 			#p8="ui.label_epn_"+str(title_num)+".home(True)"
@@ -1476,32 +1482,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				finalUrl = '"'+epnArrList[num]+'"'
 				new_epn = os.path.basename(epnArrList[num])
 				ui.epn_name_in_list = new_epn
-			"""
-			if (site != "Local" and site!="PlayLists" and site!="Music" 
-					and site!="Video"):
-				ui.epnfound_return()
-				if type(path_final_Url) is not list:
-					finalUrl = path_final_Url
-				else:
-					rfr_url = path_final_Url[1]
-					rfr = "--referrer="+rfr_url
-					finalUrl = path_final_Url[0]
-			finalUrl = finalUrl.replace('#','')
-			if site == "PlayLists":
-				finalUrl = finalUrl.replace('""','"')
-			print (finalUrl)
-			if 'youtube.com' in finalUrl:
-				ui.external_url = True
-				finalUrl = finalUrl.replace('"','')
-				finalUrl = get_yt_url(finalUrl,quality).strip()
-				if '#' in finalUrl:
-					audio_url = finalUrl.split('#')[0]
-					video_url = finalUrl.split('#')[1]
-					if Player == 'mpv':
-						finalUrl = "--audio-file="+audio_url+' '+video_url
-					elif Player == 'mplayer':
-						finalUrl = '-audiofile '+audio_url+' '+video_url
-			"""
+			
 			finalUrl = ui.epn_return(num)
 			if num < ui.list2.count():
 				ui.list2.setCurrentRow(num)
@@ -1527,9 +1508,6 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 					print (command)
 					ui.infoPlay(command)	
-			print ("horiz="+str(ui.scrollArea1.horizontalScrollBar().maximum()))
-			#ui.scrollArea1.horizontalScrollBar().setValue((((curR+1)%iconv_r)-1)*w1)
-			#ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r))*h1)
 			ui.labelFrame2.setText(ui.epn_name_in_list)
 			#Mode 2,3 Ends Here#
 		elif var_mode == 4:
@@ -1600,30 +1578,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				#ui.epn_name_in_list = new_epn
 				new_epn = os.path.basename(epnArrList[num])
 				ui.epn_name_in_list = new_epn
-			"""
-			if site != "Local" and site != "PlayLists":
-				ui.epnfound_return()
-				if type(path_final_Url) is not list:
-					finalUrl = path_final_Url
-				else:
-					rfr_url = path_final_Url[1]
-					rfr = "--referrer="+rfr_url
-					finalUrl = path_final_Url[0]
-			finalUrl = finalUrl.replace('#','')
-			if site == "PlayLists":
-				finalUrl = finalUrl.replace('""','"')
-			if 'youtube.com' in finalUrl:
-				ui.external_url = True
-				finalUrl = finalUrl.replace('"','')
-				finalUrl = get_yt_url(finalUrl,quality).strip()
-				if '#' in finalUrl:
-					audio_url = finalUrl.split('#')[0]
-					video_url = finalUrl.split('#')[1]
-					if Player == 'mpv':
-						finalUrl = "--audio-file="+audio_url+' '+video_url
-					elif Player == 'mplayer':
-						finalUrl = '-audiofile '+audio_url+' '+video_url
-			"""
+			
 			finalUrl = ui.epn_return(num)
 			if num < ui.list2.count():
 				ui.list2.setCurrentRow(num)
@@ -1649,9 +1604,6 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 					print (command)
 					ui.infoPlay(command)	
-			print ("horiz="+str(ui.scrollArea1.horizontalScrollBar().maximum()))
-			#ui.scrollArea1.horizontalScrollBar().setValue((((curR+1)%iconv_r)-1)*w1)
-			#ui.scrollArea1.verticalScrollBar().setValue((((curR+1)/iconv_r))*h1)
 			ui.labelFrame2.setText(ui.epn_name_in_list)
 		elif var_mode == 5:
 			
@@ -5202,20 +5154,29 @@ class tab5(QtWidgets.QWidget):
 			else:
 				mpvplayer.write(b'\n osd-msg-bar seek -10 \n')
 			self.frameShowHide()
-		elif event.key() == QtCore.Qt.Key_0:
+		elif event.key() == QtCore.Qt.Key_BracketRight:
 			if Player == "mplayer":
-					self.set_slider_val(90)
 					mpvplayer.write(b'\n seek +90 \n')
 			else:
 					mpvplayer.write(b'\n osd-msg-bar seek +90 \n')
-		elif event.key() == QtCore.Qt.Key_9:
+		elif event.key() == QtCore.Qt.Key_BracketLeft:
 			if Player == "mplayer":
-					self.set_slider_val(-5)
 					mpvplayer.write(b'\n seek -5 \n')
 			else:
 					mpvplayer.write(b'\n osd-msg-bar seek -5 \n')
+		elif event.key() == QtCore.Qt.Key_0:
+			if Player == "mplayer":
+					mpvplayer.write(b'\n volume +5 \n')
+			else:
+					mpvplayer.write(b'\n add ao-volume +5 \n')
+		elif event.key() == QtCore.Qt.Key_9:
+			if Player == "mplayer":
+					mpvplayer.write(b'\n volume -5 \n')
+			else:
+					mpvplayer.write(b'\n add ao-volume -5 \n')
 		elif event.key() == QtCore.Qt.Key_A:
-			mpvplayer.write(b'\n cycle_values video-aspect "16:9" "4:3" "2.35:1" "-1" \n')
+			if Player == 'mpv':
+				mpvplayer.write(b'\n cycle_values video-aspect "16:9" "4:3" "2.35:1" "-1" \n')
 		elif event.key() == QtCore.Qt.Key_N:
 			mpvplayer.write(b'\n playlist_next \n')
 		elif event.key() == QtCore.Qt.Key_L:
@@ -8130,6 +8091,7 @@ class Ui_MainWindow(object):
 			font: Bold 12px;color:white;
 			background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius:3px;
 			}
+			
 			QListWidget:item {
 			height: 30px;
 			}
@@ -10314,19 +10276,21 @@ class Ui_MainWindow(object):
 			except Exception as e:
 				print(e,'--line 10948--')
 		elif os.path.isfile(picn) and (site == "Music"):
-			if str(self.list3.currentItem().text()) == "Artist":
-				nm = name
-			else:
-				try:
+			try:
+				if str(self.list3.currentItem().text()) == "Artist":
+					nm = ui.list1.currentItem().text()
+				else:
 					r = ui.list2.currentRow()
-				
 					nm = epnArrList[r].split('	')[2]
 					nm = nm.replace('"','')
-				except:
+			except Exception as e:
+					print(e)
 					nm = ""
+			print('nm=',nm)
 			if nm and os.path.exists(os.path.join(home,'Music','Artist',nm)):
 				picn = os.path.join(TMPDIR,nm+'.jpg')
 				thumbnail = os.path.join(TMPDIR,nm+'-thumbnail.jpg')
+				print(picn,thumbnail)
 				try:
 					self.image_fit_option(picn,thumbnail,fit_size=450)
 					shutil.copy(picn,
@@ -10413,15 +10377,17 @@ class Ui_MainWindow(object):
 				print(e,'--line--11023--')
 			#ui.listfound()
 		elif (site == "Music"):
-			if str(self.list3.currentItem().text()) == "Artist":
-					nm = name
-			else:
-					try:
-						r = ui.list2.currentRow()
-					
-						nm = epnArrList[r].split('	')[2]
-					except:
-						nm = ""
+			try:
+				if str(self.list3.currentItem().text()) == "Artist":
+					nm = ui.list1.currentItem().text()
+				else:
+					r = ui.list2.currentRow()
+					nm = epnArrList[r].split('	')[2]
+					nm = nm.replace('"','')
+			except Exception as e:
+					print(e)
+					nm = ""
+			print('nm=',nm)
 			if nm and os.path.exists(os.path.join(home,'Music','Artist',nm)):
 				picn = os.path.join(TMPDIR,nm+'.jpg')
 				shutil.copy(picn,
@@ -10447,16 +10413,17 @@ class Ui_MainWindow(object):
 			r = self.list1.currentRow()
 			name = str(self.list1.currentItem().text())
 		elif site == "Music":
-			nm = ''
-			if str(self.list3.currentItem().text()) == "Artist":
-				nm = name
-			else:
-				try:
+			try:
+				nm = ''
+				if str(self.list3.currentItem().text()) == "Artist":
+					nm = ui.list1.currentItem().text()
+				else:
 					r = ui.list2.currentRow()
-				
 					nm = epnArrList[r].split('	')[2]
-				except:
-					nm = ""
+					nm = nm.replace('"','')
+			except Exception as e:
+				print(e)
+				nm = ""
 			sumry = os.path.join(TMPDIR,nm+'-bio.txt')
 		else:
 			sumry = os.path.join(TMPDIR,name+'-summary.txt')
@@ -10475,15 +10442,17 @@ class Ui_MainWindow(object):
 		elif os.path.isfile(sumry) and (site == "Local" or site == "Video"):
 				shutil.copy(sumry,os.path.join(home,'Local',name,'summary.txt'))
 		elif (site == "Music"):
-			if str(self.list3.currentItem().text()) == "Artist":
-				nm = name
-			else:
-				try:
+			try:
+				nm = ''
+				if str(self.list3.currentItem().text()) == "Artist":
+					nm = ui.list1.currentItem().text()
+				else:
 					r = ui.list2.currentRow()
-				
 					nm = epnArrList[r].split('	')[2]
-				except:
-					nm = ""
+					nm = nm.replace('"','')
+			except Exception as e:
+				print(e)
+				nm = ""
 			if nm and os.path.exists(os.path.join(home,'Music','Artist',nm)):
 				sumry = os.path.join(TMPDIR,nm+'-bio.txt')
 				shutil.copy(sumry,os.path.join(home,'Music','Artist',nm,'bio.txt'))
@@ -14831,7 +14800,9 @@ class Ui_MainWindow(object):
 		
 		try:
 			a = str(p.readAllStandardOutput(),'utf-8').strip('\r\n')
-			
+			if 'volume' in a:
+				print(a)
+			#print(a)
 			if 'icy info:' in a.lower() or 'icy-title:' in a.lower():
 				if 'icy info:' in a.lower():
 					song_title = re.search("'[^']*",a)
@@ -18602,11 +18573,11 @@ def main():
 	"""Starting of Final code which will be Executed just before 
 	Application Quits"""
 	
-	if ui.dockWidget_3.isHidden():
+	if ui.dockWidget_3.isHidden() or ui.auto_hide_dock:
 		dock_opt = 0
 	else:
 		dock_opt = 1
-	
+		
 	def_val = ''
 	for i in default_arr_setting:
 		def_val = def_val + str(i) + ','
