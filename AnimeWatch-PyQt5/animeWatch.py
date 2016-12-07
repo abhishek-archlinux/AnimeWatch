@@ -1207,21 +1207,19 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			if (site == "Local" or site == "PlayLists" or site == "Music" or 
 				site == "Video" or site == "None"):
 				num = curR
+				cur_label_num = num
 				ui.gridLayout.addWidget(ui.tab_6, 0, 2, 1, 1)
 				#ui.gridLayout.addWidget(ui.frame1, 1, 0, 1, 1)
 				#ui.tab_5.setMinimumSize(500,400)
 				#ui.gridLayout.addWidget(ui.tab_6, 0, 1, 1, 1)
 				if '	' in epnArrList[num]:
 					new_epn = (epnArrList[num]).split('	')[0]
-					
-					finalUrl = '"'+((epnArrList[num]).split('	')[1])+'"'
 				else:
-					#new_epn = (epnArrList[num]).split('/')[-1]
 					new_epn = os.path.basename(epnArrList[num])
-					finalUrl = '"'+epnArrList[num]+'"'
 				if new_epn.startswith('#'):
 					new_epn = new_epn.replace('#','',1)
 				ui.epn_name_in_list = new_epn
+				finalUrl = ui.epn_return(num)
 				if num < ui.list2.count():
 					ui.list2.setCurrentRow(num)
 					idw = str(int(ui.tab_5.winId()))
@@ -1237,26 +1235,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					ht = eval(p1)
 					print(ht,'--ht--',ui.scrollArea1.height())
 					ui.scrollArea1.verticalScrollBar().setValue(ht)
-					finalUrl = finalUrl.replace('#','',1)
-					try:
-						finalUrl = str(finalUrl)
-					except:
-						finalUrl = finalUrl
-					finalUrl = finalUrl.replace('"','')
-					if ui.if_file_path_exists_then_play(curR,ui.list2,True):
-						print('---line 1868---')
-					else:
-						if 'youtube.com' in finalUrl:
-							ui.external_url = True
-							finalUrl = get_yt_url(finalUrl,quality).strip()
-							if '#' in finalUrl:
-								audio_url = finalUrl.split('#')[0]
-								video_url = finalUrl.split('#')[1]
-								if Player == 'mpv':
-									finalUrl = "--audio-file="+audio_url+' '+video_url
-								elif Player == 'mplayer':
-									finalUrl = '-audiofile '+audio_url+' '+video_url
-						ui.play_file_now(finalUrl)
+					ui.play_file_now(finalUrl)
 					if site == "Music":
 						print (finalUrl)
 						try:
@@ -1280,7 +1259,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						new_epn = new_epn.replace('#','',1)
 					ui.epn_name_in_list = new_epn
 					ui.list2.setCurrentRow(num)
-					ui.epnfound()
+					finalUrl = ui.epn_return(num)
 					if num < ui.list2.count():
 						ui.gridLayout.addWidget(ui.tab_5, 0, 1, 1, 1)
 						##ui.gridLayout.addWidget(ui.frame1, 1, 1, 1, 1)
@@ -1292,6 +1271,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						ui.tab_5.setFocus()
 						ui.frame1.show()
 						i = 0
+						ui.play_file_now(finalUrl)
 						thumbnail_indicator[:]=[]
 						iconv_r = 1
 						ui.thumbnail_label_update_epn()
@@ -1604,6 +1584,43 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			server._emitMeta("Play",site,epnArrList)
 		except:
 			pass
+		try:
+			if site.lower() == "music":
+					try:
+						artist_name_mplayer = epnArrList[row].split('	')[2]
+						if artist_name_mplayer.lower() == "none":
+							artist_name_mplayer = ""
+					except:
+						artist_name_mplayer = ""
+					ui.updateMusicCount('count',finalUrl)
+					r = curR
+					ui.musicBackground(r,'Search')
+			elif site.lower() == 'video' or site.lower() == 'local' or site.lower() == 'playlists':
+				try:
+					row = curR
+					if (site.lower() == 'playlists'):
+						if ui.is_artist_exists(row):
+							ui.musicBackground(row,'get now')
+							ui.updateMusicCount('count',finalUrl)
+						else:
+							try:
+								thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+								print("thumbnail path = {0}".format(thumb_path))
+								if os.path.exists(thumb_path):
+									self.videoImage(thumb_path,thumb_path,thumb_path,'')
+							except Exception as e:
+								print('Error in getting Thumbnail: {0}'.format(e))
+					elif site.lower() == "video":
+						ui.updateVideoCount('mark',finalUrl)
+						thumb_path = ui.get_thumbnail_image_path(row,epnArrList[row])
+						print("thumbnail path = {0}".format(thumb_path))
+						if os.path.exists(thumb_path):
+							ui.videoImage(thumb_path,thumb_path,thumb_path,'')
+				except Exception as e:
+					print('Error in getting Thumbnail--1620-- - localvideogetinlist: {0}'.format(e))
+		except Exception as e:
+			print(e,'--1622--')
+		
 		try:
 			new_cnt = curR + ui.list2.count()
 			p1 = "ui.label_epn_{0}.setTextColor(QtCore.Qt.green)".format(new_cnt)
@@ -2023,6 +2040,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				print(new_small_thumb)
 				if os.path.exists(new_small_thumb):
 					os.remove(new_small_thumb)
+
+
 
 
 class MySlider(QtWidgets.QSlider):
@@ -4315,6 +4334,44 @@ class QLineCustomEpn(QtWidgets.QLineEdit):
 			ui.list5.setFocus()
 		super(QLineCustomEpn, self).keyPressEvent(event)
 
+class QLineProgress(QtWidgets.QProgressBar):
+	
+	def __init__(self, parent):
+		super(QLineProgress, self).__init__(parent)
+		
+	def mouseMoveEvent(self, event): 
+		global Player,ui,mplayerLength
+		#t = self.minimum() + ((self.maximum()-self.minimum()) * event.x()) / self.width()
+		t = ((event.x() - self.x())/self.width())
+		t = t*mplayerLength
+		if Player == "mplayer":
+			l=str((datetime.timedelta(milliseconds=t)))
+		elif Player == "mpv":
+			l=str((datetime.timedelta(seconds=t)))
+		else:
+			l = str(0)
+		if '.' in l:
+			l = l.split('.')[0]
+		self.setToolTip(l)
+		
+	def mousePressEvent(self, event):
+		global mpvplayer,Player,current_playing_file_path,mplayerLength
+		old_val = int((self.value()*mplayerLength)/100)
+		
+		t = ((event.x() - self.x())/self.width())
+		#self.setValue(int(t*100))
+		t = int(t*mplayerLength)
+		new_val = t
+		print(old_val,new_val,int((new_val-old_val)/1000))
+		if mpvplayer:
+			if mpvplayer.processId() > 0:
+				if Player== "mpv":
+					var = bytes('\n'+"seek "+str(new_val)+" absolute"+'\n','utf-8')
+					mpvplayer.write(var)
+				elif Player =="mplayer":
+					seek_val = int((new_val-old_val)/1000)
+					var = bytes('\n'+"seek "+str(seek_val)+' \n','utf-8')
+					mpvplayer.write(var)
 
 class QProgressBarCustom(QtWidgets.QProgressBar):
 	
@@ -13366,18 +13423,18 @@ class Ui_MainWindow(object):
 		if mpvplayer.processId() > 0 and OSNAME == 'posix':
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
-				t1 = bytes('\n'+'show_text '+epnShow+'\n','utf-8')
-				t2 = bytes('\n'+"loadfile "+finalUrl+" replace"+'\n','utf-8')
+				t1 = bytes('\n '+'show_text '+epnShow+' \n','utf-8')
+				t2 = bytes('\n '+"loadfile "+finalUrl+" replace "+'\n','utf-8')
 			elif Player == 'mpv':
-				t1 = bytes('\n'+'show-text '+epnShow+'\n','utf-8')
-				t2 = bytes('\n'+"loadfile "+finalUrl+'\n','utf-8')
-			print (finalUrl,'---hello-----')
+				t1 = bytes('\n '+'show-text '+epnShow+' \n','utf-8')
+				t2 = bytes('\n '+"loadfile "+finalUrl+' replace \n','utf-8')
+			print (t2,'---hello-----')
 			mpvplayer.write(t1)
 			mpvplayer.write(t2)
 			if self.mplayer_SubTimer.isActive():
 				self.mplayer_SubTimer.stop()
 			self.mplayer_SubTimer.start(2000)
-			print('..function play_file_now gapless mode..{0}'.format(finalUrl))
+			print('..function play_file_now gapless mode::::{0}'.format(finalUrl))
 		else:
 			if mpvplayer.processId()>0:
 				mpvplayer.kill()
@@ -13841,19 +13898,8 @@ class Ui_MainWindow(object):
 			self.list2.setCurrentRow(row)
 			
 			
-			if site == "Music":
-				print (finalUrl)
-				try:
-					artist_name_mplayer = epnArrList[row].split('	')[2]
-					if artist_name_mplayer == "None":
-						artist_name_mplayer = ""
-				except:
-					artist_name_mplayer = ""
-				if not 'youtube.com' in finalUrl.lower():
-					self.updateMusicCount('count',finalUrl)
-			elif site == "Video":
-				self.updateVideoCount('mark',finalUrl)
-			elif site == 'None' and video_local_stream:
+			
+			if site == 'None' and video_local_stream:
 					finalUrl = self.local_torrent_open(local_torrent_file_path)
 			elif site == 'None' and self.btn1.currentText().lower() == 'youtube':
 					finalUrl = finalUrl.replace('"','')
@@ -13881,24 +13927,7 @@ class Ui_MainWindow(object):
 				finalUrl = finalUrl[0]
 				
 			finalUrl = finalUrl.replace('"','')
-			"""
-			if ('#' in finalUrl and finalUrl.startswith('http')):
-				if mpvplayer.processId() > 0:
-					mpvplayer.kill()
-				video_url = finalUrl.split('#')[-1]
-				audio_url = finalUrl.split('#')[0]
-				if Player == 'mplayer':
-					if mpvplayer.processId() > 0:
-						try:
-							subprocess.Popen(['killall','mplayer'])
-						except:
-							pass
-					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
-				else:
-					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
-				self.infoPlay(command)
-			else:
-			"""
+			
 			finalUrl = '"'+finalUrl+'"'
 			try:
 				finalUrl = str(finalUrl)
@@ -13931,10 +13960,7 @@ class Ui_MainWindow(object):
 			else:
 				finalUrl = finalUrl.replace('"','')
 				subprocess.Popen([Player, finalUrl], stdin=subprocess.PIPE,stdout=subprocess.PIPE)
-			if site == "Music":
-				self.list2.setFocus()
-				r = self.list2.currentRow()
-				self.musicBackground(r,'Search')
+			
 			
 		else:
 		
@@ -14126,6 +14152,31 @@ class Ui_MainWindow(object):
 		if downloadVideo == 0:
 			self.initial_view_mode()
 		self.epn_name_in_list = self.epn_name_in_list.replace('#','',1)
+		
+		try:
+			if site == "Music":
+				print (finalUrl)
+				try:
+					artist_name_mplayer = epnArrList[row].split('	')[2]
+					if artist_name_mplayer.lower() == "none" or 'http' in artist_name_mplayer:
+						artist_name_mplayer = ""
+				except:
+					artist_name_mplayer = ""
+				if self.is_artist_exists(row):
+					self.updateMusicCount('count',finalUrl)
+					self.musicBackground(row,'Search')
+			elif site.lower() == 'video' or site.lower() == 'local' or site.lower() == 'playlists':
+				if site == "Video":
+					self.updateVideoCount('mark',finalUrl)
+				try:
+					thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+					print("thumbnail path = {0}".format(thumb_path))
+					if os.path.exists(thumb_path):
+						self.videoImage(thumb_path,thumb_path,thumb_path,'')
+				except Exception as e:
+					print('Error in getting Thumbnail -14179- epnfound: {0}'.format(e))
+		except Exception as e:
+			print(e,'--14180--')
 		
 	def initial_view_mode(self):
 		global site,show_hide_player
@@ -14485,7 +14536,7 @@ class Ui_MainWindow(object):
 			print(mpvplayer.processId(),'=mpvplayer.processId()')
 			if (mpvplayer.processId()>0):
 				mpvplayer.kill()
-				time.sleep(1)
+				#time.sleep(1)
 				if mpvplayer.processId() > 0:
 					print(mpvplayer.processId(),'=mpvplayer.processId()')
 					try:
@@ -14504,16 +14555,7 @@ class Ui_MainWindow(object):
 		idw = str(int(self.tab_5.winId()))
 		self.tab_5.show()
 		self.tab_5.setFocus()
-		"""
-		if '#' in finalUrl:
-			video_url = finalUrl.split('#')[-1]
-			audio_url = finalUrl.split('#')[0]
-			if Player == 'mplayer':
-				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+video_url+' -audiofile '+audio_url
-			else:
-				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' --audio-file='+audio_url+' '+video_url
-		else:
-		"""
+		
 		finalUrl = str(finalUrl)
 		path_final_Url = finalUrl
 		current_playing_file_path = finalUrl
@@ -14893,8 +14935,7 @@ class Ui_MainWindow(object):
 					elif "Paused" in a and mpv_indicator:
 						out = "(Paused Caching..Wait Few Seconds) "+out
 					out = re.sub('AV:[^0-9]*|A:[^0-9]*','',out)
-					if not new_tray_widget.isHidden():
-						new_tray_widget.update_signal.emit(out)
+					
 					#print(out)
 					l = re.findall("[0-9][^ ]*",out)
 					val1 = l[0].split(':')
@@ -14916,9 +14957,12 @@ class Ui_MainWindow(object):
 					out1 = out+" ["+self.epn_name_in_list+"]"
 					self.progressEpn.setFormat((out1))
 					if mplayerLength == 1:
+						val = 0
 						self.slider.setValue(0)
 					else:
 						self.slider.setValue(val)
+					if not new_tray_widget.isHidden():
+						new_tray_widget.update_signal.emit(out,val)
 				if "VO:" in a or "AO:" in a or 'Stream opened successfully' in a:
 					t = "Loading: "+self.epn_name_in_list+" (Please Wait)"
 					self.progressEpn.setFormat((t))
@@ -14930,7 +14974,12 @@ class Ui_MainWindow(object):
 						self.frame_timer.start(1000)
 				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 					if self.player_setLoop_var:
-						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+'\n','utf-8')
+						if current_playing_file_path.startswith('"'):
+							replay = '\n loadfile {0} \n'.format(current_playing_file_path)
+						else:
+							replay = '\n loadfile "{0}" \n'.format(current_playing_file_path)
+						t2 = bytes(replay,'utf-8')
+						print(t2,'--replay--')
 						mpvplayer.write(t2)
 						return 0
 					else:
@@ -15112,6 +15161,7 @@ class Ui_MainWindow(object):
 						l =int(l)*1000
 						
 						if mplayerLength == 1:
+							l = 0
 							self.slider.setValue(0)
 						else:
 							self.slider.setValue(int(l))
@@ -15126,7 +15176,7 @@ class Ui_MainWindow(object):
 							out = out_time + " ["+self.epn_name_in_list+"]" +' Cache:'+c
 							
 						if not new_tray_widget.isHidden():
-							new_tray_widget.update_signal.emit(out_time)
+							new_tray_widget.update_signal.emit(out_time,int(l))
 					if (cache_empty == "yes") and (site != "Local" or site != "Music" or site != "Video"):
 						print('---nop--error--pausing---')
 						mpvplayer.write(b'\n pause \n')
@@ -15153,6 +15203,7 @@ class Ui_MainWindow(object):
 					if self.player_setLoop_var:
 						t2 = bytes('\n'+"loadfile "+(current_playing_file_path)+" replace"+'\n','utf-8')
 						mpvplayer.write(t2)
+						print(t2)
 						return 0
 					else:
 						if not self.queue_url_list:
@@ -15475,40 +15526,6 @@ class Ui_MainWindow(object):
 		new_epn = self.epn_name_in_list
 	
 		finalUrl = finalUrl.replace('"','')
-		"""
-		if '#' in finalUrl:
-			
-				print('---*******-------line 15825--')
-				if '#' in finalUrl:
-					video_url = finalUrl.split('#')[-1]
-					audio_url = finalUrl.split('#')[0]
-					if Player == 'mpv':
-						finalUrl = "--audio-file="+audio_url+' '+video_url
-					elif Player == 'mplayer':
-						finalUrl = '-audiofile '+audio_url+' '+video_url
-				if Player == 'mplayer':
-					if mpvplayer.processId()>0:
-						mpvplayer.kill()
-						if mpvplayer.processId() > 0:
-							try:
-								subprocess.Popen(['killall','mplayer'])
-							except:
-								pass
-					command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-				else:
-					command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
-					if mpvplayer.processId()>0:
-						mpvplayer.kill()
-						if mpvplayer.processId() > 0:
-							try:
-								subprocess.Popen(['killall','mpv'])
-							except:
-								pass
-					print('---*******-------line 15849--')
-				self.infoPlay(command)
-				
-		else:
-		"""
 		finalUrl = '"'+finalUrl+'"'
 		try:
 			finalUrl = str(finalUrl,'utf-8')
@@ -15684,37 +15701,7 @@ class Ui_MainWindow(object):
 			print('--------inside getQueueInlist------')
 			self.list2.setCurrentRow(curR)
 			
-		"""
-		if '#' in epnShow:
-			if '#' in epnShow:
-				epnShow = epnShow.replace('"','')
-				if mpvplayer.processId()>0:
-					mpvplayer.kill()
-				video_url = epnShow.split('#')[-1]
-				audio_url = epnShow.split('#')[0]
-				if Player == 'mpv':
-					finalUrl = "--audio-file="+audio_url+' '+video_url
-				elif Player == 'mplayer':
-					finalUrl = '-audiofile '+audio_url+' '+video_url
-			else:
-				finalUrl = epnShow
-			if Player == 'mplayer':
-				if mpvplayer.processId() > 0:
-					try:
-						subprocess.Popen(['killall','mplayer'])
-					except:
-						pass
-				command = "mplayer -identify -idle -msglevel all=4:statusline=5:global=6 -cache 100000 -cache-min 0.001 -cache-seek-min 0.001 -osdlevel 0 -slave -wid "+idw+" "+finalUrl
-			else:
-				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+' '+finalUrl
-				if mpvplayer.processId() > 0:
-					try:
-						subprocess.Popen(['killall','mpv'])
-					except:
-						pass
-			self.infoPlay(command)
-		else:
-		"""
+		
 		epnShowN = '"'+epnShow.replace('"','')+'"'
 		if Player == "mplayer":
 				command = "mplayer -idle -identify -msglevel all=4:statusline=5:global=6 -osdlevel 0 -slave -wid "+idw+" "+epnShowN
@@ -17401,7 +17388,7 @@ class Ui_MainWindow(object):
 		
 class FloatWindowWidget(QtWidgets.QWidget):
 	
-	update_signal = pyqtSignal(str)
+	update_signal = pyqtSignal(str,int)
 	
 	def __init__(self):
 		QtWidgets.QWidget.__init__(self)
@@ -17414,11 +17401,20 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		
 		self.title = QtWidgets.QLineEdit(self)
 		self.title1 = QtWidgets.QLineEdit(self)
+		
 		self.title.setAlignment(QtCore.Qt.AlignCenter)
 		self.title1.setAlignment(QtCore.Qt.AlignCenter)
 		
-		self.progress = QtWidgets.QLineEdit(self)
-		self.progress.setAlignment(QtCore.Qt.AlignCenter)
+		self.title.setReadOnly(True)
+		self.title1.setReadOnly(True)
+		
+		#self.progress = QtWidgets.QLineEdit(self)
+		self.progress = QLineProgress(self)
+		#self.progress.setAlignment(QtCore.Qt.AlignCenter)
+		#self.progress.setReadOnly(True)
+		self.progress.setMinimum(0)
+		self.progress.setMaximum(100)
+		self.progress.setMouseTracking(True)
 		
 		self.f = QtWidgets.QFrame(self)
 		self.f.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -17477,9 +17473,11 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		
 		self.lay.insertWidget(0,self.f,0)
 		self.lay.addStretch(1)
-		self.lay.insertWidget(3,self.progress,0)
-		self.lay.insertWidget(4,self.title,0)
-		self.lay.insertWidget(5,self.title1,0)
+		
+		self.lay.insertWidget(3,self.title,0)
+		self.lay.insertWidget(4,self.title1,0)
+		self.lay.insertWidget(5,self.progress,0)
+		
 		
 		self.horiz.setSpacing(0)
 		self.horiz.setContentsMargins(0,0,0,0)
@@ -17492,8 +17490,23 @@ class FloatWindowWidget(QtWidgets.QWidget):
 		self.f.setStyleSheet("font: bold 15px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:25px;")
 		self.title.setStyleSheet("font:bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
 		self.title1.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
-		self.progress.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
-		
+		#self.progress.setStyleSheet("font: bold 10px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);height:15px;")
+		self.progress.setStyleSheet("""QProgressBar{
+			font: bold 10px;
+			color:white;
+			background:rgba(0,0,0,30%);
+			border:rgba(0,0,0,1%) ;
+			border-radius: 1px;
+			text-align: center;
+			heigth:15px;
+			}
+			
+			QProgressBar:chunk {
+			background-color: rgba(255,255,255,30%);
+			width: 5px;
+			margin: 0.5px;
+			}}""")
+			
 	def mouseMoveEvent(self,event):
 		if ui.float_timer.isActive():
 			ui.float_timer.stop()
@@ -17542,11 +17555,18 @@ class FloatWindowWidget(QtWidgets.QWidget):
 			self.remove_toolbar = True
 			ui.float_timer.start(1000)
 			
-	@pyqtSlot(str)
-	def update_progress(self,var):
-		self.progress.setText(var)
-		
-		
+	@pyqtSlot(str,int)
+	def update_progress(self,var_str,var_int):
+		global Player,mplayerLength
+		self.progress.setFormat(var_str)
+		#print(var_int)
+		if Player == 'mpv' and mplayerLength:
+			self.progress.setValue(int((var_int/mplayerLength)*100))
+		elif Player == 'mplayer' and mplayerLength:
+			self.progress.setValue(int(((var_int/mplayerLength)*100)))
+		else:
+			self.progress.setValue(0)
+			
 class RightClickMenuIndicator(QtWidgets.QMenu):
 	
 	def __init__(self,parent=None):
