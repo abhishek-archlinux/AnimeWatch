@@ -46,8 +46,8 @@ class MprisServer():
 					t = t.replace('#','')
 					print(art,t)
 				if (site == 'Music' and self.ui.list3.currentItem()) or (site == 'PlayLists'): 
-					if (site == 'Music' and self.ui.list3.currentItem().text().lower() == 'playlist') or (site == 'PlayLists'):
-						
+					if ((site == 'Music' and self.ui.list3.currentItem().text().lower() == 'playlist') 
+							or (site == 'PlayLists')):
 						artist = art
 						if artist.lower() == 'none':
 							artist = t.replace('#','')
@@ -64,7 +64,6 @@ class MprisServer():
 						print(img_place,'--img--place')
 						title = re.sub('.jpg','',pls_entry)
 						art_u = img_place
-						
 					elif site == 'Music':
 						title = t
 						artist = art
@@ -75,14 +74,10 @@ class MprisServer():
 						if artist.startswith(self.ui.check_symbol):
 							artist = artist[1:]
 						art_u = os.path.join(self.home,'Music','Artist',artist,'poster.jpg')
-						
-					
-					
 			except:
 				title = "AnimeWatch"
 				artist = "AnimeWatch"
 		else:
-		
 			try:
 				r = self.ui.list2.currentRow()
 				print(epnArrList[r])
@@ -100,7 +95,8 @@ class MprisServer():
 				title = title.replace('#','')
 				#if os.path.exists(art_u):
 				#	art_url = art_u
-			except:
+			except Exception as e:
+				print(e,'--no-dus-error--')
 				title = "AnimeWatch"
 				artist = "AnimeWatch"
 		try:
@@ -108,27 +104,10 @@ class MprisServer():
 			art_u = self.ui.get_thumbnail_image_path(r,epnArrList[r])
 			if os.path.exists(art_u):
 				art_url = art_u
-		except:
-			pass
+		except Exception as e:
+			print(e,'--no-dbus--error--')
 		
-		
-		
-		art_url_name = '256px.'+os.path.basename(art_url)
-		path_thumb,new_title = os.path.split(art_url)
-		abs_path_thumb = os.path.join(path_thumb,art_url_name)
-		try:
-			if not os.path.exists(abs_path_thumb) and os.path.exists(art_url):
-				basewidth = 256
-				img = Image.open(str(art_url))
-				wpercent = (basewidth / float(img.size[0]))
-				#hsize = int((float(img.size[1]) * float(wpercent)))
-				hsize = 256
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(abs_path_thumb))
-		except:
-			pass
-			
-
+		abs_path_thumb = art_url
 		if title == artist:
 			if len(title) > 38:
 				title = title[:36]+'..'

@@ -19,7 +19,6 @@ MPRIS_OBJECT_PATH = '/org/mpris/MediaPlayer2'
 MPRIS_MEDIAPLAYER_INTERFACE = 'org.mpris.MediaPlayer2'
 MPRIS_MEDIAPLAYER_PLAYER_INTERFACE = 'org.mpris.MediaPlayer2.Player'
 
-
 class MprisServer(dbus.service.Object):
 	def __init__(self,ui,home,tr_ay,new_tr):
 		global tray,new_tray_widget
@@ -103,8 +102,6 @@ class MprisServer(dbus.service.Object):
 				  invalidated_properties=[]):
 		pass
 
-	   
-
 	@pyqtSlot(str,str,list)
 	def _emitMeta(self,info,site,epnArrList):
 		global tray,new_tray_widget
@@ -136,9 +133,10 @@ class MprisServer(dbus.service.Object):
 					t = epnArrList[self.ui.list2.currentRow()].split('	')[0]
 					t = t.replace('#','')
 					print(art,t)
-				if (site == 'Music' and self.ui.list3.currentItem()) or (site == 'PlayLists'): 
-					if (site == 'Music' and self.ui.list3.currentItem().text().lower() == 'playlist') or (site == 'PlayLists'):
-						
+				if ((site == 'Music' and self.ui.list3.currentItem()) 
+						or (site == 'PlayLists')): 
+					if ((site == 'Music' and self.ui.list3.currentItem().text().lower() == 'playlist') 
+							or (site == 'PlayLists')):
 						artist = art
 						if artist.lower() == 'none':
 							artist = t.replace('#','')
@@ -166,10 +164,8 @@ class MprisServer(dbus.service.Object):
 						if artist.startswith(self.ui.check_symbol):
 							artist = artist[1:]
 						art_u = os.path.join(self.home,'Music','Artist',artist,'poster.jpg')
-						
-					
-					
-			except:
+			except Exception as e:
+				print(e,'--mpris-dbus-error--')
 				title = "AnimeWatch"
 				artist = "AnimeWatch"
 		else:
@@ -199,27 +195,10 @@ class MprisServer(dbus.service.Object):
 			art_u = self.ui.get_thumbnail_image_path(r,epnArrList[r])
 			if os.path.exists(art_u):
 				art_url = art_u
-		except:
-			pass
+		except Exception as e:
+			print(e,'--no--art--url--or-path--')
 		
-		
-		
-		art_url_name = '256px.'+os.path.basename(art_url)
-		path_thumb,new_title = os.path.split(art_url)
-		abs_path_thumb = os.path.join(path_thumb,art_url_name)
-		try:
-			if not os.path.exists(abs_path_thumb) and os.path.exists(art_url):
-				basewidth = 256
-				img = Image.open(str(art_url))
-				wpercent = (basewidth / float(img.size[0]))
-				#hsize = int((float(img.size[1]) * float(wpercent)))
-				hsize = 256
-				img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
-				img.save(str(abs_path_thumb))
-		except:
-			pass
-			
-		
+		abs_path_thumb = art_url	
 		props = dbus.Dictionary({'Metadata': dbus.Dictionary({
 		    'xesam:artist': artist,
 		'mpris:artUrl': abs_path_thumb,
@@ -281,9 +260,3 @@ class MprisServer(dbus.service.Object):
 			% interface
 	)
 
-
-
-
-		
-			
-	

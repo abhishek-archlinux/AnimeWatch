@@ -35,11 +35,10 @@ import subprocess,re
 from player_functions import send_notification
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
-	
-	
 		
 	def do_GET(self):
-		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path,tmp_dir_folder
+		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
+		global tmp_dir_folder
 		print(handle,ses,info)
 		tmp_file = os.path.join(tmp_dir_folder,'row.txt')
 		tmp_pl_file = os.path.join(tmp_dir_folder,'player_stop.txt')
@@ -107,8 +106,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			f = open(file_name,'wb')
 			f.close()
 		
-		
-		
 		f = open(file_name,'rb')
 		i = cnt
 		total = 0
@@ -133,8 +130,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				time.sleep(2)
 				if ses.is_paused() or os.path.exists(tmp_pl_file):
 					break
-		
-		
 		f.close()
 		if os.path.exists(tmp_pl_file):
 			os.remove(tmp_pl_file)
@@ -198,15 +193,14 @@ class TorrentThread(QtCore.QThread):
 		cnt1 = self.cnt
 		cnt_limit = self.cnt_limit
 		s = self.handle.status()
-		#progress.show()
-		#progress.setFormat('hello')
 		
 		while (not self.session.is_paused()):
 			#print(self.session.is_paused())
 			s = self.handle.status()
 			
-			state_str = ['queued', 'checking', 'downloading metadata', \
-				'DOWNLOADING', 'finished', 'seeding', 'allocating', 'checking fastresume']
+			state_str = ['queued', 'checking', 'downloading metadata',
+						'DOWNLOADING', 'finished', 'seeding', 'allocating', 
+						'checking fastresume']
 			#print ('\r%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % \
 			#	(s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000, \
 			#	s.num_peers, state_str[s.state]),)
@@ -252,7 +246,8 @@ class TorrentThread(QtCore.QThread):
 		#self.session_signal.emit('..Finished..')
 		
 def change_config_file(ip,port):
-	config_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','torrent_config.txt')
+	config_file = os.path.join(os.path.expanduser('~'),
+								'.config','AnimeWatch','torrent_config.txt')
 	new_ip = 'TORRENT_STREAM_IP='+ip+':'+str(port)
 	content = open(config_file,'r').read()
 	content = re.sub('TORRENT_STREAM_IP=[^\n]*',new_ip,content)
@@ -460,7 +455,8 @@ def get_torrent_info_magnet(v1,v3,u,p_bar,tmp_dir):
 	return handle,ses,info
 
 def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
-	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path,progress,total_size_content,tmp_dir_folder
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
+	global progress,total_size_content,tmp_dir_folder
 	ui = u
 	progress = p_bar
 	tmp_dir_folder = tmp_dir
@@ -480,7 +476,6 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 		
 	#print(ses.get_settings())
 	
-	
 	if v1.startswith('magnet:'):
 		handle = lt.add_magnet_uri(ses,v1,{'save_path':v3})
 		i = 0
@@ -494,11 +489,9 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	else:
 		info = lt.torrent_info(v1)
 		#print(info)
-
 		#sett = ses.get_settings()
 		#print(sett)
 		#print(sett['user_agent'],sett['upload_rate_limit'])
-		
 		handle = ses.add_torrent({'ti': info, 'save_path': v3})
 
 	handle.set_sequential_download(True)
@@ -527,10 +520,8 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 		file_arr.append(f.path)
 		i += 1
 
-
 	for i in file_arr:
 		print(i)
-
 	
 	content_length = fileStr.size
 	print(content_length,'content-length')
@@ -555,7 +546,6 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 				handle.piece_priority(i,1)
 		else:
 			handle.piece_priority(i,0)
-
 	
 	print ('starting', handle.name())
 	handle.set_sequential_download(True)
@@ -565,7 +555,6 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	cnt1 = cnt
 	
 	print('\n',cnt,cnt_limit,file_name,'---get--torrent--info\n')
-
 	
 	if ses.is_paused():
 		ses.resume()
