@@ -1317,6 +1317,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					#new_epn = (epnArrList[num]).split('/')[-1]
 					new_epn = os.path.basename(epnArrList[num])
 					finalUrl = '"'+epnArrList[num]+'"'
+				if new_epn.startswith('#'):
+					new_epn = new_epn.replace('#','',1)
 				ui.epn_name_in_list = new_epn
 				if num < ui.list2.count():
 					ui.list2.setCurrentRow(num)
@@ -1372,6 +1374,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						new_epn = (epnArrList[num]).split('	')[0]
 					else:
 						new_epn = os.path.basename(epnArrList[num])
+					if new_epn.startswith('#'):
+						new_epn = new_epn.replace('#','',1)
 					ui.epn_name_in_list = new_epn
 					ui.list2.setCurrentRow(num)
 					ui.epnfound()
@@ -1479,11 +1483,14 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			if '	' in epnArrList[num]:
 				finalUrl = '"'+(epnArrList[num]).split('	')[1]+'"'
 				new_epn = (epnArrList[num]).split('	')[0]
-				ui.epn_name_in_list = new_epn
 			else:
 				finalUrl = '"'+epnArrList[num]+'"'
 				new_epn = os.path.basename(epnArrList[num])
-				ui.epn_name_in_list = new_epn
+			
+			if new_epn.startswith('#'):
+				new_epn = new_epn.replace('#','',1)
+				
+			ui.epn_name_in_list = new_epn
 			
 			finalUrl = ui.epn_return(num)
 			if num < ui.list2.count():
@@ -1544,6 +1551,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			w = float(ui.thumbnail_video_width)
 			#h = float((9*w)/16)
 			h = int(w/ui.image_aspect_allowed)
+			#new_val_scroll = (ui.list2.count())*(2*h)
+			#ui.scrollAreaWidgetContents1.setMinimumHeight(new_val_scroll)
 			width=str(int(w))
 			height=str(int(h))
 			dim = (width,height)
@@ -1576,12 +1585,14 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			if '	' in epnArrList[num]:
 				finalUrl = '"'+(epnArrList[num]).split('	')[1]+'"'
 				new_epn = (epnArrList[num]).split('	')[0]
-				ui.epn_name_in_list = new_epn
 			else:
 				finalUrl = '"'+epnArrList[num]+'"'
 				#ui.epn_name_in_list = new_epn
 				new_epn = os.path.basename(epnArrList[num])
-				ui.epn_name_in_list = new_epn
+				
+			if new_epn.startswith('#'):
+					new_epn = new_epn.replace('#','',1)
+			ui.epn_name_in_list = new_epn
 			
 			finalUrl = ui.epn_return(num)
 			if num < ui.list2.count():
@@ -1609,6 +1620,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					print (command)
 					ui.infoPlay(command)	
 			ui.labelFrame2.setText(ui.epn_name_in_list)
+			#QtCore.QTimer.singleShot(3000, partial(ui.update_thumbnail_position))
 		elif var_mode == 5:
 			
 				
@@ -9393,6 +9405,8 @@ class Ui_MainWindow(object):
 				h = int(w/ui.image_aspect_allowed)
 			width = str(int(w))
 			height = str(int(h))
+			#new_val_scroll = int(self.list2.count()/iconv_r)*(2*h)
+			#self.scrollAreaWidgetContents1.setMinimumHeight(new_val_scroll)
 			if icon_size_arr:
 				icon_size_arr[:]=[]
 			icon_size_arr.append(width)
@@ -9468,7 +9482,7 @@ class Ui_MainWindow(object):
 					
 					i=i+1
 					if (i%50) == 0:
-						QtWidgets.QApplication.processEvents()
+						#QtWidgets.QApplication.processEvents()
 						print('created {0} label-text-frame'.format(i))
 					k = k+1
 					if k == iconv_r:
@@ -15461,34 +15475,74 @@ class Ui_MainWindow(object):
 	
 	def adjust_thumbnail_window(self,row):
 		global thumbnail_indicator,idw,ui,cur_label_num
-		self.epn_name_in_list = self.epn_name_in_list.replace('#','',1)
-		if thumbnail_indicator and not self.tab_5.isHidden():
-			title_num = row + ui.list2.count()
-			if self.epn_name_in_list.startswith(self.check_symbol):
-				newTitle = self.epn_name_in_list
-			else:
-				newTitle = self.check_symbol+self.epn_name_in_list
-			sumry = "<html><h1>"+self.epn_name_in_list+"</h1></html>"
-			q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"
-			exec (q4)
-			q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
-			exec (q3)
-			q3="ui.label_epn_"+str(title_num)+".setAlignment(QtCore.Qt.AlignCenter)"
-			exec(q3)
-			#p8="ui.label_epn_"+str(title_num)+".home(True)"
-			#exec (p8)
-			#p8="ui.label_epn_"+str(title_num)+".deselect()"
-			#exec (p8)
-			QtWidgets.QApplication.processEvents()
-			
-			p1 = "ui.label_epn_"+str(row)+".y()"
-			ht=eval(p1)
-			
-			ui.scrollArea1.verticalScrollBar().setValue(ht)
-			ui.labelFrame2.setText(newTitle[:20])
+		if self.epn_name_in_list.startswith('#'):
+			self.epn_name_in_list = self.epn_name_in_list.replace('#','',1)
+		if (thumbnail_indicator and idw == str(int(ui.tab_5.winId()))):
+			try:
+				title_num = row + ui.list2.count()
+				if self.epn_name_in_list.startswith(self.check_symbol):
+					newTitle = self.epn_name_in_list
+				else:
+					newTitle = self.check_symbol+self.epn_name_in_list
+					
+				sumry = "<html><h1>"+self.epn_name_in_list+"</h1></html>"
+				q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"
+				exec (q4)
+				q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
+				exec (q3)
+				q3="ui.label_epn_"+str(title_num)+".setAlignment(QtCore.Qt.AlignCenter)"
+				exec(q3)
+				QtWidgets.QApplication.processEvents()
+				
+				p1 = "ui.label_epn_"+str(row)+".y()"
+				ht=eval(p1)
+				
+				ui.scrollArea1.verticalScrollBar().setValue(ht)
+				ui.labelFrame2.setText(newTitle[:20]+'..')
+				
+				new_cnt = curR + ui.list2.count()
+				p1 = "ui.label_epn_{0}.setTextColor(QtCore.Qt.green)".format(new_cnt)
+				exec (p1)
+				p1 = "ui.label_epn_{0}.toPlainText()".format(new_cnt)
+				txt = eval(p1)
+				try:
+					p1 = "ui.label_epn_{0}.setText('{1}')".format(new_cnt,txt)
+					exec(p1)
+				except Exception as e:
+					print(e,'--line--4597--')
+					try:
+						p1 = 'ui.label_epn_{0}.setText("{1}")'.format(new_cnt,txt)
+						exec(p1)
+					except Exception as e:
+						print(e)
+				p1="ui.label_epn_{0}.setAlignment(QtCore.Qt.AlignCenter)".format(new_cnt)
+				exec(p1)
+				QtWidgets.QApplication.processEvents()
+			except Exception as e:
+				print(e)
 		else:
 			if idw and idw != str(int(ui.tab_5.winId())) and idw != str(int(ui.label.winId())):
 				try:
+					title_num = row + ui.list2.count()
+					if self.epn_name_in_list.startswith(self.check_symbol):
+						newTitle = self.epn_name_in_list
+					else:
+						newTitle = self.check_symbol+self.epn_name_in_list
+					sumry = "<html><h1>"+self.epn_name_in_list+"</h1></html>"
+					q4="ui.label_epn_"+str(title_num)+".setToolTip((sumry))"
+					exec (q4)
+					q3="ui.label_epn_"+str(title_num)+".setText((newTitle))"
+					exec (q3)
+					q3="ui.label_epn_"+str(title_num)+".setAlignment(QtCore.Qt.AlignCenter)"
+					exec(q3)
+					QtWidgets.QApplication.processEvents()
+					
+					p1 = "ui.label_epn_"+str(row)+".y()"
+					ht=eval(p1)
+					
+					ui.scrollArea1.verticalScrollBar().setValue(ht)
+					ui.labelFrame2.setText(newTitle[:20]+'..')
+					
 					new_cnt = curR + ui.list2.count()
 					p1 = "ui.label_epn_{0}.setTextColor(QtCore.Qt.green)".format(new_cnt)
 					exec (p1)
