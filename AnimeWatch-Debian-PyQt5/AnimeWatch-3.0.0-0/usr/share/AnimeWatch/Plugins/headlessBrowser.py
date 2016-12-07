@@ -1,11 +1,6 @@
 import sys  
-#from PyQt5.QtGui import *  
-#from PyQt5.QtCore import *  
-#from PyQt5.QtWebEngineWidgets import *  
-#from PyQt5.QtWebEngineCore import *  
 import re
 import urllib
-import urllib3
 import time
 import os
 import os.path
@@ -21,7 +16,7 @@ from io import StringIO,BytesIO
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkAccessManager
-#from player_functions import ccurl
+from player_functions import ccurl
 
 
 
@@ -69,8 +64,11 @@ class BrowseUrl(QWebEngineView):
 				print('wait Clouflare ')
 				time.sleep(1)
 				cnt = cnt+1
-			if 'kissasian' in url:
-				str3 = '\nkissasian.com	FALSE	/	FALSE	0		__test'
+			if 'kissasian' in url or 'kisscartoon' in url:
+				if 'kissasian' in url:
+					str3 = '\nkissasian.com	FALSE	/	FALSE	0		__test'
+				else:
+					str3 = '\nkisscartoon.me	FALSE	/	FALSE	0		__test'
 				f = open(self.cookie_file,'a')
 				f.write(str3)
 				f.close()

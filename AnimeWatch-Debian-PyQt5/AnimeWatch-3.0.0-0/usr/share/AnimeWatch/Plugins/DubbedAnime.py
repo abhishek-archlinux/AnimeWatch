@@ -1,6 +1,5 @@
 import sys
-import urllib
-import urllib3
+import urllib.parse
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -10,58 +9,9 @@ import random
 from bs4 import BeautifulSoup  
 import os
 import os.path
-from player_functions import send_notification
+from player_functions import send_notification,naturallysorted
 from player_functions import ccurl as ccurlNew
 
-def naturallysorted(l):
-	convert = lambda text: int(text) if text.isdigit() else text.lower() 
-	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
-	return sorted(l, key = alphanum_key)
-
-def replace_all(text, di):
-	for i, j in di.iteritems():
-		text = text.replace(i, j)
-	return text
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
-
-		
-def ccurl(url,value):
-	hdr = "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0"
-	
-	c = pycurl.Curl()
-	if value == "no_redir":
-		print("no redirect")
-	else:
-		c.setopt(c.FOLLOWLOCATION, True)
-	c.setopt(c.USERAGENT, hdr)
-	if value != "" and value != "no_redir":
-		post_data = {'id': value}
-		post_d = urllib.parse.urlencode(post_data)
-		c.setopt(c.POSTFIELDS,post_d)
-	#if rfr != "":
-	 # c.setopt(pycurl.REFERER, rfr)
-	url = str(url)
-	c.setopt(c.URL, url)
-	
-	storage = BytesIO()
-	c.setopt(c.WRITEDATA, storage)
-	c.perform()
-	c.close()
-	content = storage.getvalue()
-	content = getContentUnicode(content)
-	return (content)
-	
 def simplyfind(i):
 	content = ccurlNew(i)
 	#replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}

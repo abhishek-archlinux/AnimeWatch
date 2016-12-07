@@ -1,7 +1,6 @@
 import sys  
 import re
-import urllib
-import urllib3
+import urllib.parse
 import time
 import os
 import os.path
@@ -385,10 +384,6 @@ class BrowserPage(QWebEnginePage):
 		if 'kissanime' in self.url:
 			self._writeCookies(l)
 			if ('idtz' in l) :
-				self.cookie_signal.emit("Cookie Found")
-		elif 'kisscartoon' in self.url:
-			self._writeCookies(l)
-			if ('ASP.NET_SessionId' in l) :
 				self.cookie_signal.emit("Cookie Found")
 		else :
 			#print(l)

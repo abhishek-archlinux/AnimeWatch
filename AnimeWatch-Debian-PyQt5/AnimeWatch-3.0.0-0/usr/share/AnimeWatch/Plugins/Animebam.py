@@ -1,5 +1,4 @@
 import urllib
-import urllib3 
 import sys
 import pycurl
 from io import StringIO,BytesIO
@@ -55,9 +54,10 @@ class Animebam():
 			url = 'http://www.animebam.net' + pre
 			content = ccurl(url+'#'+'-Ie'+'#'+rfr)
 			final = ''
-			print(content)
+			#print(content)
 			if "Location:" in content:
 				m = re.findall('Location: [^\n]*',content)
+				print(m)
 				final = re.sub('Location: |\r','',m[-1])
 		except Exception as e:
 			print(e,'--error--in--resolving--url--')

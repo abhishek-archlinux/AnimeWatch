@@ -1,6 +1,5 @@
 import sys
 import urllib
-import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -17,6 +16,7 @@ try:
 	from headlessBrowser import BrowseUrl
 except:
 	from headlessBrowser_webkit import BrowseUrl
+from player_functions import ccurl
 
 def cloudfare(url,quality):
 	web = BrowseUrl(url,quality)
@@ -25,132 +25,12 @@ def naturallysorted(l):
 	convert = lambda text: int(text) if text.isdigit() else text.lower() 
 	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
 	return sorted(l, key = alphanum_key)
-
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
 	
-def ccurl(url,value,code):
-	global hdr
-	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-	print(url)
-	c = pycurl.Curl()
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	postfield = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc':
-			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
-			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
-			post1 = post.split('=')[0]
-			post2 = post.split('=')[1]
-			post_data = {post1:post2}
-			postfield = urllib.parse.urlencode(post_data)
-	
-	url = str(url)
-	c.setopt(c.URL, url)
-	if os.name != 'posix':
-		c.setopt(c.SSL_VERIFYPEER,False)
-	storage = BytesIO()
-	
-	if value:
-		if code == 1:
-			print('-----code==1---')
-			post_data = {'genrename': value}
-		elif code == 2:
-			post_data = {'station': value}
-		elif code == 5:
-			post_data = {'id': value}
-		post_d = urllib.parse.urlencode(post_data)
-		c.setopt(c.POSTFIELDS,post_d)
-	if code == 3:
-		c.setopt(c.HTTPHEADER,['ICY Metadata: 1'])
-		
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		f = open(picn_op,'wb')
-		c.setopt(c.WRITEDATA, f)
-		c.perform()
-		c.close()
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		elif curl_opt == '-d':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.POSTFIELDS,postfield)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		c.perform()
-		c.close()
-		content = storage.getvalue()
-		content = getContentUnicode(content)
-		#print(content)
-		return content
 
 def replace_all(text, di):
 	for i, j in di.iteritems():
 		text = text.replace(i, j)
 	return text
-
-
-
 
 
 class Shoutcast():
@@ -200,14 +80,17 @@ class Shoutcast():
 			m = self.getCompleteList(name.upper(),1)
 		else:
 			url = "https://www.shoutcast.com/Home/BrowseByGenre"
-			content = ccurl(url,name,1)
+			#content = ccurl(url,name,1)
+			post = "genrename="+name
+			content = ccurl(url+'#'+'-d'+'#'+post)
 			m = self.process_page(content)
 		return m
 		
 	def getCompleteList(self,opt,genre_num):
 		if opt == 'Genre' and genre_num == 0:
 			url = "http://www.shoutcast.com/"
-			content = ccurl(url,"",1)
+			#content = ccurl(url,"",1)
+			content = ccurl(url)
 			m = re.findall('Genre[^"]name[^"]*',content)
 			#print m
 			j = 0
@@ -229,7 +112,8 @@ class Shoutcast():
 			bitrate = []
 			idr = []
 			url = "http://thugie.nl/streams.php"
-			content = ccurl(url,"",4)
+			#content = ccurl(url,"",4)
+			content = ccurl(url)
 			soup = BeautifulSoup(content,'lxml')
 			tmp = soup.prettify()
 			#m = soup.findAll('div',{'class':'boxcenterdir fontstyle'})
@@ -257,7 +141,9 @@ class Shoutcast():
 				m.append(name[i].strip().replace('/','-')+'-TV	id='+str(idr[i]).replace('\\','')+'\nBitrate='+str(bitrate[i])+'\nListeners='+str(listeners[i])+'\n')
 		else:
 			url = "https://www.shoutcast.com/Home/BrowseByGenre"
-			content = ccurl(url,opt,1)
+			#content = ccurl(url,opt,1)
+			post = 'genrename='+opt
+			content = ccurl(url+'#'+'-d'+'#'+post)
 			m = self.process_page(content)
 		print(opt,url)
 		return m
@@ -273,7 +159,8 @@ class Shoutcast():
 		station_url = ''
 		if opt == "TV" or '-TV' in name:
 			url = "http://thugie.nl/streams.php?tunein="+str(id_station)
-			content = ccurl(url,'',1)
+			#content = ccurl(url,'',1)
+			content = ccurl(url)
 			final = re.findall('http://[^\n]*',content)
 			station_url = final[0].rstrip()
 			if 'stream.nsv' not in station_url:
@@ -283,7 +170,9 @@ class Shoutcast():
 			
 		else:
 			url = "https://www.shoutcast.com/Player/GetStreamUrl"
-			content = ccurl(url,id_station,2)
+			#content = ccurl(url,id_station,2)
+			post = 'station='+str(id_station)
+			content = ccurl(url+'#-d#'+post)
 			m = re.findall('http://[^"]*',content)
 			station_url = str(m[0])
 		file_arr.append(name+'	'+station_url+'	'+'NONE')

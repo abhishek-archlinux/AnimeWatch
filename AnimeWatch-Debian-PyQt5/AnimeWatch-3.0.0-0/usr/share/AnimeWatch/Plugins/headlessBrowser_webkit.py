@@ -1,7 +1,6 @@
 import sys   
 import re
 import urllib
-import urllib3
 import pycurl
 import time
 import os

@@ -1,6 +1,5 @@
 import sys
 import urllib
-import urllib3
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -81,6 +80,7 @@ class Animejoy():
 	def getCompleteList(self,opt,genre_num):
 		url = "http://anime-joy.tv/animelist"
 		content = ccurl(url)
+		#print(content)
 		m = re.findall('watch/[^"]*',content)
 		j=0
 		search = []
