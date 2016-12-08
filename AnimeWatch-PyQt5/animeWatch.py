@@ -2064,19 +2064,31 @@ class MySlider(QtWidgets.QSlider):
 		self.setToolTip(l)
 		
 	def mousePressEvent(self, event):
-		global mpvplayer,Player,current_playing_file_path
-		old_val = self.value()
-		self.setValue(self.minimum() + ((self.maximum()-self.minimum()) * event.x()) / self.width())
-		event.accept()
-		new_val = self.value()
+		global mpvplayer,Player,current_playing_file_path,mplayerLength
+		#old_val = self.value()
+		#self.setValue(self.minimum() + ((self.maximum()-self.minimum()) * event.x()) / self.width())
+		#event.accept()
+		#new_val = self.value()
+		
+		old_val = int(self.value())
+		
+		t = ((event.x() - self.x())/self.width())
+		#self.setValue(int(t*100))
+		t = int(t*mplayerLength)
+		new_val = t
+		if Player == 'mplayer':
+			print(old_val,new_val,int((new_val-old_val)/1000))
+		else:
+			print(old_val,new_val,int(new_val-old_val))
+		
 		if mpvplayer:
 			if mpvplayer.processId() > 0:
 				if Player== "mpv":
-					var = bytes('\n'+"seek "+str(new_val)+" absolute"+'\n','utf-8')
+					var = bytes('\n '+"seek "+str(new_val)+" absolute"+' \n','utf-8')
 					mpvplayer.write(var)
 				elif Player =="mplayer":
 					seek_val = int((new_val-old_val)/1000)
-					var = bytes('\n'+"seek "+str(seek_val)+'\n','utf-8')
+					var = bytes('\n '+"seek "+str(seek_val)+' \n','utf-8')
 					mpvplayer.write(var)
 
 
@@ -4362,7 +4374,10 @@ class QLineProgress(QtWidgets.QProgressBar):
 		#self.setValue(int(t*100))
 		t = int(t*mplayerLength)
 		new_val = t
-		print(old_val,new_val,int((new_val-old_val)/1000))
+		if Player == 'mplayer':
+			print(old_val,new_val,int((new_val-old_val)/1000))
+		else:
+			print(old_val,new_val,int(new_val-old_val))
 		if mpvplayer:
 			if mpvplayer.processId() > 0:
 				if Player== "mpv":
@@ -14824,6 +14839,7 @@ class Ui_MainWindow(object):
 			if 'volume' in a:
 				print(a)
 			#print(a)
+			#print(a)
 			if 'icy info:' in a.lower() or 'icy-title:' in a.lower():
 				if 'icy info:' in a.lower():
 					song_title = re.search("'[^']*",a)
@@ -14975,9 +14991,9 @@ class Ui_MainWindow(object):
 				if ("EOF code: 1" in a or "HTTP error 403 Forbidden" in a):
 					if self.player_setLoop_var:
 						if current_playing_file_path.startswith('"'):
-							replay = '\n loadfile {0} \n'.format(current_playing_file_path)
+							replay = '\n loadfile {0} replace \n'.format(current_playing_file_path)
 						else:
-							replay = '\n loadfile "{0}" \n'.format(current_playing_file_path)
+							replay = '\n loadfile "{0}" replace \n'.format(current_playing_file_path)
 						t2 = bytes(replay,'utf-8')
 						print(t2,'--replay--')
 						mpvplayer.write(t2)
