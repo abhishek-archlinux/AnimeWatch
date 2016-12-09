@@ -1143,7 +1143,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 	
 			
 	def mouseMoveEvent(self,event):
-		global new_tray_widget,ui,idw
+		global new_tray_widget,ui,idw,mpvplayer
 		self.setFocus()
 		pos = event.pos()
 		if not ui.float_window.isHidden() and new_tray_widget.remove_toolbar:
@@ -1163,9 +1163,14 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					if self.arrow_timer.isActive():
 						self.arrow_timer.stop()
 					self.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-					self.arrow_timer.start(2000)
+					if mpvplayer.processId() > 0:
+						self.arrow_timer.start(2000)
 			except Exception as e:
 				print(e)
+				self.arrow_timer = QtCore.QTimer()
+				self.arrow_timer.timeout.connect(self.arrow_hide)
+				self.arrow_timer.setSingleShot(True)
+
 		if MainWindow.isFullScreen():
 			ht = self.height()
 			#print "height="+str(ht)
@@ -1280,7 +1285,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						ht = eval(p1)
 						print(ht,'--ht--',ui.scrollArea1.height())
 						ui.scrollArea1.verticalScrollBar().setValue(ht)
-			ui.mark_History()				
+							
 			title_num = num + ui.list2.count()
 			if ui.epn_name_in_list.startswith(ui.check_symbol):
 				newTitle = ui.epn_name_in_list
@@ -1604,10 +1609,10 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							ui.updateMusicCount('count',finalUrl)
 						else:
 							try:
-								thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+								thumb_path = ui.get_thumbnail_image_path(row,epnArrList[row])
 								print("thumbnail path = {0}".format(thumb_path))
 								if os.path.exists(thumb_path):
-									self.videoImage(thumb_path,thumb_path,thumb_path,'')
+									ui.videoImage(thumb_path,thumb_path,thumb_path,'')
 							except Exception as e:
 								print('Error in getting Thumbnail: {0}'.format(e))
 					elif site.lower() == "video":
@@ -1641,7 +1646,11 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			exec(p1)
 		except Exception as e:
 			print(e)
-			
+		try:
+			if var_mode == 1 or var_mode == 2 or var_mode == 3 or var_mode == 4:
+				ui.mark_History()
+		except Exception as e:
+			print(e)
 	def mouseReleaseEvent(self, ev):
 		global quitReally,curR,idw,mpvplayer
 		if ev.button() == QtCore.Qt.LeftButton:
@@ -1667,12 +1676,12 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				if ui.video_mode_index == 5:
 					ui.video_mode_index = 1
 					ui.comboBoxMode.setCurrentIndex(0)
-					
-			p1 = "ui.gridLayout2.indexOf(ui.label_epn_{0})".format(num)
-			index = eval(p1)
-			print(index,'--index--')
-			ui.current_thumbnail_position = ui.gridLayout2.getItemPosition(index)
-			cur_label_num = num
+				p1 = "ui.gridLayout2.indexOf(ui.label_epn_{0})".format(num)
+				index = eval(p1)
+				print(index,'--index--')
+				ui.current_thumbnail_position = ui.gridLayout2.getItemPosition(index)
+				cur_label_num = num
+				
 			if tmp_idw == idw:
 				if mpvplayer.processId() > 0:
 					ui.playerPlayPause()
@@ -1761,8 +1770,13 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		global finalUrlFound,refererNeeded,ui
 		total_seek = 0
 		t=str(self.objectName())
-		t = re.sub('label_epn_','',t)
-		num = int(t)
+		thumbnail_grid = True
+		if t == 'label':
+			num = ui.list2.currentRow()
+			thumbnail_grid = False
+		else:
+			t = re.sub('label_epn_','',t)
+			num = int(t)
 		menu = QtWidgets.QMenu(self)
 		submenuR = QtWidgets.QMenu(menu)
 		submenuR.setTitle("Add To Playlist")
@@ -1802,12 +1816,22 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					print (ui.queue_url_list)
 					write_files(file_path,epnArrList[r],line_by_line=True)
 		elif action == watch:
+			if not thumbnail_grid:
+				if ui.list2.currentItem() and ui.float_window.isHidden():
+					ui.IconViewEpn()
+					ui.scrollArea1.setFocus()
+			ui.comboBoxMode.setCurrentIndex(1)
 			ui.video_mode_index = 2
 			self.change_video_mode(2,num)
 		elif action == watch1:
 			#if site=="Local":
-			ui.video_mode_index = 3
-			self.change_video_mode(3,num)
+			if not thumbnail_grid:
+				if ui.list2.currentItem() and ui.float_window.isHidden():
+					ui.IconViewEpn()
+					ui.scrollArea1.setFocus()
+			ui.comboBoxMode.setCurrentIndex(3)
+			ui.video_mode_index = 4
+			self.change_video_mode(4,num)
 		elif action == stop:
 			quitReally = "yes"
 			if mpvplayer:
@@ -1841,9 +1865,11 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					picn = os.path.join(home,'thumbnails',nm,name+'-'+a+'.jpg')
 				if os.path.exists(picn):
 					os.remove(picn)
-					
-					q1="ui.label_epn_"+str(num)+".clear()"
-					exec (q1)
+					if thumbnail_grid:
+						q1="ui.label_epn_"+str(num)+".clear()"
+					else:
+						q1="ui.label.clear()"
+					exec(q1)
 				if os.path.exists(picn):
 					small_nm_1,new_title = os.path.split(picn)
 					small_nm_2 = '128px.'+new_title
@@ -1863,8 +1889,11 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				picn = os.path.join(home,'thumbnails',nm,a1+'.jpg')
 				if os.path.exists(picn):
 					os.remove(picn)
-					q1="ui.label_epn_"+str(num)+".clear()"
-					exec (q1)
+					if thumbnail_grid:
+						q1="ui.label_epn_"+str(num)+".clear()"
+					else:
+						q1="ui.label.clear()"
+					exec(q1)
 			interval = 0
 		elif action == thumb:
 			width = self.width()
@@ -1950,7 +1979,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 								path
 								]
 								)
-						tpm_img = os.path.join(TMPDIR,'00000001.jpg')
+						tmp_img = os.path.join(TMPDIR,'00000001.jpg')
 						if os.path.exists(tmp_img):
 							shutil.copy(tmp_img,picn)
 							os.remove(tmp_img)
@@ -1963,7 +1992,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 									"--start="+str(interval)+"%","--frames=1",
 									path]
 									)
-							tpm_img = os.path.join(TMPDIR,'00000001.jpg')
+							tmp_img = os.path.join(TMPDIR,'00000001.jpg')
 							if os.path.exists(tmp_img):
 								shutil.copy(tmp_img,picn)
 								os.remove(tmp_img)
@@ -1988,7 +2017,10 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					ui.generate_thumbnail_method(picn,inter,path)
 				picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
 				img = QtGui.QPixmap(picn, "1")			
-				q1="ui.label_epn_"+str(num)+".setPixmap(img)"
+				if thumbnail_grid:
+					q1="ui.label_epn_"+str(num)+".setPixmap(img)"
+				else:
+					q1="ui.label.setPixmap(img)"
 				exec (q1)
 				if interval == 100:
 					interval = 10
@@ -2033,7 +2065,10 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						os.remove(tmp_img)
 					picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
 					img = QtGui.QPixmap(picn, "1")			
-					q1="ui.label_epn_"+str(num)+".setPixmap(img)"
+					if thumbnail_grid:
+						q1="ui.label_epn_"+str(num)+".setPixmap(img)"
+					else:
+						q1="ui.label.setPixmap(img)"
 					exec (q1)
 					if interval == 100:
 						interval = 10
@@ -6660,7 +6695,8 @@ class Ui_MainWindow(object):
 		self.list6.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 		self.scrollArea.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 		self.scrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-		self.scrollArea1.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+		if OSNAME == 'posix':
+			self.scrollArea1.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 		self.scrollArea1.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 		self.retranslateUi(MainWindow)
 		
@@ -7507,7 +7543,7 @@ class Ui_MainWindow(object):
 			self.sortList()
 			
 	def playerLoopFile(self,loop_widget):
-		global Player,quitReally,tray,new_tray_widget
+		global Player,quitReally,tray,new_tray_widget,mpvplayer
 		txt = loop_widget.text()
 		#txt = self.player_loop_file.text()
 		if txt == self.player_buttons['unlock']:
@@ -7515,11 +7551,19 @@ class Ui_MainWindow(object):
 			self.player_loop_file.setText(self.player_buttons['lock'])
 			new_tray_widget.lock.setText(self.player_buttons['lock'])
 			quitReally = 'no'
+			if Player == 'mpv':
+				mpvplayer.write(b'\n set loop-file inf \n')
+			else:
+				mpvplayer.write(b'\n set_property loop 0 \n')
 		else:
 			self.player_setLoop_var = 0
 			self.player_loop_file.setText(self.player_buttons['unlock'])
 			new_tray_widget.lock.setText(self.player_buttons['unlock'])
-			
+			if Player == 'mpv':
+				mpvplayer.write(b'\n set loop-file no \n')
+			else:
+				mpvplayer.write(b'\n set_property loop -1 \n')
+				
 	def playerPlayPause(self):
 		global mpvplayer,curR,idw,cur_label_num
 		txt = self.player_play_pause.text() 
@@ -7631,10 +7675,18 @@ class Ui_MainWindow(object):
 				self.player_setLoop_var = 1
 				self.action_player_menu[5].setText("UnLock File")
 				self.player_loop_file.setText("unLock")
+				if Player == 'mpv':
+					mpvplayer.write(b'\n set loop-file inf \n')
+				else:
+					mpvplayer.write(b'\n set_property loop 0 \n')
 			elif v == "UnLock File":
 					self.player_setLoop_var = 0
 					self.action_player_menu[5].setText("Lock File")
 					self.player_loop_file.setText("Lock")
+					if Player == 'mpv':
+						mpvplayer.write(b'\n set loop-file no \n')
+					else:
+						mpvplayer.write(b'\n set_property loop -1 \n')
 		elif val == "Lock Playlist":
 			v = str(self.action_player_menu[4].text())
 			if v == "Lock Playlist":
@@ -13427,7 +13479,7 @@ class Ui_MainWindow(object):
 		
 	def play_file_now(self,file_name,win_id=None):
 		global Player,epn_name_in_list,mpvplayer,idw,quitReally,mplayerLength
-		global current_playing_file_path
+		global current_playing_file_path,cur_label_num
 			
 		mplayerLength = 0
 		quitReally = 'no'
@@ -13459,10 +13511,23 @@ class Ui_MainWindow(object):
 		else:
 			if mpvplayer.processId()>0:
 				mpvplayer.kill()
-			if not win_id:
-				idw = str(int(self.tab_5.winId()))
-			else:
-				idw = str(win_id)
+			if OSNAME == 'posix':
+				if not win_id:
+					idw = str(int(self.tab_5.winId()))
+				else:
+					idw = str(win_id)
+			elif OSNAME == 'nt':
+				if win_id:
+					idw = str(win_id)
+				elif thumbnail_indicator and ui.video_mode_index != 1:
+					try:
+						p1 = 'self.label_epn_{0}.winId()'.format(str(cur_label_num))
+						idw = str(int(eval(p1)))
+					except Exception as e:
+						print(e)
+						idw = str(int(self.tab_5.winId()))
+				else:
+					idw = str(int(self.tab_5.winId()))
 			if Player == 'mpv':
 				command = "mpv --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --input-conf=input.conf --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+finalUrl
 			else:
@@ -15037,7 +15102,7 @@ class Ui_MainWindow(object):
 							exec (q3)
 							q3="self.label_epn_"+str(length_1+cur_label_num)+".setAlignment(QtCore.Qt.AlignCenter)"
 							exec(q3)
-							QtWidgets.QApplication.processEvents()
+							#QtWidgets.QApplication.processEvents()
 						if (site == "Local" or site == "Video" or site == "Music" 
 								or site == "PlayLists" or site == "None"):
 							if len(self.queue_url_list)>0 and wget.processId() == 0:
@@ -15324,6 +15389,8 @@ class Ui_MainWindow(object):
 				'-msglevel all=4:statusline=5:global=6',
 				'-msglevel statusline=5:global=6'
 				)
+			if OSNAME == 'nt':
+				command = command + ' -vo gl'
 		mpvplayer = QtCore.QProcess()
 		self.mpvplayer_val = mpvplayer
 		mpvplayer.setProcessChannelMode(QtCore.QProcess.MergedChannels)
@@ -15397,10 +15464,10 @@ class Ui_MainWindow(object):
 					exec(q3)
 					QtWidgets.QApplication.processEvents()
 					
-					p1 = "ui.label_epn_"+str(row)+".y()"
-					ht=eval(p1)
-					
-					ui.scrollArea1.verticalScrollBar().setValue(ht)
+					if ui.video_mode_index == 1:
+						p1 = "ui.label_epn_"+str(row)+".y()"
+						ht=eval(p1)
+						ui.scrollArea1.verticalScrollBar().setValue(ht)
 					ui.labelFrame2.setText(newTitle[:20]+'..')
 					
 					new_cnt = curR + ui.list2.count()
