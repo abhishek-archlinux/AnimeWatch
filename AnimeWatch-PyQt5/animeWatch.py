@@ -1867,6 +1867,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					exec (q1)
 			interval = 0
 		elif action == thumb:
+			width = self.width()
+			height = self.height()
 			if (site == "Local" or finalUrlFound == True or site=="None" 
 					or site =="PlayLists" or site == "Video" or site == "Music"):
 				ui.list2.setCurrentRow(num)
@@ -1984,6 +1986,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 						os.makedirs(picnD)
 					picn = os.path.join(picnD,a1)+'.jpg'
 					ui.generate_thumbnail_method(picn,inter,path)
+				picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
 				img = QtGui.QPixmap(picn, "1")			
 				q1="ui.label_epn_"+str(num)+".setPixmap(img)"
 				exec (q1)
@@ -2028,6 +2031,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					if os.path.exists(tmp_img):
 						shutil.copy(tmp_img,picn)
 						os.remove(tmp_img)
+					picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
 					img = QtGui.QPixmap(picn, "1")			
 					q1="ui.label_epn_"+str(num)+".setPixmap(img)"
 					exec (q1)
@@ -7032,6 +7036,8 @@ class Ui_MainWindow(object):
 				if os.path.exists(picn_path):
 					shutil.copy(picn_path,picn)
 					os.remove(picn_path)
+					if os.path.exists(picn) and os.stat(picn).st_size:
+						self.image_fit_option(picn,picn,fit_size=6,widget=self.label)
 				self.mpv_thumbnail_lock = False
 			#self.progressEpn.setFormat('Thumbnail Generated..')
 	
@@ -15305,7 +15311,7 @@ class Ui_MainWindow(object):
 		self.progressEpn.setValue(0)
 		self.slider.setValue(0)
 		self.progressEpn.setFormat("")
-		print (mpvplayer.processId())
+		print (mpvplayer.processId(),'--finished--id--')
 		
 	def infoPlay(self,command):
 		global mpvplayer,Player,site,new_epn
@@ -17514,7 +17520,7 @@ class FloatWindowWidget(QtWidgets.QWidget):
 			border:rgba(0,0,0,1%) ;
 			border-radius: 1px;
 			text-align: center;
-			heigth:15px;
+			height:15px;
 			}
 			
 			QProgressBar:chunk {
