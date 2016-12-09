@@ -1823,6 +1823,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			ui.comboBoxMode.setCurrentIndex(1)
 			ui.video_mode_index = 2
 			self.change_video_mode(2,num)
+			QtCore.QTimer.singleShot(1000, partial(ui.update_thumbnail_position))
 		elif action == watch1:
 			#if site=="Local":
 			if not thumbnail_grid:
@@ -7388,7 +7389,7 @@ class Ui_MainWindow(object):
 		QtWidgets.QApplication.processEvents()
 		p1="ui.label_epn_"+str(cur_label_num)+".y()"
 		yy=eval(p1)
-		ui.scrollArea1.verticalScrollBar().setValue(yy)
+		ui.scrollArea1.verticalScrollBar().setValue(yy-10)
 		QtWidgets.QApplication.processEvents()
 		ui.frame1.show()
 		ui.gridLayout.setContentsMargins(5,5,5,5)
