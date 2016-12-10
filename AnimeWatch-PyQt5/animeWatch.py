@@ -12527,7 +12527,8 @@ class Ui_MainWindow(object):
 						m = self.site_var.search(name)
 						self.search_term = name
 						self.text.setText('Load Complete!')
-					except:
+					except Exception as e:
+						print(e)
 						self.text.setText('Load Failed')
 						return 0
 					if type(m) is list:
@@ -12641,8 +12642,13 @@ class Ui_MainWindow(object):
 					genre_num = 0
 					self.text.setText('Wait...Loading')
 					QtWidgets.QApplication.processEvents()
-					m = self.site_var.getCompleteList(siteName,category,'Search')
-					self.text.setText('Load Complete!')
+					try:
+						m = self.site_var.getCompleteList(siteName,category,'Search')
+						self.text.setText('Load Complete!')
+					except Exception as e:
+						print(e)
+						self.text.setText('Load Failed')
+						return 0
 					original_path_name[:] = []
 					for i in m:
 						i = i.strip()
@@ -12763,8 +12769,12 @@ class Ui_MainWindow(object):
 					#try:
 					self.text.setText('Wait...Loading')
 					QtWidgets.QApplication.processEvents()
-					m,summary,picn,self.record_history,self.depth_list = self.site_var.getEpnList(name,opt,self.depth_list,extra_info,siteName,category)
-					self.text.setText('Load..Complete')
+					try:
+						m,summary,picn,self.record_history,self.depth_list = self.site_var.getEpnList(name,opt,self.depth_list,extra_info,siteName,category)
+						self.text.setText('Load..Complete')
+					except Exception as e:
+						print(e)
+						self.text.setText('Load..Failed')
 					if not m:
 						return 0
 					
@@ -13826,23 +13836,28 @@ class Ui_MainWindow(object):
 				self.list2.setCurrentRow(row)
 				
 			if site != "Local":
-				self.progressEpn.setFormat('Wait..')
-				if video_local_stream:
-					if self.thread_server.isRunning():
-						if self.do_get_thread.isRunning():
-							row_file = os.path.join(TMPDIR,'row.txt')
-							f = open(row_file,'w')
-							f.write(str(row))
-							f.close()
-							finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+				try:
+					self.progressEpn.setFormat('Wait..')
+					if video_local_stream:
+						if self.thread_server.isRunning():
+							if self.do_get_thread.isRunning():
+								row_file = os.path.join(TMPDIR,'row.txt')
+								f = open(row_file,'w')
+								f.write(str(row))
+								f.close()
+								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+							else:
+								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = self.site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress,ui.tmp_download_folder)
 						else:
-							finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = self.site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress,ui.tmp_download_folder)
+							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = self.site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress,ui.tmp_download_folder)
+						self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
+						self.torrent_handle.set_download_limit(self.torrent_download_limit)
 					else:
-						finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = self.site_var.getFinalUrl(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,ui.list6,ui.progress,ui.tmp_download_folder)
-					self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
-					self.torrent_handle.set_download_limit(self.torrent_download_limit)
-				else:
-					finalUrl = self.site_var.getFinalUrl(name,epn,mirrorNo,quality)
+						finalUrl = self.site_var.getFinalUrl(name,epn,mirrorNo,quality)
+				except Exception as e:
+					print(e)
+					self.progressEpn.setFormat('Load Failed!')
+					return 0
 		elif site == "PlayLists":
 			row = self.list2.currentRow()
 			item = self.list2.item(row)
@@ -13924,7 +13939,8 @@ class Ui_MainWindow(object):
 						QtWidgets.QApplication.processEvents()
 						try:
 							finalUrl = self.site_var.urlResolve(epnArrList[r].split('	')[1])
-						except:
+						except Exception as e:
+							print(e)
 							return 0
 				else:
 					if self.site_var:
@@ -13934,7 +13950,8 @@ class Ui_MainWindow(object):
 							finalUrl = self.site_var.getFinalUrl(
 								siteName,name,epn,mirrorNo,category,quality
 								) 
-						except:
+						except Exception as e:
+							print(e)
 							return 0
 				if category == "Movies" and not opt_movies_indicator and (type(finalUrl) is list):
 					self.list2.clear()
@@ -13953,7 +13970,8 @@ class Ui_MainWindow(object):
 						QtWidgets.QApplication.processEvents()
 						try:
 							finalUrl = self.site_var.urlResolve(epnArrList[0].split('	')[1])
-						except:
+						except Exception as e:
+							print(e)
 							return 0
 					self.epn_name_in_list = name+"-"+self.list2.currentItem().text()
 			elif site == "DubbedAnime":
@@ -13965,7 +13983,8 @@ class Ui_MainWindow(object):
 						finalUrl = self.site_var.getFinalUrl(
 							siteName,name,epn,mirrorNo,quality
 							) 
-					except:
+					except Exception as e:
+						print(e)
 						return 0
 		elif site == "None" or site == "Music" or site == "Video" or site == "Local":
 			if site == "Local" and opt == "History":
@@ -14907,7 +14926,7 @@ class Ui_MainWindow(object):
 		global sub_id,audio_id,current_playing_file_path,wget
 		
 		try:
-			a = str(p.readAllStandardOutput(),'utf-8').strip('\r\n')
+			a = str(p.readAllStandardOutput(),'utf-8').strip()
 			if 'volume' in a:
 				print(a)
 			#print(a)
@@ -15952,7 +15971,9 @@ class Ui_MainWindow(object):
 						self.torrent_handle.set_download_limit(self.torrent_download_limit)
 					else:
 						finalUrl = self.site_var.getFinalUrl(name,epn,mirrorNo,quality)
-				except:
+				except Exception as e:
+					print(e)
+					self.progressEpn.setFormat('Load Failed!')
 					print('final url not found')
 					return 0
 		elif finalUrlFound == True:
@@ -15995,7 +16016,8 @@ class Ui_MainWindow(object):
 						QtWidgets.QApplication.processEvents()
 						try:
 							finalUrl = self.site_var.urlResolve(epnArrList[r].split('	')[1])
-						except:
+						except Exception as e:
+							print(e)
 							return 0
 				else:
 					if self.site_var:
@@ -16005,7 +16027,8 @@ class Ui_MainWindow(object):
 							finalUrl = self.site_var.getFinalUrl(
 								siteName,name,epn,mirrorNo,category,quality
 								) 
-						except:
+						except Exception as e:
+							print(e)
 							return 0
 			elif site == "DubbedAnime":
 				code = 5
@@ -16016,7 +16039,8 @@ class Ui_MainWindow(object):
 						finalUrl = self.site_var.getFinalUrl(
 							siteName,name,epn,mirrorNo,quality
 							) 
-					except:
+					except Exception as e:
+						print(e)
 						return 0
 		elif site == "None" or site == "Music" or site == "Video" or site == "Local":
 			if opt == "History" and site == "Local":
@@ -16270,12 +16294,13 @@ class Ui_MainWindow(object):
 				self.list3.clear()
 				self.text.setText('Wait...Loading')
 				QtWidgets.QApplication.processEvents()
-				#try:
-				m = self.site_var.getCompleteList(t_opt,genre_num)
-				self.text.setText('Load Complete!')
-				#except:
-				#	self.text.setText('Load Failed!')
-				#	return 0
+				try:
+					m = self.site_var.getCompleteList(t_opt,genre_num)
+					self.text.setText('Load Complete!')
+				except Exception as e:
+					print(e)
+					self.text.setText('Load Failed!')
+					return 0
 				genre_num = 1
 				opt = t_opt
 				for i in m:
@@ -16306,8 +16331,13 @@ class Ui_MainWindow(object):
 				pgn = 1
 				self.text.setText('Wait...Loading')
 				QtWidgets.QApplication.processEvents()
-				m = self.site_var.getCompleteList(t_opt,genre_num)
-				self.text.setText('Load Complete!')
+				try:
+					m = self.site_var.getCompleteList(t_opt,genre_num)
+					self.text.setText('Load Complete!')
+				except Exception as e:
+					print(e)
+					self.text.setText('Load Failed!')
+					return 0
 				list1_items = m
 				original_path_name[:]=[]
 				for i in m:
@@ -16324,12 +16354,14 @@ class Ui_MainWindow(object):
 					pgn = 1
 					self.text.setText('Wait...Loading')
 					QtWidgets.QApplication.processEvents()
-					#try:
-					m = self.site_var.getCompleteList(t_opt,genre_num)
-					self.text.setText('Load Complete!')
-					#except:
-					#	return 0
-					#	self.text.setText('Load Failed!')
+					try:
+						m = self.site_var.getCompleteList(t_opt,genre_num)
+						self.text.setText('Load Complete!')
+					except Exception as e:
+						print(e)
+						self.text.setText('Load Failed!')
+						return 0
+						
 					list1_items[:] = []
 					original_path_name[:]=[]
 					for i in m:
@@ -16347,17 +16379,18 @@ class Ui_MainWindow(object):
 				opt = t_opt
 				self.text.setText('Wait...Loading')
 				QtWidgets.QApplication.processEvents()
-				#try:
-				if video_local_stream:
-					m = self.site_var.getCompleteList(
-							t_opt,ui.list6,ui.progress,ui.tmp_download_folder
-							)
-				else:
-					m = self.site_var.getCompleteList(t_opt,0)
-				self.text.setText('Load Complete!')
-				#except:
-				#	self.text.setText('Load Failed!')
-				#	return 0
+				try:
+					if video_local_stream:
+						m = self.site_var.getCompleteList(
+								t_opt,ui.list6,ui.progress,ui.tmp_download_folder
+								)
+					else:
+						m = self.site_var.getCompleteList(t_opt,0)
+					self.text.setText('Load Complete!')
+				except Exception as e:
+					print(e)
+					self.text.setText('Load Failed!')
+					return 0
 				list1_items[:] = []
 				original_path_name[:]=[]
 				for i in m:
@@ -16413,7 +16446,8 @@ class Ui_MainWindow(object):
 					try:
 						m = self.site_var.getCompleteList(siteName,category,opt) 
 						self.text.setText('Load Complete!')
-					except:
+					except Exception as e:
+						print(e)
 						self.text.setText('Load Failed!')
 						return 0
 				list1_items[:] = []
