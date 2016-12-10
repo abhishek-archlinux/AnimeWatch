@@ -619,6 +619,9 @@ class ExtendedQLabel(QtWidgets.QLabel):
 			ui.IconViewEpn()
 			if not ui.scrollArea1.isHidden():
 				ui.scrollArea1.setFocus()
+				
+	def mouseMoveEvent(self,event):
+		self.setFocus()
 		
 	def contextMenuEvent(self, event):
 		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt
@@ -2587,7 +2590,7 @@ class List1(QtWidgets.QListWidget):
 				delFanart = menu.addAction("Delete Fanart")
 				delThumb = menu.addAction("Delete Playlist Thumbnails")
 				delInfo = menu.addAction("Delete Info")
-				thumbnail = menu.addAction("Show Thumbnail View")
+				thumbnail = menu.addAction("Show Thumbnail View (Ctrl+Z)")
 				cache = menu.addAction("Clear Cache")
 				action = menu.exec_(self.mapToGlobal(event.pos()))
 				
@@ -2750,7 +2753,7 @@ class List1(QtWidgets.QListWidget):
 				submenu.addSeparator()
 				new_pls = submenu.addAction("Create New Bookmark Category")
 				sideBar = menu.addAction("Show Side Bar")
-				thumbnail = menu.addAction("Show Thumbnail View")
+				thumbnail = menu.addAction("Show Thumbnail View (Ctrl+Z)")
 				history = menu.addAction("History")
 				#rmPoster = menu.addAction("Remove Poster")
 				tvdb	= menu.addAction("Find Image(TVDB)")
@@ -3802,7 +3805,7 @@ class List2(QtWidgets.QListWidget):
 			menu.addMenu(view_menu)
 			view_list = view_menu.addAction("List Mode (Default)")
 			view_list_thumbnail = view_menu.addAction("List With Thumbnail")
-			thumb = view_menu.addAction("Thumbnail Mode")
+			thumb = view_menu.addAction("Thumbnail Grid Mode (Shift+Z)")
 			#thumb = menu.addAction("Show Thumbnails")
 			go_to = menu.addAction("Go To Last.fm")
 			fix_ord = menu.addAction("Lock Order (Playlist Only)")
@@ -3950,7 +3953,7 @@ class List2(QtWidgets.QListWidget):
 			menu.addMenu(view_menu)
 			view_list = view_menu.addAction("List Mode (Default)")
 			view_list_thumbnail = view_menu.addAction("List With Thumbnail")
-			thumb = view_menu.addAction("Thumbnail Mode")
+			thumb = view_menu.addAction("Thumbnail Grid Mode (Shift+Z)")
 			pls = os.listdir(os.path.join(home,'Playlists'))
 			home_n = os.path.join(home,'Playlists')
 			
@@ -5946,6 +5949,7 @@ class Ui_MainWindow(object):
 		self.player_opt_toolbar.setObjectName(_fromUtf8("player_opt_toolbar"))
 		self.horizontalLayout_player_opt.insertWidget(0,self.player_opt_toolbar,0)
 		self.player_opt_toolbar.setText("Options")
+		self.player_opt_toolbar.setToolTip('Shift+G')
 		
 		self.sd_hd = QtWidgets.QPushButton(self.player_opt)
 		self.sd_hd.setObjectName(_fromUtf8("sd_hd"))
@@ -5956,16 +5960,19 @@ class Ui_MainWindow(object):
 		self.audio_track.setObjectName(_fromUtf8("audio_track"))
 		self.horizontalLayout_player_opt.insertWidget(2,self.audio_track,0)
 		self.audio_track.setText("A/V")
+		self.audio_track.setToolTip('Toggle Audio (K)')
 		
 		self.subtitle_track = QtWidgets.QPushButton(self.player_opt)
 		self.subtitle_track.setObjectName(_fromUtf8("subtitle_track"))
 		self.horizontalLayout_player_opt.insertWidget(3,self.subtitle_track,0)
 		self.subtitle_track.setText("SUB")
+		self.subtitle_track.setToolTip('Toggle Subtitle (J)')
 		
 		self.player_loop_file = QtWidgets.QPushButton(self.player_opt)
 		self.player_loop_file.setObjectName(_fromUtf8("player_loop_file"))
 		self.horizontalLayout_player_opt.insertWidget(4,self.player_loop_file,0)
 		self.player_loop_file.setText(self.player_buttons['unlock'])
+		self.player_loop_file.setToolTip('Lock/unLock File (L)')
 		#self.player_loop_file.hide()
 		
 		self.player_stop = QtWidgets.QPushButton(self.player_opt)
@@ -5982,12 +5989,13 @@ class Ui_MainWindow(object):
 		self.player_prev.setObjectName(_fromUtf8("player_prev"))
 		self.horizontalLayout_player_opt.insertWidget(7,self.player_prev,0)
 		self.player_prev.setText(self.player_buttons['prev'])
+		self.player_prev.setToolTip('<')
 		
 		self.player_next = QtWidgets.QPushButton(self.player_opt)
 		self.player_next.setObjectName(_fromUtf8("player_next"))
 		self.horizontalLayout_player_opt.insertWidget(8,self.player_next,0)
 		self.player_next.setText(self.player_buttons['next'])
-		
+		self.player_next.setToolTip('>')
 		
 		self.player_showhide_title_list = QtWidgets.QPushButton(self.player_opt)
 		self.player_showhide_title_list.setObjectName(_fromUtf8("player_showhide_title_list"))
@@ -6017,7 +6025,7 @@ class Ui_MainWindow(object):
 		self.player_filter.setObjectName(_fromUtf8("player_filter"))
 		self.horizontalLayout_player_opt.insertWidget(12,self.player_filter,0)
 		self.player_filter.setText('Y')
-		self.player_filter.setToolTip('Show/Hide Filter and other options')
+		self.player_filter.setToolTip('Show/Hide Filter and other options (Ctrl+F)')
 		self.player_filter.clicked.connect(self.show_hide_filter_toolbar)
 		
 		self.btnWebHide = QtWidgets.QPushButton(self.player_opt)
@@ -6028,6 +6036,7 @@ class Ui_MainWindow(object):
 		self.horizontalLayout_player_opt.insertWidget(13,self.btnWebHide,0)
 		self.btnWebHide.setText(self.player_buttons['browser'])
 		self.btnWebHide.clicked.connect(self.webHide)
+		self.btnWebHide.setToolTip('Show/Hide Browser (Ctrl+X)')
 		
 		self.player_playlist = QtWidgets.QPushButton(self.player_opt)
 		self.player_playlist.setObjectName(_fromUtf8("player_playlist"))
@@ -8965,12 +8974,14 @@ class Ui_MainWindow(object):
 					p5="self.label_"+str(i)+".setObjectName(_fromUtf8("+'"'+"label_"+str(i)+'"'+"))"
 					p6="self.gridLayout1.addWidget(self.label_"+str(i)+","+str(j)+","+str(k)+", 1, 1,QtCore.Qt.AlignCenter)"
 					p8 = "self.label_{0}.setAlignment(QtCore.Qt.AlignCenter|QtCore.Qt.AlignBottom)".format(str(i))
+					p9 = "self.label_{0}.setMouseTracking(True)".format(str(i))
 					exec(p2)
 					exec(p3)
 					#exec(p4)
 					exec(p5)
 					exec(p6)
 					exec(p8)
+					exec(p9)
 					if value_str == "deleted":
 						p1="self.label_"+str(length+i)+" = QtWidgets.QTextEdit(self.scrollAreaWidgetContents)"
 						p7 = "l_"+str(length+i)+" = weakref.ref(self.label_"+str(length+i)+")"
@@ -14929,9 +14940,14 @@ class Ui_MainWindow(object):
 		try:
 			if Player == "mpv":
 				if "Audio_ID" in a:
-					print (a)
-					a_id = re.sub('[^"]*Audio_ID=','',a)
-					print (a_id)
+					print ('--',a,'--')
+					new_arr = a.split('\n')
+					for i in new_arr:
+						if i.startswith('Audio_ID'):
+							a_id = i.split('=')[-1]
+							break
+					#a_id = re.sub('[^"]*Audio_ID=','',a)
+					print ('--',a_id,'--')
 					audio_s = (re.search('[(][^)]*',a_id))
 					if audio_s:
 						audio_id = (audio_s.group()).replace('(','')
@@ -14940,8 +14956,15 @@ class Ui_MainWindow(object):
 					print ("audio_id="+audio_id)
 					self.audio_track.setText("A:"+str(a_id[:8]))
 				if "SUB_ID" in a:
-					print (a)
-					s_id = re.sub('[^"]*SUB_ID=','',a)
+					print ('--',a,'--')
+					new_arr = a.split('\n')
+					print(new_arr)
+					for i in new_arr:
+						if i.startswith('SUB_ID'):
+							print('--',i,'--')
+							s_id = i.split('=')[-1]
+							break
+					#s_id = re.sub('[^"]*SUB_ID=','',a)
 					sub_s = (re.search('[(][^)]*',s_id))
 					if sub_s:
 						sub_id = (sub_s.group()).replace('(','')
