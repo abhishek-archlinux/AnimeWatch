@@ -76,8 +76,7 @@ from shutil import move
 from os import remove, close
 import time
 import PIL
-from PIL import Image,ImageOps 
-#from PIL.ImageQt import ImageQt
+from PIL import Image
 import random
 from os.path import expanduser
 import textwrap
@@ -89,7 +88,7 @@ import socket
 import struct
 from PyQt5.QtWidgets import QInputDialog
 import sqlite3
-
+import json
 try:
 	try:
 		import taglib
@@ -1648,9 +1647,17 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			print(e)
 		try:
 			if var_mode == 1 or var_mode == 2 or var_mode == 3 or var_mode == 4:
-				ui.mark_History()
+				if site.lower() == 'music' or site.lower() == 'none' or site.lower() == 'local':
+					pass
+				elif site.lower() == 'video':
+					mark_video_list('mark',curR)
+				elif site.lower() == 'playlists':
+					ui.mark_playlist('mark',curR)
+				else:
+					ui.mark_addons_history_list('mark',curR)
 		except Exception as e:
 			print(e)
+			
 	def mouseReleaseEvent(self, ev):
 		global quitReally,curR,idw,mpvplayer
 		if ev.button() == QtCore.Qt.LeftButton:
@@ -2986,17 +2993,11 @@ class List2(QtWidgets.QListWidget):
 				else:
 					final = ui.epn_return(curR)
 					ui.play_file_now(final)
-					try:
-						thumb_path = ui.get_thumbnail_image_path(curR,epnArrList[curR])
-						print("thumbnail path = {0}".format(thumb_path))
-						if os.path.exists(thumb_path):
-							ui.videoImage(thumb_path,thumb_path,thumb_path,'')
-					except Exception as e:
-						print('Error in getting Thumbnail: {0}'.format(e))
+					ui.paste_background(curR)
 					try:
 						server._emitMeta("Play",site,epnArrList)
-					except:
-						pass
+					except Exception as e:
+						print(e)
 		elif event.key() == QtCore.Qt.Key_Backspace:
 			if ui.list1.isHidden() and ui.list1.count() > 0:
 				ui.list2.hide()
@@ -9597,13 +9598,11 @@ class Ui_MainWindow(object):
 			else:
 				final = ui.epn_return(curR)
 				ui.play_file_now(final)
+				ui.paste_background(curR)
 				try:
-					thumb_path = self.get_thumbnail_image_path(curR,epnArrList[curR])
-					print("thumbnail path = {0}".format(thumb_path))
-					if os.path.exists(thumb_path):
-						self.videoImage(thumb_path,thumb_path,thumb_path,'')
+					server._emitMeta("Play",site,epnArrList)
 				except Exception as e:
-					print('Error in getting Thumbnail: {0}'.format(e))
+					print(e)
 	
 	def mpvNextEpnList(self):
 		global mpvplayer,epn,curR,Player,epnArrList,site,current_playing_file_path
@@ -13253,7 +13252,6 @@ class Ui_MainWindow(object):
 					else:
 						offset = (int((0)),int((screen_height-baseheight)/2))
 					bg.paste(img,offset)
-					#new_img = ImageOps.fit(img, sz, Image.ANTIALIAS, centering=(0.5,0.5))
 					bg.save(str(fanart),'JPEG',quality=100)
 				elif fit_size == 6 or fit_size == 4:
 					if widget and fit_size == 6:
@@ -14259,30 +14257,8 @@ class Ui_MainWindow(object):
 			self.initial_view_mode()
 		self.epn_name_in_list = self.epn_name_in_list.replace('#','',1)
 		
-		try:
-			if site == "Music":
-				print (finalUrl)
-				try:
-					artist_name_mplayer = epnArrList[row].split('	')[2]
-					if artist_name_mplayer.lower() == "none" or 'http' in artist_name_mplayer:
-						artist_name_mplayer = ""
-				except:
-					artist_name_mplayer = ""
-				if self.is_artist_exists(row):
-					self.updateMusicCount('count',finalUrl)
-					self.musicBackground(row,'Search')
-			elif site.lower() == 'video' or site.lower() == 'local' or site.lower() == 'playlists':
-				if site == "Video":
-					self.updateVideoCount('mark',finalUrl)
-				try:
-					thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
-					print("thumbnail path = {0}".format(thumb_path))
-					if os.path.exists(thumb_path):
-						self.videoImage(thumb_path,thumb_path,thumb_path,'')
-				except Exception as e:
-					print('Error in getting Thumbnail -14179- epnfound: {0}'.format(e))
-		except Exception as e:
-			print(e,'--14180--')
+		self.paste_background(row)
+		
 		
 	def initial_view_mode(self):
 		global site,show_hide_player
@@ -15701,22 +15677,6 @@ class Ui_MainWindow(object):
 					print(command)
 		
 			print ("mpv=" + str(mpvplayer.processId()))
-			if site == "Music":
-				try:
-					artist_name_mplayer = epnArrList[row].split('	')[2]
-					if artist_name_mplayer == "None":
-						artist_name_mplayer = ""
-				except:
-					artist_name_mplayer = ""
-				self.updateMusicCount('count',finalUrl)
-				r = self.list2.currentRow()
-				self.musicBackground(r,'Search')
-			elif site == "Video":
-				self.updateVideoCount('mark',finalUrl)
-			if finalUrl.startswith('"http'):
-				current_playing_file_path = finalUrl.replace('"','')
-			else:
-				current_playing_file_path = finalUrl
 		else:
 			if Player == "mplayer":
 				if audio_id == "auto":
@@ -15739,32 +15699,57 @@ class Ui_MainWindow(object):
 			self.infoPlay(command)
 		
 			print ("mpv=" + str(mpvplayer.processId()))
-			if site == "Music":
-				try:
-					artist_name_mplayer = epnArrList[row].split('	')[2]
-					if artist_name_mplayer == "None":
-						artist_name_mplayer = ""
-				except:
-					artist_name_mplayer = ""
-				self.updateMusicCount('count',finalUrl)
-				r = self.list2.currentRow()
-				self.musicBackground(r,'Search')
-			elif site == "Video":
-				self.updateVideoCount('mark',finalUrl)
+			
 			if finalUrl.startswith('"http'):
 				current_playing_file_path = finalUrl.replace('"','')
 			else:
 				current_playing_file_path = finalUrl
-		if site.lower() == 'video' or site.lower() == 'local' or site.lower() == 'playlists':
-			try:
-				r = self.list2.currentRow()
-				thumb_path = self.get_thumbnail_image_path(r,epnArrList[r])
-				print("thumbnail path = {0}".format(thumb_path))
-				if os.path.exists(thumb_path):
-					self.videoImage(thumb_path,thumb_path,thumb_path,'')
-			except Exception as e:
-				print('Error in getting Thumbnail - localvideogetinlist: {0}'.format(e))
-					
+				
+		self.paste_background(row)
+	
+	def paste_background(self,row):
+		global site,epnArrList,artist_name_mplayer
+		
+		try:
+			if site == "Music":
+				try:
+					artist_name_mplayer = epnArrList[row].split('	')[2]
+					if artist_name_mplayer.lower() == "none" or 'http' in artist_name_mplayer:
+						artist_name_mplayer = ""
+				except:
+					artist_name_mplayer = ""
+				if artist_name_mplayer:
+					self.updateMusicCount('count',finalUrl)
+					self.musicBackground(row,'Search')
+				else:
+					try:
+						thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+						print("thumbnail path = {0}".format(thumb_path))
+						if os.path.exists(thumb_path):
+							self.videoImage(thumb_path,thumb_path,thumb_path,'')
+					except Exception as e:
+						print('Error in getting Thumbnail: {0}'.format(e))
+			elif site.lower() == 'video' or site.lower() == 'local' or site.lower() == 'playlists':
+				if site == "Video":
+					self.updateVideoCount('mark',finalUrl)
+				try:
+					thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+					print("thumbnail path = {0}".format(thumb_path))
+					if os.path.exists(thumb_path):
+						self.videoImage(thumb_path,thumb_path,thumb_path,'')
+				except Exception as e:
+					print('Error in getting Thumbnail -14179- epnfound: {0}'.format(e))
+			else:
+				try:
+					thumb_path = self.get_thumbnail_image_path(row,epnArrList[row])
+					print("thumbnail path = {0}".format(thumb_path))
+					if os.path.exists(thumb_path):
+						self.videoImage(thumb_path,thumb_path,thumb_path,'')
+				except Exception as e:
+					print('Error in getting Thumbnail: {0}'.format(e))
+		except Exception as e:
+			print(e,'--14180--')
+		
 	def getQueueInList(self):
 		global curR,mpvplayer,site,epn_name_in_list,artist_name_mplayer,idw
 		global sub_id,audio_id,Player,server,current_playing_file_path,quality
