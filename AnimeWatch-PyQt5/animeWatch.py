@@ -1653,7 +1653,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				if site.lower() == 'music' or site.lower() == 'none' or site.lower() == 'local':
 					pass
 				elif site.lower() == 'video':
-					mark_video_list('mark',curR)
+					ui.mark_video_list('mark',curR)
 				elif site.lower() == 'playlists':
 					ui.mark_playlist('mark',curR)
 				else:
