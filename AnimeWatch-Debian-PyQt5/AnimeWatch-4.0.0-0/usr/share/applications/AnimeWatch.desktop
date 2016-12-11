@@ -3,7 +3,7 @@
 Type=Application
 Name=AnimeWatch
 Icon=/usr/share/AnimeWatch/tray.png
-Exec=python3 -B /usr/share/AnimeWatch/animeWatch.py %u
+Exec=python3 -B /usr/share/AnimeWatch/animeWatch.py %f
 Terminal=false
 NoDisplay=false
 Categories=AudioVideo;Audio;Video;Player;TV;
