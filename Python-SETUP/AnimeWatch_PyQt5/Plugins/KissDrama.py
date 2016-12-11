@@ -14,8 +14,6 @@ from tempfile import mkstemp
 from shutil import move
 from os import remove, close
 from os.path import expanduser
-import fileinput
-import codecs
 import base64
 from player_functions import ccurl,naturallysorted
 try:
