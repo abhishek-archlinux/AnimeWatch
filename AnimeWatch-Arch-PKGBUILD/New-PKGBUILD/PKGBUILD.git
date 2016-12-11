@@ -45,7 +45,7 @@ package() {
 		if [ $nm == 'AnimeWatch.desktop' ];then
 			echo $file
 			echo 'desktop file copying'
-			cat "$file" | sed 's/Exec=/Exec=python -B \/usr\/share\/AnimeWatch\/animeWatch.py \%u/g' > "${pkgdir}/usr/share/applications/AnimeWatch.desktop"
+			cat "$file" | sed 's/Exec=/Exec=python -B \/usr\/share\/AnimeWatch\/animeWatch.py \%f/g' > "${pkgdir}/usr/share/applications/AnimeWatch.desktop"
 		elif [ $nm == 'anime-watch' ];then
 			echo $file
 			echo 'anime-watch script'
