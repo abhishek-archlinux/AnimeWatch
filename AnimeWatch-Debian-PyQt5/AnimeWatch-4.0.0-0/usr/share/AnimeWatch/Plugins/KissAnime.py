@@ -14,25 +14,25 @@ from tempfile import mkstemp
 from shutil import move
 from os import remove, close
 from os.path import expanduser
-import fileinput
-import codecs
 import base64
+import platform
 from player_functions import ccurl,naturallysorted
+
 try:
 	from headlessBrowser import BrowseUrl
 except:
 	from headlessBrowser_webkit import BrowseUrl
 	
-def cloudfare(url,quality,c):
-	web = BrowseUrl(url,quality,c)
+def cloudfare(url,quality,cookie):
+	web = BrowseUrl(url,quality,cookie)
 
-class KissDrama():
+class KissAnime():
 	def __init__(self,tmp):
 		global tmp_working_dir
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
-		tmp_working_dir = tmp
 		self.tmp_dir = tmp
-		self.cookie_file = os.path.join(tmp,'kcookieD.txt')
+		tmp_working_dir = tmp
+		self.cookie_file = os.path.join(tmp,'kcookie.txt')
 		if not os.path.exists(self.cookie_file):
 			f = open(self.cookie_file,'w')
 			f.close()
@@ -52,14 +52,15 @@ class KissDrama():
 	def search(self,name):
 		
 		if name != '':
-			url = 'http://kissasian.com/Search/Drama/?keyword=' + name
+			url = 'http://kissanime.to/Search/Anime/?keyword=' + name
 			content = self.ccurlN(url)
-			m = re.findall('/Drama/[^"]*', content)
+				
+			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Anime/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -67,51 +68,50 @@ class KissDrama():
 				j = j + 1
 
 			return m
-			
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
-		
-		
+			
 		epn_num = ''
 		if extra_info:
 			name,epn_num = name.rsplit('--',1) 
-		
-		url = 'http://kissasian.com/Drama/' + name
+			
+		url = 'http://kissanime.to/Anime/' + name
 		print(url)
 		content = self.ccurlN(url)
+		
+			
 		#f = open('/tmp/AnimeWatch/1.txt','w')
 		#f.write(content)
 		#f.close()
-		epl = re.findall('/Drama/' + name +'/' +'[^"]*["?"]id[^"]*', content)
+		epl = re.findall('/Anime/' + name + '[^"]*["?"]id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
-			img = re.findall('http://kissasian.com/Uploads/Etc/[^"]*.jpg', content)
+			img = re.findall('https://kissanime.to/Uploads/Etc/[^"]*.jpg', content)
 			if not img:
 				img = re.findall('http://cdn.myanimelist.net/[^"]*.jpg', content)	
 			print(img)
 			#jpgn = img[0].split('/')[-1]
 			#print('Pic Name=' + jpgn
-			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
+			picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			print(picn)
 			if img:
 				#img[0]=img[0].replace('kissanime.com','kissanime.to')
 				print(img[0])
 			if not os.path.isfile(picn):
-				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieD.txt','-A',self.hdr,'-o',picn,img[0]])
+				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookie.txt','-A',self.hdr,'-o',picn,img[0]])
 				ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 		except:
 			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 		j = 0
 		for i in epl:
-			i = re.sub('/Drama/' + name + '/', '', i)
+			i = re.sub('/Anime/' + name + '/', '', i)
 			epl[j] = i
 			j = j + 1
 
-		#try:
-		soup = BeautifulSoup(content,'lxml')
 		
+		soup = BeautifulSoup(content,'lxml')
 		summary = ""
 		summary1 = ""
 		try:
@@ -139,19 +139,18 @@ class KissDrama():
 			summary = re.sub('\n\n','\n',summary)
 		except:
 			summary = 'Summary Not Available'
-		#print(summary)
-		#print(picn)
+			
 		epl=naturallysorted(epl)  
-		#epl.append(picn)
-		#epl.append(summary)
 		if extra_info and epn_num:
 			epl[:] = []
 			epl.append(epn_num)
+			
 		record_history = True
+		display_list = True
 		return (epl,summary,picn,record_history,depth_list)
 	def urlResolve(self,txt):
 		m =[]
-		
+
 		if isinstance(txt,bytes):
 			print("I'm byte")
 			content = str((txt).decode('utf-8'))
@@ -170,45 +169,78 @@ class KissDrama():
 					print (k)
 					m.append(k)
 		return m
+	
+	
 	def getFinalUrl(self,name,epn,mirror,quality):
 		if '--' in name and 'id=' in name:
 			name = name.split('--')[0]
-		url = 'http://kissasian.com/Drama/' + name + '/' + epn
+		url = 'http://kissanime.to/Anime/' + name + '/' + epn
 		print(url)
 		sd = ''
 		hd = ''
 		sd480 = ''
-		lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
-		if os.path.exists(lnk_file):
-			os.remove(lnk_file)
-			
-		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
-		print(url,quality,self.cookie_file)
-		cloudfare(url,quality,self.cookie_file)
+		content = self.ccurlN(url)
 		
 		
-		cnt = 0
+		print (content)
+		soup = BeautifulSoup(content,'lxml')
+		#f = open('/tmp/AnimeWatch/k.txt','w')
+		#f.write(content)
+		#f.close()
+		m = soup.findAll('select',{'id':'selectQuality'})
+		print(m)
+		arr = []
+		for i in m:
+			j = i.findAll('option')
+			for k in j:
+				l = k['value']
+				arr.append(str(base64.b64decode(l).decode('utf-8')))
+		print(arr)
+		for i in arr:
+			if 'itag=18' in i:
+				sd = i
+			elif 'itag=22' in i:
+				hd = i
+			elif 'itag=37' in i:
+				full_hd = i
+			elif 'itag=59' in i:
+				sd480 = i
+			elif '=m18' in i:
+				sd = i
+			elif '=m22' in i:
+				hd = i
 		
+		if quality == "hd" and hd:
+			sd = hd
+		elif quality == 'sd480p' and sd480:
+			sd = sd480
 		
-		if os.path.exists(lnk_file):
-			link = open(lnk_file).read()
-			final = link
-			print(link)
-		else:
-			final = ''
-			print('No Link Available or Clear The Cache')
-		
+		if not sd:
+			if sd480:
+				sd = sd480
+			elif hd:
+				sd = hd
+		#content = (subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookie.txt','-L','-I','-A',self.hdr,sd]))
+		print(sd)
+		content = ccurl(sd+'#'+'-I')
+		print(content)
+		m = self.urlResolve(content)
+		if m:
+			final = str(m[-1])
+			print(final)
 		return final
 		
 	def getCompleteList(self,opt,genre_num):
 		
 		if opt == 'Genre' and genre_num == 0:
-			url = 'http://kissasian.com/DramaList/'
+			url = 'http://kissanime.to/AnimeList/'
 			content = self.ccurlN(url)
+			
+			
 			m = re.findall('/Genre/[^"]*', content)
 			m = list(set(m))
 			m.sort()
-			#del m[9]
+			del m[9]
 			m.pop()
 			j = 0
 			for i in m:
@@ -220,15 +252,17 @@ class KissDrama():
 		if opt == 'History':
 			print('History')
 		elif opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate':
-			url = 'http://kissasian.com/DramaList/' + opt
+			url = 'http://kissanime.to/AnimeList/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
-			m = re.findall('/Drama/[^"]*', content)
+			
+			
+			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Anime/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -237,15 +271,15 @@ class KissDrama():
 
 			return m
 		if genre_num == 1:
-			url = 'http://kissasian.com/Genre/' + opt
+			url = 'http://kissanime.to/Genre/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Anime/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -258,17 +292,17 @@ class KissDrama():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
-				url = 'http://kissasian.com/DramaList/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = self.ccurlN(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Anime/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -282,16 +316,16 @@ class KissDrama():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:
-				url = 'http://kissasian.com/DramaList/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.to/Genre/' + opt + '?page=' + pgnum
 			content = self.ccurlN(url)
-			m = re.findall('/Drama/[^"]*', content)
+			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Drama/', '', i)
+				i = re.sub('/Anime/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')

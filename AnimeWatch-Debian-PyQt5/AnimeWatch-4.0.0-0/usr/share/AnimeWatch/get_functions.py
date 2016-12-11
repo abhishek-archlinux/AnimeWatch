@@ -362,7 +362,7 @@ def ccurl(url,external_cookie=None):
 		#ca_cert = get_ca_certificate()
 		#if ca_cert:
 		#c.setopt(c.CAINFO, ca_cert)
-		e#lse:
+		#else:
 		c.setopt(c.SSL_VERIFYPEER,False)
 	if curl_opt == '-o':
 		c.setopt(c.FOLLOWLOCATION, True)

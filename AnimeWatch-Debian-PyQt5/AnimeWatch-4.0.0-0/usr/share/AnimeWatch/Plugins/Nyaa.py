@@ -41,6 +41,7 @@ class Nyaa():
 	
 	def ccurlN(self,url):
 		content = ccurl(url+'#-b#'+self.cookie_file)
+		#print(content)
 		if 'checking_browser' in content:
 			if os.path.exists(self.cookie_file):
 				os.remove(self.cookie_file)
@@ -94,7 +95,7 @@ class Nyaa():
 		content = self.ccurlN(url)
 		soup = BeautifulSoup(content,'lxml')
 		#print(soup.prettify())
-		unit_element = soup.findAll('tr',{'class':'trusted tlistrow'})
+		unit_element = soup.findAll('tr',{'class':'tlistrow trusted'})
 		#print(unit_element[0])
 		s = []
 		for i in unit_element:

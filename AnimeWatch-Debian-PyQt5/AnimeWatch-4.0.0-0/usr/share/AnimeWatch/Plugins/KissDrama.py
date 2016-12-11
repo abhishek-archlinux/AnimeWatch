@@ -14,8 +14,6 @@ from tempfile import mkstemp
 from shutil import move
 from os import remove, close
 from os.path import expanduser
-import fileinput
-import codecs
 import base64
 from player_functions import ccurl,naturallysorted
 try:
@@ -26,13 +24,13 @@ except:
 def cloudfare(url,quality,c):
 	web = BrowseUrl(url,quality,c)
 
-class KissCartoon():
+class KissDrama():
 	def __init__(self,tmp):
 		global tmp_working_dir
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		tmp_working_dir = tmp
 		self.tmp_dir = tmp
-		self.cookie_file = os.path.join(tmp,'kcookieC.txt')
+		self.cookie_file = os.path.join(tmp,'kcookieD.txt')
 		if not os.path.exists(self.cookie_file):
 			f = open(self.cookie_file,'w')
 			f.close()
@@ -48,17 +46,18 @@ class KissCartoon():
 			cloudfare(url,'',self.cookie_file)
 			content = ccurl(url+'#-b#'+self.cookie_file)
 		return content
+		
 	def search(self,name):
 		
 		if name != '':
-			url = 'http://kisscartoon.me/Search/Cartoon/?keyword=' + name
+			url = 'http://kissasian.com/Search/Drama/?keyword=' + name
 			content = self.ccurlN(url)
-			m = re.findall('/Cartoon/[^"]*', content)
+			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Cartoon/', '', i)
+				i = re.sub('/Drama/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -66,23 +65,25 @@ class KissCartoon():
 				j = j + 1
 
 			return m
+			
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
+		
 		
 		epn_num = ''
 		if extra_info:
 			name,epn_num = name.rsplit('--',1) 
 		
-		url = 'http://kisscartoon.me/Cartoon/' + name
+		url = 'http://kissasian.com/Drama/' + name
 		print(url)
 		content = self.ccurlN(url)
 		#f = open('/tmp/AnimeWatch/1.txt','w')
 		#f.write(content)
 		#f.close()
-		epl = re.findall('/Cartoon/' + name + '[^"]*["?"]id[^"]*', content)
+		epl = re.findall('/Drama/' + name +'/' +'[^"]*["?"]id[^"]*', content)
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
-			img = re.findall('http://kisscartoon.me/Uploads/Etc/[^"]*.jpg', content)
+			img = re.findall('http://kissasian.com/Uploads/Etc/[^"]*.jpg', content)
 			if not img:
 				img = re.findall('http://cdn.myanimelist.net/[^"]*.jpg', content)	
 			print(img)
@@ -95,14 +96,14 @@ class KissCartoon():
 				#img[0]=img[0].replace('kissanime.com','kissanime.to')
 				print(img[0])
 			if not os.path.isfile(picn):
-				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieC.txt','-A',self.hdr,'-o',picn,img[0]])
+				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookieD.txt','-A',self.hdr,'-o',picn,img[0]])
 				ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 		except:
 			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 		j = 0
 		for i in epl:
-			i = re.sub('/Cartoon/' + name + '/', '', i)
+			i = re.sub('/Drama/' + name + '/', '', i)
 			epl[j] = i
 			j = j + 1
 
@@ -136,7 +137,11 @@ class KissCartoon():
 			summary = re.sub('\n\n','\n',summary)
 		except:
 			summary = 'Summary Not Available'
+		#print(summary)
+		#print(picn)
 		epl=naturallysorted(epl)  
+		#epl.append(picn)
+		#epl.append(summary)
 		if extra_info and epn_num:
 			epl[:] = []
 			epl.append(epn_num)
@@ -166,7 +171,7 @@ class KissCartoon():
 	def getFinalUrl(self,name,epn,mirror,quality):
 		if '--' in name and 'id=' in name:
 			name = name.split('--')[0]
-		url = 'http://kisscartoon.me/Cartoon/' + name + '/' + epn
+		url = 'http://kissasian.com/Drama/' + name + '/' + epn
 		print(url)
 		sd = ''
 		hd = ''
@@ -176,7 +181,12 @@ class KissCartoon():
 			os.remove(lnk_file)
 			
 		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
+		print(url,quality,self.cookie_file)
 		cloudfare(url,quality,self.cookie_file)
+		
+		
+		cnt = 0
+		
 		
 		if os.path.exists(lnk_file):
 			link = open(lnk_file).read()
@@ -185,12 +195,13 @@ class KissCartoon():
 		else:
 			final = ''
 			print('No Link Available or Clear The Cache')
+		
 		return final
 		
 	def getCompleteList(self,opt,genre_num):
 		
 		if opt == 'Genre' and genre_num == 0:
-			url = 'http://kisscartoon.me/CartoonList/'
+			url = 'http://kissasian.com/DramaList/'
 			content = self.ccurlN(url)
 			m = re.findall('/Genre/[^"]*', content)
 			m = list(set(m))
@@ -207,15 +218,15 @@ class KissCartoon():
 		if opt == 'History':
 			print('History')
 		elif opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate':
-			url = 'http://kisscartoon.me/CartoonList/' + opt
+			url = 'http://kissasian.com/DramaList/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
-			m = re.findall('/Cartoon/[^"]*', content)
+			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Cartoon/', '', i)
+				i = re.sub('/Drama/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -224,15 +235,15 @@ class KissCartoon():
 
 			return m
 		if genre_num == 1:
-			url = 'http://kisscartoon.me/Genre/' + opt
+			url = 'http://kissasian.com/Genre/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
-			m = re.findall('/Cartoon/[^"]*', content)
+			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Cartoon/', '', i)
+				i = re.sub('/Drama/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -245,17 +256,17 @@ class KissCartoon():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
-				url = 'http://kisscartoon.me/CartoonList/' + opt + '?page=' + pgnum
+				url = 'http://kissasian.com/DramaList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = self.ccurlN(url)
-			m = re.findall('/Cartoon/[^"]*', content)
+			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Cartoon/', '', i)
+				i = re.sub('/Drama/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
@@ -269,16 +280,16 @@ class KissCartoon():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:
-				url = 'http://kisscartoon.me/CartoonList/' + opt + '?page=' + pgnum
+				url = 'http://kissasian.com/DramaList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissasian.com/Genre/' + opt + '?page=' + pgnum
 			content = self.ccurlN(url)
-			m = re.findall('/Cartoon/[^"]*', content)
+			m = re.findall('/Drama/[^"]*', content)
 			m = list(set(m))
 			m.sort()
 			j = 0
 			for i in m:
-				i = re.sub('/Cartoon/', '', i)
+				i = re.sub('/Drama/', '', i)
 				m[j] = i
 				if '?id=' in i and '/' in i:
 					nm,ep = i.split('/')
