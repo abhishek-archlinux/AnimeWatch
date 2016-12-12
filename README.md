@@ -499,24 +499,25 @@ You can explore Right click menu of both Playlist Column and Title List Column f
 
 ###Other Things for convenience:
 
-Please Enable Vertical Scrolling of Touchpad, because there are no scrollbars in this application, because they were looking very ugly in the total setup.
+1. Please Enable Vertical Scrolling of Touchpad, because there are no scrollbars in this application, because they were looking very ugly in the total setup.
 
-In LXDE you can insert following command in autostart file to enable vertical scrolling
+   In LXDE you can insert following command in autostart file to enable vertical scrolling
 
-'synclient VertEdgeScroll=1'
+	synclient VertEdgeScroll=1
 
-In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyboard shortcuts to following commands in Openbox lxde-rc.xml
+2. In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyboard shortcuts to following commands in Openbox lxde-rc.xml.
 
-1. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next'
+	1. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause'
+	
+	2. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next'
 
-2. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous'
+	3. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous'
 
-3. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause'
 
-4. It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
+3. It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
 
-5. Instead of pycurl, it's possible to use directly either curl or wget for fetching web pages. Users need to edit 'GET_LIBRARY' field in the '~/.config/AnimeWatch/other_options.txt' and change it to either 'curl' or 'wget'. 
+4. Instead of pycurl, it's possible to use directly either curl or wget for fetching web pages. Users need to edit 'GET_LIBRARY' field in the '~/.config/AnimeWatch/other_options.txt' and change it to either 'curl' or 'wget'. 
 
-6. If users want to remove temporary directory automatically once the programme quits, then they should edit 'TMP_REMOVE' field in the '~/.config/AnimeWatch/other_options.txt' and change it to 'yes' from 'no'.
+5. If users want to remove temporary directory automatically once the programme quits, then they should edit 'TMP_REMOVE' field in the '~/.config/AnimeWatch/other_options.txt' and change it to 'yes' from 'no'.
 
-7. By default, the background image follows fit to screen without thinking about original aspect ratio of the image. If user want to change it to fit to width or fit to height, then they should try Ctrl+2 or Ctrl+3 global keys. Users can also try Ctrl+4 to Ctrl+8 shortcuts, to experiment with various available background image modes.
+6. By default, the background image follows fit to screen without thinking about original aspect ratio of the image. If user want to change it to fit to width or fit to height, then they should try Ctrl+2 or Ctrl+3 global keys. Users can also try Ctrl+4 to Ctrl+8 shortcuts, to experiment with various available background image modes.
