@@ -164,10 +164,10 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
    
    First clone the repository then execute following commands.
 
-	$ cd Python-SETUP
-	$ python setup.py sdist (or python3 setup.py sdist)
-	$ cd dist
-	$ sudo pip3 install 'pkg_available_in_directory'
+		$ cd Python-SETUP
+		$ python setup.py sdist (or python3 setup.py sdist)
+		$ cd dist
+		$ sudo pip3 install 'pkg_available_in_directory'
 	
 	pip3 will essentially install most of the python-based dependencies along with the package. Users only have to install non-python based dependencies such as mplayer/mpv,ffmpegthumbnailer,libtorrent and curl/wget manually. 
 	
