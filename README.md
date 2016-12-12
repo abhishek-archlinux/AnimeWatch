@@ -14,6 +14,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Minimal Music Player](#minimal-music-player)
 
+[Detached Video Mode](#detached-video-mode)
+
 [Torrent Streaming Player] (#torrent-streaming)
 
 [Media Server](#media-server)
@@ -84,7 +86,7 @@ User can make as many playlists as possible. It is possible to merge various pla
 
 Users can see their entire collection in Thumbnail mode in Grid Layout, once your collection is ready with appropriate fanart or posters. Use this thumbnail mode if you have more than 2 GB of RAM. Otherwise your system may slow down. 
 
-In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail mode itself by right clicking and selecting appropriate option. If you don't like generated thumbnail then right click it and select another.
+In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail itself by selecting right mode from 1 to 4. If you don't like generated thumbnail then right click it and select another.
 
 ## Thumbnail Mode
 ######[Index](#index)
@@ -97,6 +99,12 @@ It is not very powerful music organizer, but provide certain decent functionalit
 ## Minimal Music Player
 ######[Index](#index)
 ![AnimeWatch](/Images/Music.png)
+
+## Detached Video Mode
+######[Index](#index)
+
+The Player contains Detached video mode, which can be activated by right clicking tray icon and selecting appropriate entry.
+In this mode, video will be detached from the main application window and can float anywhere on the desktop. By default it has titlebar, which users can remove by activating frameless mode from system tray context menu. Users can make this detached video of any size and can position it anywhere on the desktop which will remain above all the windows. This mode can be used like system sound menu indicator in LXDE or LXQT, in which there is no sound menu applet similar to Unity or GNOME. In lightweight desktop sessions like LXDE there is very simple sound menu applet which does not integrate music and any other extra functionalities. By using this mode, it is possible to use it as a system tray widget with many advance features with which you can quickly control your media (both audio and video) which is being played in the player.
 
 ## Torrent Streaming
 ######[Index](#index)
@@ -131,8 +139,7 @@ Default Settings: 'TORRENT_STREAM_IP=127.0.0.1:8001' and 'LOCAL_STREAM_IP=127.0.
 ######[Index](#index)
 ![AnimeWatch](/Images/YT.png)
 
-This player provides a wrapper around youtube site using qtwebengine (since version 2.8.0-0). If your GNU/linux distro does not package qtwebengine, then it will fallback to qtwebkit, which is slower compared to qtwebengine for rendering web pages. Users need to install livestreamer(for watching live streams) and youtube-dl for directly playing youtube videos on this player.
-
+This player provides a wrapper around youtube site using qtwebengine (since version 2.8.0-0). If your GNU/linux distro does not package qtwebengine, then it will fallback to qtwebkit, which is slower compared to qtwebengine for rendering web pages. Users need to install youtube-dl for directly playing youtube videos on this player. In this wrapper users will get complete functionality of youtube site, but with better control over video.
 
 ## Addon Structure
 ######[Index](#index)
@@ -140,7 +147,7 @@ In this player, a weak addon structure has been created, so that one can write a
 
 Most of the above things are possible in KODI or Plex . But I wanted some simple player with either mpv or mplayer as backend with decent media management functionality and addon structure. Therefore, I decided to create the application.
 
-This player is made mainly for GNU/Linux systems. But probably it may work on BSD and other Unix-like systems, if dependencies are satisfied. And one thing is sure it can't work on Windows.
+This player is made mainly for GNU/Linux systems. But probably it should work on BSD and other Unix-like systems, if dependencies are satisfied. ~~And one thing is sure it can't work on Windows.~~From version 4.0 onwards the player might work on Windows too if dependencies are satisfied. 
 
 It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(PyQt4 version) and ubuntu 16.04(PyQt5 version).
 
@@ -153,18 +160,33 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 
   Note: From version number 2.8.0-0 onwards, only PyQt5 version will be available. It is difficult to maintain two different versions (i.e. PyQt4 and PyQt5) of the same programme. AnimeWatch 2.7.0-0 was the last PyQt4 release. All the subsequent release will be PyQt5 only.
 
-3. Common Method: Users have to manually install all the dependencies listed below. Then they should clone the repository and go to AnimeWatch-PyQt4-Stable or AnimeWatch-PyQt5 directory. Open terminal in that directory and run 'python3 install.py' (or 'python install.py' if default python points to python3). Application launcher will be created in '~/.local/share/applications/'.
+3. Using **setup.py** located in **Python-SETUP** directory: 
+   
+   First clone the repository then execute following commands.
 
-4. If You've Already installed application using common method and now want to re-install it again using either .deb and .pkg.tar.xz or you want to try PyQt5 version, then first remove AnimeWatch.desktop file located in '~/.local/share/applications/' and also remove config directory '~/.config/AnimeWatch/src/
+	$ cd Python-SETUP
+	$ python setup.py sdist (or python3 setup.py sdist)
+	$ cd dist
+	$ sudo pip3 install 'pkg_available_in_directory'
+	
+	pip3 will essentially install most of the python-based dependencies along with the package. Users only have to install non-python based dependencies such as mplayer/mpv,ffmpegthumbnailer,libtorrent and curl/wget manually. 
+	
+	Note: GNU/Linux distros should install PyQt5 and other python based dependencies from their own repositories using their native package manager instead of using pip, in order to avoid conflicting files or other dependecies problems due to differing naming schemes of the package. They should remove or comment out the 'install_requires' field in the setup.py, before using this method.
+	
+	Once application is installed, launch the application using command 'animewatch' from the terminal.
+
+4. Common Method: Users have to manually install all the dependencies listed below. Then they should clone the repository and go to AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable directory. Open terminal in that directory and run 'python3 install.py' (or 'python install.py' if default python points to python3). Application launcher will be created in '~/.local/share/applications/'.
+Or they can simply click on (or execute using command line) **'animewatch-start'** shell script located in the directory to start the player directly without copying files anywhere.
 
 
 #Dependencies
 ######[Index](#index)
+
+**Minimum Dependencies on GNU/Linux:** 
+
 python3 {Main Language}
 
 python-pyqt5 (Main GUI Builder)
-
-python-pyqt4 (for PyQt4 version, which is not maintained now. AnimeWatch-2.7.0-0 was the last pyqt4 release)
 
 python-pillow {For Image Processing}
 
@@ -172,9 +194,17 @@ python-beautifulsoup4 {For scrapping webpage}
 
 python-lxml {Internal parser used in beautifulsoup4 for advance features}
 
-python-pycurl {Main library for fetching web pages}
+python-pycurl (or curl or wget alternative) {Main library for fetching web pages}
 
-python-urllib3 {Alternative python library for fetching web pages}
+pytaglib or mutagen (required for Tagging of audio files)
+
+sqlite3 (for managing local music and video database, Addons are not managed by it. Addons are managed using files.)
+
+mpv or mplayer. (for playing media)
+
+ffmpegthumbnailer(Thumbnail Generator for Local Files)
+
+**For extra features such as Youtube support, torrent streaming, MPRIS D-Bus support and desktop notifications:**
 
 libtorrent-rasterbar {since version 2.5.0-0, For Torrent Streaming Support}
 
@@ -184,39 +214,19 @@ youtube-dl {for YouTube Support}
 
 python3-dbus {for MPRIS DBus support}
 
-ffmpegthumbnailer(Thumbnail Generator for Local Files)
-
 libnotify(required for Desktop Notification)
 
-pytaglib(required for mp3 Tagging)
-
-sqlite3 (for managing local music and video database, Addons are not managed by it. Addons are managed using files.)
-
-mpv or mplayer (having both is good option, for streaming video mpv is the best because it's seeking capability within live stream is very efficient and it's buffer management is also very good, and for listening music mplayer is very cost-effective. Cpu usage is just 1 to 2 % when playing music with mplayer. When playing local video files mplayer cpu utilization always remains 4-5 % point less than that of mpv atleast on my system)
+curl or wget {In case pycurl doesn't work}
 
 python-psutil
 
-curl
+python-pyqt4 (for PyQt4 version, which is not maintained now. AnimeWatch-2.7.0-0 was the last pyqt4 release)
 
-wget
+**Dependencies installation in Arch for pyqt5 version.**
 
-~~python-requests { Not required for version >= 2.1.1-1}~~
+sudo pacman -S python python-pyqt5 qt5-webengine python-dbus python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3 libtorrent-rasterbar youtube-dl wget
 
-~~phantomjs(Headless Browser) { Not required for version >= 2.0.0-1}~~
-
-~~python-pip {for installing jsbeautifier and pytaglib}~~
-
-~~jsbeautifier(required for resolving certain links) {Not required for version >= 2.1.1-1}~~
-
-###Dependencies installation in Arch for pyqt4 version.
-
-sudo pacman -S python python-pyqt4 python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3 libtorrent-rasterbar python-dbus
-
-###Dependencies installation in Arch for pyqt5 version.
-
-sudo pacman -S python python-pyqt5 qt5-webengine python-dbus python-pycurl python-urllib3 python-pillow python-beautifulsoup4 python-lxml python-psutil curl libnotify mpv mplayer ffmpegthumbnailer sqlite3 libtorrent-rasterbar livestreamer youtube-dl wget
-
-###In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command
+**In ubuntu 14.04, default python points to python 2.7, hence for installing dependencies use following command**
 
 In ubuntu 14.04 only pyqt4 version can work
 
@@ -227,17 +237,17 @@ sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python
 
 AnimeWatch-PyQt5 from version number 2.8.0-0 onwards can be installed on ubuntu (16.04 or higher) or any other distro which does not package qt5-webengine. In case qt5-webengine is not packaged in the distro, it will use qtwebkit in fallback mode.
 
-###Dependencies installation in Ubuntu 16.04
+**Dependencies installation in Ubuntu 16.04**
 
-sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl wget libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent livestreamer python3-livestreamer youtube-dl python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebkit python3-dbus
+sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl wget libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent python3-livestreamer youtube-dl python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebkit python3-dbus
 
-###Once Dependencies are installed Download the Appropriate folder (AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable) containing 'install.py' file. Open Terminal in the directory and use following command:
+**Once Dependencies are installed Download the Appropriate folder (AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable) containing 'install.py' file. Open Terminal in the directory and use following command:**
 
-###In Arch:
+**In Arch:**
 
 python install.py
 
-###In Ubuntu 14.04:
+**In Ubuntu 14.04,16.04:**
 
 python3 install.py
 
@@ -245,7 +255,7 @@ Application Launcher will be created as "~/.local/share/applications/AnimeWatch.
 
 All other configuration files will be created in "~/.config/AnimeWatch/"
 
-###Uninstall
+**Uninstall**
 
 Simply remove the application launcher '~/.local/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
 
@@ -255,7 +265,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 1. If you've installed the Application using .deb or .pkg.tar.xz package or using PKGBUILD, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'anime-watch' or 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
 
-2. If addons are not working after some time or fanart/poster are not fetched properly, then try clearing the cache directory '/tmp/AnimeWatch/'. If users have some problems in using qtwebengine, then try clearing cache directory for qtwebengine '~/.config/AnimeWatch/Cache/'.
+2. If addons are not working after some time or fanart/poster are not fetched properly, then try clearing the cache directory '~/.config/AnimeWatch/tmp/'. If users have some problems in using qtwebengine, then try clearing cache directory for qtwebengine '~/.config/AnimeWatch/Cache/'.
 
 3. If application is crashing after certain update, then it might be possible that it may be due to incompatibility or mismatch between addons of different versions, or certain configuration issues or addition/deletion of certain addons. In such cases remove config file '~/.config/AnimeWatch/src/config.txt' manually, and then restart the application. If removing only config file doesn't work then remove both addons directory '~/.config/AnimeWatch/src/' and config file '~/.config/AnimeWatch/src/config.txt' manually, and then restart the application.
 
@@ -265,7 +275,11 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 6. Sometimes application launcher does not launch the application because of some configuration issues in .desktop file. In such cases try changing 'Terminal=True' to 'Terminal=false' in the file '/usr/share/applications/AnimeWatch.desktop'. If it does not solve the problem then open terminal and execute the command 'anime-watch' to see the error output.
 
-7. In Plsma 5.8, the application does not closes even after clicking on close button on title bar or using ALT+F4. Therefore, plasma users have to exit application by right clicking the tray icon and selecting the exit option. Tray icon remains hidden in the plasma panel, which users need to first un-hide by manually adjusting plasma tray settings. 
+7. In Plsma 5.8, the application does not close even after clicking on close button on title bar or using ALT+F4. Therefore, plasma users have to exit application by right clicking the tray icon and selecting the exit option, or using exit button in player itself. Tray icon remains hidden in the plasma panel, which users need to first un-hide by manually adjusting plasma tray settings. 
+
+8. On Windows if 'lxml' can't be installed using pip then try finding binary available for it from other sources on the internet.
+
+9. On Windows, If fetching of web pages is very slow using pycurl, then try changing pycurl to 'curl' or 'wget' in 'other_options.txt' file located in '~\.config\AnimeWatch' folder.
 
 ####Troubleshooting for common method
 
@@ -340,9 +354,13 @@ PgUp  : 300s+
 
 PgDown : 300s-
 
-0 : 90s+
+] : 90s+
 
-9 : 5s- 
+[ : 5s-
+
+0 : volume up
+
+9 : volume down 
 
 a : change aspect ratio (works with mpv: default aspect is 16:9 for mpv)
 
@@ -382,19 +400,23 @@ vo=opengl {or anything that works on your system}
 cache-secs=120
 
 ###Some global Shortcuts:
-L : show/hide Player ('shift+L' in pyqt5 version)
+Shift + L : show/hide Player
 
-g : show/hide Settings column ('shift+G' in pyqt5 version)
+shift + G : show/hide Settings column
 
-shift+f: fullscreen Application not the player
+Shift + F: fullscreen Application not the player
 
-ctrl+x : show/hide Browser
+Ctrl + X : show/hide Browser
 
-ctrl+z : show/hide Thumbnail mode (Thumbnail Mode is memory consuming, hence use it carefully if you have very big library collection)
+Ctrl + Z : show/hide Thumbnail mode for Title list (Thumbnail Mode is memory consuming, hence use it carefully if you have very big library collection)
+
+Shift + Z : show/hide Thumbnail mode for playlist column.
 
 Escape : show/hide Everything
 
 Right,Left: set focus alternate between Option column, Title column and Playlist column (If Player is not Playing Anything)
+
+Ctrl+1 to Ctrl+8 : Change aspect ratio of background image
 
 ###Title Column:(if Title list is focussed)
 
@@ -436,7 +458,7 @@ w : toggle watch/unwatch
 
 o : start offline mode (If offline mode is already activated then pressing 'o' will enqueue items for offline viewing)
 
-Right: play the item but keep both playlist and title list visible
+Right: play the item within thumbnail located in the leftmost corner but keep both playlist and title list visible. (can be used as preview mode)
 
 Left: show title list if it's hidden
 
@@ -458,10 +480,14 @@ Ctrl+Down: Move to last entry
 
 '-' : decrease size of Thumbnails
 
+###Summary Text Browser
+
+Ctrl+A : to select and save save edited summary.
+
 ###Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in the mode.
 
 ###Apart from shortcuts:
-You can explore Right click menu of both Playlist Column and Title List Column for getting TVDB, Last.fm profiles for your collection either manually or automatically. If you are getting some problem while setting profiles from TVDB or Last.fm , or having problems accessing addons,then empty the cache directory '/tmp/AnimeWatch/', This option is available with right click menu of Title List and Playlist column also.
+You can explore Right click menu of both Playlist Column and Title List Column for getting TVDB, Last.fm profiles for your collection either manually or automatically. If you are getting some problem while setting profiles from TVDB or Last.fm , or having problems accessing addons,then empty the cache directory '~/.config/AnimeWatch/tmp', This option is available with right click menu of Title List and Playlist column also.
 
 ###Other Things for convenience:
 
@@ -479,7 +505,10 @@ In LXDE, for setting global shortcuts for: Play,Pause,Next,Previous; assign keyb
 
 3. bash -c 'player=$(qdbus-qt4 org.mpris.* | grep MediaPlayer2 | head -n 1); qdbus-qt4 $player /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause'
 
-It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
+4. It is possible also to change default background image by simply replacing '~/.config/AnimeWatch/default.jpg' with another wallpaper of your choice and rename it to 'default.jpg'. This default image is important only when appropriate Fanart is not found. Once a fanart is found for particular entry, the default background image will change to it.
 
+5. Instead of pycurl, it's possible to use directly either curl or wget for fetching web pages. Users need to edit 'GET_LIBRARY' field in the '~/.config/AnimeWatch/other_options.txt' and change it to either 'curl' or 'wget'. 
 
+6. If users want to remove temporary directory automatically once the programme quits, then they should edit 'TMP_REMOVE' field in the '~/.config/AnimeWatch/other_options.txt' and change it to 'yes' from 'no'.
 
+7. By default, the background image follows fit to screen without thinking about original aspect ratio of the image. If user want to change it to fit to width or fit to height, then they should try Ctrl+2 or Ctrl+3 global keys. Users can also try Ctrl+4 to Ctrl+8 shortcuts, to experiment with various available background image modes.
