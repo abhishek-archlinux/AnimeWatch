@@ -102,9 +102,10 @@ It is not very powerful music organizer, but provide certain decent functionalit
 
 ## Detached Video Mode
 ######[Index](#index)
+![AnimeWatch](/Images/Detached_Mode.png)
 
 The Player contains Detached video mode, which can be activated by right clicking tray icon and selecting appropriate entry.
-In this mode, video will be detached from the main application window and can float anywhere on the desktop. By default it has titlebar, which users can remove by activating frameless mode from system tray context menu. Users can make this detached video of any size and can position it anywhere on the desktop which will remain above all the windows. This mode can be used like system sound menu indicator in LXDE or LXQT, in which there is no sound menu applet similar to Unity or GNOME. In lightweight desktop sessions like LXDE there is very simple sound menu applet which does not integrate music and any other extra functionalities. By using this mode, it is possible to use it as a system tray widget with many advance features with which you can quickly control your media (both audio and video) which is being played in the player.
+In this mode, video will be detached from the main application window and can float anywhere on the desktop. By default it has titlebar, which users can remove by activating frameless mode from system tray context menu. Users can make this detached video of any size and can position it anywhere on the desktop which will remain above all the windows. In lightweight desktop sessions like LXDE there is very simple sound menu applet which does not integrate music and any other extra functionalities. By using this mode, it is possible to use it as a system tray widget with many advance features with which you can quickly control your media (both audio and video) which is being played in the player, similar to sound menu applet of Unity or GNOME.
 
 ## Torrent Streaming
 ######[Index](#index)
