@@ -42,7 +42,7 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 5.  Support for downloading fanart/posters and other information such as summary or biography from internet sites such as TVDB and last.fm.
 
-6.  Thumbnail Mode Support.
+6.  Thumbnail Grid Mode Support.
 
 7.  Internal web browser with custom right click menu for manually downloading desired fanart and poster for library collection.
 
@@ -58,17 +58,21 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 13. Proper History Manager for both addons and local content.
 
-14. mplayer/mpv internal player.
+14. Bookmark support for both Audio, Video and Addons.
 
-15. Better buffer management for mplayer on low bandwidth network.
+15. mplayer/mpv internal player.
 
-16. Support for opening video in external players like vlc, smplayer or kodi.
+16. Better buffer management for mplayer on low bandwidth network.
 
-17. Torrent streaming player.
+17. Support for opening video in external players like vlc, smplayer or kodi.
 
-18. Media Server capability.
+18. Torrent streaming player.
 
-19. Youtube wrapper using qtwebengine/qtwebkit.
+19. Media Server capability.
+
+20. Youtube wrapper using qtwebengine/qtwebkit.
+
+21. Detached Video Mode
 
 ## Normal Mode 
 ######[Index](#index)
@@ -82,7 +86,7 @@ It tries to be a simple media manager for your audio and video collection with s
 
 You can fetch fanart and posters from TVDB website. If proper match is not found then you can directly go to the website using inbuilt browser. In the inbuilt browser right click has been tweaked, so that when when you find relevant url of fanart ,poster or anime; you can directly right click on the option to save it as fanart or poster or find anime info. In the same way you can find Episode Names or thumbnails of the anime. If you are in Music section then you can use the inbuilt browser to get artist information and poster directly from Last.fm, if default perfect match is not found.
 
-User can make as many playlists as possible. It is possible to merge various playlists and you can create playlist of both audio and video.
+User can make as many playlists as possible. It is possible to merge various playlists. Users can combine local audio, local video and external url into the playlist.
 
 ## Thumbnail Mode
 ######[Index](#index)
@@ -90,7 +94,7 @@ User can make as many playlists as possible. It is possible to merge various pla
 
 Users can see their entire collection in Thumbnail mode in Grid Layout, once your collection is ready with appropriate fanart or posters. Use this thumbnail mode if you have more than 2 GB of RAM. Otherwise your system may slow down. 
 
-In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail itself by selecting right mode from 2 to 4. If you don't like generated thumbnail then right click it and select another.
+In thumbnail mode, Thumbnails of local video files are automatically generated with the help of 'ffmpegthumbnailer'.You can watch video in thumbnail itself by selecting right mode from 2 to 4. If you don't like generated thumbnail then you can change it by right clicking and selecting appropriate option from the context menu.
 
 ## Minimal Music Player
 ######[Index](#index)
@@ -140,7 +144,7 @@ Default Settings: 'TORRENT_STREAM_IP=127.0.0.1:8001' and 'LOCAL_STREAM_IP=127.0.
 ######[Index](#index)
 ![AnimeWatch](/Images/YT.png)
 
-This player provides a wrapper around youtube site using qtwebengine (since version 2.8.0-0). If your GNU/linux distro does not package qtwebengine, then it will fallback to qtwebkit, which is slower compared to qtwebengine for rendering web pages. Users need to install youtube-dl for directly playing youtube videos on this player. In this wrapper users will get complete functionality of youtube site, but with better control over video and playlist.
+This player provides a wrapper around youtube site using qtwebengine (since version 2.8.0-0). If your GNU/linux distro does not package qtwebengine, then it will fallback to qtwebkit, which is slower compared to qtwebengine for rendering web pages. Users need to install youtube-dl for directly playing youtube videos on this player. In this wrapper users will get complete functionality of youtube site, but with better control over video and playlist. Users can add any youtube video url into the local playlist or they can import entire youtube playlist as local playlist. It also supports downloading youtube subtitles/captions (If available). If subtitles are availble and downloaded by the player, then usesrs need to press 'Shift+J' (Focus the player by taking mouse pointer over the playing video, before using this shortcut key combination) to load the subtitles into the player. It also supports offline mode, if users have fluctuating internet connection. Before using offline mode users need to add youtube url into local playlist.
 
 ## Addon Structure
 ######[Index](#index)
@@ -185,7 +189,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 	Once application is installed, launch the application using command **animewatch** from the terminal.
 
 4. Common Method: Users have to manually install all the dependencies listed below. Then they should clone the repository and go to AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable directory. Open terminal in that directory and run 'python3 install.py' (or 'python install.py' if default python points to python3). Application launcher will be created in '~/.local/share/applications/'.
-Or they can simply click on (or execute using command line) **'animewatch-start'** shell script located in the directory to start the player directly without copying files anywhere.
+Or they can simply click on (or execute using command line) **'animewatch-start'** shell script located in the directory to start the player directly **without copying files anywhere**.
 
 
 #Dependencies
@@ -278,7 +282,7 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 
 3. If application is crashing after certain update, then it might be possible that it may be due to incompatibility or mismatch between addons of different versions, or certain configuration issues or addition/deletion of certain addons. In such cases remove config file '~/.config/AnimeWatch/src/config.txt' manually, and then restart the application. If removing only config file doesn't work then remove both addons directory '~/.config/AnimeWatch/src/' and config file '~/.config/AnimeWatch/src/config.txt' manually, and then restart the application.
 
-4. In order to update addons manually , download or clone the github AnimeWatch directory, then go to github 'AnimeWatch-PyQt4-Stable/Plugins' directory (or AnimeWatch-PyQt5/Plugins depending upon which version you've installed) , you will find 'installPlugins.py' file there, open terminal in the directory, run the command 'python installPlugins.py' or 'python3 installPlugins.py'. It will update the addons. Or simply copy content of github 'Plugins' directory (except installPlugins.py file) into '~/.config/AnimeWatch/src/Plugins'.
+4. In order to update addons manually , download or clone the github AnimeWatch directory, then go to github 'AnimeWatch-PyQt5/Plugins' directory (or AnimeWatch-PyQt4-Stable/Plugins depending upon which version you've installed) , you will find 'installPlugins.py' file there, open terminal in the directory, run the command 'python installPlugins.py' or 'python3 installPlugins.py'. It will update the addons. Or simply copy content of github 'Plugins' directory (except installPlugins.py file) into '~/.config/AnimeWatch/src/Plugins'.
 
 5. If the status text of the player fluctuates a lot due to frequent changes in cache text duration, while using mpv as backend, then you need to set 'cache-secs' field properly in '~/.mpv/config' file. Sample fields and their values required to be set up in '~/.mpv/config' or '~/.mplayer/config' for better performance are listed in the Documentation section. 
 
@@ -521,4 +525,4 @@ You can explore Right click menu of both Playlist Column and Title List Column f
 
 5. If users want to remove temporary directory automatically once the programme quits, then they should edit 'TMP_REMOVE' field in the '~/.config/AnimeWatch/other_options.txt' and change it to 'yes' from 'no'.
 
-6. By default, the background image follows fit to screen without thinking about original aspect ratio of the image. If user want to change it to fit to width or fit to height, then they should try Ctrl+2 or Ctrl+3 global keys. Users can also try Ctrl+4 to Ctrl+8 shortcuts, to experiment with various available background image modes.
+6. By default, the background image follows fit to screen mode without thinking about original aspect ratio of the image. If user want to change it to fit to width or fit to height, then they should try Ctrl+2 or Ctrl+3 global key combination. Users can also try Ctrl+4 to Ctrl+8 shortcuts, to experiment with various available background image modes.
