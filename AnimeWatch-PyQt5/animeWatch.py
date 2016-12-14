@@ -164,13 +164,127 @@ def set_mainwindow_palette(fanart):
 
 
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
+	content_binary = 0
+	protocol_version = 'HTTP/1.1'
 	
+	def do_HEAD(self):
+		global current_playing_file_path,path_final_Url,client_closed,ui,curR
+		global epnArrList
+		print(self.path)
+		path = self.path.replace('/','',1)
+		print(os.getcwd())
+		client_closed = False
+		tm = 0
+		tmp_row = curR
+		if path.endswith('_playlist'):
+			row,pl = path.split('_',1)
+			row_num = int(row)
+			nm = ui.epn_return(row_num)
+			if nm.startswith('http'):
+				self.send_response(303)
+				self.send_header('Location',nm)
+				self.end_headers()
+			else:
+				nm = nm.replace('"','')
+				self.send_response(200)
+				self.send_header('Content-type','video/mp4')
+				size = os.stat(nm).st_size
+				self.send_header('Content-Length', str(size))
+				self.send_header('Accept-Ranges', 'bytes')
+				#self.send_header('Content-Range', 'bytes ' +str('0-')+str(size)+'/'+str(size))
+				self.send_header('Connection', 'close')
+				self.end_headers()
+				#print(size)
+		return 0
+		
+	def process_url(self,nm,get_bytes):
+		if nm.startswith('http'):
+			self.send_response(303)
+			self.send_header('Location',nm)
+			self.end_headers()
+		else:
+			self.send_response(200)
+			self.send_header('Content-type','video/mp4')
+			size = os.stat(nm).st_size
+			#size = size - get_bytes
+			self.send_header('Content-Length', str(size))
+			self.send_header('Accept-Ranges', 'bytes')
+			self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
+			self.send_header('Connection', 'close')
+			self.end_headers()
+			
+			print(get_bytes,'--get--bytes--')
+			t = 0
+			with open(nm,'rb') as f:
+				if get_bytes and t ==0:
+						f.seek(get_bytes)
+						t = 1
+						print('seeking')
+				content = f.read(1024*512)
+				while(content):
+					try:
+						self.wfile.write(content)
+					except Exception as e:
+						print(e,'--error--')
+					content = f.read(1024*512)
+			print('--hello--')
+				
 	def do_GET(self):
-		global current_playing_file_path,path_final_Url
+		global current_playing_file_path,path_final_Url,client_closed,ui,curR
+		global epnArrList
 		print(self.path)
 		path = self.path.replace('/','')
-		if path.lower() == 'play' or not path:
-			
+		print(os.getcwd())
+		print(self.requestline)
+		try:
+			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
+		except Exception as e:
+			get_bytes = 0
+		print(get_bytes)
+		client_closed = False
+		tm = 0
+		tmp_row = curR
+		if path.lower() == 'stream_continue' or path.lower() == 'stream_shuffle':
+			new_arr = []
+			for i in range(ui.list2.count()):
+				new_arr.append(i)
+			if path.lower() == 'stream_shuffle':
+				new_arr = random.sample(new_arr,len(new_arr))
+			print(new_arr)
+			print(client_closed)
+			print(self.client_address)
+			pls_path = os.path.join(TMPDIR,'mylist.m3u')
+			f = open(pls_path,'w')
+			f.write('#EXTM3U\n')
+			try:
+				for  i in range(len(new_arr)):
+					k = new_arr[i]
+					n_out = epnArrList[k].split('	')[0]
+					n_out = n_out.replace(' ','_')
+					if n_out.startswith('#'):
+						n_out = n_out.replace('#','',1)
+					j = str(k)+'_'+n_out+'_playlist'
+					out = 'http://'+str(ui.local_ip_stream)+':'+str(ui.local_port_stream)+'/'+j
+					f.write('#EXTINF:{0}\n{1}\n'.format(n_out,out))
+			except Exception as e:
+				print(e)
+			f.close()
+			self.send_response(200)
+			self.send_header('Content-type','text/html')
+			size = os.stat(pls_path).st_size
+			#size = size - get_bytes
+			self.send_header('Content-Length', str(size))
+			self.end_headers()
+			f = open(pls_path,'rb')
+			content = f.read()
+			f.close()
+			try:
+				self.wfile.write(content)
+			except Exception as e:
+				print(e)
+				client_closed = True
+				tm = 0
+		elif path.lower() == 'play' or not path:
 			self.row = ui.list2.currentRow()
 			if self.row < 0:
 				self.row = 0
@@ -180,23 +294,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					return 0
 			else:
 				nm = ui.epn_return(self.row)
-			if nm.startswith('http'):
-				self.send_response(303)
-				self.send_header('Location',nm)
-				self.end_headers()
-			else:
-				#ui.list2.setCurrentRow(self.row)
-				self.send_response(200)
-				self.send_header('Content-type','video/mp4')
-				self.end_headers()
-				#nm = current_playing_file_path
+			if nm.startswith('"'):
 				nm = nm.replace('"','')
-				#nm = nm.replace("'",'')
-				f = open(nm,'rb')
-				content = f.read()
-				self.wfile.write(content)
-				#time.sleep(1)
-				f.close()
+			self.process_url(nm,get_bytes)
 		elif path.lower() == 'next':
 			self.row = ui.list2.currentRow()+1
 			if self.row < 0 or self.row > ui.list2.count()-1:
@@ -208,22 +308,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			else:
 				nm = ui.epn_return(self.row)
 			ui.list2.setCurrentRow(self.row)
-			if nm.startswith('http'):
-				self.send_response(303)
-				self.send_header('Location',nm)
-				self.end_headers()
-			else:
-				self.send_response(200)
-				self.send_header('Content-type','video/mp4')
-				self.end_headers()
-				#nm = current_playing_file_path
+			if nm.startswith('"'):
 				nm = nm.replace('"','')
-				#nm = nm.replace("'",'')
-				f = open(nm,'rb')
-				content = f.read()
-				self.wfile.write(content)
-				#time.sleep(1)
-				f.close()
+			self.process_url(nm,get_bytes)
 		elif path.lower() == 'prev':
 			self.row = ui.list2.currentRow()-1
 			if self.row < 0:
@@ -235,27 +322,19 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			else:
 				nm = ui.epn_return(self.row)
 			ui.list2.setCurrentRow(self.row)
-			if nm.startswith('http'):
-				self.send_response(303)
-				self.send_header('Location',nm)
-				self.end_headers()
-			else:
-				self.send_response(200)
-				self.send_header('Content-type','video/mp4')
-				self.end_headers()
-				#nm = current_playing_file_path
+			if nm.startswith('"'):
 				nm = nm.replace('"','')
-				#nm = nm.replace("'",'')
-				f = open(nm,'rb')
-				content = f.read()
-				self.wfile.write(content)
-				#time.sleep(1)
-				f.close()
+			self.process_url(nm,get_bytes)
+		elif path.endswith('_playlist'):
+			row,pl = path.split('_',1)
+			row_num = int(row)
+			nm = ui.epn_return(row_num)
+			if nm.startswith('"'):
+				nm = nm.replace('"','')
+			self.process_url(nm,get_bytes)
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
-		
-		return 0
 
 
 class ThreadedHTTPServerLocal(ThreadingMixIn, HTTPServer):
@@ -283,8 +362,8 @@ class ThreadServerLocal(QtCore.QThread):
 		print('starting server...')
 		try:
 			server_address = (self.ip,self.port)
-			#httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
-			httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
+			httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+			#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
 		except OSError as e:
 			e_str = str(e)
 			print(e_str)
@@ -296,8 +375,8 @@ class ThreadServerLocal(QtCore.QThread):
 				send_notification(txt)
 				change_config_file(self.ip,self.port)
 				server_address = (self.ip,self.port)
-				httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
-				#httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+				#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
+				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
 			else:
 				pass
 		print('running server...at..'+self.ip+':'+str(self.port))
@@ -18018,11 +18097,16 @@ def watch_external_video(var):
 		ui.btn1.setCurrentIndex(0)
 		m = []
 		path_Local_Dir,name = os.path.split(t)
-		for r,d,f in os.walk(path_Local_Dir):
-			for z in f:
-				if ('.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z 
+		#for r,d,f in os.walk(path_Local_Dir):
+		#	for z in f:
+		#		if ('.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z 
+		#				or '.flv' in z or '.flac' in z):
+		#			m.append(os.path.join(r,z))
+		list_dir = os.listdir(path_Local_Dir)
+		for z in list_dir:
+			if ('.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z 
 						or '.flv' in z or '.flac' in z):
-					m.append(os.path.join(r,z))
+					m.append(os.path.join(path_Local_Dir,z))
 		m=naturallysorted(m)
 		#print m
 		epnArrList[:]=[]
