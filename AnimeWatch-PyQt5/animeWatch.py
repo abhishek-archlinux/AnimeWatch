@@ -122,7 +122,8 @@ try:
 	import libtorrent as lt
 	from stream import ThreadServer,TorrentThread,get_torrent_info
 	from stream import set_torrent_info,get_torrent_info_magnet
-except:
+except Exception as e:
+	print(e)
 	notify_txt = 'python3 bindings for libtorrent are broken\nTorrent Streaming feature will be disabled'
 	send_notification(notify_txt)
 
@@ -2193,7 +2194,7 @@ class MySlider(QtWidgets.QSlider):
 		self.setToolTip(l)
 		
 	def mousePressEvent(self, event):
-		global mpvplayer,Player,current_playing_file_path,mplayerLength
+		global mpvplayer,Player,current_playing_file_path,mplayerLength,video_local_stream
 		#old_val = self.value()
 		#self.setValue(self.minimum() + ((self.maximum()-self.minimum()) * event.x()) / self.width())
 		#event.accept()
@@ -2219,6 +2220,7 @@ class MySlider(QtWidgets.QSlider):
 					seek_val = int((new_val-old_val)/1000)
 					var = bytes('\n '+"seek "+str(seek_val)+' \n','utf-8')
 					mpvplayer.write(var)
+				
 
 
 class List1(QtWidgets.QListWidget):

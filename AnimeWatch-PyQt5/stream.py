@@ -33,14 +33,39 @@ from socketserver import ThreadingMixIn
 import os
 import subprocess,re
 from player_functions import send_notification
+import select
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
+	
+	protocol_version = 'HTTP/1.1'
+	
+	def do_HEAD(self):
 		
+		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
+		global tmp_dir_folder,content_length
+		#print(handle,ses,info)
+		print('--head--',content_length)
+		self.send_response(200)
+		self.send_header('Content-type','video/mp4')
+		self.send_header('Content-Length', str(content_length))
+		self.send_header('Accept-Ranges', 'bytes')
+		self.send_header('Connection', 'close')
+		self.end_headers()
+			
+	
 	def do_GET(self):
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
-		global tmp_dir_folder
-		print(handle,ses,info)
+		global tmp_dir_folder,httpd
+		#print(handle,ses,info)
+		print('do_get')
+		print(self.headers)
+		try:
+			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
+		except Exception as e:
+			get_bytes = 0
+		print(get_bytes,'--get--bytes--')
 		tmp_file = os.path.join(tmp_dir_folder,'row.txt')
+		tmp_seek_file = os.path.join(tmp_dir_folder,'seek.txt')
 		tmp_pl_file = os.path.join(tmp_dir_folder,'player_stop.txt')
 		if os.path.exists(tmp_file):
 			content = open(tmp_file).read()
@@ -86,20 +111,19 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				cnt_limit = pr.piece+n_pieces
 				cnt1 = cnt
 				file_name = os.path.join(torrent_download_path,fileStr.path)
-			except:
-				pass
+			except Exception as e:
+				print(e)
+				
 		self.send_response(200)
-		if file_name.endswith('.mkv'):
-			self.send_header('Content-type','video/x-matroska')
-		else:
-			self.send_header('Content-type','video/mp4')
-			
+		self.send_header('Content-type','video/mp4')
+		self.send_header('Content-Length', str(content_length))
+		self.send_header('Accept-Ranges', 'bytes')
+		self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(content_length)+'/'+str(content_length))
+		self.send_header('Connection', 'close')
 		self.end_headers()
 		
 		length = info.piece_length()
 		if not os.path.exists(file_name):
-			#if '/' in file_name:
-			#	dir_name = file_name.rsplit('/',1)[0]
 			dir_name,sub_file = os.path.split(file_name)
 			if not os.path.exists(dir_name):
 				os.makedirs(dir_name)
@@ -107,41 +131,102 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			f.close()
 		
 		f = open(file_name,'rb')
-		i = cnt
+		if get_bytes:
+			new_piece = int(get_bytes/length)+1
+			print(new_piece,get_bytes,length)
+			i = cnt+new_piece
+			if i > cnt_limit -3:
+				i = cnt
+			print(new_piece,'--new_piece--',i,get_bytes,content_length)
+		else:
+			i = cnt
 		total = 0
 		
 		print(file_name,i,cnt,cnt_limit,'---file--download---path--')
-		
-		while i < cnt_limit:
-			if handle.have_piece(i) and handle.have_piece(i+1):
-				#print('--reading---')
-				content = f.read(2*length)
-				try:
-					self.wfile.write(content)
-				except:
-					break
-				i = i+2
-				total = total + 2*length
+		t = 0
+		content = 0
+		pri_lowered = False
+		cnt_arr = []
+		for l in range(10):
+			cnt_arr.append(i+l)
+			if l == 0:
+				handle.piece_priority(l,7)
 			else:
-				if total > 2*length:
-					print(i,'--get--')
-					handle.piece_priority(i,7)
-					handle.piece_priority(i+1,7)
-				time.sleep(2)
+				handle.piece_priority(l,6)
+		with open(file_name,'rb') as f:
+			
+			content = b'0'
+			while content:
+				try:
+					if handle.have_piece(i):
+						if get_bytes:
+							f.seek(get_bytes)
+							get_bytes = 0
+							
+						content = f.read(length)
+						self.wfile.write(content)
+						i = i+1
+						print(i,'=i piece')
+						handle.piece_priority(i,7)
+					else:
+						time.sleep(1)
+						#if get_bytes and not pri_lowered:
+						d = 0
+						for l in cnt_arr:
+							if handle.have_piece(l):
+								d = d+1
+						if d >= 5:
+							o = cnt_arr[-1]
+							cnt_arr[:]=[]
+							for l in range(10):
+								if i+l < cnt_limit:
+									cnt_arr.append(i+l)
+									#if l == 0:
+									#	handle.piece_priority(i+l,7)
+									#else:
+									handle.piece_priority(i+l,6)
+						print("seeking i={0},cnt={1},get_bytes={2},pri_lowered={3}".format(i,cnt,get_bytes,pri_lowered))
+						handle.piece_priority(i,7)
+						print(cnt_arr)
+						if get_bytes and not pri_lowered:
+							k = cnt
+							while k < i:
+								handle.piece_priority(k,1)
+								print(k,' lowered')
+								k = k+1
+							pri_lowered = True
+						#print(httpd.request_queue_size)
+				except Exception as e:
+					print(e)
+					break
+				
 				if ses.is_paused() or os.path.exists(tmp_pl_file):
 					break
-		f.close()
+			
+			
 		if os.path.exists(tmp_pl_file):
 			os.remove(tmp_pl_file)
 		if os.path.exists(tmp_file):
 			os.remove(tmp_file)
 		return 0
 		
-	
-		
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
-
+	"""
+	def serve_forever(HTTPServer, poll_interval=0.5):
+		
+		HTTPServer.__serving = True
+		#self.__is_shut_down.clear()
+		while HTTPServer.__serving:
+			r, w, e = select.select([HTTPServer], [], [], poll_interval)
+			#print(r,w,e,'--rwe--')
+			#print(HTTPServer.get_request())
+			#print(HTTPServer.request.recv(1024).strip())
+			#print(HTTPServer.request_queue_size)
+			if r:
+				HTTPServer._handle_request_noblock()
+		#self.__is_shut_down.set()
+	"""
 class ThreadServer(QtCore.QThread):
 	
 	def __init__(self,ip,port):
@@ -153,6 +238,7 @@ class ThreadServer(QtCore.QThread):
 		self.wait()                        
 	
 	def run(self):
+		global httpd
 		print('starting server...')
 		server_address = (self.ip,self.port)
 		try:
@@ -223,7 +309,7 @@ class TorrentThread(QtCore.QThread):
 			#print(h.have_piece(cnt))
 			if cnt1+3 < cnt_limit:
 				if self.handle.have_piece(cnt1) and self.handle.have_piece(cnt1+1):
-					print(cnt1,cnt1+1,7,'--cnt--downloaded--')
+					#print(cnt1,cnt1+1,7,'--cnt--downloaded--')
 					self.handle.piece_priority(cnt1+2,7)
 					self.handle.piece_priority(cnt1+3,7)
 					cnt1 = cnt1+4
@@ -456,7 +542,8 @@ def get_torrent_info_magnet(v1,v3,u,p_bar,tmp_dir):
 
 def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
-	global progress,total_size_content,tmp_dir_folder
+	global progress,total_size_content,tmp_dir_folder,content_length
+	content_length = 0
 	ui = u
 	progress = p_bar
 	tmp_dir_folder = tmp_dir
