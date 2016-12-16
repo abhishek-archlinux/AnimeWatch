@@ -75,8 +75,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				for f in info.files():
 					if fileIndex == i:
 						fileStr = f
-						handle.file_priority(i,7)
-					
 					i += 1
 				try:
 					print (fileStr.path)
@@ -88,25 +86,9 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				n_pieces = pr.length / info.piece_length() + 1 
 				print(n_pieces)
 				n_pieces = int(n_pieces)
-				for i in range(info.num_pieces()):
-					if i in range(pr.piece,pr.piece+n_pieces):
-						if i == pr.piece:
-							handle.piece_priority(i,7)
-						elif i == pr.piece+1:
-							handle.piece_priority(i,7)
-						elif i == pr.piece+2:
-							handle.piece_priority(i,1)
-						elif i == pr.piece+n_pieces-1:
-							handle.piece_priority(i,7)
-						else:
-							handle.piece_priority(i,1)
-				tmp = ''
-				for i in range(info.num_pieces()):
-					tmp = tmp+':'+str(handle.piece_priority(i))
-				print(tmp)
+				
 				print ('starting', handle.name())
 				handle.set_sequential_download(True)
-
 				cnt = pr.piece
 				cnt_limit = pr.piece+n_pieces
 				cnt1 = cnt
@@ -164,7 +146,11 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							get_bytes = 0
 							
 						content = f.read(length)
-						self.wfile.write(content)
+						try:
+							self.wfile.write(content)
+						except Exception as e:
+							print(e)
+							#break
 						i = i+1
 						print(i,'=i piece')
 						handle.piece_priority(i,7)
@@ -185,9 +171,10 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 									#	handle.piece_priority(i+l,7)
 									#else:
 									handle.piece_priority(i+l,6)
-						print("seeking i={0},cnt={1},get_bytes={2},pri_lowered={3}".format(i,cnt,get_bytes,pri_lowered))
+							print(cnt_arr)
+						#print("seeking i={0},cnt={1},get_bytes={2},pri_lowered={3}".format(i,cnt,get_bytes,pri_lowered))
 						handle.piece_priority(i,7)
-						print(cnt_arr)
+						#print(cnt_arr)
 						if get_bytes and not pri_lowered:
 							k = cnt
 							while k < i:
@@ -195,14 +182,11 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 								print(k,' lowered')
 								k = k+1
 							pri_lowered = True
-						#print(httpd.request_queue_size)
+					if ses.is_paused() or os.path.exists(tmp_pl_file):
+						break
 				except Exception as e:
 					print(e)
 					break
-				
-				if ses.is_paused() or os.path.exists(tmp_pl_file):
-					break
-			
 			
 		if os.path.exists(tmp_pl_file):
 			os.remove(tmp_pl_file)
@@ -212,21 +196,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
-	"""
-	def serve_forever(HTTPServer, poll_interval=0.5):
-		
-		HTTPServer.__serving = True
-		#self.__is_shut_down.clear()
-		while HTTPServer.__serving:
-			r, w, e = select.select([HTTPServer], [], [], poll_interval)
-			#print(r,w,e,'--rwe--')
-			#print(HTTPServer.get_request())
-			#print(HTTPServer.request.recv(1024).strip())
-			#print(HTTPServer.request_queue_size)
-			if r:
-				HTTPServer._handle_request_noblock()
-		#self.__is_shut_down.set()
-	"""
+	
 class ThreadServer(QtCore.QThread):
 	
 	def __init__(self,ip,port):
@@ -368,6 +338,8 @@ def print_progress(var_str,var_int):
 	#if progress.value() > var_int:
 	progress.setValue(var_int)		
 	progress.setFormat(var_str)
+	if progress.isHidden():
+		progress.show()
 @pyqtSlot(str)
 def session_finished(var):
 	#from animeWatch import ui
@@ -402,7 +374,6 @@ def session_finished(var):
 			except:
 				return 0
 			
-			
 			pr = info.map_file(fileIndex,0,fileStr.size)
 			print(pr.length,info.piece_length(),info.num_pieces())
 			n_pieces = pr.length / info.piece_length() + 1 
@@ -431,12 +402,7 @@ def session_finished(var):
 			new_cnt_limit = pr.piece+n_pieces
 			cnt1 = cnt
 			
-			
 			g = fileStr.path
-			#if '/' in g:
-			#	print(g.split('/')[-1])
-			#else:
-			#	print(g)
 			g = os.path.basename(g)
 	
 def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
@@ -452,13 +418,19 @@ def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	path = v3
 	ses = session
 	info = handle.get_torrent_info()
+	
 	for f in info.files():
 		if fileIndex == i:
 			fileStr = f
 			handle.file_priority(i,7)
 		else:
-			handle.file_priority(i,0)
-		i += 1
+			new_path = os.path.join(v3,f.path)
+			new_size = f.size
+			if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
+				handle.file_priority(i,7)
+			else:
+				handle.file_priority(i,0)
+		i = i+1
 		
 	print (fileStr.path)
 	file_name = os.path.join(path,fileStr.path)
@@ -467,11 +439,8 @@ def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 		file_arr.append(f.path)
 		i += 1
 
-
 	for i in file_arr:
 		print(i)
-
-	
 
 	pr = info.map_file(fileIndex,0,fileStr.size)
 	print(pr.length,info.piece_length(),info.num_pieces())
@@ -480,24 +449,24 @@ def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	n_pieces = int(n_pieces)
 	for i in range(info.num_pieces()):
 		if i in range(pr.piece,pr.piece+n_pieces):
-			if i == pr.piece:
-				handle.piece_priority(i,7)
-			elif i == pr.piece+1:
-				handle.piece_priority(i,7)
-			elif i == pr.piece+2:
-				handle.piece_priority(i,1)
+			if i in range(pr.piece,pr.piece+10):
+				if i == pr.piece:
+					handle.piece_priority(i,7)
+				else:
+					handle.piece_priority(i,6)
 			elif i == pr.piece+n_pieces-1:
 				handle.piece_priority(i,7)
 			else:
 				handle.piece_priority(i,1)
-		else:
-			#if not handle.have_piece(i):
-			handle.piece_priority(i,0)
-
 
 	print ('starting', handle.name())
 	handle.set_sequential_download(True)
 
+	tmp = ''
+	for i in range(info.num_pieces()):
+		tmp = tmp+':'+str(handle.piece_priority(i))
+	print(tmp)
+	
 	cnt = pr.piece
 	cnt_limit = pr.piece+n_pieces
 	cnt1 = cnt
@@ -540,6 +509,53 @@ def get_torrent_info_magnet(v1,v3,u,p_bar,tmp_dir):
 	
 	return handle,ses,info
 
+def set_new_torrent_file_limit(v1,v2,v3,session,u,p_bar,tmp_dir):
+	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
+	global progress,tmp_dir_folder
+	content_length = 0
+	ui = u
+	progress = p_bar
+	tmp_dir_folder = tmp_dir
+	
+	torr_arr = ses.get_torrents()
+	for i in torr_arr:
+		print(i.name())
+	
+	i=0
+	fileIndex = int(v2)
+	
+	for f in info.files():
+		if fileIndex == i:
+			fileStr = f
+		else:
+			new_path = os.path.join(v3,f.path)
+			new_size = f.size
+		i = i+1
+	
+	print (fileStr.path)
+	file_name = os.path.join(v3,fileStr.path)
+	torrent_download_path = v3
+	file_arr =[]
+	for f in info.files():
+		file_arr.append(f.path)
+		i += 1
+
+	for i in file_arr:
+		print(i)
+	
+	pr = info.map_file(fileIndex,0,fileStr.size)
+	print(pr.length,info.piece_length(),info.num_pieces())
+	n_pieces = pr.length / info.piece_length() + 1 
+	print(n_pieces)
+	n_pieces = int(n_pieces)
+
+	cnt = pr.piece
+	cnt_limit = pr.piece+n_pieces
+	cnt1 = cnt
+	
+	print('\n',cnt,cnt_limit,file_name,'---get--torrent--info\n')
+	
+	
 def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
 	global progress,total_size_content,tmp_dir_folder,content_length
@@ -591,13 +607,19 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	
 	i=0
 	fileIndex = int(v2)
+	
 	for f in info.files():
 		if fileIndex == i:
 			fileStr = f
 			handle.file_priority(i,7)
 		else:
-			handle.file_priority(i,0)
-		i += 1
+			new_path = os.path.join(v3,f.path)
+			new_size = f.size
+			if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
+				handle.file_priority(i,7)
+			else:
+				handle.file_priority(i,0)
+		i = i+1
 	
 	print (fileStr.path)
 	file_name = os.path.join(v3,fileStr.path)
@@ -609,7 +631,9 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 
 	for i in file_arr:
 		print(i)
+		
 	
+		
 	content_length = fileStr.size
 	print(content_length,'content-length')
 	total_size_content = str(int(content_length/(1024*1024)))+'M'
@@ -621,19 +645,19 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	n_pieces = int(n_pieces)
 	for i in range(info.num_pieces()):
 		if i in range(pr.piece,pr.piece+n_pieces):
-			if i == pr.piece:
-				handle.piece_priority(i,7)
-			elif i == pr.piece+1:
-				handle.piece_priority(i,7)
-			elif i == pr.piece+2:
-				handle.piece_priority(i,1)
+			if i in range(pr.piece,pr.piece+10):
+				if i == pr.piece:
+					handle.piece_priority(i,7)
+				else:
+					handle.piece_priority(i,6)
 			elif i == pr.piece+n_pieces-1:
 				handle.piece_priority(i,7)
 			else:
 				handle.piece_priority(i,1)
-		else:
-			handle.piece_priority(i,0)
-	
+	tmp = ''
+	for i in range(info.num_pieces()):
+		tmp = tmp+':'+str(handle.piece_priority(i))
+	print(tmp)
 	print ('starting', handle.name())
 	handle.set_sequential_download(True)
 
