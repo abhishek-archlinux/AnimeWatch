@@ -43,22 +43,6 @@ except:
 
 from PyQt5 import QtWidgets
 import shutil
-#from hurry.filesize import size
-
-def naturallysorted(l): 
-	convert = lambda text: int(text) if text.isdigit() else text.lower() 
-	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
-	return sorted(l, key = alphanum_key)
-
-
-
-def replace_all(text, di):
-	for i, j in di.iteritems():
-		text = text.replace(i, j)
-	return text
-
-
-
 
 
 class Torrent():
@@ -69,54 +53,19 @@ class Torrent():
 			criteria = ['Open','History','LocalStreaming']
 			return criteria
 		
-	def getFinalUrl(self,name,epn,local_ip,status,path_folder,session,ui,progress,tmp_dir):
-		
-		index = int(epn)
-		ip_n = local_ip.rsplit(':',1)
-		ip = ip_n[0]
-		port = int(ip_n[1])
-		if status.lower() =='first run':
-			thread_server = ThreadServer(ip,port)
-			thread_server.start()
-			#ses = set_torrent_session()
-		path = path_folder
-		
-		home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History','Torrent')
-		torrent_dest = os.path.join(home,name+'.torrent')
-		
-		#home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'
-		#torrent_dest = home+name+'.torrent'
-		print(torrent_dest,index,path)
-		
-		
-		handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui,progress,tmp_dir)
-		torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
-		torrent_thread.start()
-		
-		
-		url = 'http://'+ip+':'+str(port)+'/'
-		print(url,'-local-ip-url')
-		if status.lower() == 'first run':
-			return url,thread_server,torrent_thread,ses,handle
-		else:
-			return url,torrent_thread,ses,handle
-		
-		
 	def search(self,name):
 		m = ['Not Available']
 		return m
 		
-	def getCompleteList(self,opt,ui,progress,tmp_dir):
+	def getCompleteList(self,opt,ui,progress,tmp_dir,hist_folder):
 		m = ['Not Able To Open']
 		if opt == 'Open':
 			MainWindow = QtWidgets.QWidget()
 			item, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Torrent Url or Magnet Link or local torrent file path')
 			if ok and item:
 				if (item.startswith('http') or item.startswith('/')) and item.endswith('.torrent'):
-					home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History','Torrent')
-					#name1 = item.split('/')[-1].replace('.torrent','')
+					home = hist_folder
 					name1 = os.path.basename(item).replace('.torrent','')
-					#torrent_dest1 = '/tmp/AnimeWatch/'+name1+'.torrent'
 					torrent_dest1 = os.path.join(tmp_dir,name1+'.torrent')
 					if not os.path.exists(torrent_dest1):
 						if item.startswith('http'):
@@ -134,7 +83,7 @@ class Torrent():
 					torrent_handle,stream_session,info = get_torrent_info_magnet(item,tmp_dir,ui,progress,tmp_dir)
 					torrent_file = lt.create_torrent(info)
 					
-					home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History','Torrent')
+					home = hist_folder
 					name = info.name()
 					torrent_dest = os.path.join(home,name+'.torrent')
 					
@@ -148,21 +97,14 @@ class Torrent():
 	
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		summary = ""
-		#home = os.path.expanduser('~')+'/.config/AnimeWatch/History/Torrent/'
-		home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History','Torrent')
-		torrent_dest = os.path.join(home,name+'.torrent')
+		torrent_dest = os.path.join(siteName,name+'.torrent')
 		info = lt.torrent_info(torrent_dest)
 		file_arr = []
 		for f in info.files():
 			file_path = f.path
-			#if '/' in f.path:
-			#	file_path = file_path.split('/')[-1]
 			file_path = os.path.basename(file_path)	
 			file_arr.append(file_path)
 		
-		#file_arr.append('No.jpg')
-		#file_arr.append('Summary Not Available')
-		#return file_arr
 		record_history = True
 		return (file_arr,'Summary Not Available','No.jpg',record_history,depth_list)
 		
