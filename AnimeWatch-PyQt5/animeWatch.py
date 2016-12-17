@@ -296,6 +296,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			for  i in range(len(new_arr)):
 				try:
 					k = new_arr[i]
+					n_url_file = ui.if_file_path_exists_then_play(k,ui.list2,play_now=False)
 					if (site.lower() == 'video' or site.lower() == 'music' or 
 							site.lower() == 'local' or site.lower() == 'playlists' 
 							or site.lower() == 'none'):
@@ -303,7 +304,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							n_out = epnArrList[k].split('	')[0]
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
-							n_url = urllib.parse.quote(epnArrList[k].split('	')[1].replace('"',''))
+							if n_url_file:
+								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+							else:
+								n_url = urllib.parse.quote(epnArrList[k].split('	')[1].replace('"',''))
 							try:
 								n_art = epnArrList[k].split('	')[2]
 							except Exception as e:
@@ -321,7 +325,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							n_out = epnArrList[k]
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
-							n_url = urllib.parse.quote(epnArrList[k].replace('"',''))
+							if n_url_file:
+								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+							else:
+								n_url = urllib.parse.quote(epnArrList[k].replace('"',''))
 							try:
 								n_art = ui.list1.currentItem().text()
 							except Exception as e:
@@ -329,13 +336,15 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 								n_art = 'NONE'
 						j = 'abs_path='+n_url
 					else:
-						
 						if '	' in epnArrList[k]:
 							n_out = epnArrList[k].split('	')[0]
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
 							new_name = urllib.parse.quote(epnArrList[k].split('	')[1].replace('"',''))
-							n_url = book_mark+'&'+str(k)+'&'+new_name
+							if n_url_file:
+								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+							else:
+								n_url = book_mark+'&'+str(k)+'&'+new_name
 							try:
 								n_art = epnArrList[k].split('	')[2]
 							except Exception as e:
@@ -355,13 +364,19 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 								n_out = n_out.replace('#','',1)
 							n_out = n_out.replace('"','')
 							new_name = urllib.parse.quote(n_out)
-							n_url = book_mark+'&'+str(k)+'&'+new_name
+							if n_url_file:
+								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+							else:
+								n_url = book_mark+'&'+str(k)+'&'+new_name
 							try:
 								n_art = ui.list1.currentItem().text()
 							except Exception as e:
 								print(e)
 								n_art = 'NONE'
-						j = 'relative_path='+n_url
+						if n_url_file:
+							j = 'abs_path='+n_url
+						else:
+							j = 'relative_path='+n_url
 					#n_out = n_out.replace(' ','_')
 					n_url = n_url.replace('"','')
 					n_art = n_art.replace('"','')
@@ -399,24 +414,33 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nm = nm.replace('"','')
 			self.process_url(nm,get_bytes)
 		elif path.endswith('_playlist'):
-			row,pl = path.split('_',1)
-			row_num = int(row)
-			nm = ui.epn_return(row_num)
-			if nm.startswith('"'):
-				nm = nm.replace('"','')
-			self.process_url(nm,get_bytes)
+			try:
+				row,pl = path.split('_',1)
+				row_num = int(row)
+				nm = ui.epn_return(row_num)
+				if nm.startswith('"'):
+					nm = nm.replace('"','')
+				self.process_url(nm,get_bytes)
+			except Exception as e:
+				print(e)
 		elif path.startswith('abs_path='):
-			path = path.split('abs_path=',1)[1]
-			nm = urllib.parse.unquote(path)
-			print(nm)
-			if 'youtube.com' in nm:
-				nm = get_yt_url(nm,ui.quality_val).strip()
-			self.process_url(nm,get_bytes)
+			try:
+				path = path.split('abs_path=',1)[1]
+				nm = urllib.parse.unquote(path)
+				print(nm)
+				if 'youtube.com' in nm:
+					nm = get_yt_url(nm,ui.quality_val).strip()
+				self.process_url(nm,get_bytes)
+			except Exception as e:
+				print(e)
 		elif path.startswith('relative_path='):
-			path = path.split('relative_path=',1)[1]
-			nm = urllib.parse.unquote(path)
-			nm = ui.epn_return_from_bookmark(nm)
-			self.process_url(nm,get_bytes)
+			try:
+				path = path.split('relative_path=',1)[1]
+				nm = urllib.parse.unquote(path)
+				nm = ui.epn_return_from_bookmark(nm)
+				self.process_url(nm,get_bytes)
+			except Exception as e:
+				print(e)
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
@@ -565,7 +589,28 @@ class downloadThread(QtCore.QThread):
 		except Exception as e:
 			print(e)
 
-		
+class PlayerWaitThread(QtCore.QThread):
+	wait_signal = pyqtSignal(str)
+	def __init__(self,command):
+		QtCore.QThread.__init__(self)
+		self.command = command
+		self.wait_signal.connect(start_new_player_instance)
+
+	def __del__(self):
+		self.wait()                        
+	
+	def run(self):
+		global ui,mpvplayer,Player
+		while mpvplayer.processId() > 0:
+			time.sleep(0.5)
+			print('{0} Player still alive'.format(Player))
+		#ui.infoPlayThread(self.command)
+		self.wait_signal.emit(self.command)
+
+@pyqtSlot(str)
+def start_new_player_instance(command):
+	ui.infoPlay(command)
+	
 class updateListThread(QtCore.QThread):
 	
 	update_list2_signal = pyqtSignal(str,int)
@@ -1711,12 +1756,13 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			if tmp_idw != idw:
 				if mpvplayer.processId()>0:
 					mpvplayer.kill()
-					mpvplayer = QtCore.QProcess()
+					#mpvplayer = QtCore.QProcess()
 					ui.tab_5.hide()
 					ui.tab_6.setMaximumSize(10000,10000)
 					if Player == 'mplayer':
 						try:
-							subprocess.Popen(['killall','mplayer'])
+							#subprocess.Popen(['killall','mplayer'])
+							print('hello')
 						except Exception as e:
 							print(e)
 							
@@ -3154,11 +3200,12 @@ class List2(QtWidgets.QListWidget):
 						mpvplayer.kill()
 						if Player == 'mplayer' and mpvplayer.processId() > 0:
 							try:
-								killall(['killall','mplayer'])
+								#subprocess.Popen(['killall','mplayer'])
+								print('hello')
 							except Exception as e:
 								print(e)
 						#del mpvplayer
-						mpvplayer = QtCore.QProcess()
+						#mpvplayer = QtCore.QProcess()
 					idw = str(int(ui.tab_5.winId()))
 				ui.epnfound()
 				if ui.auto_hide_dock:
@@ -6736,6 +6783,7 @@ class Ui_MainWindow(object):
 		self.playerPlaylist_setLoop_var = 0
 		self.thread_server = QtCore.QThread()
 		self.do_get_thread = QtCore.QThread()
+		self.mplayer_status_thread = QtCore.QThread()
 		self.stream_session = ''
 		self.start_streaming = False
 		self.local_http_server = QtCore.QThread()
@@ -6754,6 +6802,8 @@ class Ui_MainWindow(object):
 		self.torrent_handle = ''
 		self.list_with_thumbnail = False
 		self.mpvplayer_val = QtCore.QProcess()
+		self.mpvplayer_started = False
+		self.mpvplayer_command = []
 		self.torrent_upload_limit = 0
 		self.torrent_download_limit = 0
 		self.torrent_download_folder = TMPDIR
@@ -7735,6 +7785,13 @@ class Ui_MainWindow(object):
 		else:
 			self.sortList()
 			
+	def set_playerLoopFile(self):
+		global Player,quitReally,tray,new_tray_widget,mpvplayer
+		if Player == 'mpv':
+			mpvplayer.write(b'\n set loop-file inf \n')
+		else:
+			mpvplayer.write(b'\n set_property loop 0 \n')
+				
 	def playerLoopFile(self,loop_widget):
 		global Player,quitReally,tray,new_tray_widget,mpvplayer
 		txt = loop_widget.text()
@@ -9778,11 +9835,12 @@ class Ui_MainWindow(object):
 					mpvplayer.kill()
 					if Player == 'mplayer' and mpvplayer.processId() > 0:
 						try:
-							killall(['killall','mplayer'])
+							#subprocess.Popen(['killall','mplayer'])
+							print('hello')
 						except Exception as e:
 							print(e)
 					#del mpvplayer
-					mpvplayer = QtCore.QProcess()
+					#mpvplayer = QtCore.QProcess()
 					idw = str(int(ui.tab_5.winId()))
 			self.epnfound()
 		else:
@@ -9837,14 +9895,17 @@ class Ui_MainWindow(object):
 				if (current_playing_file_path.startswith('http') 
 						or current_playing_file_path.startswith('"http')):
 					mpvplayer.kill()
+					self.mpvplayer_started = False
 					if Player == 'mplayer':
 						if mpvplayer.processId() > 0:
 							try:
-								subprocess.Popen(['killall','mplayer'])
+								#subprocess.Popen(['killall','mplayer'])
+								print('hello')
+								#time.sleep(1)
 							except:
 								pass
-					del mpvplayer
-					mpvplayer = QtCore.QProcess()
+					#del mpvplayer
+					#mpvplayer = QtCore.QProcess()
 					
 				if len(self.queue_url_list)>0:
 					self.getQueueInList()
@@ -9853,19 +9914,22 @@ class Ui_MainWindow(object):
 			else:
 				if Player == "mpv":
 					mpvplayer.kill()
-					del mpvplayer
-					mpvplayer = QtCore.QProcess()
+					self.mpvplayer_started = False
+					#del mpvplayer
+					#mpvplayer = QtCore.QProcess()
 					self.getNextInList()
 				else:
 					print(mpvplayer.state())
 					mpvplayer.kill()
+					self.mpvplayer_started = False
 					if mpvplayer.processId() > 0:
 						try:
-							subprocess.call(['killall','mplayer'])
+							#subprocess.call(['killall','mplayer'])
+							print('hello')
 						except:
 							pass
-					del mpvplayer
-					mpvplayer = QtCore.QProcess()
+					#del mpvplayer
+					#mpvplayer = QtCore.QProcess()
 					print (mpvplayer.processId(),'--mpvnext---')
 					
 					self.getNextInList()
@@ -9910,14 +9974,16 @@ class Ui_MainWindow(object):
 				if (current_playing_file_path.startswith('http') 
 						or current_playing_file_path.startswith('"http')):
 					mpvplayer.kill()
+					self.mpvplayer_started = False
 					if Player == 'mplayer':
 						if mpvplayer.processId() > 0:
 							try:
-								subprocess.Popen(['killall','mplayer'])
+								#subprocess.Popen(['killall','mplayer'])
+								print('hello')
 							except:
 								pass
-					del mpvplayer
-					mpvplayer = QtCore.QProcess()
+					#del mpvplayer
+					#mpvplayer = QtCore.QProcess()
 					
 				if len(self.queue_url_list)>0:
 					pass
@@ -9926,19 +9992,22 @@ class Ui_MainWindow(object):
 			else:
 				if Player == "mpv":
 					mpvplayer.kill()
-					del mpvplayer
-					mpvplayer = QtCore.QProcess()
+					self.mpvplayer_started = False
+					#del mpvplayer
+					#mpvplayer = QtCore.QProcess()
 					self.getNextInList()
 				else:
 					print(mpvplayer.state())
 					mpvplayer.kill()
+					self.mpvplayer_started = False
 					if mpvplayer.processId() > 0:
 						try:
-							subprocess.Popen(['killall','mplayer'])
+							#subprocess.Popen(['killall','mplayer'])
+							print('hello')
 						except:
 							pass
-					del mpvplayer
-					mpvplayer = QtCore.QProcess()
+					#del mpvplayer
+					#mpvplayer = QtCore.QProcess()
 					print (mpvplayer.processId(),'--mpvnext---')
 					
 					self.getNextInList()
@@ -13701,7 +13770,7 @@ class Ui_MainWindow(object):
 			finalUrl = finalUrl.replace('"','')
 		else:
 			current_playing_file_path = finalUrl
-		if mpvplayer.processId() > 0 and OSNAME == 'posix':
+		if mpvplayer.processId() > 0 and OSNAME == 'posix' and self.mpvplayer_started:
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
 				t1 = bytes('\n '+'show_text '+epnShow+' \n','utf-8')
@@ -13966,10 +14035,11 @@ class Ui_MainWindow(object):
 			if Player == 'mplayer':
 				if mpvplayer.processId() > 0:
 					try:
-						subprocess.Popen(['killall','mplayer'])
+						#subprocess.Popen(['killall','mplayer'])
+						print('hello')
 					except Exception as e:
 						print(e)
-			mpvplayer = QtCore.QProcess()
+			#mpvplayer = QtCore.QProcess()
 	
 		if epn_goto == 0 and site != "PlayLists" and downloadVideo == 0:
 			if self.list2.currentItem():
@@ -14245,7 +14315,8 @@ class Ui_MainWindow(object):
 			elif Player == "mplayer":
 				if mpvplayer.processId() > 0:
 					try:
-						subprocess.Popen(['killall','mplayer'])
+						#subprocess.Popen(['killall','mplayer'])
+						print('hello')
 					except:
 						pass
 				quitReally = "no"
@@ -14312,7 +14383,8 @@ class Ui_MainWindow(object):
 								if Player == "mplayer":
 									if mpvplayer.processId() > 0:
 										try:
-											subprocess.Popen(['killall','mplayer'])
+											#subprocess.Popen(['killall','mplayer'])
+											print('hello')
 										except:
 											pass
 									quitReally = "no"
@@ -14329,7 +14401,8 @@ class Ui_MainWindow(object):
 								if Player == "mplayer":
 									if mpvplayer.processId() > 0:
 										try:
-											subprocess.Popen(['killall','mplayer'])
+											#subprocess.Popen(['killall','mplayer'])
+											print('hello')
 										except:
 											pass
 									quitReally = "no"
@@ -14346,7 +14419,8 @@ class Ui_MainWindow(object):
 					else:
 							if mpvplayer.processId() > 0:
 								try:
-									subprocess.Popen(['killall','mplayer'])
+									#subprocess.Popen(['killall','mplayer'])
+									print('hello')
 								except:
 									pass
 							epnShow = finalUrl[0]
@@ -14365,7 +14439,8 @@ class Ui_MainWindow(object):
 						if Player == "mplayer":
 							if mpvplayer.processId() > 0:
 								try:
-									subprocess.Popen(['killall','mplayer'])
+									#subprocess.Popen(['killall','mplayer'])
+									print('hello')
 								except:
 									pass
 							quitReally = "no"
@@ -14793,7 +14868,8 @@ class Ui_MainWindow(object):
 				if mpvplayer.processId() > 0:
 					print(mpvplayer.processId(),'=mpvplayer.processId()')
 					try:
-						subprocess.Popen(['killall','mplayer'])
+						#subprocess.Popen(['killall','mplayer'])
+						print('hello')
 					except:
 						pass
 		print(mpvplayer.processId(),'=mpvplayer.processId()')
@@ -15583,13 +15659,12 @@ class Ui_MainWindow(object):
 		self.slider.setValue(0)
 		self.progressEpn.setFormat("")
 		print (mpvplayer.processId(),'--finished--id--')
+	
+	#def infoPlayThread(self,command):
+	#	self.infoPlay(command)
 		
 	def infoPlay(self,command):
 		global mpvplayer,Player,site,new_epn
-		print('--line--15662--')
-		if mpvplayer.processId()>0:
-			mpvplayer.kill()
-		print('--line--15666--')
 		if command.startswith('mplayer'):
 			command = command.replace(
 				'-msglevel all=4:statusline=5:global=6',
@@ -15597,15 +15672,34 @@ class Ui_MainWindow(object):
 				)
 			if OSNAME == 'nt':
 				command = command + ' -vo gl'
-		mpvplayer = QtCore.QProcess()
-		self.mpvplayer_val = mpvplayer
-		mpvplayer.setProcessChannelMode(QtCore.QProcess.MergedChannels)
-		mpvplayer.started.connect(self.started)
-		mpvplayer.readyReadStandardOutput.connect(partial(self.dataReady,mpvplayer))
-		mpvplayer.finished.connect(self.finished)
-		QtCore.QTimer.singleShot(1000, partial(mpvplayer.start, command))
-		print(command)
-	
+		if self.player_setLoop_var == 1:
+			if Player == 'mplayer':
+				command = command+' -loop 0'
+				
+		print('--line--15662--')
+		if mpvplayer.processId()>0:
+			mpvplayer.kill()
+			if not self.mplayer_status_thread.isRunning():
+				self.mplayer_status_thread = PlayerWaitThread(command)
+				self.mplayer_status_thread.start()
+			else:
+				self.mpvplayer_command.append(command)
+		else:
+			#mpvplayer = QtCore.QProcess()
+			if self.mpvplayer_command:
+				command = self.mpvplayer_command[-1]
+				self.mpvplayer_command[:]=[]
+			self.mpvplayer_val = mpvplayer
+			mpvplayer.setProcessChannelMode(QtCore.QProcess.MergedChannels)
+			mpvplayer.started.connect(self.started)
+			mpvplayer.readyReadStandardOutput.connect(partial(self.dataReady,mpvplayer))
+			mpvplayer.finished.connect(self.finished)
+			QtCore.QTimer.singleShot(1000, partial(mpvplayer.start, command))
+			print(command)
+			self.mpvplayer_started = True
+			if self.player_setLoop_var == 1 and Player == 'mpv':
+				QtCore.QTimer.singleShot(15000, partial(self.set_playerLoopFile))
+				
 	def adjust_thumbnail_window(self,row):
 		global thumbnail_indicator,idw,ui,cur_label_num
 		if self.epn_name_in_list.startswith('#'):
@@ -15854,7 +15948,8 @@ class Ui_MainWindow(object):
 					mpvplayer.write(b'\n quit \n')
 					if mpvplayer.processId() > 0:
 						try:
-							subprocess.Popen(['killall','mplayer'])
+							#subprocess.Popen(['killall','mplayer'])
+							print('hello')
 						except:
 							pass
 					self.infoPlay(command)
@@ -15879,7 +15974,8 @@ class Ui_MainWindow(object):
 					mpvplayer.write(b'\n quit \n')
 					if mpvplayer.processId() > 0:
 						try:
-							subprocess.Popen(['killall','mpv'])
+							#subprocess.Popen(['killall','mpv'])
+							print('hello')
 						except:
 							pass
 					self.infoPlay(command)
@@ -16026,7 +16122,8 @@ class Ui_MainWindow(object):
 					mpvplayer.write(b'\n quit \n')
 					if mpvplayer.processId() > 0:
 						try:
-							subprocess.Popen(['killall','mpv'])
+							#subprocess.Popen(['killall','mpv'])
+							print('hello')
 						except:
 							pass
 					self.infoPlay(command)
@@ -16043,7 +16140,8 @@ class Ui_MainWindow(object):
 					mpvplayer.write(b'\n quit \n')
 					if mpvplayer.processId() > 0:
 						try:
-							subprocess.Popen(['killall','mplayer'])
+							#subprocess.Popen(['killall','mplayer'])
+							print('hello')
 						except:
 							pass
 					self.infoPlay(command)
@@ -16339,7 +16437,8 @@ class Ui_MainWindow(object):
 							mpvplayer.kill()
 							if Player == 'mplayer':
 								try:
-									subprocess.Popen(['killall','mplayer'])
+									#subprocess.Popen(['killall','mplayer'])
+									print('hello')
 								except:
 									pass
 						self.infoPlay(command)
@@ -16365,7 +16464,8 @@ class Ui_MainWindow(object):
 					mpvplayer.kill()
 					if Player == 'mplayer' and mpvplayer.processId() > 0:
 						try:
-							subprocess.Popen(['killall','mplayer'])
+							#subprocess.Popen(['killall','mplayer'])
+							print('hello')
 						except:
 							pass
 				self.infoPlay(command)
