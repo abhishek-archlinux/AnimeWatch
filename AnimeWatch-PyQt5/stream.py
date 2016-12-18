@@ -56,6 +56,10 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
 		global tmp_dir_folder,httpd
+		
+		#data = self.request.recv(1024).strip()
+		#print(data,'--requests--')
+		
 		#print(handle,ses,info)
 		print('do_get')
 		print(self.headers)
@@ -88,7 +92,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				n_pieces = int(n_pieces)
 				
 				print ('starting', handle.name())
-				handle.set_sequential_download(True)
+				#handle.set_sequential_download(True)
 				cnt = pr.piece
 				cnt_limit = pr.piece+n_pieces
 				cnt1 = cnt
@@ -105,13 +109,16 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		self.end_headers()
 		
 		length = info.piece_length()
+		complete_file = False
 		if not os.path.exists(file_name):
 			dir_name,sub_file = os.path.split(file_name)
 			if not os.path.exists(dir_name):
 				os.makedirs(dir_name)
 			f = open(file_name,'wb')
 			f.close()
-		
+		else:
+			if os.path.exists(file_name) and os.stat(file_name).st_size == content_length:
+				complete_file = True
 		f = open(file_name,'rb')
 		if get_bytes:
 			new_piece = int(get_bytes/length)+1
@@ -135,6 +142,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				handle.piece_priority(l,7)
 			else:
 				handle.piece_priority(l,6)
+		tm = 0
 		with open(file_name,'rb') as f:
 			
 			content = b'0'
@@ -144,13 +152,12 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						if get_bytes:
 							f.seek(get_bytes)
 							get_bytes = 0
-							
 						content = f.read(length)
 						try:
 							self.wfile.write(content)
 						except Exception as e:
 							print(e)
-							#break
+							break
 						i = i+1
 						print(i,'=i piece')
 						handle.piece_priority(i,7)
@@ -336,6 +343,7 @@ def print_progress_complete(var_str):
 def print_progress(var_str,var_int):
 	global progress
 	#if progress.value() > var_int:
+	#print(var_str,var_int)
 	progress.setValue(var_int)		
 	progress.setFormat(var_str)
 	if progress.isHidden():
@@ -511,7 +519,7 @@ def get_torrent_info_magnet(v1,v3,u,p_bar,tmp_dir):
 
 def set_new_torrent_file_limit(v1,v2,v3,session,u,p_bar,tmp_dir):
 	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
-	global progress,tmp_dir_folder
+	global progress,tmp_dir_folder,content_length
 	content_length = 0
 	ui = u
 	progress = p_bar
@@ -543,6 +551,7 @@ def set_new_torrent_file_limit(v1,v2,v3,session,u,p_bar,tmp_dir):
 	for i in file_arr:
 		print(i)
 	
+	content_length = fileStr.size
 	pr = info.map_file(fileIndex,0,fileStr.size)
 	print(pr.length,info.piece_length(),info.num_pieces())
 	n_pieces = pr.length / info.piece_length() + 1 

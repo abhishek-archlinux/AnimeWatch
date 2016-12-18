@@ -390,6 +390,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			size = os.stat(pls_path).st_size
 			#size = size - get_bytes
 			self.send_header('Content-Length', str(size))
+			self.send_header('Connection', 'close')
 			self.end_headers()
 			f = open(pls_path,'rb')
 			content = f.read()
@@ -435,9 +436,17 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		elif path.startswith('relative_path='):
 			try:
+				
 				path = path.split('relative_path=',1)[1]
 				nm = urllib.parse.unquote(path)
-				nm = ui.epn_return_from_bookmark(nm)
+				if nm.split('&')[4] == 'True':
+					old_nm = nm
+					nm = ui.epn_return_from_bookmark(nm)
+					#new_torrent_signal = doGETSignal()
+					#nm = "http://"+ui.local_ip+':'+str(ui.local_port)+'/'
+					#new_torrent_signal.new_signal.emit(old_nm)
+				else:
+					nm = ui.epn_return_from_bookmark(nm)
 				self.process_url(nm,get_bytes)
 			except Exception as e:
 				print(e)
@@ -445,7 +454,16 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
 
-
+class doGETSignal():
+	new_signal = pyqtSignal(str)
+	def __init__(self):
+		self.new_signal.connect(goToUi_jump)
+		
+@pyqtSlot(str)
+def goToUi_jump(nm):
+	global ui
+	url = ui.epn_return_from_bookmark(nm)
+	
 class ThreadedHTTPServerLocal(ThreadingMixIn, HTTPServer):
 	pass
 
@@ -14830,7 +14848,6 @@ class Ui_MainWindow(object):
 					print(finalUrl,'=finalUrl--torrent--')
 					if self.thread_server.isRunning():
 						if self.do_get_thread.isRunning():
-							finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
 							if self.torrent_handle.file_priority(row):
 									self.start_torrent_stream(na_me,row,self.local_ip+':'+str(self.local_port),'Get Next',self.torrent_download_folder,self.stream_session)
 						else:
@@ -14843,8 +14860,8 @@ class Ui_MainWindow(object):
 					finalUrl = si_te_var.getFinalUrl(na_me,ep_n,mirrorNo,ui.quality_val)
 			except:
 				return 0
-		
 		return finalUrl
+		
 	
 	def watchDirectly(self,finalUrl,title,quit_val):
 		global site,base_url,idw,quitReally,mpvplayer,Player,epn_name_in_list
@@ -15679,11 +15696,14 @@ class Ui_MainWindow(object):
 		print('--line--15662--')
 		if mpvplayer.processId()>0:
 			mpvplayer.kill()
-			if not self.mplayer_status_thread.isRunning():
-				self.mplayer_status_thread = PlayerWaitThread(command)
-				self.mplayer_status_thread.start()
-			else:
-				self.mpvplayer_command.append(command)
+			try:
+				if not self.mplayer_status_thread.isRunning():
+					self.mplayer_status_thread = PlayerWaitThread(command)
+					self.mplayer_status_thread.start()
+				else:
+					self.mpvplayer_command.append(command)
+			except Exception as e:
+				print(e)
 		else:
 			#mpvplayer = QtCore.QProcess()
 			if self.mpvplayer_command:
