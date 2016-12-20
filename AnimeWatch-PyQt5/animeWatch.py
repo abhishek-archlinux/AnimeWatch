@@ -146,8 +146,8 @@ def get_lan_ip():
 
 
 def change_config_file(ip,port):
-	config_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch',
-								'other_options.txt')
+	global home
+	config_file = os.path.join(home,'other_options.txt')
 	new_ip = 'LOCAL_STREAM_IP='+ip+':'+str(port)
 	content = open(config_file,'r').read()
 	content = re.sub('LOCAL_STREAM_IP=[^\n]*',new_ip,content)
@@ -169,20 +169,57 @@ def set_mainwindow_palette(fanart):
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	content_binary = 0
 	protocol_version = 'HTTP/1.1'
-	
+	old_get_bytes = 0
+	proc_req = True
 	def do_HEAD(self):
 		global current_playing_file_path,path_final_Url,client_closed,ui,curR
 		global epnArrList
 		print(self.path)
 		path = self.path.replace('/','',1)
+		path = urllib.parse.unquote(path)
 		print(os.getcwd())
 		client_closed = False
 		tm = 0
 		tmp_row = curR
+		_head_found = False
+		nm = ''
 		if path.endswith('_playlist'):
 			row,pl = path.split('_',1)
 			row_num = int(row)
 			nm = ui.epn_return(row_num)
+		elif path.lower() == 'play' or not path:
+			self.row = ui.list2.currentRow()
+			if self.row < 0:
+				self.row = 0
+			if ui.btn1.currentText().lower() == 'youtube':
+				nm = path_final_Url
+			else:
+				nm = ui.epn_return(self.row)
+		elif path.startswith('abs_path='):
+			try:
+				path = path.split('abs_path=',1)[1]
+				nm = path
+				print(nm)
+				if 'youtube.com' in nm:
+					nm = get_yt_url(nm,ui.quality_val).strip()
+			except Exception as e:
+				print(e)
+		elif path.startswith('relative_path='):
+			try:
+				path = path.split('relative_path=',1)[1]
+				nm = path
+				if nm.split('&')[4] == 'True':
+					old_nm = nm
+					#nm = ui.epn_return_from_bookmark(nm)
+					new_torrent_signal = doGETSignal()
+					nm = "http://"+ui.local_ip+':'+str(ui.local_port)+'/'
+					new_torrent_signal.new_signal.emit(old_nm)
+				else:
+					nm = ui.epn_return_from_bookmark(nm,from_client=True)
+			except Exception as e:
+				print(e)
+				
+		if nm:
 			if nm.startswith('http'):
 				self.send_response(303)
 				self.send_header('Location',nm)
@@ -197,7 +234,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				#self.send_header('Content-Range', 'bytes ' +str('0-')+str(size)+'/'+str(size))
 				self.send_header('Connection', 'close')
 				self.end_headers()
-				#print(size)
+					#print(size)
+		else:
+			self.send_response(404)
+			self.end_headers()
 		return 0
 		
 	def process_url(self,nm,get_bytes):
@@ -206,6 +246,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Location',nm)
 			self.end_headers()
 		else:
+			self.proc_req = False
 			self.send_response(200)
 			self.send_header('Content-type','video/mp4')
 			size = os.stat(nm).st_size
@@ -219,37 +260,36 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nm_ext = nm.rsplit('.',1)[1]
 			else:
 				nm_ext = 'nothing'
-			
+			old_get_bytes = get_bytes
 			print(get_bytes,'--get--bytes--',nm_ext)
 			t = 0
+			old_time = time.time()
 			with open(nm,'rb') as f:
 				if get_bytes and t ==0:
 						f.seek(get_bytes)
 						t = 1
 						print('seeking')
-						
-				if nm_ext in ui.music_type_arr:
-					print('music file')
-					content = f.read()
+				
+				content = f.read(1024*512)
+				while(content):
 					try:
 						self.wfile.write(content)
 					except Exception as e:
-						print(e,'--error--')
-				else:
+						#print(e,'--error--')
+						if 'Errno 104' in str(e):
+							break
 					content = f.read(1024*512)
-					while(content):
-						try:
-							self.wfile.write(content)
-						except Exception as e:
-							print(e,'--error--')
-						content = f.read(1024*512)
-				
+					time.sleep(0.0001)
+			new_time = time.time()
+			elapsed = new_time-old_time
+			print(datetime.timedelta(seconds=elapsed),'--elapsed-time--')
 			print('--hello--')
+			self.proc_req = True
 			
 	def triggerBookmark(self,row):
 		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt
-		global base_url,bookmark,status,siteName,finalUrlFound,refererNeeded,video_local_stream
-		global original_path_name
+		global base_url,bookmark,status,siteName,finalUrlFound,refererNeeded
+		global original_path_name,video_local_stream
 		tmp = ''
 		if row:
 			tmp = site+'&'+opt+'&'+siteName+'&'+name+'&'+str(video_local_stream)
@@ -262,6 +302,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		global epnArrList
 		print(self.path)
 		path = self.path.replace('/','',1)
+		path = urllib.parse.unquote(path)
 		print(os.getcwd())
 		print(self.requestline)
 		try:
@@ -269,10 +310,11 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		except Exception as e:
 			get_bytes = 0
 		print(get_bytes)
+		
 		client_closed = False
 		tm = 0
 		tmp_row = curR
-		if path.lower() == 'stream_continue' or path.lower() == 'stream_shuffle':
+		if path.lower().startswith('stream_continue') or path.lower() == 'stream_shuffle':
 			new_arr = []
 			n_out = ''
 			n_art = ''
@@ -285,6 +327,17 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			
 			for i in range(ui.list2.count()):
 				new_arr.append(i)
+			if path.lower().startswith('stream_continue_from_'):
+				row_digit = 0
+				try:
+					row_digit = int(path.lower().rsplit('_',1)[1])
+				except Exception as err_val:
+					print(err_val,'--bad--request--')
+				if row_digit:
+					if len(new_arr) > row_digit:
+						new_arr = new_arr[row_digit:]
+				print(row_digit)
+				print(new_arr)
 			if path.lower() == 'stream_shuffle':
 				new_arr = random.sample(new_arr,len(new_arr))
 			print(new_arr)
@@ -305,9 +358,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
 							if n_url_file:
-								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+								n_url = n_url_file.replace('"','')
 							else:
-								n_url = urllib.parse.quote(epnArrList[k].split('	')[1].replace('"',''))
+								n_url = epnArrList[k].split('	')[1].replace('"','')
 							try:
 								n_art = epnArrList[k].split('	')[2]
 							except Exception as e:
@@ -326,9 +379,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
 							if n_url_file:
-								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+								n_url = n_url_file.replace('"','')
 							else:
-								n_url = urllib.parse.quote(epnArrList[k].replace('"',''))
+								n_url = epnArrList[k].replace('"','')
 							try:
 								n_art = ui.list1.currentItem().text()
 							except Exception as e:
@@ -340,9 +393,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							n_out = epnArrList[k].split('	')[0]
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
-							new_name = urllib.parse.quote(epnArrList[k].split('	')[1].replace('"',''))
+							new_name = epnArrList[k].split('	')[1].replace('"','')
 							if n_url_file:
-								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+								n_url = n_url_file.replace('"','')
 							else:
 								n_url = book_mark+'&'+str(k)+'&'+new_name
 							try:
@@ -363,9 +416,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
 							n_out = n_out.replace('"','')
-							new_name = urllib.parse.quote(n_out)
+							new_name = n_out
 							if n_url_file:
-								n_url = urllib.parse.quote(n_url_file.replace('"',''))
+								n_url = n_url_file.replace('"','')
 							else:
 								n_url = book_mark+'&'+str(k)+'&'+new_name
 							try:
@@ -380,7 +433,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					#n_out = n_out.replace(' ','_')
 					n_url = n_url.replace('"','')
 					n_art = n_art.replace('"','')
-					out = 'http://'+str(ui.local_ip_stream)+':'+str(ui.local_port_stream)+'/'+j
+					out = 'http://'+str(ui.local_ip_stream)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
 					f.write('#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out))
 				except Exception as e:
 					print(e)
@@ -427,7 +480,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		elif path.startswith('abs_path='):
 			try:
 				path = path.split('abs_path=',1)[1]
-				nm = urllib.parse.unquote(path)
+				nm = path
 				print(nm)
 				if 'youtube.com' in nm:
 					nm = get_yt_url(nm,ui.quality_val).strip()
@@ -438,31 +491,52 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			try:
 				
 				path = path.split('relative_path=',1)[1]
-				nm = urllib.parse.unquote(path)
+				nm = path
 				if nm.split('&')[4] == 'True':
 					old_nm = nm
-					nm = ui.epn_return_from_bookmark(nm)
-					#new_torrent_signal = doGETSignal()
-					#nm = "http://"+ui.local_ip+':'+str(ui.local_port)+'/'
-					#new_torrent_signal.new_signal.emit(old_nm)
+					#nm = ui.epn_return_from_bookmark(nm)
+					new_torrent_signal = doGETSignal()
+					nm = "http://"+ui.local_ip+':'+str(ui.local_port)+'/'
+					new_torrent_signal.new_signal.emit(old_nm)
 				else:
-					nm = ui.epn_return_from_bookmark(nm)
+					nm = ui.epn_return_from_bookmark(nm,from_client=True)
 				self.process_url(nm,get_bytes)
+			except Exception as e:
+				print(e)
+		elif path.startswith('stop_torrent'):
+			try:
+				arr = b'<html>Trying To Stop Torrent</html>'
+				#size = sys.getsizeof(arr)
+				self.send_response(200)
+				self.send_header('Content-type','text/html')
+				self.send_header('Content-Length',len(arr))
+				self.send_header('Connection', 'close')
+				self.end_headers()
+				self.wfile.write(arr)
+				new_torrent_signal = doGETSignal()
+				new_torrent_signal.stop_signal.emit('from client')
 			except Exception as e:
 				print(e)
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
 
-class doGETSignal():
+class doGETSignal(QtCore.QObject):
 	new_signal = pyqtSignal(str)
+	stop_signal = pyqtSignal(str)
 	def __init__(self):
+		QtCore.QObject.__init__(self)
 		self.new_signal.connect(goToUi_jump)
+		self.stop_signal.connect(stop_torrent_from_client)
 		
 @pyqtSlot(str)
 def goToUi_jump(nm):
 	global ui
-	url = ui.epn_return_from_bookmark(nm)
+	url = ui.epn_return_from_bookmark(nm,from_client=True)
+	
+@pyqtSlot(str)
+def stop_torrent_from_client(nm):
+	ui.stop_torrent(from_client=True)
 	
 class ThreadedHTTPServerLocal(ThreadingMixIn, HTTPServer):
 	pass
@@ -936,6 +1010,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		global total_till,curR,cur_label_num,iconv_r_indicator,total_seek
 		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,quitReally
 		global pause_indicator,iconv_r,tab_6_size_indicator,ui,MainWindow
+		global mpv_indicator
 		if mpvplayer:
 			if mpvplayer.processId() > 0:
 					#self.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
@@ -1076,6 +1151,9 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 									ui.gridLayout.setSpacing(0)
 									ui.frame1.hide()
 								pause_indicator.pop()
+								if mpv_indicator:
+									mpv_indicator.pop()
+									cache_empty = 'no'
 					elif event.key() == QtCore.Qt.Key_Up:
 						if Player == "mplayer":
 							if site == "Local" or site == "None" or site == "PlayLists":
@@ -2242,7 +2320,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 									)
 							tmp_img = os.path.join(TMPDIR,'00000001.jpg')
 							if os.path.exists(tmp_img):
-								shutil.copy(tmp_img,picn)
+								tmp_new_img = ui.change_aspect_only(tmp_img)
+								shutil.copy(tmp_new_img,picn)
 								os.remove(tmp_img)
 						else:
 							ui.generate_thumbnail_method(picn,inter,path)
@@ -2273,6 +2352,8 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				if interval == 100:
 					interval = 10
 			else:
+					width = ui.label.width()
+					height = ui.label.height()
 					print ("num="+str(num))
 					ui.list2.setCurrentRow(num)
 					if memory_num_arr:
@@ -2310,9 +2391,12 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							)
 					tmp_img = os.path.join(TMPDIR,'00000001.jpg')
 					if os.path.exists(tmp_img):
-						shutil.copy(tmp_img,picn)
+						tmp_new_img = ui.change_aspect_only(tmp_img)
+						shutil.copy(tmp_new_img,picn)
 						os.remove(tmp_img)
-					picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
+					print(width,height)
+					#picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
+					
 					img = QtGui.QPixmap(picn, "1")			
 					if thumbnail_grid:
 						q1="ui.label_epn_"+str(num)+".setPixmap(img)"
@@ -2375,6 +2459,8 @@ class MySlider(QtWidgets.QSlider):
 					var = bytes('\n '+"seek "+str(new_val)+" absolute"+' \n','utf-8')
 					mpvplayer.write(var)
 				elif Player =="mplayer":
+					#self.setValue(new_val)
+					#QtWidgets.QApplication.processEvents()
 					seek_val = int((new_val-old_val)/1000)
 					var = bytes('\n '+"seek "+str(seek_val)+' \n','utf-8')
 					mpvplayer.write(var)
@@ -3197,7 +3283,7 @@ class List2(QtWidgets.QListWidget):
 		global startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url
 		global new_epn,epnArrList,show_hide_playlist,show_hide_titlelist
 		global site,opt,pre_opt,name,siteName,Player,total_till
-		global video_local_stream,MainWindow,mpvplayer,idw
+		global video_local_stream,MainWindow,mpvplayer,idw,ui
 		
 		if (event.modifiers() == QtCore.Qt.ControlModifier 
 				and event.key() == QtCore.Qt.Key_Left):
@@ -3619,9 +3705,10 @@ class List2(QtWidgets.QListWidget):
 					ui.tab_6.hide()
 					ui.goto_epn.hide()
 					ui.btn20.hide()
-					if wget:
-						if wget.processId() > 0:
-							ui.progress.hide()
+					if wget.processId() > 0 or video_local_stream:
+						ui.progress.hide()
+						if not ui.torrent_frame.isHidden():
+							ui.torrent_frame.hide()
 					ui.list2.hide()
 					ui.list6.hide()
 					ui.list1.hide()
@@ -5364,7 +5451,7 @@ class tab5(QtWidgets.QWidget):
 		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,total_seek
 		global site,iconv_r,browse_cnt,total_till,browse_cnt,sub_id,audio_id
 		global rfr_url,show_hide_cover,show_hide_playlist,show_hide_titlelist
-		global video_local_stream
+		global video_local_stream,mpv_indicator
 		
 		if (event.modifiers() == QtCore.Qt.ControlModifier 
 				and event.key() == QtCore.Qt.Key_Right):
@@ -5479,6 +5566,9 @@ class tab5(QtWidgets.QWidget):
 					if MainWindow.isFullScreen():
 						ui.frame1.hide()
 					pause_indicator.pop()
+					if mpv_indicator:
+						mpv_indicator.pop()
+						cache_empty = 'no'
 		elif event.key() == QtCore.Qt.Key_Up:
 			if Player == "mplayer":
 				self.set_slider_val(60)
@@ -5777,10 +5867,8 @@ class QDockNew(QtWidgets.QDockWidget):
 	
 def findimg(img):
 	if img:
-		#jpgn = img[0].split("/")[-1]
 		jpgn = os.path.basename(img[0])
 		print ("Pic Name=" + jpgn)
-		#picn = "/tmp/AnimeWatch/" + jpgn
 		picn = os.path.join(TMPDIR,jpgn)
 		print (picn)
 		if not os.path.isfile(picn):
@@ -6847,6 +6935,7 @@ class Ui_MainWindow(object):
 		self.fullscreen_mode = 0
 		self.mplayer_pause_buffer = False
 		self.mplayer_nop_error_pause = False
+		self.started_from_external_client = False
 		self.music_type_arr = [
 			'mp3','flac','ogg','wav','aac','wma','m4a','m4b','opus','webm'
 			]
@@ -7399,28 +7488,35 @@ class Ui_MainWindow(object):
 		self.torrent_frame.hide()
 		self.progress.hide()
 		
-	def stop_torrent(self):
+	def stop_torrent(self,from_client=None):
 		global video_local_stream,wget
-		if video_local_stream:
-			if self.do_get_thread.isRunning():
-				print('----------stream-----pausing-----')
-				t_list = self.stream_session.get_torrents()
-				for i in t_list:
-					print(i.name(),'--removing--')
-					self.stream_session.remove_torrent(i)
-				self.stream_session.pause()
-			elif self.stream_session:
-				if not self.stream_session.is_paused():
-					self.stream_session.pause()
-			txt = 'Torrent Stopped'
-			send_notification(txt)
-			self.torrent_frame.hide()
+		stop_now = False
+		if from_client:
+			if self.started_from_external_client:
+				stop_now = True
 		else:
-			if wget.processId() > 0:
-				wget.kill()
-			txt = 'Stopping download'
-			send_notification(txt)
-			self.torrent_frame.hide()
+			stop_now = True
+		if stop_now:
+			if video_local_stream:
+				if self.do_get_thread.isRunning():
+					print('----------stream-----pausing-----')
+					t_list = self.stream_session.get_torrents()
+					for i in t_list:
+						print(i.name(),'--removing--')
+						self.stream_session.remove_torrent(i)
+					self.stream_session.pause()
+				elif self.stream_session:
+					if not self.stream_session.is_paused():
+						self.stream_session.pause()
+				txt = 'Torrent Stopped'
+				send_notification(txt)
+				self.torrent_frame.hide()
+			else:
+				if wget.processId() > 0:
+					wget.kill()
+				txt = 'Stopping download'
+				send_notification(txt)
+				self.torrent_frame.hide()
 			
 	def set_new_download_speed(self):
 		txt = self.label_down_speed.text()
@@ -8284,14 +8380,19 @@ class Ui_MainWindow(object):
 		
 	def mplayer_unpause(self):
 		global mpvplayer,fullscr,Player,buffering_mplayer,mpv_indicator
+		global cache_empty,pause_indicator
 		buffering_mplayer = "no"
 		self.mplayer_pause_buffer = False
 		self.mplayer_nop_error_pause = False
 		if Player == "mplayer":
 			mpvplayer.write(b'\n pause \n')
 		else:
-			mpvplayer.write(b'\n cycle pause \n')
-			mpv_indicator.pop()
+			mpvplayer.write(b'\n set pause no \n')
+			if mpv_indicator:
+				mpv_indicator.pop()
+				cache_empty = 'no'
+			if pause_indicator:
+				pause_indicator.pop()
 		print ("UnPausing")
 		if MainWindow.isFullScreen():
 			if not self.frame_timer.isActive():
@@ -11108,10 +11209,8 @@ class Ui_MainWindow(object):
 					elif "url:" in nam:
 						url = nam.replace('url:','')
 						if (".jpg" in url or ".png" in url) and "http" in url:
-							#picn = "/tmp/AnimeWatch/"+name+".jpg"
 							picn = os.path.join(TMPDIR,name+'.jpg')
 							if not nav:
-								#subprocess.call(["curl","-A",hdr,"-L","-o",picn,url])
 								ccurl(url+'#'+'-o'+'#'+picn)
 								self.label.clear()
 								if os.path.isfile(picn):
@@ -12642,8 +12741,6 @@ class Ui_MainWindow(object):
 				name = nm
 		else:
 			return 0
-		#fanart = "/tmp/AnimeWatch/"+name+"-fanart.jpg"
-		#thumbnail = "/tmp/AnimeWatch/"+name+"-thumbnail.jpg"
 		cur_row = self.list1.currentRow()
 		fanart = os.path.join(TMPDIR,name+'-fanart.jpg')
 		thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
@@ -14135,6 +14232,7 @@ class Ui_MainWindow(object):
 								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session)
 						else:
 							finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(name,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session)
+							
 						self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 						self.torrent_handle.set_download_limit(self.torrent_download_limit)
 					else:
@@ -14552,8 +14650,10 @@ class Ui_MainWindow(object):
 		self.paste_background(row)
 		
 	
-	def start_torrent_stream(self,name_file,epn_index,local_ip,status,path_folder,session,site_name=None):
-		global site
+	def start_torrent_stream(
+				self,name_file,epn_index,local_ip,status,path_folder,session,
+				site_name=None,from_client=None):
+		global site,home
 		index = int(epn_index)
 		ip_n = local_ip.rsplit(':',1)
 		ip = ip_n[0]
@@ -14563,24 +14663,50 @@ class Ui_MainWindow(object):
 			site_name_val = site_name
 		else:
 			site_name_val = site
-		site_home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','History',site_name_val)
+		site_home = os.path.join(home,'History',site_name_val)
 		torrent_dest = os.path.join(site_home,name_file+'.torrent')
 		print(torrent_dest,index,path)
 		url = 'http://'+ip+':'+str(port)+'/'
 		print(url,'-local-ip-url',status)
 		
 		if status.lower() == 'get next':
-			set_new_torrent_file_limit(torrent_dest,index,path,self.stream_session,ui.list6,ui.progress,TMPDIR)
+			set_new_torrent_file_limit(
+				torrent_dest,index,path,self.stream_session,ui.list6,
+				ui.progress,TMPDIR)
 		else:
-			if status.lower() =='first run':
+			if status.lower() =='first run' and not self.thread_server.isRunning():
 				thread_server = ThreadServer(ip,port)
 				thread_server.start()
-			
-			handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,session,ui.list6,ui.progress,TMPDIR)
-			torrent_thread = TorrentThread(handle,cnt,cnt_limit,ses)
-			torrent_thread.start()
-			
+			print('--line--14578--')
+			handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(
+									torrent_dest,index,path,session,ui.list6,
+									ui.progress,TMPDIR)
+			if not self.do_get_thread.isRunning():
+				torrent_thread = TorrentThread(
+								handle,cnt,cnt_limit,ses,row=index,
+								from_client=from_client)
+				torrent_thread.start()
+			print('--line--14583--')
+			if self.progress.isHidden():
+				self.progress.show()
+			if from_client:
+				self.started_from_external_client = True
+			else:
+				self.started_from_external_client = False
 			if status.lower() == 'first run':
+				self.list6.clear()
+				i=0
+				for f in info.files():
+					file_path = f.path
+					file_exists = False
+					new_path = os.path.join(path,file_path)
+					new_size = f.size
+					if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
+						file_exists = True
+					if i > index and not file_exists:
+						txt = os.path.basename(file_path)+':'+str(i)
+						self.list6.addItem(txt)
+					i = i+1
 				return url,thread_server,torrent_thread,ses,handle
 			else:
 				return url,torrent_thread,ses,handle
@@ -14620,7 +14746,8 @@ class Ui_MainWindow(object):
 				torrent_dest = local_torrent_file_path
 				print(torrent_dest,path)
 				
-				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(tmp,path,ui.list6,ui.progress,ui.tmp_download_folder)
+				self.torrent_handle,self.stream_session,info = get_torrent_info_magnet(
+						tmp,path,ui.list6,ui.progress,ui.tmp_download_folder)
 				#self.handle.pause()
 				file_arr = []
 				ui.list2.clear()
@@ -14662,7 +14789,8 @@ class Ui_MainWindow(object):
 			torrent_dest = local_torrent_file_path
 			print(torrent_dest,index,path)
 			
-			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(torrent_dest,index,path,self.stream_session,ui.list6,ui.progress,ui.tmp_download_folder)
+			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(
+					torrent_dest,index,path,self.stream_session,ui.list6,ui.progress,ui.tmp_download_folder)
 			
 			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 			self.torrent_handle.set_download_limit(self.torrent_download_limit)
@@ -14804,10 +14932,12 @@ class Ui_MainWindow(object):
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 		return finalUrl
 	
-	def epn_return_from_bookmark(self,tmp_bookmark):
+	def epn_return_from_bookmark(self,tmp_bookmark,from_client=None):
 		#site+'&'+opt+'&'+siteName+'&'+name+'&'+str(video_local_stream)+'&'+str(row)+'&'+str(epn)
 		tmp_arr = tmp_bookmark.split('&')
 		print(tmp_arr)
+		clnt = from_client
+		print(clnt,'--from--client--')
 		si_te = tmp_arr[0]
 		op_t = tmp_arr[1]
 		site_Name = tmp_arr[2]
@@ -14849,20 +14979,30 @@ class Ui_MainWindow(object):
 					if self.thread_server.isRunning():
 						if self.do_get_thread.isRunning():
 							if self.torrent_handle.file_priority(row):
-									self.start_torrent_stream(na_me,row,self.local_ip+':'+str(self.local_port),'Get Next',self.torrent_download_folder,self.stream_session)
+									self.start_torrent_stream(
+										na_me,row,self.local_ip+':'+str(self.local_port),
+										'Get Next',self.torrent_download_folder,
+										self.stream_session)
 						else:
-							finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(na_me,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session,si_te)
+							finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(
+								na_me,row,self.local_ip+':'+str(self.local_port),'Next',
+								self.torrent_download_folder,self.stream_session,
+								site_name=si_te,from_client=from_client)
 					else:
-						finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(na_me,row,self.local_ip+':'+str(self.local_port),'First Run',self.torrent_download_folder,self.stream_session,si_te)
+						finalUrl,self.thread_server,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(
+							na_me,row,self.local_ip+':'+str(self.local_port),'First Run',
+							self.torrent_download_folder,self.stream_session,
+							site_name=si_te,from_client=from_client)
 					self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 					self.torrent_handle.set_download_limit(self.torrent_download_limit)
 				else:
 					finalUrl = si_te_var.getFinalUrl(na_me,ep_n,mirrorNo,ui.quality_val)
-			except:
-				return 0
+			except Exception as e:
+				print(e)
+				#return 0
 		return finalUrl
 		
-	
+		
 	def watchDirectly(self,finalUrl,title,quit_val):
 		global site,base_url,idw,quitReally,mpvplayer,Player,epn_name_in_list
 		global path_final_Url,current_playing_file_path,curR
@@ -15161,7 +15301,7 @@ class Ui_MainWindow(object):
 		global mpvplayer,new_epn,quitReally,curR,epn,opt,base_url,Player,site
 		global wget,mplayerLength,cache_empty,buffering_mplayer,slider_clicked
 		global fullscr,total_seek,artist_name_mplayer,layout_mode,server
-		global new_tray_widget,video_local_stream
+		global new_tray_widget,video_local_stream,pause_indicator
 		global epn_name_in_list,mpv_indicator,mpv_start,idw,cur_label_num
 		global sub_id,audio_id,current_playing_file_path,wget
 		
@@ -15266,9 +15406,12 @@ class Ui_MainWindow(object):
 						mpv_indicator.append("cache empty") 
 						print ("buffering")
 						mpvplayer.write(b'\n set pause yes \n')
-						if self.mplayer_timer.isActive():
-							self.mplayer_timer.stop()
-						self.mplayer_timer.start(5000)
+						self.player_play_pause.setText(self.player_buttons['play'])
+						#if self.mplayer_timer.isActive():
+						#	self.mplayer_timer.stop()
+						#self.mplayer_timer.start(5000)
+						if not pause_indicator:
+							pause_indicator.append('Pause')
 						if MainWindow.isFullScreen() and layout_mode != "Music":
 							self.gridLayout.setSpacing(0)
 							self.frame1.show()
@@ -15289,12 +15432,19 @@ class Ui_MainWindow(object):
 							cache_val = '0'+cache_val
 						out = t[0] +"  "+cache_val+'s'
 					else:
+						cache_val = '0'
 						out = t[0]
-					
+					try:
+						new_cache_val = int(cache_val)
+					except Exception as e:
+						print(e,'--cache-val-error--')
+						new_cache_val = 0
 					if "Paused" in a and not mpv_indicator:
 						out = "(Paused) "+out
+						#print(out)
 					elif "Paused" in a and mpv_indicator:
 						out = "(Paused Caching..Wait Few Seconds) "+out
+						#print(out)
 					out = re.sub('AV:[^0-9]*|A:[^0-9]*','',out)
 					
 					#print(out)
@@ -15328,6 +15478,21 @@ class Ui_MainWindow(object):
 						self.slider.setValue(val)
 					if not new_tray_widget.isHidden():
 						new_tray_widget.update_signal.emit(out,val)
+					if cache_empty == 'yes':
+						try:
+							if new_cache_val > 4:
+								#if self.mplayer_timer.isActive():
+								#	self.mplayer_timer.stop()
+								#self.mplayer_timer.start(10)
+								cache_empty = 'no'
+								mpvplayer.write(b'\n set pause no \n')
+								self.player_play_pause.setText(self.player_buttons['pause'])
+								if mpv_indicator:
+									mpv_indicator.pop()
+								if pause_indicator:
+									pause_indicator.pop()
+						except Exception as err_val:
+							print(err_val,'--mpv--cache-error--')
 				if "VO:" in a or "AO:" in a or 'Stream opened successfully' in a:
 					t = "Loading: "+self.epn_name_in_list+" (Please Wait)"
 					self.progressEpn.setFormat((t))
@@ -15405,7 +15570,7 @@ class Ui_MainWindow(object):
 						if buffering_mplayer == "yes":
 							if self.frame_timer.isActive:
 								self.frame_timer.stop()
-							self.frame_timer.start(10000)
+							self.frame_timer.start(1000)
 				if "Cache empty" in a:
 					cache_empty = "yes"
 					
@@ -15681,7 +15846,10 @@ class Ui_MainWindow(object):
 	#	self.infoPlay(command)
 		
 	def infoPlay(self,command):
-		global mpvplayer,Player,site,new_epn
+		global mpvplayer,Player,site,new_epn,mpv_indicator,cache_empty
+		if mpv_indicator:
+			mpv_indicator.pop()
+		cache_empty = 'no'
 		if command.startswith('mplayer'):
 			command = command.replace(
 				'-msglevel all=4:statusline=5:global=6',

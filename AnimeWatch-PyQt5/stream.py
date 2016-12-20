@@ -53,6 +53,44 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		self.end_headers()
 			
 	
+	def process_url(self,nm,get_bytes):
+		if nm.startswith('http'):
+			self.send_response(303)
+			self.send_header('Location',nm)
+			self.end_headers()
+		else:
+			self.send_response(200)
+			self.send_header('Content-type','video/mp4')
+			size = os.stat(nm).st_size
+			#size = size - get_bytes
+			self.send_header('Content-Length', str(size))
+			self.send_header('Accept-Ranges', 'bytes')
+			self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
+			self.send_header('Connection', 'close')
+			self.end_headers()
+			if '.' in nm:
+				nm_ext = nm.rsplit('.',1)[1]
+			else:
+				nm_ext = 'nothing'
+			
+			print(get_bytes,'--get--bytes--',nm_ext)
+			t = 0
+			with open(nm,'rb') as f:
+				if get_bytes and t ==0:
+						f.seek(get_bytes)
+						t = 1
+						print('seeking')
+				content = f.read(1024*512)
+				while(content):
+					try:
+						self.wfile.write(content)
+					except Exception as e:
+						print(e,'--error--')
+						#a = 0
+					content = f.read(1024*512)
+					time.sleep(0.0001)
+			print('--hello--')
+	
 	def do_GET(self):
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
 		global tmp_dir_folder,httpd
@@ -71,6 +109,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		tmp_file = os.path.join(tmp_dir_folder,'row.txt')
 		tmp_seek_file = os.path.join(tmp_dir_folder,'seek.txt')
 		tmp_pl_file = os.path.join(tmp_dir_folder,'player_stop.txt')
+		
 		if os.path.exists(tmp_file):
 			content = open(tmp_file).read()
 			try:
@@ -90,7 +129,10 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				n_pieces = pr.length / info.piece_length() + 1 
 				print(n_pieces)
 				n_pieces = int(n_pieces)
-				
+				tmp = ''
+				for i in range(info.num_pieces()):
+					tmp = tmp+':'+str(handle.piece_priority(i))
+				print(tmp)
 				print ('starting', handle.name())
 				#handle.set_sequential_download(True)
 				cnt = pr.piece
@@ -99,14 +141,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				file_name = os.path.join(torrent_download_path,fileStr.path)
 			except Exception as e:
 				print(e)
-				
-		self.send_response(200)
-		self.send_header('Content-type','video/mp4')
-		self.send_header('Content-Length', str(content_length))
-		self.send_header('Accept-Ranges', 'bytes')
-		self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(content_length)+'/'+str(content_length))
-		self.send_header('Connection', 'close')
-		self.end_headers()
 		
 		length = info.piece_length()
 		complete_file = False
@@ -119,6 +153,17 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		else:
 			if os.path.exists(file_name) and os.stat(file_name).st_size == content_length:
 				complete_file = True
+		#if complete_file:
+		#	self.process_url(file_name,get_bytes)
+		#else:
+		self.send_response(200)
+		self.send_header('Content-type','video/mp4')
+		self.send_header('Content-Length', str(content_length))
+		self.send_header('Accept-Ranges', 'bytes')
+		self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(content_length)+'/'+str(content_length))
+		self.send_header('Connection', 'close')
+		self.end_headers()
+		
 		f = open(file_name,'rb')
 		if get_bytes:
 			new_piece = int(get_bytes/length)+1
@@ -163,7 +208,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						handle.piece_priority(i,7)
 					else:
 						time.sleep(1)
-						#if get_bytes and not pri_lowered:
 						d = 0
 						for l in cnt_arr:
 							if handle.have_piece(l):
@@ -174,9 +218,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							for l in range(10):
 								if i+l < cnt_limit:
 									cnt_arr.append(i+l)
-									#if l == 0:
-									#	handle.piece_priority(i+l,7)
-									#else:
 									handle.piece_priority(i+l,6)
 							print(cnt_arr)
 						#print("seeking i={0},cnt={1},get_bytes={2},pri_lowered={3}".format(i,cnt,get_bytes,pri_lowered))
@@ -239,20 +280,77 @@ class TorrentThread(QtCore.QThread):
 	session_signal = pyqtSignal(str)
 	progress_signal = pyqtSignal(str,int)
 	progress_signal_end = pyqtSignal(str)
-	def __init__(self,v1,v2,v3,v4):
+	def __init__(self,v1,v2,v3,v4,row=None,from_client=None):
 		QtCore.QThread.__init__(self)
 		self.handle = v1
 		self.cnt = v2
 		self.cnt_limit = v3
 		self.session = v4
+		if row:
+			self.current_index = row
+		else:
+			self.current_index = 0
+		self.from_client = from_client
+		self.start_next = False
 		self.session_signal.connect(session_finished)
 		self.progress_signal.connect(print_progress)
 		self.progress_signal_end.connect(print_progress_complete)
 	def __del__(self):
 		self.wait()                        
 	
+	def process_next(self):
+		global handle,info,ses,new_cnt,new_cnt_limit,total_size_content
+		global torrent_download_path
+		self.current_index = self.current_index + 1
+		fileIndex = int(self.current_index)
+		i = 0
+		fileStr = None
+		file_exists = False
+		for f in info.files():
+			if fileIndex == i:
+				fileStr = f
+				handle.file_priority(i,7)
+			i += 1
+		new_path = os.path.join(torrent_download_path,fileStr.path)
+		new_size = fileStr.size
+		if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
+			file_exists = True
+		if fileStr and not file_exists:
+			s = self.handle.status()
+			if (s.progress *100) >= 100:
+				handle.force_recheck()
+				print('--force--rechecking--')
+			print (fileStr.path)
+			total_size_content = str(int(fileStr.size/(1024*1024)))+'M'
+			pr = info.map_file(fileIndex,0,fileStr.size)
+			print(pr.length,info.piece_length(),info.num_pieces())
+			n_pieces = pr.length / info.piece_length() + 1 
+			print(n_pieces)
+			n_pieces = int(n_pieces)
+			for i in range(info.num_pieces()):
+				if i in range(pr.piece,pr.piece+n_pieces):
+					if i in range(pr.piece,pr.piece+10):
+						if i == pr.piece:
+							handle.piece_priority(i,7)
+						else:
+							handle.piece_priority(i,6)
+					elif i == pr.piece+n_pieces-1:
+						handle.piece_priority(i,7)
+					else:
+						handle.piece_priority(i,1)
+			tmp = ''
+			for i in range(info.num_pieces()):
+				tmp = tmp+':'+str(handle.piece_priority(i))
+			print(tmp)
+			print ('starting', handle.name())
+			handle.set_sequential_download(True)
+			new_cnt = pr.piece
+			new_cnt_limit = pr.piece+n_pieces
+			cnt1 = cnt
+			self.start_next = False
+			
 	def run(self):
-		global ui,new_cnt,new_cnt_limit,progress,total_size_content
+		global new_cnt,new_cnt_limit,total_size_content
 		cnt1 = self.cnt
 		cnt_limit = self.cnt_limit
 		s = self.handle.status()
@@ -260,7 +358,7 @@ class TorrentThread(QtCore.QThread):
 		while (not self.session.is_paused()):
 			#print(self.session.is_paused())
 			s = self.handle.status()
-			
+			#print('hello',s)
 			state_str = ['queued', 'checking', 'downloading metadata',
 						'DOWNLOADING', 'finished', 'seeding', 'allocating', 
 						'checking fastresume']
@@ -279,10 +377,13 @@ class TorrentThread(QtCore.QThread):
 			TU = str(int(s.total_upload/(1024*1024)))+'M'
 			TDR = u'\u2193'+str(int(s.download_rate/1024)) + 'K' + '('+TD+')'
 			TUR = u'\u2191'+str(int(s.upload_rate/1024)) + 'K'+'('+TU+')'
+			#TD_ALL = str(int(s.all_time_download/(1024*1024)))+'M'
 			out1 = str(out)+' '+total_size_content+' '+TDR +' '+TUR+' '+'P:'+str(s.num_peers)
 			if s.state == 1:
 				out1 = 'Checking Please Wait: '+str(out)
 			self.progress_signal.emit(out1,out_percent)
+			if self.from_client:
+				print(out1,out_percent,'from_client=',self.from_client,'start_next=',self.start_next)
 			#print(h.have_piece(cnt))
 			if cnt1+3 < cnt_limit:
 				if self.handle.have_piece(cnt1) and self.handle.have_piece(cnt1+1):
@@ -291,13 +392,19 @@ class TorrentThread(QtCore.QThread):
 					self.handle.piece_priority(cnt1+3,7)
 					cnt1 = cnt1+4
 			
-			if (s.progress * 100)>=99:
-				self.session_signal.emit('..Starting Next Download..')
-				#self.session.pause()
-				time.sleep(5)
+			if (s.progress * 100)>=99 and (s.state != 1):
+				if self.from_client:
+					print(self.start_next)
+					if not self.start_next:
+						self.start_next = True
+						self.process_next()
+					print(self.start_next)
+				else:
+					self.session_signal.emit('..Starting Next Download..')
+					time.sleep(5)
 			
 			if self.handle.is_seed():
-				print('Download Complete, Entering into seeding mode')
+				print('Download Complete, Entered into seeding mode')
 				#break
 			time.sleep(1)
 			
@@ -309,8 +416,9 @@ class TorrentThread(QtCore.QThread):
 		#self.session_signal.emit('..Finished..')
 		
 def change_config_file(ip,port):
-	config_file = os.path.join(os.path.expanduser('~'),
-								'.config','AnimeWatch','torrent_config.txt')
+	config_file = os.path.join(
+			os.path.expanduser('~'),'.config','AnimeWatch',
+			'torrent_config.txt')
 	new_ip = 'TORRENT_STREAM_IP='+ip+':'+str(port)
 	content = open(config_file,'r').read()
 	content = re.sub('TORRENT_STREAM_IP=[^\n]*',new_ip,content)
@@ -339,24 +447,19 @@ def print_progress_complete(var_str):
 	progress.setValue(100)
 	progress.hide()
 
-@pyqtSlot(str)
+@pyqtSlot(str,int)
 def print_progress(var_str,var_int):
 	global progress
-	#if progress.value() > var_int:
-	#print(var_str,var_int)
 	progress.setValue(var_int)		
 	progress.setFormat(var_str)
-	if progress.isHidden():
-		progress.show()
+	#if progress.isHidden():
+	#	progress.show()
+		
 @pyqtSlot(str)
 def session_finished(var):
-	#from animeWatch import ui
-	global ui,handle,info,ses,new_cnt,new_cnt_limit
+	global ui,handle,info,ses,new_cnt,new_cnt_limit,total_size_content
 	print(var,'--session-finished--')
-	#print(ui.local_file_index)
-	
 	if ui.count() > 0:
-		
 		item = ui.item(0)
 		if item:
 			txt = item.text()
@@ -375,13 +478,12 @@ def session_finished(var):
 				if fileIndex == i:
 					fileStr = f
 					handle.file_priority(i,7)
-				
 				i += 1
 			try:
 				print (fileStr.path)
+				total_size_content = str(int(fileStr.size/(1024*1024)))+'M'
 			except:
 				return 0
-			
 			pr = info.map_file(fileIndex,0,fileStr.size)
 			print(pr.length,info.piece_length(),info.num_pieces())
 			n_pieces = pr.length / info.piece_length() + 1 
@@ -389,12 +491,11 @@ def session_finished(var):
 			n_pieces = int(n_pieces)
 			for i in range(info.num_pieces()):
 				if i in range(pr.piece,pr.piece+n_pieces):
-					if i == pr.piece:
-						handle.piece_priority(i,7)
-					elif i == pr.piece+1:
-						handle.piece_priority(i,7)
-					elif i == pr.piece+2:
-						handle.piece_priority(i,1)
+					if i in range(pr.piece,pr.piece+10):
+						if i == pr.piece:
+							handle.piece_priority(i,7)
+						else:
+							handle.piece_priority(i,6)
 					elif i == pr.piece+n_pieces-1:
 						handle.piece_priority(i,7)
 					else:
@@ -435,7 +536,7 @@ def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 			new_path = os.path.join(v3,f.path)
 			new_size = f.size
 			if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
-				handle.file_priority(i,7)
+				handle.file_priority(i,1)
 			else:
 				handle.file_priority(i,0)
 		i = i+1
@@ -616,16 +717,21 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 	
 	i=0
 	fileIndex = int(v2)
-	
+	file_found = False
 	for f in info.files():
+		file_exists = False
+		new_path = os.path.join(v3,f.path)
+		new_size = f.size
+		if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
+			file_exists = True
 		if fileIndex == i:
 			fileStr = f
 			handle.file_priority(i,7)
+			if file_exists:
+				file_found = True
 		else:
-			new_path = os.path.join(v3,f.path)
-			new_size = f.size
-			if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
-				handle.file_priority(i,7)
+			if file_exists:
+				handle.file_priority(i,1)
 			else:
 				handle.file_priority(i,0)
 		i = i+1
@@ -640,8 +746,6 @@ def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
 
 	for i in file_arr:
 		print(i)
-		
-	
 		
 	content_length = fileStr.size
 	print(content_length,'content-length')
