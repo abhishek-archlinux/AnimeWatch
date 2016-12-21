@@ -5759,6 +5759,7 @@ class tab5(QtWidgets.QWidget):
 				else:
 					ui.gridLayout.setSpacing(5)
 					ui.superGridLayout.setSpacing(0)
+					ui.gridLayout.setContentsMargins(5,5,5,5)
 					ui.superGridLayout.setContentsMargins(5,5,5,5)
 					ui.list2.show()
 					ui.btn20.show()
@@ -5777,6 +5778,7 @@ class tab5(QtWidgets.QWidget):
 						ui.list2.hide()
 						ui.goto_epn.hide()
 						ui.tab_2.show()
+					#QtW
 			else:
 				if not ui.float_window.isHidden():
 					if not ui.float_window.isFullScreen():
@@ -13065,7 +13067,8 @@ class Ui_MainWindow(object):
 		picn = "No.jpg"
 		m = []
 		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
-			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+finalUrlFound+':'+refererNeeded+':'+video_local_stream
+			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+
+			#finalUrlFound+':'+refererNeeded+':'+video_local_stream
 			#f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
 			#line_a = f.readlines()
 			#f.close()
@@ -13152,7 +13155,9 @@ class Ui_MainWindow(object):
 							siteName = os.path.join(home,'History',site)
 							if not os.path.exists(siteName):
 								os.makedirs(siteName)
-						m,summary,picn,self.record_history,self.depth_list = self.site_var.getEpnList(name,opt,self.depth_list,extra_info,siteName,category)
+						m,summary,picn,self.record_history,self.depth_list = self.site_var.getEpnList(
+								name,opt,self.depth_list,extra_info,siteName,
+								category)
 						self.text.setText('Load..Complete')
 					except Exception as e:
 						print(e)
@@ -13885,7 +13890,8 @@ class Ui_MainWindow(object):
 			finalUrl = finalUrl.replace('"','')
 		else:
 			current_playing_file_path = finalUrl
-		if mpvplayer.processId() > 0 and OSNAME == 'posix' and self.mpvplayer_started:
+		if (mpvplayer.processId() > 0 and OSNAME == 'posix' 
+				and self.mpvplayer_started and not finalUrl.startswith('http')):
 			epnShow = '"' + "Queued:  "+ self.epn_name_in_list + '"'
 			if Player == "mplayer":
 				t1 = bytes('\n '+'show_text '+epnShow+' \n','utf-8')
@@ -15567,10 +15573,10 @@ class Ui_MainWindow(object):
 					if MainWindow.isFullScreen() and layout_mode != "Music":
 						self.gridLayout.setSpacing(0)
 						self.frame1.show()
-						if buffering_mplayer == "yes":
+						if (buffering_mplayer == "yes"):
 							if self.frame_timer.isActive:
 								self.frame_timer.stop()
-							self.frame_timer.start(1000)
+							self.frame_timer.start(10000)
 				if "Cache empty" in a:
 					cache_empty = "yes"
 					
@@ -18483,57 +18489,75 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 			
 			
 def watch_external_video(var):
-	global ui,epnArrList,quitReally,video_local_stream,curR
+	global ui,epnArrList,quitReally,video_local_stream,curR,epnArrList,site
 	t = var
 	print (t)
 	if (("file:///" in t or t.startswith('/')) and not t.endswith('.torrent') 
 			and not 'magnet:' in t):
 		quitReally="no"
 		print (t)
-		#new_epn = t.split('/')[-1]
 		t = os.path.normpath(t)
-		new_epn = os.path.basename(t)
-		#t = '"'+t+'"'
-		ui.epn_name_in_list = urllib.parse.unquote(new_epn)
 		t = t.replace('file:///','/')
-		ui.watchDirectly(urllib.parse.unquote('"'+t+'"'),'','no')
-		ui.dockWidget_3.hide()
-		site = "None"
-		ui.btn1.setCurrentIndex(0)
-		m = []
-		path_Local_Dir,name = os.path.split(t)
-		#for r,d,f in os.walk(path_Local_Dir):
-		#	for z in f:
-		#		if ('.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z 
-		#				or '.flv' in z or '.flac' in z):
-		#			m.append(os.path.join(r,z))
-		list_dir = os.listdir(path_Local_Dir)
-		for z in list_dir:
-			if ('.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z 
-						or '.flv' in z or '.flac' in z):
-					m.append(os.path.join(path_Local_Dir,z))
-		m=naturallysorted(m)
-		#print m
-		epnArrList[:]=[]
-		j = 0
-		row = 0
-		t = t.replace('"','')
-		t=urllib.parse.unquote(t)
-		
-		e = os.path.basename(t)
-		
-		for i in m:
-			i1 = i
-			#i = i.split('/')[-1]
-			i = os.path.basename(i)
-			epnArrList.append(i+'	'+i1)
-			ui.list2.addItem((i))
-			i = i
-			if i == e:
-				row = j
-			j =j+1
-		ui.list2.setCurrentRow(row)
-		curR = row
+		if t.endswith('.m3u'):
+			t = urllib.parse.unquote(t)
+			if os.path.exists(t):
+				lines = open(t,'r').readlines()
+				if lines:
+					epnArrList[:] = []
+					cnt = len(lines)
+					i = 0
+					site = "None"
+					ui.btn1.setCurrentIndex(0)
+					while i < cnt:
+						try:
+							if 'EXTINF' in lines[i]:
+								n_epn = (lines[i].strip()).split(',',1)[1]
+								ui.list2.addItem(n_epn)
+								if i+1 < cnt:
+									epnArrList.append(lines[i+1].strip())
+								i = i+2
+							else:
+								i = i+1
+						except Exception as e:
+							print(e)
+		else:
+			#new_epn = t.split('/')[-1]
+			new_epn = os.path.basename(t)
+			#t = '"'+t+'"'
+			ui.epn_name_in_list = urllib.parse.unquote(new_epn)
+			ui.watchDirectly(urllib.parse.unquote('"'+t+'"'),'','no')
+			ui.dockWidget_3.hide()
+			site = "None"
+			ui.btn1.setCurrentIndex(0)
+			m = []
+			path_Local_Dir,name = os.path.split(t)
+			list_dir = os.listdir(path_Local_Dir)
+			for z in list_dir:
+				if ('.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z 
+							or '.flv' in z or '.flac' in z):
+						m.append(os.path.join(path_Local_Dir,z))
+			m=naturallysorted(m)
+			#print m
+			epnArrList[:]=[]
+			j = 0
+			row = 0
+			t = t.replace('"','')
+			t=urllib.parse.unquote(t)
+			
+			e = os.path.basename(t)
+			
+			for i in m:
+				i1 = i
+				#i = i.split('/')[-1]
+				i = os.path.basename(i)
+				epnArrList.append(i+'	'+i1)
+				ui.list2.addItem((i))
+				i = i
+				if i == e:
+					row = j
+				j =j+1
+			ui.list2.setCurrentRow(row)
+			curR = row
 	elif t.endswith('.torrent'):
 		ui.torrent_type = 'file'
 		video_local_stream = True
