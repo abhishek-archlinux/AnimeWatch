@@ -296,10 +296,61 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		else:
 			tmp = ''+'&'+''+'&'+''+'&'+''+'&'+str(video_local_stream)
 		return tmp
-			
+		
+	def create_playlist(self,site,site_option,name,epnArrList):
+		global new_video_local_stream
+		
+		pls_txt = '#EXTM3U\n'
+		for  i in range(len(epnArrList)):
+			try:
+				k = epnArrList[i]
+				n_art = k.split('	')[-1]
+				if n_art.startswith('http') or n_art.startswith('"http') or n_art.lower() == 'none':
+					n_art = 'NONE'
+					
+				book_mark = site+'&'+site_option+'&'+''+'&'+n_art+'&'+str(new_video_local_stream)
+				
+				n_url_file = ui.get_file_name_from_bookmark(site,site_option,name,i,epnArrList)
+				if (site.lower() == 'video' or site.lower() == 'music' or 
+						site.lower() == 'local' or site.lower() == 'playlists' 
+						or site.lower() == 'none'):
+					if '	' in k:
+						n_out = k.split('	')[0]
+						if n_out.startswith('#'):
+							n_out = n_out.replace('#','',1)
+						if n_url_file:
+							n_url = n_url_file.replace('"','')
+						else:
+							n_url = k.split('	')[1].replace('"','')
+						
+					j = 'abs_path='+n_url
+				else:
+					if '	' in k:
+						n_out = k.split('	')[0]
+						if n_out.startswith('#'):
+							n_out = n_out.replace('#','',1)
+						new_name = k.split('	')[1].replace('"','')
+						if n_url_file:
+							n_url = n_url_file.replace('"','')
+						else:
+							n_url = book_mark+'&'+str(k)+'&'+new_name
+						
+					if n_url_file:
+						j = 'abs_path='+n_url
+					else:
+						j = 'relative_path='+n_url
+				#n_out = n_out.replace(' ','_')
+				n_url = n_url.replace('"','')
+				n_art = n_art.replace('"','')
+				out = 'http://'+str(ui.local_ip_stream)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
+				pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+			except Exception as e:
+				print(e)
+		return pls_txt
+		
 	def do_GET(self):
 		global current_playing_file_path,path_final_Url,client_closed,ui,curR
-		global epnArrList
+		global epnArrList,new_video_local_stream
 		print(self.path)
 		path = self.path.replace('/','',1)
 		path = urllib.parse.unquote(path)
@@ -314,7 +365,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		client_closed = False
 		tm = 0
 		tmp_row = curR
-		if path.lower().startswith('stream_continue') or path.lower() == 'stream_shuffle':
+		if (path.lower().startswith('stream_continue') or path.lower() == 'stream_shuffle'):
 			new_arr = []
 			n_out = ''
 			n_art = ''
@@ -343,9 +394,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			print(new_arr)
 			print(client_closed)
 			print(self.client_address)
-			pls_path = os.path.join(TMPDIR,'mylist.m3u')
-			f = open(pls_path,'w')
-			f.write('#EXTM3U\n')
+			pls_txt = '#EXTM3U\n'
 			for  i in range(len(new_arr)):
 				try:
 					k = new_arr[i]
@@ -434,26 +483,62 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					n_url = n_url.replace('"','')
 					n_art = n_art.replace('"','')
 					out = 'http://'+str(ui.local_ip_stream)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
-					f.write('#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out))
+					pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
 				except Exception as e:
 					print(e)
-			f.close()
+			pls_txt = bytes(pls_txt,'utf-8')
 			self.send_response(200)
 			self.send_header('Content-type','text/html')
-			size = os.stat(pls_path).st_size
+			size = len(pls_txt)
 			#size = size - get_bytes
 			self.send_header('Content-Length', str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
-			f = open(pls_path,'rb')
-			content = f.read()
-			f.close()
 			try:
-				self.wfile.write(content)
+				self.wfile.write(pls_txt)
 			except Exception as e:
 				print(e)
 				client_closed = True
-				tm = 0
+		elif path.lower().startswith('site='):
+			new_arr = path.split('&')
+			print(new_arr)
+			st = ''
+			st_o = ''
+			srch = ''
+			srch_exact = False
+			for i in new_arr:
+				print(i)
+				if i.startswith('site='):
+					st = i.split('=')[-1]
+				elif i.startswith('opt='):
+					st_o = i.split('=')[-1]
+				elif i.startswith('s='):
+					srch = i.split('=')[-1]
+					srch = srch.replace('+',' ')
+				elif i.startswith('exact'):
+					srch_exact = True
+			if not st_o:
+				st_o = 'NONE'
+			if st and st_o and srch:
+				print(srch_exact,'=srch_exact')
+				epn_arr = ui.options_from_bookmark(st,st_o,srch,search_exact=srch_exact)
+				pls_txt = ''
+				if epn_arr:
+					pls_txt = self.create_playlist(st,st_o,srch,epn_arr)
+				#print(pls_txt)
+				pls_txt = bytes(pls_txt,'utf-8')
+				self.send_response(200)
+				self.send_header('Content-type','text/html')
+				size = len(pls_txt)
+				#size = size - get_bytes
+				self.send_header('Content-Length', str(size))
+				self.send_header('Connection', 'close')
+				self.end_headers()
+				try:
+					self.wfile.write(pls_txt)
+				except Exception as e:
+					print(e)
+					client_closed = True
 		elif path.lower() == 'play' or not path:
 			self.row = ui.list2.currentRow()
 			if self.row < 0:
@@ -13050,7 +13135,559 @@ class Ui_MainWindow(object):
 	def get_summary_history(self,file_name):
 		summary = open_files(file_name,False)
 		return summary
+	
+	def get_file_name_from_bookmark(self,site,site_option,name,row,epnArrList):
+		file_name_mkv = ''
+		file_name_mp4 = ''
+		
+		new_epn = epnArrList[row].replace('#','',1).strip()
+		if '	' in new_epn:
+			new_epn = new_epn.split('	')[0]
 			
+		new_epn = new_epn.replace('/','-')
+		new_epn = new_epn.replace('"','')
+		new_epn = re.sub('"|.mkv|.mp4','',new_epn)
+		if new_epn.startswith('.'):
+			new_epn = new_epn[1:]
+		
+		if (site.lower() != 'video' and site.lower() != 'music' 
+				and site.lower() != 'local' and site.lower() != 'playlists' 
+				and site.lower() != 'none'):
+			title = name
+			new_epn_mkv = new_epn+'.mkv'
+			new_epn_mp4 = new_epn+'.mp4'
+			file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
+			file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
+		elif (site.lower() == 'playlists' or (site.lower() == 'music' 
+				and site_option.lower().startswith('playlist'))):
+			title = name
+			st = epnArrList[row].split('	')[1]
+			st = st.replace('"','')
+			if 'youtube.com' in st:
+				new_epn_mkv = new_epn+'.mp4'
+				new_epn_mp4 = new_epn+'.mp4'
+				file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
+				file_name_mp4 = os.path.join(self.default_download_location,title,new_epn_mp4)
+			else:
+				new_epn_mkv = os.path.basename(st)
+				new_epn_mp4 = new_epn_mkv
+				file_name_mkv = st
+				file_name_mp4 = st
+		elif (site.lower() == 'video' or site.lower() == 'music' 
+				or site.lower() == 'local' or site.lower() == 'none'):
+			file_name_mkv = epnArrList[row].split('	')[1]
+			file_name_mp4 = epnArrList[row].split('	')[1]
+		#print('function ',file_name_mkv,file_name_mp4,'function get_file_name')
+		
+		if os.path.exists(file_name_mp4):
+			return file_name_mp4
+		elif os.path.exists(file_name_mkv):
+			return file_name_mkv
+		else:
+			return 0
+	
+	def options_from_bookmark(self,site,site_option,search_term,search_exact=None):
+		global home,new_video_local_stream,addons_option_arr
+		original_path_name = []
+		bookmark = False
+		if site.lower() == 'bookmark':
+			bookmark = True
+			status = site_option
+			if status == "all":
+				status = "bookmark"
+		m = []
+		new_video_local_stream = False
+		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
+			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
+			r = 0
+			k = 0
+			for i in line_a:
+				j = i.split(':')
+				if j:
+					if search_term in j[5]:
+						site = j[0]
+						r = k
+						break
+				k = k+1
+			tmp = line_a[r]
+			tmp = tmp.strip()
+			tmp1 = tmp.split(':')
+			site = tmp1[0]
+			if site.lower() == "music" or site.lower() == "video":
+				opt = "Not Defined"
+				if site.lower() == "music":
+					music_opt = tmp1[1]
+				else:
+					video_opt = tmp1[1]
+			else:
+				opt = tmp1[1]
+			pre_opt = tmp1[2]
+			siteName = tmp1[2]
+			base_url = int(tmp1[3])
+			embed = int(tmp1[4])
+			name = tmp1[5]
+			if site.lower() == "local":
+				name_path = name
+			
+			print (name)
+			if len(tmp1) > 6:
+				if tmp1[6] == "True":
+					finalUrlFound = True
+				else:
+					finalUrlFound = False
+				if tmp1[7] == "True":
+					refererNeeded = True
+				else:
+					refererNeeded = False
+				if len(tmp1) >=9:
+					if tmp1[8] == "True":
+						video_local_stream = True
+					else:
+						video_local_stream = False
+				print (finalUrlFound)
+				print (refererNeeded)
+				print (video_local_stream)
+			else:
+				refererNeeded = False
+				finalUrlFound = False
+				video_local_stream = False
+			print (site + ":"+opt)
+		site_var = None
+		if (not site.lower().startswith("playlist") and site.lower() != "music" and site.lower() != "video" 
+				and site.lower()!="local" and site.lower() !="none"):
+			for i in addons_option_arr:
+				if site.lower() == i.lower():
+					site = i
+					break
+			plugin_path = os.path.join(home,'src','Plugins',site+'.py')
+			if os.path.exists(plugin_path):
+				if site_var:
+					del site_var
+					site_var = ''
+				module = imp.load_source(site,plugin_path)
+				site_var = getattr(module,site)(TMPDIR)
+			else:
+				return 0
+				
+		genre_num = 0
+		if (site.lower() !="local" and site.lower() != "music" 
+				and site.lower() != "subbedanime" and site.lower() != "dubbedanime" 
+				and not site.lower().startswith("playlist") and site.lower()!="video" 
+				and site.lower() != 'none'):
+		
+			if site_option:
+				t_opt = site_option
+			else:
+				t_opt = "history"
+			if t_opt.lower() == 'none':
+				t_opt = 'history'
+			opt = t_opt
+			
+			if t_opt == "history":
+				genre_num = 0
+				opt = t_opt
+				file_path = os.path.join(home,'History',site,'history.txt')
+				if os.path.isfile(file_path):
+					lines = open_files(file_path,True)
+					lins = open_files(file_path,True)
+					list1_items = []
+					original_path_name[:] = []
+					for i in lins:
+						i = i.strip()
+						j = i
+						if '	' in i:
+							i = i.split('	')[0]
+						original_path_name.append(j)
+			else:
+				opt = t_opt
+				try:
+					if video_local_stream:
+						new_video_local_stream = True
+						history_folder = os.path.join(home,'History',site)
+						if os.path.exists(history_folder):
+							m = site_var.getCompleteList(
+								t_opt,ui.list6,ui.progress,
+								ui.tmp_download_folder,history_folder
+								)
+					else:
+						m = site_var.getCompleteList(t_opt,0)
+				except Exception as e:
+					print(e)
+					return 0
+				original_path_name[:]=[]
+				for i in m:
+					i = i.strip()
+					if '	' in i:
+						j = i.split('	')[0]
+					else:
+						j = i
+					original_path_name.append(i)
+		elif site.lower() == "subbedanime" or site.lower() == "dubbedanime":
+			code = 2
+			siteName = site_option
+			if site_var:
+				criteria = site_var.getOptions()
+				for i in criteria:
+					if siteName.lower() == i.lower():
+						siteName = i
+						break 
+			opt = "history"
+			original_path_name[:]=[]
+			if opt == "history":
+					file_path = os.path.join(home,'History',site,siteName,'history.txt')
+					if os.path.isfile(file_path):
+						lines = open_files(file_path,True)
+						original_path_name[:]=[]
+						for i in lines:
+							i = i.strip()
+							if '	' in i:
+								j = i.split('	')[0]
+							else:
+								j = i
+							original_path_name.append(i)
+		elif site.lower() == "music":
+			music_dir = os.path.join(home,'Music')
+			music_db = os.path.join(home,'Music','Music.db')
+			music_file = os.path.join(home,'Music','Music.txt')
+			music_file_bak = os.path.join(home,'Music','Music_bak.txt')
+			
+			music_opt = site_option
+			print (music_opt)
+			if music_opt:
+				music_opt = music_opt[0].upper()+music_opt[1:]
+				if '-' in music_opt:
+					tmp = music_opt.split('-',1)
+					sub_tmp = tmp[1]
+					music_opt = tmp[0]+'-'+sub_tmp[0].upper()+sub_tmp[1:]
+			artist =[]
+			epnArrList = []
+			if music_opt.lower().startswith("playlist"):
+				pls = os.path.join(home,'Playlists')
+				if os.path.exists(pls):
+					m = os.listdir(pls)
+					for i in m:
+						artist.append(i)
+			else:
+				m = self.getMusicDB(music_db,music_opt,"")
+				for i in m:
+					artist.append(i[0])
+			#print(m)
+			#print(artist)
+			print(music_opt)
+			original_path_name[:] = []
+			if (music_opt.lower() == "artist" or music_opt.lower() == "album" or music_opt.lower() == "title" 
+					or music_opt.lower() == "fav-artist" or music_opt.lower() == "fav-album"):
+				for i in artist:
+					original_path_name.append(i)
+			elif music_opt.lower() == "directory" or music_opt.lower() == "fav-directory":
+				for i in artist:
+					original_path_name.append(i)
+					i = os.path.basename(i)
+			elif music_opt.lower().startswith("playlist"):
+				for i in artist:
+					original_path_name.append(i.replace('.txt','')+'	'+os.path.join(home,'Playlists',i))
+			#print(original_path_name)
+		elif site.lower() == "video":
+			video_dir = os.path.join(home,'VideoDB')
+			video_db = os.path.join(video_dir,'Video.db')
+			video_file = os.path.join(video_dir,'Video.txt')
+			video_file_bak = os.path.join(video_dir,'Video_bak.txt')
+			video_opt = site_option
+			print('----video-----opt',video_opt)
+			if video_opt.lower() == "update":
+				self.updateOnStartVideoDB(video_db,video_file,video_file_bak,'Update')
+				video_opt = "directory"
+			print (video_opt)
+			if (video_opt.lower() == 'directory' or video_opt.lower() == 'history' 
+					or video_opt.lower() == 'available'):
+				opt = video_opt
+			artist = []
+			print('----video-----opt',video_opt)
+			if video_opt.lower() == "available":
+				m = self.getVideoDB(video_db,"Directory","")
+			elif video_opt.lower() == "history":
+				m = self.getVideoDB(video_db,"History","")
+			else:
+				video_opt = video_opt[0].upper()+video_opt[1:]
+				m = self.getVideoDB(video_db,video_opt,"")
+			for i in m:
+				artist.append(i[0]+'	'+i[1])
+			original_path_name[:] = []
+			if video_opt.lower() == "available" or video_opt.lower() == "history":
+				for i in artist:
+					ti = i.split('	')[0]
+					di = i.split('	')[1]
+					if os.path.exists(di):
+						original_path_name.append(i)
+			elif video_opt.lower() == "directory":
+				for i in artist:
+					ti = i.split('	')[0]
+					di = i.split('	')[1]
+					original_path_name.append(i)
+		elif site.lower().startswith("playlist"):
+			pls = os.path.join(home,'Playlists')
+			if os.path.exists(pls):
+				m = os.listdir(pls)
+				for i in m:
+					j = i.replace('.txt','')
+					original_path_name.append(j+'	'+os.path.join(pls,i))
+		print(original_path_name)
+		epnArrList = self.listfound_from_bookmark(
+				site,site_option,search_term,original_path_name,search_exact=search_exact)
+		return epnArrList
+		
+	def listfound_from_bookmark(self,site,site_option,search_term,
+			original_path_name,search_exact=None):
+		global home,addons_option_arr
+		site_var = None
+		bookmark = False
+		if site.lower() == 'bookmark':
+			bookmark = True
+			status = site_option
+			m = os.path.listdir(os.path.join(home,'Bookmark'))
+			for i in m:
+				i = i.lower().replace('.txt','')
+				if i == site_option.lower():
+					status = i
+					break
+		m = []
+		search_term = search_term.lower()
+		epnArrList = []
+		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
+			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
+			r = 0
+			k = 0
+			for i in line_a:
+				j = i.split(':')
+				if j:
+					if search_term in j[5]:
+						site = j[0]
+						r = k
+						break
+				k = k+1
+			tmp = line_a[r]
+			tmp = tmp.strip()
+			tmp1 = tmp.split(':')
+			site = tmp1[0]
+			if site.lower() == "music" or site.lower() == "video":
+				opt = "Not Defined"
+				if site.lower() == "music":
+					music_opt = tmp1[1]
+				else:
+					video_opt = tmp1[1]
+			else:
+				opt = tmp1[1]
+			pre_opt = tmp1[2]
+			siteName = tmp1[2]
+			base_url = int(tmp1[3])
+			embed = int(tmp1[4])
+			name = tmp1[5]
+			if site.lower() == "local":
+				name_path = name
+			
+			print (name)
+			if len(tmp1) > 6:
+				if tmp1[6] == "True":
+					finalUrlFound = True
+				else:
+					finalUrlFound = False
+				if tmp1[7] == "True":
+					refererNeeded = True
+				else:
+					refererNeeded = False
+				if len(tmp1) >=9:
+					if tmp1[8] == "True":
+						video_local_stream = True
+					else:
+						video_local_stream = False
+				print (finalUrlFound)
+				print (refererNeeded)
+				print (video_local_stream)
+			else:
+				refererNeeded = False
+				finalUrlFound = False
+				video_local_stream = False
+			print (site + ":"+opt)
+		site_var = None
+		if (not site.lower().startswith("playlist") and site.lower() != "music" and site.lower() != "video" 
+				and site.lower() !="local" and site.lower() !="none"):
+			if search_term:
+				epnArrList = []
+				for i in addons_option_arr:
+					if site.lower() == i.lower():
+						site = i
+						break
+				plugin_path = os.path.join(home,'src','Plugins',site+'.py')
+				if os.path.exists(plugin_path):
+					if site_var:
+						del site_var
+						site_var = ''
+					module = imp.load_source(site,plugin_path)
+					site_var = getattr(module,site)(TMPDIR)
+					siteName = site_option
+					if site_var:
+						if site.lower() == 'subbedanime' or site.lower() == 'dubbedanime':
+							criteria = site_var.getOptions()
+							for i in criteria:
+								if siteName.lower() == i.lower():
+									siteName = i
+									break 
+				else:
+					return 0
+					
+				for i in range(len(original_path_name)):
+					search_field = original_path_name[i].lower()
+					if ((search_term in search_field and not search_exact) 
+							or (search_term == search_field and search_exact)):
+						cur_row = i
+						new_name_with_info = original_path_name[cur_row].strip()
+						extra_info = ''
+						if '	' in new_name_with_info:
+							name = new_name_with_info.split('	')[0]
+							extra_info = new_name_with_info.split('	')[1]
+						else:
+							name = new_name_with_info
+						
+						if site.lower() == 'subbedanime' or site.lower() == 'dubbedanime':
+							hist_site = os.path.join(home,'History',site,siteName,name)
+						else:
+							hist_site = os.path.join(home,'History',site,name)
+							
+						hist_epn = os.path.join(hist_site,'Ep.txt')
+						print(hist_epn)
+						if os.path.exists(hist_epn):
+							lines = open_files(hist_epn,True)
+							m = []
+							for i in lines:
+								i = i.strip()
+								j = i.split('	')
+								if len(j) == 1:
+									epnArrList.append(i+'	'+i+'	'+name)
+								elif len(j) >= 2:
+									epnArrList.append(i+'	'+name)
+							picn = os.path.join(hist_site,'poster.jpg')
+							fanart = os.path.join(hist_site,'fanart.jpg')
+							thumbnail = os.path.join(hist_site,'thumbnail.jpg')
+							sum_file = os.path.join(hist_site,'summary.txt')
+							summary = self.get_summary_history(sum_file)
+		elif site.lower() == "music":
+			art_n = search_term
+			music_dir = os.path.join(home,'Music')
+								
+			music_db = os.path.join(home,'Music','Music.db')
+			music_file = os.path.join(home,'Music','Music.txt')
+			music_file_bak = os.path.join(home,'Music','Music_bak.txt')
+			
+			music_opt = site_option
+			if music_opt:
+				music_opt = music_opt[0].upper()+music_opt[1:]
+				if '-' in music_opt:
+					tmp = music_opt.split('-',1)
+					sub_tmp = tmp[1]
+					music_opt = tmp[0]+'-'+sub_tmp[0].upper()+sub_tmp[1:]
+			artist =[]
+			print(original_path_name)
+			for index in range(len(original_path_name)):
+				search_field = os.path.basename(original_path_name[index]).lower()
+				if ((search_term in  search_field and not search_exact) or 
+						(search_term == search_field and search_exact)):
+					if '	' in original_path_name[index].lower():
+						art_n = original_path_name[index].split('	')[0]
+					else:
+						art_n = original_path_name[index].strip()
+					if music_opt.lower() == "directory":
+						art_n = original_path_name[index]
+					if music_opt.lower() == "fav-directory":
+						art_n = original_path_name[index]
+					if music_opt.lower() == "playlist" or music_opt.lower() == "playlists":
+							pls = original_path_name[index].split('	')[0]
+							m = open_files(os.path.join(home,'Playlists',pls),True)
+							for i in m:
+								i = i.replace('\n','')
+								if i:
+									j = i.split('	')
+									i1 = j[0]
+									i2 = j[1]
+									try:
+										i3 = j[2]
+									except:
+										i3 = "None"
+									artist.append(i1+'	'+i2+'	'+i3)
+					else:
+						music_opt = music_opt[0].upper()+music_opt[1:]
+						if '-' in music_opt:
+							tmp = music_opt.split('-',1)
+							sub_tmp = tmp[1]
+							music_opt = tmp[0]+'-'+sub_tmp[0].upper()+sub_tmp[1:]
+						m = self.getMusicDB(music_db,music_opt,art_n)
+						for i in m:
+							artist.append(i[1]+'	'+i[2]+'	'+i[0])
+			epnArrList[:]=[]
+			for i in artist:
+				epnArrList.append((i))
+		elif site.lower().startswith("playlist"):
+			epnArrList = []
+			for index in range(len(original_path_name)):
+				search_field = original_path_name[index].lower().split('	')[0]
+				if ((search_term in  search_field and not search_exact) or 
+							(search_term == search_field and search_exact)):
+						pls = original_path_name[index].split('	')[0]
+						file_path = os.path.join(home,'Playlists',str(pls))
+						if os.path.exists(file_path):
+							lines = open_files(file_path,True)
+							k = 0
+							for i in lines:
+								i = i.strip()
+								if i:	
+									epnArrList.append(i)
+		elif site.lower() == "video":
+			for index in range(len(original_path_name)):
+				search_field = original_path_name[index].lower()
+				if ((search_term in  search_field and not search_exact) or 
+						(search_term == search_field and search_exact)):
+					if '	' in original_path_name[index].lower():
+						art_n = original_path_name[index].split('	')[0]
+					else:
+						art_n = original_path_name[index].strip()
+					name = art_n
+					video_dir = os.path.join(home,'VideoDB')
+					
+					video_db = os.path.join(video_dir,'Video.db')
+					video_file = os.path.join(video_dir,'Video.txt')
+					video_file_bak = os.path.join(video_dir,'Video_bak.txt')
+					
+					artist =[]
+					if bookmark == "False":
+						video_opt = site_option[0].upper()+site_option[1:]
+						if video_opt == "Update" or video_opt == "UpdateAll":
+							video_opt = "Available"
+						if video_opt == "Available" or video_opt == "History":
+							art_n = original_path_name[index].split('	')[-1]
+							m = self.getVideoDB(video_db,"Directory",art_n)
+						elif video_opt == "Directory":
+							art_n = original_path_name[index].split('	')[-1]
+							m = self.getVideoDB(video_db,video_opt,art_n)
+					else:
+						m = self.getVideoDB(video_db,"Bookmark",art_n)
+						
+					for i in m:
+						artist.append(i[0]+'	'+i[1]+'	'+art_n)
+						
+					epnArrList[:]=[]
+					for i in artist:
+						epnArrList.append((i))
+					dir_path = os.path.join(home,'Local',art_n)
+					if os.path.exists(dir_path):
+						picn = os.path.join(home,'Local',art_n,'poster.jpg')
+						thumbnail = os.path.join(home,'Local',art_n,'thumbnail.jpg')
+						fanart = os.path.join(home,'Local',art_n,'fanart.jpg')
+						summary1 = os.path.join(home,'Local',art_n,'summary.txt')
+						if os.path.exists(summary1):
+							summary = open_files(summary1,False)
+						else:
+							summary = "Not Available"
+		return epnArrList
+	
 	def listfound(self):
 		global site,name,base_url,name1,embed,opt,pre_opt,mirrorNo,list1_items
 		global list2_items,quality,row_history,home,epn,path_Local_Dir,bookmark
@@ -13802,7 +14439,10 @@ class Ui_MainWindow(object):
 			if self.list1.currentItem():
 				file_path = os.path.join(home,'Playlists',self.list1.currentItem().text())
 				write_files(file_path,epnArrList,line_by_line=True)
-				
+	
+	
+	
+	
 	def get_file_name(self,row,list_widget):
 		global name,site,epnArrList
 		file_name_mkv = ''
@@ -18619,7 +19259,7 @@ def main():
 	global show_hide_player,layout_mode,current_playing_file_path
 	global music_arr_setting,default_arr_setting,video_local_stream
 	global local_torrent_file_path,wait_player,platform_name
-	
+	global addons_option_arr
 	
 	wait_player = False
 	local_torrent_file_path = ''
@@ -18655,6 +19295,7 @@ def main():
 		"Select","Video","Music","Local","Bookmark",
 		"PlayLists","YouTube","Addons"
 		]
+	
 	addons_option_arr = []
 	audio_id = "auto"
 	sub_id = "auto"
