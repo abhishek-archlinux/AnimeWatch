@@ -215,13 +215,17 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			print(client_auth_arr,'--auth--')
 			if not cli_key and (not client_addr in client_auth_arr):
 				print('authenticating...')
-				#self.get_the_content(path,get_bytes)
-				#self.do_AUTHHEAD()
+				txt = 'Nothing'
 				print ("send header")
 				self.send_response(401)
 				self.send_header('WWW-Authenticate', 'Basic realm="Auth"')
 				self.send_header('Content-type', 'text/html')
+				self.send_header('Content-Length', len(txt))
 				self.end_headers()
+				try:
+					self.wfile.write(b'Nothing')
+				except Exception as e:
+					print(e)
 			elif (cli_key == new_key) or (client_addr in client_auth_arr):
 				self.get_the_content(get_bytes)
 			else:
@@ -230,7 +234,10 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.send_header('Content-Length', len(txt))
 				self.send_header('Connection', 'close')
 				self.end_headers()
-				self.wfile.write(txt)
+				try:
+					self.wfile.write(txt)
+				except Exception as e:
+					print(e)
 		else:
 			self.get_the_content(get_bytes)
 		
