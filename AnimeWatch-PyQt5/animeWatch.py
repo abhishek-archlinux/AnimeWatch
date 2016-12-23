@@ -89,6 +89,8 @@ import struct
 from PyQt5.QtWidgets import QInputDialog
 import sqlite3
 import json
+import base64
+
 try:
 	try:
 		import taglib
@@ -172,15 +174,12 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	old_get_bytes = 0
 	proc_req = True
 	def do_HEAD(self):
-		global current_playing_file_path,path_final_Url,client_closed,ui,curR
+		global current_playing_file_path,path_final_Url,ui,curR
 		global epnArrList
 		print(self.path)
 		path = self.path.replace('/','',1)
 		path = urllib.parse.unquote(path)
 		print(os.getcwd())
-		client_closed = False
-		tm = 0
-		tmp_row = curR
 		_head_found = False
 		nm = ''
 		if path.endswith('_playlist'):
@@ -297,10 +296,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			tmp = ''+'&'+''+'&'+''+'&'+''+'&'+str(video_local_stream)
 		return tmp
 		
-	def create_playlist(self,site,site_option,name,epnArrList):
-		global new_video_local_stream
-		
+	def create_playlist(self,site,site_option,name,epnArrList,new_video_local_stream):
+		old_name = []
 		pls_txt = '#EXTM3U\n'
+		new_index = 0
 		for  i in range(len(epnArrList)):
 			try:
 				k = epnArrList[i]
@@ -309,7 +308,17 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					n_art = 'NONE'
 					
 				book_mark = site+'&'+site_option+'&'+''+'&'+n_art+'&'+str(new_video_local_stream)
-				
+				if not old_name:
+					old_name.append(n_art)
+					new_index = 0
+				else:
+					old_old_name = old_name.pop()
+					if old_old_name == n_art:
+						new_index = new_index + 1
+					else:
+						new_index = 0
+					old_name.append(n_art)
+						
 				n_url_file = ui.get_file_name_from_bookmark(site,site_option,name,i,epnArrList)
 				if (site.lower() == 'video' or site.lower() == 'music' or 
 						site.lower() == 'local' or site.lower() == 'playlists' 
@@ -333,7 +342,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						if n_url_file:
 							n_url = n_url_file.replace('"','')
 						else:
-							n_url = book_mark+'&'+str(k)+'&'+new_name
+							n_url = book_mark+'&'+str(new_index)+'&'+new_name
 						
 					if n_url_file:
 						j = 'abs_path='+n_url
@@ -348,23 +357,12 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		return pls_txt
 		
-	def do_GET(self):
-		global current_playing_file_path,path_final_Url,client_closed,ui,curR
-		global epnArrList,new_video_local_stream
-		print(self.path)
-		path = self.path.replace('/','',1)
-		path = urllib.parse.unquote(path)
-		print(os.getcwd())
-		print(self.requestline)
-		try:
-			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
-		except Exception as e:
-			get_bytes = 0
-		print(get_bytes)
+	
 		
-		client_closed = False
-		tm = 0
-		tmp_row = curR
+	def get_the_content(self,path,get_bytes):
+		global current_playing_file_path,path_final_Url,ui,curR
+		global epnArrList
+		
 		if (path.lower().startswith('stream_continue') or path.lower() == 'stream_shuffle'):
 			new_arr = []
 			n_out = ''
@@ -392,7 +390,6 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			if path.lower() == 'stream_shuffle':
 				new_arr = random.sample(new_arr,len(new_arr))
 			print(new_arr)
-			print(client_closed)
 			print(self.client_address)
 			pls_txt = '#EXTM3U\n'
 			for  i in range(len(new_arr)):
@@ -498,7 +495,6 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.wfile.write(pls_txt)
 			except Exception as e:
 				print(e)
-				client_closed = True
 		elif path.lower().startswith('site='):
 			new_arr = path.split('&')
 			print(new_arr)
@@ -521,10 +517,11 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				st_o = 'NONE'
 			if st and st_o and srch:
 				print(srch_exact,'=srch_exact')
-				epn_arr = ui.options_from_bookmark(st,st_o,srch,search_exact=srch_exact)
+				epn_arr,st,st_o,new_str = ui.options_from_bookmark(
+						st,st_o,srch,search_exact=srch_exact)
 				pls_txt = ''
 				if epn_arr:
-					pls_txt = self.create_playlist(st,st_o,srch,epn_arr)
+					pls_txt = self.create_playlist(st,st_o,srch,epn_arr,new_str)
 				#print(pls_txt)
 				pls_txt = bytes(pls_txt,'utf-8')
 				self.send_response(200)
@@ -538,7 +535,6 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					self.wfile.write(pls_txt)
 				except Exception as e:
 					print(e)
-					client_closed = True
 		elif path.lower() == 'play' or not path:
 			self.row = ui.list2.currentRow()
 			if self.row < 0:
@@ -605,7 +601,54 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
-
+			self.end_headers()
+			
+	def do_GET(self):
+		global current_playing_file_path,path_final_Url,ui,curR
+		global epnArrList
+		print(self.path)
+		path = self.path.replace('/','',1)
+		path = urllib.parse.unquote(path)
+		print(os.getcwd())
+		print(self.requestline)
+		try:
+			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
+		except Exception as e:
+			get_bytes = 0
+		print(get_bytes)
+		
+		if ui.media_server_key:
+			key_en = base64.b64encode(bytes(ui.media_server_key,'utf-8'))
+			key = (str(key_en).replace("b'",'',1))[:-1]
+			new_key = 'Basic '+key
+			cli_key = self.headers['Authorization'] 
+			print(cli_key,new_key)
+			client_addr = str(self.client_address[0])
+			print(client_addr,'--cli--')
+			print(ui.client_auth_arr,'--auth--')
+			if not cli_key and (not client_addr in ui.client_auth_arr):
+				print('authenticating...')
+				#self.get_the_content(path,get_bytes)
+				#self.do_AUTHHEAD()
+				print ("send header")
+				self.send_response(401)
+				self.send_header('WWW-Authenticate', 'Basic realm="Auth"')
+				self.send_header('Content-type', 'text/html')
+				self.end_headers()
+			elif (cli_key == new_key) or (client_addr in ui.client_auth_arr):
+				if client_addr not in ui.client_auth_arr:
+					ui.client_auth_arr.append(client_addr)
+				self.get_the_content(path,get_bytes)
+			else:
+				self.send_header('Content-type','text/html')
+				txt = b'You are not authorized to access the content'
+				self.send_header('Content-Length', len(txt))
+				self.send_header('Connection', 'close')
+				self.end_headers()
+				self.wfile.write(txt)
+		else:
+			self.get_the_content(path,get_bytes)
+			
 class doGETSignal(QtCore.QObject):
 	new_signal = pyqtSignal(str)
 	stop_signal = pyqtSignal(str)
@@ -644,11 +687,14 @@ class ThreadServerLocal(QtCore.QThread):
 		self.wait()                        
 	
 	def run(self):
-		global httpd
+		global httpd,home
 		print('starting server...')
 		try:
+			#import ssl
 			server_address = (self.ip,self.port)
 			httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+			#cert = os.path.join(home,'server.pem')
+			#httpd.socket = ssl.wrap_socket(httpd.socket, certfile=cert, server_side=True)
 			#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
 		except OSError as e:
 			e_str = str(e)
@@ -6977,7 +7023,7 @@ class Ui_MainWindow(object):
 		self.thread_server = QtCore.QThread()
 		self.do_get_thread = QtCore.QThread()
 		self.mplayer_status_thread = QtCore.QThread()
-		self.stream_session = ''
+		self.stream_session = None
 		self.start_streaming = False
 		self.local_http_server = QtCore.QThread()
 		self.local_ip = ''
@@ -6988,6 +7034,8 @@ class Ui_MainWindow(object):
 		self.mpv_cnt = 0
 		self.local_file_index = []
 		self.quality_val = 'sd'
+		self.media_server_key = None
+		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
 		self.default_background = os.path.join(home,'default.jpg')
 		self.yt_sub_folder = os.path.join(home,'External-Subtitle')
@@ -7578,13 +7626,15 @@ class Ui_MainWindow(object):
 	def stop_torrent(self,from_client=None):
 		global video_local_stream,wget
 		stop_now = False
+		new_video_local_stream = False
 		if from_client:
 			if self.started_from_external_client:
 				stop_now = True
+				new_video_local_stream = True
 		else:
 			stop_now = True
 		if stop_now:
-			if video_local_stream:
+			if video_local_stream or new_video_local_stream:
 				if self.do_get_thread.isRunning():
 					print('----------stream-----pausing-----')
 					t_list = self.stream_session.get_torrents()
@@ -7592,9 +7642,11 @@ class Ui_MainWindow(object):
 						print(i.name(),'--removing--')
 						self.stream_session.remove_torrent(i)
 					self.stream_session.pause()
+					#self.stream_session = None
 				elif self.stream_session:
 					if not self.stream_session.is_paused():
 						self.stream_session.pause()
+						#self.stream_session = None
 				txt = 'Torrent Stopped'
 				send_notification(txt)
 				self.torrent_frame.hide()
@@ -13187,27 +13239,45 @@ class Ui_MainWindow(object):
 			return 0
 	
 	def options_from_bookmark(self,site,site_option,search_term,search_exact=None):
-		global home,new_video_local_stream,addons_option_arr
+		global home,addons_option_arr
 		original_path_name = []
 		bookmark = False
+		music_opt = ''
+		video_opt = ''
+		opt = ''
+		status = site_option
 		if site.lower() == 'bookmark':
 			bookmark = True
 			status = site_option
 			if status == "all":
 				status = "bookmark"
+			else:
+				book_path = os.path.join(home,'Bookmark')
+				m = os.listdir(book_path)
+				for i in m:
+					i = i.replace('.txt','')
+					if i.lower() == site_option.lower():
+						status = i
+						break
 		m = []
 		new_video_local_stream = False
-		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
+		print(bookmark,status)
+		opt = 'history'
+		print(os.path.join(home,'Bookmark',status+'.txt'))
+		if bookmark and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
 			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
+			print(line_a)
 			r = 0
 			k = 0
 			for i in line_a:
-				j = i.split(':')
+				j = i.strip()
 				if j:
-					if search_term in j[5]:
-						site = j[0]
-						r = k
-						break
+					j = i.split(':')
+					if j:
+						if search_term in j[5].lower():
+							site = j[0]
+							r = k
+							break
 				k = k+1
 			tmp = line_a[r]
 			tmp = tmp.strip()
@@ -13228,7 +13298,7 @@ class Ui_MainWindow(object):
 			name = tmp1[5]
 			if site.lower() == "local":
 				name_path = name
-			
+			video_local_stream = False
 			print (name)
 			if len(tmp1) > 6:
 				if tmp1[6] == "True":
@@ -13246,13 +13316,14 @@ class Ui_MainWindow(object):
 						video_local_stream = False
 				print (finalUrlFound)
 				print (refererNeeded)
-				print (video_local_stream)
+				
 			else:
 				refererNeeded = False
 				finalUrlFound = False
-				video_local_stream = False
+				
 			print (site + ":"+opt)
 		site_var = None
+		print(bookmark,status,site,opt)
 		if (not site.lower().startswith("playlist") and site.lower() != "music" and site.lower() != "video" 
 				and site.lower()!="local" and site.lower() !="none"):
 			for i in addons_option_arr:
@@ -13266,6 +13337,13 @@ class Ui_MainWindow(object):
 					site_var = ''
 				module = imp.load_source(site,plugin_path)
 				site_var = getattr(module,site)(TMPDIR)
+				if site_var:
+					criteria = site_var.getOptions() 
+					print (criteria)
+					tmp = criteria[-1]
+					if tmp == 'LocalStreaming':
+						video_local_stream = True
+						new_video_local_stream = True
 			else:
 				return 0
 				
@@ -13274,13 +13352,8 @@ class Ui_MainWindow(object):
 				and site.lower() != "subbedanime" and site.lower() != "dubbedanime" 
 				and not site.lower().startswith("playlist") and site.lower()!="video" 
 				and site.lower() != 'none'):
-		
-			if site_option:
-				t_opt = site_option
-			else:
-				t_opt = "history"
-			if t_opt.lower() == 'none':
-				t_opt = 'history'
+			
+			t_opt = 'history'
 			opt = t_opt
 			
 			if t_opt == "history":
@@ -13392,7 +13465,8 @@ class Ui_MainWindow(object):
 			video_db = os.path.join(video_dir,'Video.db')
 			video_file = os.path.join(video_dir,'Video.txt')
 			video_file_bak = os.path.join(video_dir,'Video_bak.txt')
-			video_opt = site_option
+			if not bookmark:
+				video_opt = site_option
 			print('----video-----opt',video_opt)
 			if video_opt.lower() == "update":
 				self.updateOnStartVideoDB(video_db,video_file,video_file_bak,'Update')
@@ -13434,7 +13508,15 @@ class Ui_MainWindow(object):
 		print(original_path_name)
 		epnArrList = self.listfound_from_bookmark(
 				site,site_option,search_term,original_path_name,search_exact=search_exact)
-		return epnArrList
+		if site.lower() == 'video':
+			ret_tuple = (epnArrList,site,video_opt,False)
+		elif site.lower() == 'music':
+			ret_tuple = (epnArrList,site,music_opt,False)
+		elif site.lower().startswith('playlist'):
+			ret_tuple = (epnArrList,site,'none',False)
+		else:
+			ret_tuple = (epnArrList,site,opt,new_video_local_stream)
+		return ret_tuple
 		
 	def listfound_from_bookmark(self,site,site_option,search_term,
 			original_path_name,search_exact=None):
@@ -13444,26 +13526,31 @@ class Ui_MainWindow(object):
 		if site.lower() == 'bookmark':
 			bookmark = True
 			status = site_option
-			m = os.path.listdir(os.path.join(home,'Bookmark'))
-			for i in m:
-				i = i.lower().replace('.txt','')
-				if i == site_option.lower():
-					status = i
-					break
+			if status.lower() == 'all':
+				status = 'bookmark'
+			else:
+				m = os.path.listdir(os.path.join(home,'Bookmark'))
+				for i in m:
+					i = i.lower().replace('.txt','')
+					if i == site_option.lower():
+						status = i
+						break
 		m = []
 		search_term = search_term.lower()
 		epnArrList = []
-		if bookmark == "True" and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
+		if bookmark and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
 			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
 			r = 0
 			k = 0
 			for i in line_a:
-				j = i.split(':')
+				j = i.strip()
 				if j:
-					if search_term in j[5]:
-						site = j[0]
-						r = k
-						break
+					j = i.split(':')
+					if j:
+						if search_term in j[5].lower():
+							site = j[0]
+							r = k
+							break
 				k = k+1
 			tmp = line_a[r]
 			tmp = tmp.strip()
@@ -13484,7 +13571,7 @@ class Ui_MainWindow(object):
 			name = tmp1[5]
 			if site.lower() == "local":
 				name_path = name
-			
+			video_local_stream = False
 			print (name)
 			if len(tmp1) > 6:
 				if tmp1[6] == "True":
@@ -13506,7 +13593,7 @@ class Ui_MainWindow(object):
 			else:
 				refererNeeded = False
 				finalUrlFound = False
-				video_local_stream = False
+				
 			print (site + ":"+opt)
 		site_var = None
 		if (not site.lower().startswith("playlist") and site.lower() != "music" and site.lower() != "video" 
@@ -15318,21 +15405,25 @@ class Ui_MainWindow(object):
 		if status.lower() == 'get next':
 			set_new_torrent_file_limit(
 				torrent_dest,index,path,self.stream_session,ui.list6,
-				ui.progress,TMPDIR)
+				ui.progress,TMPDIR,ui.media_server_key,ui.client_auth_arr)
 		else:
+			print('--line--15410--',self.thread_server.isRunning(),'=thread_server')
 			if status.lower() =='first run' and not self.thread_server.isRunning():
-				thread_server = ThreadServer(ip,port)
+				thread_server = ThreadServer(
+					ip,port,ui.media_server_key,ui.client_auth_arr)
 				thread_server.start()
-			print('--line--14578--')
+			print('--line--15415--',self.thread_server.isRunning(),'=thread_server')
 			handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(
 									torrent_dest,index,path,session,ui.list6,
-									ui.progress,TMPDIR)
+									ui.progress,TMPDIR,ui.media_server_key,
+									ui.client_auth_arr)
+			print('--line--15419--',self.do_get_thread.isRunning(),'--do_get--')
 			if not self.do_get_thread.isRunning():
 				torrent_thread = TorrentThread(
 								handle,cnt,cnt_limit,ses,row=index,
 								from_client=from_client)
 				torrent_thread.start()
-			print('--line--14583--')
+			print('--line--15425--',self.do_get_thread.isRunning(),'--do_get--')
 			if self.progress.isHidden():
 				self.progress.show()
 			if from_client:
@@ -15380,7 +15471,8 @@ class Ui_MainWindow(object):
 		ip = self.local_ip
 		port = int(self.local_port)
 		if not self.thread_server.isRunning():
-			self.thread_server = ThreadServer(ip,port)
+			self.thread_server = ThreadServer(
+				ip,port,ui.media_server_key,ui.client_auth_arr)
 			self.thread_server.start()
 		print(tmp,'------------magnet-----------')
 		tmp = str(tmp)
@@ -15415,8 +15507,8 @@ class Ui_MainWindow(object):
 				cnt,cnt_limit = set_torrent_info(
 						self.torrent_handle,index,self.torrent_download_folder,
 						self.stream_session,ui.list6,ui.progress,
-						ui.tmp_download_folder
-						)
+						ui.tmp_download_folder,ui.media_server_key,
+						ui.client_auth_arr)
 				
 				self.do_get_thread = TorrentThread(
 						self.torrent_handle,cnt,cnt_limit,self.stream_session
@@ -15436,7 +15528,9 @@ class Ui_MainWindow(object):
 			print(torrent_dest,index,path)
 			
 			self.torrent_handle,self.stream_session,info,cnt,cnt_limit,file_name = get_torrent_info(
-					torrent_dest,index,path,self.stream_session,ui.list6,ui.progress,ui.tmp_download_folder)
+					torrent_dest,index,path,self.stream_session,ui.list6,
+					ui.progress,ui.tmp_download_folder,ui.media_server_key,
+					ui.client_auth_arr)
 			
 			self.torrent_handle.set_upload_limit(self.torrent_upload_limit)
 			self.torrent_handle.set_download_limit(self.torrent_download_limit)
@@ -19694,10 +19788,16 @@ def main():
 							ui.local_ip = '127.0.0.1'
 						else:
 							ui.local_ip = j1[0]
-						ui.local_port = int(j1[1])
+						try:
+							ui.local_port = int(j1[1])
+						except Exception as e:
+							print(e)
+							ui.local_port = 8001
 					else:
 						ui.local_ip = '127.0.0.1'
 						ui.local_port = 8001
+					if ui.local_ip not in ui.client_auth_arr:
+						ui.client_auth_arr.append(ui.local_ip)
 				elif "TORRENT_DOWNLOAD_FOLDER" in i:
 					j = re.sub('\n','',j)
 					if j.endswith('/'):
@@ -19733,39 +19833,50 @@ def main():
 		lines = f.readlines()
 		f.close()
 		for i in lines:
+			i = i.strip()
 			j = i.split('=')[-1]
 			if "LOCAL_STREAM_IP" in i:
-				j = re.sub('\n','',j)
 				j1 = j.split(':')
 				if len(j1) == 2:
 					if j1[0].lower()=='localhost' or not j1[0]:
 						ui.local_ip_stream = '127.0.0.1'
 					else:
 						ui.local_ip_stream = j1[0]
-					ui.local_port_stream = int(j1[1])
+					try:
+						ui.local_port_stream = int(j1[1])
+					except Exception as e:
+						print(e)
+						ui.local_port_stream = 9001
 				else:
 					ui.local_ip_stream = '127.0.0.1'
 					ui.local_port_stream = 9001
+				if ui.local_ip_stream not in ui.client_auth_arr:
+					ui.client_auth_arr.append(ui.local_ip_stream)
 			elif 'DEFAULT_DOWNLOAD_LOCATION' in i:
-				j = re.sub('\n','',j)
 				ui.default_download_location = j
 			elif 'GET_LIBRARY' in i:
-				j = re.sub('\n','',j)
 				ui.get_fetch_library = j
 			elif 'TMP_REMOVE' in i:
-				j = re.sub('\n','',j)
 				if j == 'yes' or j == 'no':
 					ui.tmp_folder_remove = j
 				else:
 					ui.tmp_folder_remove = 'no'
 			elif 'IMAGE_FIT_OPTION' in i:
-				j = re.sub('\n','',j)
 				try:
 					k = int(j)
 				except Exception as e:
 					print(e)
 					k = 1
 				ui.image_fit_option_val = k
+			elif i.startswith('AUTH='):
+				try:
+					if (':' in j) and (j.lower() != 'none'):
+						ui.media_server_key = j
+					else:
+						ui.media_server_key = None
+				except Exception as e:
+					print(e)
+					ui.media_server_key = None
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
@@ -19773,6 +19884,7 @@ def main():
 		f.write("\nTMP_REMOVE=no")
 		f.write("\nGET_LIBRARY=pycurl")
 		f.write("\nIMAGE_FIT_OPTION=1")
+		f.write("\nAUTH=NONE")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001

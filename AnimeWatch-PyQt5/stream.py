@@ -34,13 +34,13 @@ import os
 import subprocess,re
 from player_functions import send_notification
 import select
+import base64
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	
 	protocol_version = 'HTTP/1.1'
 	
 	def do_HEAD(self):
-		
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
 		global tmp_dir_folder,content_length
 		#print(handle,ses,info)
@@ -51,61 +51,11 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		self.send_header('Accept-Ranges', 'bytes')
 		self.send_header('Connection', 'close')
 		self.end_headers()
-			
 	
-	def process_url(self,nm,get_bytes):
-		if nm.startswith('http'):
-			self.send_response(303)
-			self.send_header('Location',nm)
-			self.end_headers()
-		else:
-			self.send_response(200)
-			self.send_header('Content-type','video/mp4')
-			size = os.stat(nm).st_size
-			#size = size - get_bytes
-			self.send_header('Content-Length', str(size))
-			self.send_header('Accept-Ranges', 'bytes')
-			self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
-			self.send_header('Connection', 'close')
-			self.end_headers()
-			if '.' in nm:
-				nm_ext = nm.rsplit('.',1)[1]
-			else:
-				nm_ext = 'nothing'
-			
-			print(get_bytes,'--get--bytes--',nm_ext)
-			t = 0
-			with open(nm,'rb') as f:
-				if get_bytes and t ==0:
-						f.seek(get_bytes)
-						t = 1
-						print('seeking')
-				content = f.read(1024*512)
-				while(content):
-					try:
-						self.wfile.write(content)
-					except Exception as e:
-						print(e,'--error--')
-						#a = 0
-					content = f.read(1024*512)
-					time.sleep(0.0001)
-			print('--hello--')
-	
-	def do_GET(self):
+	def get_the_content(self,get_bytes):
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
-		global tmp_dir_folder,httpd
+		global tmp_dir_folder,httpd,media_server_key,client_auth_arr
 		
-		#data = self.request.recv(1024).strip()
-		#print(data,'--requests--')
-		
-		#print(handle,ses,info)
-		print('do_get')
-		print(self.headers)
-		try:
-			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
-		except Exception as e:
-			get_bytes = 0
-		print(get_bytes,'--get--bytes--')
 		tmp_file = os.path.join(tmp_dir_folder,'row.txt')
 		tmp_seek_file = os.path.join(tmp_dir_folder,'seek.txt')
 		tmp_pl_file = os.path.join(tmp_dir_folder,'player_stop.txt')
@@ -151,16 +101,16 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			f = open(file_name,'wb')
 			f.close()
 		else:
-			if os.path.exists(file_name) and os.stat(file_name).st_size == content_length:
+			if (os.path.exists(file_name) and 
+					os.stat(file_name).st_size == content_length):
 				complete_file = True
-		#if complete_file:
-		#	self.process_url(file_name,get_bytes)
-		#else:
+				
 		self.send_response(200)
 		self.send_header('Content-type','video/mp4')
 		self.send_header('Content-Length', str(content_length))
 		self.send_header('Accept-Ranges', 'bytes')
-		self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(content_length)+'/'+str(content_length))
+		size_field = 'bytes {0}-{1}/{1}'.format(str(get_bytes),str(content_length))
+		self.send_header('Content-Range', size_field)
 		self.send_header('Connection', 'close')
 		self.end_headers()
 		
@@ -189,7 +139,6 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				handle.piece_priority(l,6)
 		tm = 0
 		with open(file_name,'rb') as f:
-			
 			content = b'0'
 			while content:
 				try:
@@ -220,7 +169,8 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 									cnt_arr.append(i+l)
 									handle.piece_priority(i+l,6)
 							print(cnt_arr)
-						#print("seeking i={0},cnt={1},get_bytes={2},pri_lowered={3}".format(i,cnt,get_bytes,pri_lowered))
+						#print("seeking i={0},cnt={1},get_bytes={2},
+						#pri_lowered={3}".format(i,cnt,get_bytes,pri_lowered))
 						handle.piece_priority(i,7)
 						#print(cnt_arr)
 						if get_bytes and not pri_lowered:
@@ -235,23 +185,68 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				except Exception as e:
 					print(e)
 					break
-			
 		if os.path.exists(tmp_pl_file):
 			os.remove(tmp_pl_file)
 		if os.path.exists(tmp_file):
 			os.remove(tmp_file)
-		return 0
+			
+	def do_GET(self):
+		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
+		global tmp_dir_folder,httpd,media_server_key,client_auth_arr
+		#data = self.request.recv(1024).strip()
+		#print(data,'--requests--')
+		#print(handle,ses,info)
+		print('do_get')
+		print(self.headers)
+		try:
+			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
+		except Exception as e:
+			get_bytes = 0
+		print(get_bytes,'--get--bytes--')
+		
+		if media_server_key:
+			key_en = base64.b64encode(bytes(media_server_key,'utf-8'))
+			key = (str(key_en).replace("b'",'',1))[:-1]
+			new_key = 'Basic '+key
+			cli_key = self.headers['Authorization'] 
+			print(cli_key,new_key)
+			client_addr = str(self.client_address[0])
+			print(client_addr,'--cli--')
+			print(client_auth_arr,'--auth--')
+			if not cli_key and (not client_addr in client_auth_arr):
+				print('authenticating...')
+				#self.get_the_content(path,get_bytes)
+				#self.do_AUTHHEAD()
+				print ("send header")
+				self.send_response(401)
+				self.send_header('WWW-Authenticate', 'Basic realm="Auth"')
+				self.send_header('Content-type', 'text/html')
+				self.end_headers()
+			elif (cli_key == new_key) or (client_addr in client_auth_arr):
+				self.get_the_content(get_bytes)
+			else:
+				self.send_header('Content-type','text/html')
+				txt = b'You are not authorized to access the content'
+				self.send_header('Content-Length', len(txt))
+				self.send_header('Connection', 'close')
+				self.end_headers()
+				self.wfile.write(txt)
+		else:
+			self.get_the_content(get_bytes)
 		
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	pass
 	
 class ThreadServer(QtCore.QThread):
 	
-	def __init__(self,ip,port):
-		global thread_signal
+	def __init__(self,ip,port,key=None,client_arr=None):
+		global thread_signal,media_server_key,client_auth_arr
 		QtCore.QThread.__init__(self)
 		self.ip = ip
 		self.port = int(port)
+		media_server_key = key
+		client_auth_arr = client_arr
+		
 	def __del__(self):
 		self.wait()                        
 	
@@ -274,7 +269,6 @@ class ThreadServer(QtCore.QThread):
 			httpd = ThreadedHTTPServer(server_address, testHTTPServer_RequestHandler)
 		print('running server...at..'+self.ip+':'+str(self.port))
 		httpd.serve_forever()
-		
 
 class TorrentThread(QtCore.QThread):
 	session_signal = pyqtSignal(str)
@@ -311,9 +305,13 @@ class TorrentThread(QtCore.QThread):
 				fileStr = f
 				handle.file_priority(i,7)
 			i += 1
-		new_path = os.path.join(torrent_download_path,fileStr.path)
-		new_size = fileStr.size
-		if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
+		try:
+			new_path = os.path.join(torrent_download_path,fileStr.path)
+			new_size = fileStr.size
+			if os.path.exists(new_path) and os.stat(new_path).st_size == new_size:
+				file_exists = True
+		except Exception as err_val:
+			print(err_val,'--312--stream.py--')
 			file_exists = True
 		if fileStr and not file_exists:
 			s = self.handle.status()
@@ -514,8 +512,12 @@ def session_finished(var):
 			g = fileStr.path
 			g = os.path.basename(g)
 	
-def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
+def set_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir,key=None,client_arr=None):
 	global handle,ses,info,cnt,cnt_limit,file_name,ui,progress,tmp_dir_folder
+	global media_server_key,client_auth_arr
+	media_server_key = key
+	client_auth_arr = client_arr
+	
 	progress = p_bar
 	tmp_dir_folder = tmp_dir
 	progress.setValue(0)
@@ -618,9 +620,13 @@ def get_torrent_info_magnet(v1,v3,u,p_bar,tmp_dir):
 	
 	return handle,ses,info
 
-def set_new_torrent_file_limit(v1,v2,v3,session,u,p_bar,tmp_dir):
+def set_new_torrent_file_limit(
+				v1,v2,v3,session,u,p_bar,tmp_dir,key=None,client_arr=None):
 	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
 	global progress,tmp_dir_folder,content_length
+	global media_server_key,client_auth_arr
+	media_server_key = key
+	client_auth_arr = client_arr
 	content_length = 0
 	ui = u
 	progress = p_bar
@@ -666,9 +672,12 @@ def set_new_torrent_file_limit(v1,v2,v3,session,u,p_bar,tmp_dir):
 	print('\n',cnt,cnt_limit,file_name,'---get--torrent--info\n')
 	
 	
-def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir):
+def get_torrent_info(v1,v2,v3,session,u,p_bar,tmp_dir,key=None,client=None):
 	global handle,ses,info,cnt,cnt_limit,file_name,ui,torrent_download_path
 	global progress,total_size_content,tmp_dir_folder,content_length
+	global media_server_key,client_auth_arr
+	media_server_key = key
+	client_auth_arr = client
 	content_length = 0
 	ui = u
 	progress = p_bar
