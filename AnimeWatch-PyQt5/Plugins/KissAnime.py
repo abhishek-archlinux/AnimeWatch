@@ -29,7 +29,6 @@ def cloudfare(url,quality,cookie):
 class KissAnime():
 	def __init__(self,tmp):
 		global tmp_working_dir
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		self.tmp_dir = tmp
 		tmp_working_dir = tmp
 		self.cookie_file = os.path.join(tmp,'kcookie.txt')
@@ -99,7 +98,6 @@ class KissAnime():
 				#img[0]=img[0].replace('kissanime.com','kissanime.ru')
 				print(img[0])
 			if not os.path.isfile(picn):
-				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookie.txt','-A',self.hdr,'-o',picn,img[0]])
 				ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 		except:
 			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
@@ -182,7 +180,7 @@ class KissAnime():
 		content = self.ccurlN(url)
 		
 		
-		print (content)
+		#print (content)
 		soup = BeautifulSoup(content,'lxml')
 		#f = open('/tmp/AnimeWatch/k.txt','w')
 		#f.write(content)
@@ -220,8 +218,7 @@ class KissAnime():
 				sd = sd480
 			elif hd:
 				sd = hd
-		#content = (subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookie.txt','-L','-I','-A',self.hdr,sd]))
-		print(sd)
+		print(sd+'#'+'-I')
 		content = ccurl(sd+'#'+'-I')
 		print(content)
 		m = self.urlResolve(content)
