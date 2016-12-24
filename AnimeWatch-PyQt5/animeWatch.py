@@ -339,6 +339,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						if n_out.startswith('#'):
 							n_out = n_out.replace('#','',1)
 						new_name = k.split('	')[1].replace('"','')
+						if new_name.startswith('#'):
+							new_name = new_name[1:]
 						if n_url_file:
 							n_url = n_url_file.replace('"','')
 						else:
@@ -440,6 +442,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							if n_out.startswith('#'):
 								n_out = n_out.replace('#','',1)
 							new_name = epnArrList[k].split('	')[1].replace('"','')
+							if new_name.startswith('#'):
+								new_name = new_name[1:]
 							if n_url_file:
 								n_url = n_url_file.replace('"','')
 							else:
@@ -463,6 +467,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 								n_out = n_out.replace('#','',1)
 							n_out = n_out.replace('"','')
 							new_name = n_out
+							if new_name.startswith('#'):
+								new_name = new_name[1:]
 							if n_url_file:
 								n_url = n_url_file.replace('"','')
 							else:
@@ -598,6 +604,27 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				new_torrent_signal.stop_signal.emit('from client')
 			except Exception as e:
 				print(e)
+		elif path.startswith('clear_client_list'):
+			try:
+				arr = b'<html>Clearing Visited Client list</html>'
+				#size = sys.getsizeof(arr)
+				self.send_response(200)
+				self.send_header('Content-type','text/html')
+				self.send_header('Content-Length',len(arr))
+				self.send_header('Connection', 'close')
+				self.end_headers()
+				try:
+					self.wfile.write(arr)
+				except Exception as e:
+					print(e)
+				ui.client_auth_arr[:] = []
+				ui.client_auth_arr = ['127.0.0.1','0.0.0.0']
+				if ui.local_ip not in ui.client_auth_arr:
+					ui.client_auth_arr.append(ui.local_ip)
+				if ui.local_ip_stream not in ui.client_auth_arr:
+					ui.client_auth_arr.append(ui.local_ip_stream)
+			except Exception as e:
+				print(e)
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
@@ -619,7 +646,12 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		
 		if ui.media_server_key:
 			key_en = base64.b64encode(bytes(ui.media_server_key,'utf-8'))
-			key = (str(key_en).replace("b'",'',1))[:-1]
+			try:
+				key = str(key_en,'utf-8')
+				print(key,'--key--val--')
+			except Exception as err_val:
+				print(err_val)
+				key = (str(key_en).replace("b'",'',1))[:-1]
 			new_key = 'Basic '+key
 			cli_key = self.headers['Authorization'] 
 			print(cli_key,new_key)
@@ -7021,7 +7053,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (4,1,0,0)
+		self.version_number = (4,2,0,0)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -11124,6 +11156,9 @@ class Ui_MainWindow(object):
 					k = m[i].split(':')[0]
 				else:
 					k = epnArrList[i]
+				if j.startswith('#'):
+					j = j[1:]
+					k = '#'+k
 				epnArrList[i]=k+'	'+j
 				
 		if site=="Video":
@@ -16173,16 +16208,30 @@ class Ui_MainWindow(object):
 						if not t:
 							t = ['AV: 00:00:00 / 00:00:00 (0%)']
 					if "Cache:" in a:
+						cache_int = 0
 						n = re.findall("Cache:[^+]*",a)
 						cache_val = re.search("[0-9][^s]*",n[0]).group()
-						if len(cache_val) == 1:
-							cache_val = '0'+cache_val
-						out = t[0] +"  "+cache_val+'s'
+						
+						try:
+							cache_int = int(cache_val)
+						except Exception as err_val:
+							print(err_val)
+							cache_int = 0
+						if cache_int >= 119:
+							cache_int = 119
+						elif cache_int >=9 and cache_int < 12:
+							cache_int = 10
+						if cache_int < 10:
+							cache_val = '0'+str(cache_int)
+						else:
+							cache_val = str(cache_int)
+						out = t[0] +"  "+str(cache_val)+'s'
 					else:
 						cache_val = '0'
+						cache_int = 0
 						out = t[0]
 					try:
-						new_cache_val = int(cache_val)
+						new_cache_val = cache_int
 					except Exception as e:
 						print(e,'--cache-val-error--')
 						new_cache_val = 0
@@ -16190,7 +16239,7 @@ class Ui_MainWindow(object):
 						out = "(Paused) "+out
 						#print(out)
 					elif "Paused" in a and mpv_indicator:
-						out = "(Paused Caching..Wait Few Seconds) "+out
+						out = "(Paused Caching..) "+out
 						#print(out)
 					out = re.sub('AV:[^0-9]*|A:[^0-9]*','',out)
 					
