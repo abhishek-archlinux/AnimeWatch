@@ -199,6 +199,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			try:
 				path = path.split('abs_path=',1)[1]
 				nm = path
+				nm = str(base64.b64decode(nm).decode('utf-8'))
 				print(nm)
 				if 'youtube.com' in nm:
 					nm = get_yt_url(nm,ui.quality_val).strip()
@@ -208,6 +209,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			try:
 				path = path.split('relative_path=',1)[1]
 				nm = path
+				nm = str(base64.b64decode(nm).decode('utf-8'))
 				if nm.split('&')[4] == 'True':
 					old_nm = nm
 					#nm = ui.epn_return_from_bookmark(nm)
@@ -520,6 +522,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					print(e)
 			pls_txt = bytes(pls_txt,'utf-8')
 			self.send_response(200)
+			#self.send_header('Set-Cookie','A=Bcdfgh')
 			self.send_header('Content-type','audio/mpegurl')
 			size = len(pls_txt)
 			#size = size - get_bytes
@@ -686,6 +689,20 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		except Exception as e:
 			print(e)
 			
+	def auth_header(self):
+		print('authenticating...')
+		txt = 'Nothing'
+		print ("send header")
+		self.send_response(401)
+		self.send_header('WWW-Authenticate', 'Basic realm="Auth"')
+		self.send_header('Content-type', 'text/html')
+		self.send_header('Content-Length', len(txt))
+		self.end_headers()
+		try:
+			self.wfile.write(b'Nothing')
+		except Exception as e:
+			print(e)
+			
 	def do_GET(self):
 		global current_playing_file_path,path_final_Url,ui,curR
 		global epnArrList
@@ -694,6 +711,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		path = urllib.parse.unquote(path)
 		print(os.getcwd())
 		print(self.requestline)
+		#print(self.headers['Cookie'],'--cookie--')
+		
 		try:
 			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
 		except Exception as e:
@@ -715,21 +734,19 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			print(client_addr,'--cli--')
 			print(ui.client_auth_arr,'--auth--')
 			if not cli_key and (not client_addr in ui.client_auth_arr):
-				print('authenticating...')
-				txt = 'Nothing'
-				print ("send header")
-				self.send_response(401)
-				self.send_header('WWW-Authenticate', 'Basic realm="Auth"')
-				self.send_header('Content-type', 'text/html')
-				self.send_header('Content-Length', len(txt))
-				self.end_headers()
-				try:
-					self.wfile.write(b'Nothing')
-				except Exception as e:
-					print(e)
+				self.auth_header()
 			elif (cli_key == new_key) or (client_addr in ui.client_auth_arr):
+				first_time = False
 				if client_addr not in ui.client_auth_arr:
 					ui.client_auth_arr.append(client_addr)
+					if not ipaddress.ip_address(client_addr).is_private:
+						first_time = True
+				elif client_addr in ui.client_auth_arr:
+					if not ipaddress.ip_address(client_addr).is_private:
+						if (path.startswith('abs_path=') or 
+								path.startswith('relative_path=') 
+								or (cli_key == new_key)):
+							first_time = True
 				if ipaddress.ip_address(client_addr).is_private:
 					self.get_the_content(path,get_bytes)
 				else:
@@ -748,9 +765,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						else:
 							my_ip = ui.my_public_ip
 						if my_ip:
-							self.get_the_content(path,get_bytes,my_ip_addr=my_ip)
+							if first_time:
+								self.get_the_content(path,get_bytes,my_ip_addr=my_ip)
+							else:
+								#self.final_message(b'No More Activity Allowed')
+								self.auth_header()
 						else:
-							self.final_message(b'Could not found your Public IP')
+							self.final_message(b'Could not find your Public IP')
 					else:
 						txt = b'Access From Outside Network Not Allowed'
 						self.final_message(txt)
@@ -823,7 +844,7 @@ class ThreadServerLocal(QtCore.QThread):
 			server_address = (self.ip,self.port)
 			httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
 			#cert = os.path.join(home,'cert.pem')
-			#httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert,ssl_version=ssl.PROTOCOL_TLSv1)
+			#httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert)
 			#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
 		except OSError as e:
 			e_str = str(e)
@@ -10223,6 +10244,39 @@ class Ui_MainWindow(object):
 	def setCategoryAnime(self):
 		global category,site
 		category = "Animes" 
+	
+	def get_external_url_status(self,finalUrl):
+		external_url = False
+		if finalUrl.startswith('"http') or finalUrl.startswith('http'):
+			try:
+				ip_addr = finalUrl.split('/')[2]
+				if ':' in ip_addr:
+					ip_addr = ip_addr.split(':')[0]
+			except Exception as e:
+				print(e)
+				ip_addr = 'none'
+			private_ip = False
+			try:
+				ip_obj = ipaddress.ip_address(ip_addr)
+				print(ip_obj)
+				if ip_obj.is_private:
+					private_ip = True
+			except Exception as e:
+				print(e)
+			if not private_ip:
+				external_url = True
+		return external_url
+	
+	def get_redirected_url_if_any(self,finalUrl,external_url):
+		if not external_url:
+			if finalUrl.startswith('"http') or finalUrl.startswith('http'):
+				finalUrl = finalUrl.replace('"','')
+				content = ccurl(finalUrl+'#'+'-H')
+				if "Location:" in content:
+					m = re.findall('Location: [^\n]*',content)
+					finalUrl = re.sub('Location: |\r','',m[-1])
+		return finalUrl
+			
 		
 	def epnClicked(self,dock_check=None):
 		global queueNo,mpvAlive,curR,idw,Player,mpvplayer,ui,epnArrList
@@ -10230,6 +10284,8 @@ class Ui_MainWindow(object):
 		curR = self.list2.currentRow()
 		queueNo = queueNo + 1
 		mpvAlive = 0
+		#if mpvplayer.processId() > 0:
+		#	mpvplayer.write(b'\n set pause no \n')
 		if ui.float_window.isHidden():
 			if mpvplayer.processId() > 0:
 				if idw != str(int(ui.tab_5.winId())):
@@ -10237,7 +10293,7 @@ class Ui_MainWindow(object):
 					self.mpvplayer_started = False
 					idw = str(int(ui.tab_5.winId()))
 				if self.mpvplayer_started:
-					self.mpvNextEpnList(play_row=curR)
+					self.mpvNextEpnList(play_row=curR,mode='play_now')
 				else:
 					self.epnfound()
 			else:
@@ -10259,26 +10315,26 @@ class Ui_MainWindow(object):
 				except Exception as e:
 					print(e)
 	
-	def mpvNextEpnList(self,play_row=None):
+	def mpvNextEpnList(self,play_row=None,mode=None):
 		global mpvplayer,epn,curR,Player,epnArrList,site,current_playing_file_path
-		
+		print(play_row,'--play_row--',mode)
 		if mpvplayer.processId() > 0:
 			print ("-----------inside-------")
-			if curR == self.list2.count() - 1:
-				curR = 0
-				if (site == "Music" and not self.playerPlaylist_setLoop_var) or (self.list2.count()==1):
-					r1 = self.list1.currentRow()
-					it1 = self.list1.item(r1)
-					if it1:
-						if r1 < self.list1.count():
-							r2 = r1+1
-						else:
-							r2 = 0
-						self.list1.setCurrentRow(r2)
-						self.listfound()
+			if play_row != None and mode == 'play_now':
+				curR = play_row
 			else:
-				if play_row:
-					curR = play_row
+				if curR == self.list2.count() - 1:
+					curR = 0
+					if (site == "Music" and not self.playerPlaylist_setLoop_var) or (self.list2.count()==1):
+						r1 = self.list1.currentRow()
+						it1 = self.list1.item(r1)
+						if it1:
+							if r1 < self.list1.count():
+								r2 = r1+1
+							else:
+								r2 = 0
+							self.list1.setCurrentRow(r2)
+							self.listfound()
 				else:
 					curR = curR + 1
 
@@ -10298,6 +10354,10 @@ class Ui_MainWindow(object):
 			if (site == "Local" or site == "Music" or site == "Video" 
 					or site == "None" or site == "PlayLists"):
 				print('--mpv--nextepn--',current_playing_file_path)
+				self.external_url = self.get_external_url_status(current_playing_file_path)
+				if self.external_url:
+					mpvplayer.kill()
+					self.mpvplayer_started = False
 				if len(self.queue_url_list)>0:
 					self.getQueueInList()
 				else:
@@ -10320,7 +10380,6 @@ class Ui_MainWindow(object):
 		
 		if mpvplayer.processId() > 0:
 			print ("inside")
-			
 			if curR == 0:
 				curR = self.list2.count() - 1
 				if ((site == "Music" and not self.playerPlaylist_setLoop_var) 
@@ -10332,40 +10391,10 @@ class Ui_MainWindow(object):
 							r2 = r1-1
 						else:
 							r2 = self.list2.count()-1
-						self.list1.setCurrentRow(r2)
-						self.listfound()
 						curR = self.list2.count() - 1
 			else:
 				curR = curR - 1
-			self.list2.setCurrentRow(curR)
-			if site != "PlayLists" and not self.queue_url_list:
-				try:
-					if '	' in epnArrList[curR]:
-						epn = epnArrList[curR].split('	')[1]
-					else:
-						epn = self.list2.currentItem().text()
-					epn = epn.replace('#','',1)
-					if epn.startswith(self.check_symbol):
-						epn = epn[1:]
-				except:
-					pass
-			if (site == "Local" or site == "Music" or site == "Video" 
-					or site == "None" or site == "PlayLists"):
-				if len(self.queue_url_list)>0:
-					pass
-				else:
-					self.localGetInList()
-			else:
-				if Player == "mpv":
-					mpvplayer.kill()
-					self.mpvplayer_started = False
-					self.getNextInList()
-				else:
-					print(mpvplayer.state())
-					mpvplayer.kill()
-					self.mpvplayer_started = False
-					print (mpvplayer.processId(),'--mpvnext---')
-					self.getNextInList()
+			self.mpvNextEpnList(play_row=curR,mode='play_now')
 	
 	def HideEveryThing(self,hide_var=None):
 		global fullscrT,idwMain,idw,view_layout
@@ -16960,26 +16989,9 @@ class Ui_MainWindow(object):
 			if 'youtube.com' in finalUrl.lower():
 				finalUrl = finalUrl.replace('"','')
 				finalUrl = get_yt_url(finalUrl,quality).strip()
-			if finalUrl.startswith('"http') or finalUrl.startswith('http'):
-				try:
-					ip_addr = finalUrl.split('/')[2]
-					if ':' in ip_addr:
-						ip_addr = ip_addr.split(':')[0]
-				except Exception as e:
-					print(e)
-					ip_addr = 'none'
-				private_ip = False
-				try:
-					ip_obj = ipaddress.ip_address(ip_addr)
-					print(ip_obj)
-					if ip_obj.is_private:
-						private_ip = True
-				except Exception as e:
-					print(e)
-				if not private_ip:
-					self.external_url = True
-				else:
-					self.external_url = False
+			self.external_url = self.get_external_url_status(finalUrl)
+			#if not self.external_url:
+			#finalUrl = self.get_redirected_url_if_any(finalUrl,self.external_url)
 		new_epn = self.epn_name_in_list
 	
 		finalUrl = finalUrl.replace('"','')
@@ -17149,26 +17161,9 @@ class Ui_MainWindow(object):
 				finalUrl = epnShow.replace('"','')
 				finalUrl = get_yt_url(finalUrl,quality).strip()
 				epnShow = finalUrl
-			if epnShow.startswith('"http') or epnShow.startswith('http'):
-				try:
-					ip_addr = finalUrl.split('/')[2]
-					if ':' in ip_addr:
-						ip_addr = ip_addr.split(':')[0]
-				except Exception as e:
-					print(e)
-					ip_addr = 'none'
-				private_ip = False
-				try:
-					ip_obj = ipaddress.ip_address(ip_addr)
-					print(ip_obj)
-					if ip_obj.is_private:
-						private_ip = True
-				except Exception as e:
-					print(e)
-				if not private_ip:
-					self.external_url = True
-				else:
-					self.external_url = False
+			self.external_url = self.get_external_url_status(epnShow)
+			#if not self.external_url and Player == 'mplayer':
+			#	finalUrl = self.get_redirected_url_if_any(finalUrl,self.external_url)
 		else:
 			epnShow = self.queue_url_list.pop()
 			curR = curR - 1
@@ -17183,9 +17178,9 @@ class Ui_MainWindow(object):
 				command = "mpv --cache-secs=120 --cache=auto --cache-default=100000 --cache-initial=0 --cache-seek-min=100 --cache-pause --idle -msg-level=all=v --osd-level=0 --cursor-autohide=no --no-input-cursor --no-osc --no-osd-bar --ytdl=no --input-file=/dev/stdin --input-terminal=no --input-vo-keyboard=no -video-aspect 16:9 -wid "+idw+" "+" -sid "+str(sub_id)+" -aid "+str(audio_id)+" "+epnShowN
 		if mpvplayer.processId() > 0:
 			epnShow = '"'+epnShow.replace('"','')+'"'
-			if epnShow.startswith('"http'):
-				epnShow = epnShow.replace('"','')
-				self.external_url = True
+			#if epnShow.startswith('"http'):
+			#	epnShow = epnShow.replace('"','')
+			#	self.external_url = True
 			t2 = bytes('\n '+"loadfile "+epnShow+" replace"+' \n','utf-8')
 			
 			if Player == 'mpv':

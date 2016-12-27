@@ -63,6 +63,8 @@ def ccurl_string_get(url,opt,extra,download_manager=None):
 		command = ["curl","-L","-A",hdr,url]
 	elif opt == '-L':
 		command = ["curl","-A",hdr,url]
+	elif opt == '-H':
+		command = ["curl","-I","-A",hdr,url]
 	elif opt == '-e':
 		command = ["curl",'-L',"-A",hdr,"-e",extra,url]
 	elif opt == '-o':
@@ -139,6 +141,8 @@ def wget_string_get(url,dest,opt,extra,tmp_log,download_manager=None):
 		command = ["wget","--read-timeout=60","--cookies=on","--keep-session-cookies",sk,"--user-agent="+hdr,url,"-O", dest]
 	elif opt == '-I':
 		command = ["wget",'-o',tmp_log,"--server-response","--spider","--read-timeout=60", "--user-agent="+hdr,url]
+	elif opt == '-H':
+		command = ["wget","--max-redirect=0",'-o',tmp_log,"--server-response","--spider","--read-timeout=60", "--user-agent="+hdr,url]
 	elif opt == '-Ie':
 		rfr = '--referer='+extra
 		command = ["wget",'-o',tmp_log,"--server-response","--spider","--read-timeout=60","--user-agent="+hdr,rfr,url]
@@ -452,6 +456,10 @@ def ccurl(url,external_cookie=None):
 		elif curl_opt == '-L':
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
+		elif curl_opt == '-H':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
 		elif curl_opt == '-d':
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
