@@ -18118,14 +18118,9 @@ class Ui_MainWindow(object):
 							if '.' in j:
 								k = j.rsplit('.',1)[1]
 								if (k in self.music_type_arr 
-<<<<<<< HEAD
 										or k in self.video_type_arr or k == 'm3u'
 										or k == 'pls'):
 									if k != 'm3u' and k != 'pls':
-=======
-										or k in self.video_type_arr or k == 'm3u'):
-									if k != 'm3u':
->>>>>>> 068bc0d9150bb0350f069e3f6f444343ad9df649
 										new_val = j+'	'+i+'	'+'NONE'
 										epnArrList.append(new_val)
 										self.list2.addItem(j)
