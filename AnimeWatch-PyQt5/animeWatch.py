@@ -19543,7 +19543,6 @@ def watch_external_video(var):
 			t = urllib.parse.unquote(t)
 			if os.path.exists(t):
 				lines = open(t,'r').readlines()
-<<<<<<< HEAD
 				print(lines)
 			elif t.startswith('http'):
 				content = ccurl(t)
@@ -19563,15 +19562,6 @@ def watch_external_video(var):
 				ui.btn1.setCurrentIndex(ui.btn1.findText(site))
 				ui.list2.clear()
 				if t.endswith('.m3u'):
-=======
-				if lines:
-					epnArrList[:] = []
-					cnt = len(lines)
-					i = 0
-					site = "PlayLists"
-					ui.btn1.setCurrentIndex(ui.btn1.findText(site))
-					ui.list2.clear()
->>>>>>> 068bc0d9150bb0350f069e3f6f444343ad9df649
 					while i < cnt:
 						try:
 							if 'EXTINF' in lines[i]:
@@ -19587,7 +19577,6 @@ def watch_external_video(var):
 								i = i+1
 						except Exception as e:
 							print(e)
-<<<<<<< HEAD
 							i = i+1
 				else:
 					while i < cnt:
@@ -19620,14 +19609,6 @@ def watch_external_video(var):
 					write_files(file_name,epnArrList,True)
 					ui.list1.clear()
 					ui.list1.addItem('TMP_PLAYLIST')
-=======
-					if epnArrList:
-						file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
-						f = open(file_name,'w').close()
-						write_files(file_name,epnArrList,True)
-						ui.list1.clear()
-						ui.list1.addItem('TMP_PLAYLIST')
->>>>>>> 068bc0d9150bb0350f069e3f6f444343ad9df649
 		elif t.startswith('http'):
 			site = "PlayLists"
 			t = urllib.parse.unquote(t)
