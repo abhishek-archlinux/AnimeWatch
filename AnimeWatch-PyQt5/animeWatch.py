@@ -18118,9 +18118,14 @@ class Ui_MainWindow(object):
 							if '.' in j:
 								k = j.rsplit('.',1)[1]
 								if (k in self.music_type_arr 
+<<<<<<< HEAD
 										or k in self.video_type_arr or k == 'm3u'
 										or k == 'pls'):
 									if k != 'm3u' and k != 'pls':
+=======
+										or k in self.video_type_arr or k == 'm3u'):
+									if k != 'm3u':
+>>>>>>> 068bc0d9150bb0350f069e3f6f444343ad9df649
 										new_val = j+'	'+i+'	'+'NONE'
 										epnArrList.append(new_val)
 										self.list2.addItem(j)
@@ -19538,6 +19543,7 @@ def watch_external_video(var):
 			t = urllib.parse.unquote(t)
 			if os.path.exists(t):
 				lines = open(t,'r').readlines()
+<<<<<<< HEAD
 				print(lines)
 			elif t.startswith('http'):
 				content = ccurl(t)
@@ -19557,6 +19563,15 @@ def watch_external_video(var):
 				ui.btn1.setCurrentIndex(ui.btn1.findText(site))
 				ui.list2.clear()
 				if t.endswith('.m3u'):
+=======
+				if lines:
+					epnArrList[:] = []
+					cnt = len(lines)
+					i = 0
+					site = "PlayLists"
+					ui.btn1.setCurrentIndex(ui.btn1.findText(site))
+					ui.list2.clear()
+>>>>>>> 068bc0d9150bb0350f069e3f6f444343ad9df649
 					while i < cnt:
 						try:
 							if 'EXTINF' in lines[i]:
@@ -19572,6 +19587,7 @@ def watch_external_video(var):
 								i = i+1
 						except Exception as e:
 							print(e)
+<<<<<<< HEAD
 							i = i+1
 				else:
 					while i < cnt:
@@ -19604,6 +19620,14 @@ def watch_external_video(var):
 					write_files(file_name,epnArrList,True)
 					ui.list1.clear()
 					ui.list1.addItem('TMP_PLAYLIST')
+=======
+					if epnArrList:
+						file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
+						f = open(file_name,'w').close()
+						write_files(file_name,epnArrList,True)
+						ui.list1.clear()
+						ui.list1.addItem('TMP_PLAYLIST')
+>>>>>>> 068bc0d9150bb0350f069e3f6f444343ad9df649
 		elif t.startswith('http'):
 			site = "PlayLists"
 			t = urllib.parse.unquote(t)
