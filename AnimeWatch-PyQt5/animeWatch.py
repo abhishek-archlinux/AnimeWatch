@@ -28,6 +28,7 @@ sys.path.append(BASEDIR)
 
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets
 import urllib.parse
+import urllib.request
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -174,7 +175,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	protocol_version = 'HTTP/1.1'
 	old_get_bytes = 0
 	proc_req = True
-	def do_HEAD(self):
+	
+	def process_HEAD(self):
 		global current_playing_file_path,path_final_Url,ui,curR
 		global epnArrList
 		print(self.path)
@@ -249,7 +251,111 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		else:
 			self.send_response(404)
 			self.end_headers()
-		return 0
+	
+	def do_init_function(self,type_request=None):
+		global current_playing_file_path,path_final_Url,ui,curR
+		global epnArrList
+		print(self.path)
+		path = self.path.replace('/','',1)
+		path = urllib.parse.unquote(path)
+		print(os.getcwd())
+		print(self.requestline)
+		#print(self.headers['Cookie'],'--cookie--')
+		try:
+			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
+		except Exception as e:
+			get_bytes = 0
+		print(get_bytes)
+		
+		if ui.media_server_key:
+			key_en = base64.b64encode(bytes(ui.media_server_key,'utf-8'))
+			try:
+				key = str(key_en,'utf-8')
+				print(key,'--key--val--')
+			except Exception as err_val:
+				print(err_val)
+				key = (str(key_en).replace("b'",'',1))[:-1]
+			new_key = 'Basic '+key
+			cli_key = self.headers['Authorization'] 
+			#print(cli_key,new_key)
+			client_addr = str(self.client_address[0])
+			print(client_addr,'--cli--')
+			print(ui.client_auth_arr,'--auth--')
+			if not cli_key and (not client_addr in ui.client_auth_arr):
+				self.auth_header()
+			elif (cli_key == new_key) or (client_addr in ui.client_auth_arr):
+				first_time = False
+				if client_addr not in ui.client_auth_arr:
+					ui.client_auth_arr.append(client_addr)
+					if not ipaddress.ip_address(client_addr).is_private:
+						first_time = True
+				elif client_addr in ui.client_auth_arr:
+					if not ipaddress.ip_address(client_addr).is_private:
+						if (path.startswith('abs_path=') or 
+								path.startswith('relative_path=') 
+								or (cli_key == new_key)):
+							first_time = True
+				if ipaddress.ip_address(client_addr).is_private:
+					if type_request == 'get':
+						self.get_the_content(path,get_bytes)
+					elif type_request == 'head':
+						self.process_HEAD()
+				else:
+					if ui.access_from_outside_network:
+						if not ui.my_public_ip:
+							try:
+								my_ip = str(ccurl('https://diagnostic.opendns.com/myip'))
+								try:
+									new_ip_object = ipaddress.ip_address(my_ip)
+								except Exception as e:
+									print(e)
+									my_ip = None
+							except Exception as e:
+								print(e)
+								my_ip = None
+						else:
+							my_ip = ui.my_public_ip
+						if my_ip:
+							if first_time:
+								if type_request == 'get':
+									self.get_the_content(path,get_bytes,my_ip_addr=my_ip)
+								elif type_request == 'head':
+									self.process_HEAD()
+							else:
+								#self.final_message(b'No More Activity Allowed')
+								self.auth_header()
+						else:
+							self.final_message(b'Could not find your Public IP')
+					else:
+						txt = b'Access From Outside Network Not Allowed'
+						self.final_message(txt)
+						try:
+							index = ui.client_auth_arr.index(client_addr)
+							del ui.client_auth_arr[index]
+						except Exception as e:
+							print(e)
+						print(ui.client_auth_arr)
+			else:
+				txt = b'You are not authorized to access the content'
+				self.final_message(txt)
+		else:
+			client_addr = str(self.client_address[0])
+			if client_addr not in ui.client_auth_arr:
+				ui.client_auth_arr.append(client_addr)
+			if ipaddress.ip_address(client_addr).is_private:
+				if type_request == 'get':
+					self.get_the_content(path,get_bytes)
+				elif type_request == 'head':
+					self.process_HEAD()
+			else:
+				txt = b'Access From Outside Network Not Allowed'
+				self.final_message(txt)
+	
+	def do_HEAD(self):
+		self.do_init_function(type_request='head')
+		
+	def do_GET(self):
+		self.do_init_function(type_request='get')
 		
 	def process_url(self,nm,get_bytes):
 		if nm.startswith('http'):
@@ -703,96 +809,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		except Exception as e:
 			print(e)
 			
-	def do_GET(self):
-		global current_playing_file_path,path_final_Url,ui,curR
-		global epnArrList
-		print(self.path)
-		path = self.path.replace('/','',1)
-		path = urllib.parse.unquote(path)
-		print(os.getcwd())
-		print(self.requestline)
-		#print(self.headers['Cookie'],'--cookie--')
-		
-		try:
-			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
-		except Exception as e:
-			get_bytes = 0
-		print(get_bytes)
-		
-		if ui.media_server_key:
-			key_en = base64.b64encode(bytes(ui.media_server_key,'utf-8'))
-			try:
-				key = str(key_en,'utf-8')
-				print(key,'--key--val--')
-			except Exception as err_val:
-				print(err_val)
-				key = (str(key_en).replace("b'",'',1))[:-1]
-			new_key = 'Basic '+key
-			cli_key = self.headers['Authorization'] 
-			#print(cli_key,new_key)
-			client_addr = str(self.client_address[0])
-			print(client_addr,'--cli--')
-			print(ui.client_auth_arr,'--auth--')
-			if not cli_key and (not client_addr in ui.client_auth_arr):
-				self.auth_header()
-			elif (cli_key == new_key) or (client_addr in ui.client_auth_arr):
-				first_time = False
-				if client_addr not in ui.client_auth_arr:
-					ui.client_auth_arr.append(client_addr)
-					if not ipaddress.ip_address(client_addr).is_private:
-						first_time = True
-				elif client_addr in ui.client_auth_arr:
-					if not ipaddress.ip_address(client_addr).is_private:
-						if (path.startswith('abs_path=') or 
-								path.startswith('relative_path=') 
-								or (cli_key == new_key)):
-							first_time = True
-				if ipaddress.ip_address(client_addr).is_private:
-					self.get_the_content(path,get_bytes)
-				else:
-					if ui.access_from_outside_network:
-						if not ui.my_public_ip:
-							try:
-								my_ip = str(ccurl('https://diagnostic.opendns.com/myip'))
-								try:
-									new_ip_object = ipaddress.ip_address(my_ip)
-								except Exception as e:
-									print(e)
-									my_ip = None
-							except Exception as e:
-								print(e)
-								my_ip = None
-						else:
-							my_ip = ui.my_public_ip
-						if my_ip:
-							if first_time:
-								self.get_the_content(path,get_bytes,my_ip_addr=my_ip)
-							else:
-								#self.final_message(b'No More Activity Allowed')
-								self.auth_header()
-						else:
-							self.final_message(b'Could not find your Public IP')
-					else:
-						txt = b'Access From Outside Network Not Allowed'
-						self.final_message(txt)
-						try:
-							index = ui.client_auth_arr.index(client_addr)
-							del ui.client_auth_arr[index]
-						except Exception as e:
-							print(e)
-						print(ui.client_auth_arr)
-			else:
-				txt = b'You are not authorized to access the content'
-				self.final_message(txt)
-		else:
-			client_addr = str(self.client_address[0])
-			if client_addr not in ui.client_auth_arr:
-				ui.client_auth_arr.append(client_addr)
-			if ipaddress.ip_address(client_addr).is_private:
-				self.get_the_content(path,get_bytes)
-			else:
-				txt = b'Access From Outside Network Not Allowed'
-				self.final_message(txt)
+	
 					
 class doGETSignal(QtCore.QObject):
 	new_signal = pyqtSignal(str)
@@ -4421,6 +4438,7 @@ class List2(QtWidgets.QListWidget):
 			view_list_thumbnail = view_menu.addAction("List With Thumbnail")
 			thumb = view_menu.addAction("Thumbnail Grid Mode (Shift+Z)")
 			#thumb = menu.addAction("Show Thumbnails")
+			save_pls = menu.addAction('Save Current Playlist')
 			go_to = menu.addAction("Go To Last.fm")
 			fix_ord = menu.addAction("Lock Order (Playlist Only)")
 			pls = os.listdir(os.path.join(home,'Playlists'))
@@ -4452,6 +4470,13 @@ class List2(QtWidgets.QListWidget):
 					if not os.path.exists(file_path):
 						f = open(file_path,'w')
 						f.close()
+			elif action == save_pls:
+					print ("creating")
+					item, ok = QtWidgets.QInputDialog.getText(
+						MainWindow,'Input Dialog','Enter New Playlist Name')
+					if ok and item:
+						file_path = home+'/Playlists/'+item
+						write_files(file_path,epnArrList,True)
 			elif action == view_list:
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;
 				color:white;background:rgba(0,0,0,30%);
@@ -4473,7 +4498,7 @@ class List2(QtWidgets.QListWidget):
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;
 				color:white;background:rgba(0,0,0,30%);
 				border:rgba(0,0,0,30%);border-radius: 3px;}
-				QListWidget:item {height: 112px;}
+				QListWidget:item {height: 128px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);
 				color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
@@ -4592,11 +4617,15 @@ class List2(QtWidgets.QListWidget):
 					url_web = 'none'
 			else:
 				url_web = 'none'
-				
+			save_pls_entry = None
 			if 'youtube.com' in url_web:
 				goto_web = menu.addAction('Open in Youtube Browser')
 				goto_web_mode = True
-				
+			if (site.lower() == 'video' or site.lower() == 'local' 
+					or site.lower() == 'none' 
+					or site.lower().startswith('playlist')):
+				save_pls = menu.addAction('Save Current Playlist')
+				save_pls_entry = True
 			if (site.lower() != 'video' and site.lower() != 'music' 
 					and site.lower() != 'local'):
 				if (ui.btn1.currentText().lower() =='addons' 
@@ -4624,6 +4653,15 @@ class List2(QtWidgets.QListWidget):
 			if goto_web_mode:
 				if action == goto_web:
 					ui.reviewsWeb(srch_txt=url_web,review_site='yt',action='open')
+			if save_pls_entry:
+				if action == save_pls:
+					print ("creating")
+					item, ok = QtWidgets.QInputDialog.getText(
+						MainWindow,'Input Dialog','Enter Playlist Name')
+					if ok and item:
+						file_path = home+'/Playlists/'+item
+						write_files(file_path,epnArrList,True)
+							
 			if action == new_pls:
 				print ("creating")
 				item, ok = QtWidgets.QInputDialog.getText(
@@ -4655,7 +4693,7 @@ class List2(QtWidgets.QListWidget):
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;
 				color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
 				border-radius: 3px;}
-				QListWidget:item {height: 112px;}
+				QListWidget:item {height: 128px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);
 				color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
@@ -8919,7 +8957,7 @@ class Ui_MainWindow(object):
 				ui.list2.setStyleSheet("""QListWidget{font: bold 12px;
 				color:white;background:rgba(0,0,0,30%);
 				border:rgba(0,0,0,30%);border-radius:3px;}
-				QListWidget:item {height: 112px;}
+				QListWidget:item {height: 128px;}
 				QListWidget:item:selected:active {background:rgba(0,0,0,20%);
 				color: violet;}
 				QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
@@ -9169,7 +9207,7 @@ class Ui_MainWindow(object):
 					ui.list2.setStyleSheet("""QListWidget{font: bold 12px;
 					color:white;background:rgba(0,0,0,30%);
 					border:rgba(0,0,0,30%);border-radius:3px;}
-					QListWidget:item {height: 112px;}
+					QListWidget:item {height: 128px;}
 					QListWidget:item:selected:active {background:rgba(0,0,0,20%);
 					color: violet;}
 					QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
@@ -12686,6 +12724,9 @@ class Ui_MainWindow(object):
 			for i in criteria:
 				self.list1.addItem(i)
 				original_path_name.append(i)
+			criteria = ['List','Open File','Open Url']
+			for i in criteria:
+				self.list3.addItem(i)
 			video_local_stream = False
 		elif site == "Bookmark":
 			bookmark = "True"
@@ -17592,7 +17633,7 @@ class Ui_MainWindow(object):
 					new_epn_title = new_epn_title.replace('#',self.check_symbol,1)
 				self.list2.addItem(new_epn_title)
 				
-	def options(self,val):
+	def options(self,val=None):
 		global opt,pgn,genre_num,site,name,base_url,name1,embed,list1_items
 		global pre_opt,mirrorNo,insidePreopt,quality,home,siteName,finalUrlFound
 		global nameListArr,original_path_name,show_hide_playlist,show_hide_titlelist
@@ -18028,8 +18069,55 @@ class Ui_MainWindow(object):
 					di = i.split('	')[1]
 					original_path_name.append(i)
 					self.list1.addItem((ti))
-		elif site == "PlayLists":
-			a = 0
+		elif site == "PlayLists" and val == 'clicked':
+			if self.list3.currentItem():
+				txt = self.list3.currentItem().text().lower()
+				if txt == 'list':
+					criteria = os.listdir(os.path.join(home,'Playlists'))
+					criteria.sort()
+					home_n = os.path.join(home,'Playlists')
+					criteria = naturallysorted(criteria)
+					original_path_name[:] = []
+					self.list1.clear()
+					self.list2.clear()
+					for i in criteria:
+						self.list1.addItem(i)
+						original_path_name.append(i)
+				elif txt == 'open file':
+					a = 0
+					print ("add")
+					fname = QtWidgets.QFileDialog.getOpenFileNames(
+							MainWindow,'Select One or More Files',os.path.expanduser('~'))
+					if fname:
+						self.list2.clear()
+						file_list = fname[0]
+						epnArrList[:] = []
+						for i in file_list:
+							j = os.path.basename(i)
+							if '.' in j:
+								k = j.rsplit('.',1)[1]
+								if (k in self.music_type_arr 
+										or k in self.video_type_arr or k == 'm3u'):
+									if k != 'm3u':
+										new_val = j+'	'+i+'	'+'NONE'
+										epnArrList.append(new_val)
+										self.list2.addItem(j)
+									else:
+										watch_external_video(i)
+						if epnArrList:
+							file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
+							f = open(file_name,'w').close()
+							write_files(file_name,epnArrList,True)
+							self.list1.clear()
+							self.list1.addItem('TMP_PLAYLIST')
+				elif txt == 'open url':
+					item, ok = QtWidgets.QInputDialog.getText(
+						MainWindow,'Input Dialog','Enter Url of External Media or Playlist')
+					if ok and item:
+						self.list2.clear()
+						self.list1.clear()
+						if item.startswith('http'):
+							watch_external_video(item)
 			
 		self.page_number.setText(str(self.list1.count()))
 		insidePreopt = 0
@@ -19353,8 +19441,7 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 						MainWindow.showNormal()
 						MainWindow.setGeometry(
 							ui.music_mode_dim[0],ui.music_mode_dim[1],
-							ui.music_mode_dim[2],ui.music_mode_dim[3]
-							)
+							ui.music_mode_dim[2],ui.music_mode_dim[3])
 						MainWindow.show()
 					else:
 						MainWindow.showMaximized()
@@ -19362,13 +19449,63 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 					MainWindow.hide()
 					self.right_menu.h_mode.setText('&Show')
 			
-			
+class LoginAuth(QtWidgets.QDialog):
+	def __init__(self, parent=None, url=None):
+		super(LoginAuth, self).__init__(parent)
+		self.text_name = QtWidgets.QLineEdit(self)
+		self.text_pass = QtWidgets.QLineEdit(self)
+		self.text_name.setPlaceholderText('USER')
+		self.text_pass.setPlaceholderText('PASSWORD')
+		self.text_pass.setEchoMode(QtWidgets.QLineEdit.Password)
+		self.btn_login = QtWidgets.QPushButton('Login', self)
+		self.btn_login.clicked.connect(self.handleLogin)
+		layout = QtWidgets.QVBoxLayout(self)
+		layout.addWidget(self.text_name)
+		layout.addWidget(self.text_pass)
+		layout.addWidget(self.btn_login)
+		self.auth_info = ''
+		self.auth_64 = ''
+		self.url = url
+		self.setWindowTitle('Credentials Required')
+		self.show()
+		self.count = 0
+		self.found = True
+
+	def handleLogin(self):
+		self.hide()
+		text_val = self.text_name.text()
+		pass_val = self.text_pass.text()
+		self.auth_info = text_val+':'+pass_val
+		content = ccurl(self.url+'#'+'-I',user_auth=self.auth_info)
+		print(content,'==content==login==')
+		if ((not content or 'www-authenticate' in content.lower() 
+					or '401 unauthorized' in content.lower() 
+					or 'curl failure' in content.lower()) and self.count<3):
+				self.text_name.clear()
+				self.text_pass.clear()
+				self.setWindowTitle('Wrong Credential, Try Again')
+				self.text_name.setPlaceholderText('USER or PASSWORD Incorrect')
+				new_txt = '{0} Attempts Left'.format(str(2-self.count))
+				self.text_pass.setPlaceholderText(new_txt)
+				self.found = False
+				self.count = self.count+1
+				self.show()
+		elif content:
+			self.found = True
+		if self.url and self.found:
+			watch_external_video(self.url)
+		
 def watch_external_video(var):
 	global ui,epnArrList,quitReally,video_local_stream,curR,epnArrList,site
+	global home
 	t = var
 	print (t,'--yy--')
-	if (("file:///" in t or t.startswith('/') or t.startswith('http')) and not t.endswith('.torrent') 
-			and not 'magnet:' in t):
+	file_exists = False
+	site = 'None'
+	if os.path.exists(var):
+		file_exists = True
+	if (("file:///" in t or t.startswith('/') or t.startswith('http') or 
+			file_exists) and not t.endswith('.torrent') and not 'magnet:' in t):
 		quitReally="no"
 		print (t,'--hello--')
 		txt_file = True
@@ -19383,12 +19520,15 @@ def watch_external_video(var):
 					epnArrList[:] = []
 					cnt = len(lines)
 					i = 0
-					site = "None"
-					ui.btn1.setCurrentIndex(0)
+					site = "PlayLists"
+					ui.btn1.setCurrentIndex(ui.btn1.findText(site))
+					ui.list2.clear()
 					while i < cnt:
 						try:
 							if 'EXTINF' in lines[i]:
 								n_epn = (lines[i].strip()).split(',',1)[1]
+								if n_epn.startswith('NONE - '):
+									n_epn = n_epn.replace('NONE - ','',1)
 								ui.list2.addItem(n_epn)
 								if i+1 < cnt:
 									entry_epn = n_epn+'	'+lines[i+1].strip()+'	'+'NONE'
@@ -19398,9 +19538,27 @@ def watch_external_video(var):
 								i = i+1
 						except Exception as e:
 							print(e)
+					if epnArrList:
+						file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
+						f = open(file_name,'w').close()
+						write_files(file_name,epnArrList,True)
+						ui.list1.clear()
+						ui.list1.addItem('TMP_PLAYLIST')
 		elif t.startswith('http'):
+			site = "PlayLists"
 			t = urllib.parse.unquote(t)
 			content = ccurl(t+'#'+'-I')
+			if ('www-authenticate' in content.lower() 
+					or '401 unauthorized' in content.lower()):
+				dlg = LoginAuth(parent=MainWindow,url=t)
+				return 0
+				#print('hello')
+				#item, ok = QtWidgets.QInputDialog.getText(
+				#		MainWindow,'Input Dialog',
+				#		'Enter Credential in Format USER:PASSWORD',
+				#		QtWidgets.QLineEdit.Password)
+				#if item and ok:
+				#	content = ccurl(t+'#'+'-I',user_auth=item)
 			if ('audio/mpegurl' in content) or ('text/html' in content):
 				content = ccurl(t)
 				txt_file = True
@@ -19412,12 +19570,14 @@ def watch_external_video(var):
 					epnArrList[:] = []
 					cnt = len(lines)
 					i = 0
-					site = "None"
-					ui.btn1.setCurrentIndex(0)
+					ui.btn1.setCurrentIndex(ui.btn1.findText(site))
+					ui.list2.clear()
 					while i < cnt:
 						try:
 							if 'EXTINF' in lines[i]:
 								n_epn = (lines[i].strip()).split(',',1)[1]
+								if n_epn.startswith('NONE - '):
+									n_epn = n_epn.replace('NONE - ','',1)
 								ui.list2.addItem(n_epn)
 								if i+1 < cnt:
 									entry_epn = n_epn+'	'+lines[i+1].strip()+'	'+'NONE'
@@ -19427,7 +19587,14 @@ def watch_external_video(var):
 								i = i+1
 						except Exception as e:
 							print(e)
+					if epnArrList:
+						file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
+						f = open(file_name,'w').close()
+						write_files(file_name,epnArrList,True)
+						ui.list1.clear()
+						ui.list1.addItem('TMP_PLAYLIST')
 			else:
+				site == 'None'
 				if 'youtube.com' in t:
 					t = get_yt_url(t,ui.quality_val)
 				ui.watchDirectly(t,'','no')
@@ -19436,8 +19603,9 @@ def watch_external_video(var):
 			ui.epn_name_in_list = urllib.parse.unquote(new_epn)
 			ui.watchDirectly(urllib.parse.unquote('"'+t+'"'),'','no')
 			ui.dockWidget_3.hide()
-			site = "None"
-			ui.btn1.setCurrentIndex(0)
+			site = "PlayLists"
+			ui.btn1.setCurrentIndex(ui.btn1.findText(site))
+			ui.list2.clear()
 			m = []
 			try:
 				path_Local_Dir,name = os.path.split(t)
@@ -19465,7 +19633,7 @@ def watch_external_video(var):
 				i1 = i
 				#i = i.split('/')[-1]
 				i = os.path.basename(i)
-				epnArrList.append(i+'	'+i1)
+				epnArrList.append(i+'	'+i1+'	'+'NONE')
 				ui.list2.addItem((i))
 				i = i
 				if i == e:
@@ -19473,6 +19641,12 @@ def watch_external_video(var):
 				j =j+1
 			ui.list2.setCurrentRow(row)
 			curR = row
+			if epnArrList:
+				file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
+				f = open(file_name,'w').close()
+				write_files(file_name,epnArrList,True)
+				ui.list1.clear()
+				ui.list1.addItem('TMP_PLAYLIST')
 	elif t.endswith('.torrent'):
 		ui.torrent_type = 'file'
 		video_local_stream = True
@@ -19810,7 +19984,7 @@ def main():
 						ui.list2.setStyleSheet("""QListWidget{font: bold 12px;
 						color:white;background:rgba(0,0,0,30%);
 						border:rgba(0,0,0,30%);border-radius: 3px;}
-						QListWidget:item {height: 112px;}
+						QListWidget:item {height: 128px;}
 						QListWidget:item:selected:active {background:rgba(0,0,0,20%);
 						color: violet;}
 						QListWidget:item:selected:inactive {border:rgba(0,0,0,30%);}
