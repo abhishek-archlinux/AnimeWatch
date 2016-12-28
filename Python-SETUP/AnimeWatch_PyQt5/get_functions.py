@@ -1,3 +1,26 @@
+"""
+Copyright (C) 2016 kanishka-linux kanishka.linux@gmail.com
+
+This file is part of AnimeWatch.
+
+AnimeWatch is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+AnimeWatch is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with AnimeWatch.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+"""
+
+
 import os
 import shutil
 from tempfile import mkstemp,mkdtemp
@@ -40,6 +63,8 @@ def ccurl_string_get(url,opt,extra,download_manager=None):
 		command = ["curl","-L","-A",hdr,url]
 	elif opt == '-L':
 		command = ["curl","-A",hdr,url]
+	elif opt == '-H':
+		command = ["curl","-I","-A",hdr,url]
 	elif opt == '-e':
 		command = ["curl",'-L',"-A",hdr,"-e",extra,url]
 	elif opt == '-o':
@@ -116,6 +141,8 @@ def wget_string_get(url,dest,opt,extra,tmp_log,download_manager=None):
 		command = ["wget","--read-timeout=60","--cookies=on","--keep-session-cookies",sk,"--user-agent="+hdr,url,"-O", dest]
 	elif opt == '-I':
 		command = ["wget",'-o',tmp_log,"--server-response","--spider","--read-timeout=60", "--user-agent="+hdr,url]
+	elif opt == '-H':
+		command = ["wget","--max-redirect=0",'-o',tmp_log,"--server-response","--spider","--read-timeout=60", "--user-agent="+hdr,url]
 	elif opt == '-Ie':
 		rfr = '--referer='+extra
 		command = ["wget",'-o',tmp_log,"--server-response","--spider","--read-timeout=60","--user-agent="+hdr,rfr,url]
@@ -151,7 +178,7 @@ def getContentUnicode(content):
 		print("I'm unicode")
 	return content
 
-def ccurlCmd(url,external_cookie=None):
+def ccurlCmd(url,external_cookie=None,user_auth=None):
 	hdr = USER_AGENT
 	if 'youtube.com' in url:
 		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
@@ -191,6 +218,9 @@ def ccurlCmd(url,external_cookie=None):
 			extra = post
 	print("\ndebug info for ccurlCmd url ={0} \n curl_opt = {1} \n extra = {2}\n".format(url,curl_opt,extra))
 	command = ccurl_string_get(url,curl_opt,extra)
+	if user_auth != None:
+		command.append('--user')
+		command.append(user_auth)
 	content = ''
 	print(' '.join(command))
 	try:
@@ -231,7 +261,7 @@ def read_file_complete(file_path):
 	return content
 
 
-def ccurlWget(url,external_cookie=None):
+def ccurlWget(url,external_cookie=None,user_auth=None):
 	hdr = USER_AGENT
 	if 'youtube.com' in url:
 		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
@@ -275,6 +305,14 @@ def ccurlWget(url,external_cookie=None):
 	tmp_html = os.path.join(tmp_dst,'tmp_wget.html')
 	tmp_log = os.path.join(tmp_dst,'tmp_wget_log.txt')
 	command = wget_string_get(url,tmp_html,curl_opt,extra,tmp_log)
+	if user_auth != None:
+		try:
+			user_name = user_auth.split(':')[0]
+			user_passwd = user_auth.split(':')[1]
+			command.append('--http-user='+user_name)
+			command.append('--http-password='+user_passwd)
+		except Exception as e:
+			print(e)
 	content = ''
 	print(' '.join(command))
 	try:
@@ -313,7 +351,7 @@ def ccurlWget(url,external_cookie=None):
 	return content
 
 	
-def ccurl(url,external_cookie=None):
+def ccurl(url,external_cookie=None,user_auth=None):
 	hdr = USER_AGENT
 	if 'youtube.com' in url:
 		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
@@ -429,6 +467,10 @@ def ccurl(url,external_cookie=None):
 		elif curl_opt == '-L':
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
+		elif curl_opt == '-H':
+			c.setopt(c.USERAGENT, hdr)
+			c.setopt(c.NOBODY, 1)
+			c.setopt(c.HEADERFUNCTION, storage.write)
 		elif curl_opt == '-d':
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
@@ -448,6 +490,9 @@ def ccurl(url,external_cookie=None):
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
 		try:
+			if user_auth != None:
+				c.setopt(c.HTTPAUTH,c.HTTPAUTH_BASIC)
+				c.setopt(c.USERPWD,user_auth)
 			c.perform()
 			c.close()
 			content = storage.getvalue()

@@ -151,7 +151,7 @@ class BrowserPage(QWebPage):
 			j = re.findall("'[^']*",k)
 			for i in j:
 				i = re.sub("'",'',i)
-				if 'kissanime.to' in i or 'kissasian.com' in i or 'kisscartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i or 'nyaa.se' in i:
+				if 'kissanime.ru' in i or 'kissasian.com' in i or 'kisscartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i or 'nyaa.se' in i:
 					j = re.findall('expires=[^;]*',i)
 					if j:
 						l = re.sub('expires=','',j[0])

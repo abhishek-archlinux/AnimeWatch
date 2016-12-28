@@ -29,7 +29,6 @@ def cloudfare(url,quality,cookie):
 class KissAnime():
 	def __init__(self,tmp):
 		global tmp_working_dir
-		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		self.tmp_dir = tmp
 		tmp_working_dir = tmp
 		self.cookie_file = os.path.join(tmp,'kcookie.txt')
@@ -52,7 +51,7 @@ class KissAnime():
 	def search(self,name):
 		
 		if name != '':
-			url = 'http://kissanime.to/Search/Anime/?keyword=' + name
+			url = 'http://kissanime.ru/Search/Anime/?keyword=' + name
 			content = self.ccurlN(url)
 				
 			m = re.findall('/Anime/[^"]*', content)
@@ -74,7 +73,7 @@ class KissAnime():
 		if extra_info:
 			name,epn_num = name.rsplit('--',1) 
 			
-		url = 'http://kissanime.to/Anime/' + name
+		url = 'http://kissanime.ru/Anime/' + name
 		print(url)
 		content = self.ccurlN(url)
 		
@@ -86,7 +85,7 @@ class KissAnime():
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
-			img = re.findall('https://kissanime.to/Uploads/Etc/[^"]*.jpg', content)
+			img = re.findall('https://kissanime.ru/Uploads/Etc/[^"]*.jpg', content)
 			if not img:
 				img = re.findall('http://cdn.myanimelist.net/[^"]*.jpg', content)	
 			print(img)
@@ -96,10 +95,9 @@ class KissAnime():
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			print(picn)
 			if img:
-				#img[0]=img[0].replace('kissanime.com','kissanime.to')
+				#img[0]=img[0].replace('kissanime.com','kissanime.ru')
 				print(img[0])
 			if not os.path.isfile(picn):
-				#subprocess.call(['curl','-L','-b','/tmp/AnimeWatch/kcookie.txt','-A',self.hdr,'-o',picn,img[0]])
 				ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 		except:
 			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
@@ -174,7 +172,7 @@ class KissAnime():
 	def getFinalUrl(self,name,epn,mirror,quality):
 		if '--' in name and 'id=' in name:
 			name = name.split('--')[0]
-		url = 'http://kissanime.to/Anime/' + name + '/' + epn
+		url = 'http://kissanime.ru/Anime/' + name + '/' + epn
 		print(url)
 		sd = ''
 		hd = ''
@@ -182,7 +180,7 @@ class KissAnime():
 		content = self.ccurlN(url)
 		
 		
-		print (content)
+		#print (content)
 		soup = BeautifulSoup(content,'lxml')
 		#f = open('/tmp/AnimeWatch/k.txt','w')
 		#f.write(content)
@@ -220,8 +218,7 @@ class KissAnime():
 				sd = sd480
 			elif hd:
 				sd = hd
-		#content = (subprocess.check_output(['curl','-b','/tmp/AnimeWatch/kcookie.txt','-L','-I','-A',self.hdr,sd]))
-		print(sd)
+		print(sd+'#'+'-I')
 		content = ccurl(sd+'#'+'-I')
 		print(content)
 		m = self.urlResolve(content)
@@ -233,7 +230,7 @@ class KissAnime():
 	def getCompleteList(self,opt,genre_num):
 		
 		if opt == 'Genre' and genre_num == 0:
-			url = 'http://kissanime.to/AnimeList/'
+			url = 'http://kissanime.ru/AnimeList/'
 			content = self.ccurlN(url)
 			
 			
@@ -252,7 +249,7 @@ class KissAnime():
 		if opt == 'History':
 			print('History')
 		elif opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate':
-			url = 'http://kissanime.to/AnimeList/' + opt
+			url = 'http://kissanime.ru/AnimeList/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
 			
@@ -271,7 +268,7 @@ class KissAnime():
 
 			return m
 		if genre_num == 1:
-			url = 'http://kissanime.to/Genre/' + opt
+			url = 'http://kissanime.ru/Genre/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
 			m = re.findall('/Anime/[^"]*', content)
@@ -292,9 +289,9 @@ class KissAnime():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
-				url = 'http://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.ru/AnimeList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kissanime.to/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.ru/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = self.ccurlN(url)
 			m = re.findall('/Anime/[^"]*', content)
@@ -316,9 +313,9 @@ class KissAnime():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:
-				url = 'http://kissanime.to/AnimeList/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.ru/AnimeList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kissanime.to/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kissanime.ru/Genre/' + opt + '?page=' + pgnum
 			content = self.ccurlN(url)
 			m = re.findall('/Anime/[^"]*', content)
 			m = list(set(m))
