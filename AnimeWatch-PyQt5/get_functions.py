@@ -178,7 +178,7 @@ def getContentUnicode(content):
 		print("I'm unicode")
 	return content
 
-def ccurlCmd(url,external_cookie=None):
+def ccurlCmd(url,external_cookie=None,user_auth=None):
 	hdr = USER_AGENT
 	if 'youtube.com' in url:
 		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
@@ -218,6 +218,9 @@ def ccurlCmd(url,external_cookie=None):
 			extra = post
 	print("\ndebug info for ccurlCmd url ={0} \n curl_opt = {1} \n extra = {2}\n".format(url,curl_opt,extra))
 	command = ccurl_string_get(url,curl_opt,extra)
+	if user_auth != None:
+		command.append('--user')
+		command.append(user_auth)
 	content = ''
 	print(' '.join(command))
 	try:
@@ -258,7 +261,7 @@ def read_file_complete(file_path):
 	return content
 
 
-def ccurlWget(url,external_cookie=None):
+def ccurlWget(url,external_cookie=None,user_auth=None):
 	hdr = USER_AGENT
 	if 'youtube.com' in url:
 		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
@@ -302,6 +305,14 @@ def ccurlWget(url,external_cookie=None):
 	tmp_html = os.path.join(tmp_dst,'tmp_wget.html')
 	tmp_log = os.path.join(tmp_dst,'tmp_wget_log.txt')
 	command = wget_string_get(url,tmp_html,curl_opt,extra,tmp_log)
+	if user_auth != None:
+		try:
+			user_name = user_auth.split(':')[0]
+			user_passwd = user_auth.split(':')[1]
+			command.append('--http-user='+user_name)
+			command.append('--http-password='+user_passwd)
+		except Exception as e:
+			print(e)
 	content = ''
 	print(' '.join(command))
 	try:
@@ -340,7 +351,7 @@ def ccurlWget(url,external_cookie=None):
 	return content
 
 	
-def ccurl(url,external_cookie=None):
+def ccurl(url,external_cookie=None,user_auth=None):
 	hdr = USER_AGENT
 	if 'youtube.com' in url:
 		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
@@ -479,6 +490,9 @@ def ccurl(url,external_cookie=None):
 			c.setopt(c.USERAGENT, hdr)
 			c.setopt(c.WRITEDATA, storage)
 		try:
+			if user_auth != None:
+				c.setopt(c.HTTPAUTH,c.HTTPAUTH_BASIC)
+				c.setopt(c.USERPWD,user_auth)
 			c.perform()
 			c.close()
 			content = storage.getvalue()
