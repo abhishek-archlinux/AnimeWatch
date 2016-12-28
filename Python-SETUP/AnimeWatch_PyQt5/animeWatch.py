@@ -426,6 +426,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self,site,site_option,name,epnArrList,new_video_local_stream,
 			siteName,my_ipaddress):
 		old_name = []
+		if not self.path.endswith('.pls'):
+			pls_txt = '#EXTM3U\n'
+		else:
+			pls_txt = '[playlist]'
 		pls_txt = '#EXTM3U\n'
 		new_index = 0
 		for  i in range(len(epnArrList)):
@@ -484,9 +488,15 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				n_url = n_url.replace('"','')
 				n_art = n_art.replace('"','')
 				out = 'http://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
-				pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+				if not self.path.endswith('.pls'):
+					pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+				else:
+					pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
 			except Exception as e:
 				print(e)
+		if self.path.endswith('.pls'):
+			footer = '\nNumberOfEntries='+str(len(epnArrList))+'\n'
+			pls_txt = pls_txt+footer
 		return pls_txt
 		
 	
@@ -526,7 +536,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				new_arr = random.sample(new_arr,len(new_arr))
 			print(new_arr)
 			print(self.client_address)
-			pls_txt = '#EXTM3U\n'
+			if not path.endswith('.pls'):
+				pls_txt = '#EXTM3U\n'
+			else:
+				pls_txt = '[playlist]'
 			for  i in range(len(new_arr)):
 				try:
 					k = new_arr[i]
@@ -623,9 +636,15 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					#n_url = n_url.replace('"','')
 					n_art = n_art.replace('"','')
 					out = 'http://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
-					pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+					if not path.endswith('.pls'):
+						pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+					else:
+						pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
 				except Exception as e:
 					print(e)
+			if path.endswith('.pls'):
+				footer = '\nNumberOfEntries='+str(len(new_arr))+'\n'
+				pls_txt = pls_txt+footer
 			pls_txt = bytes(pls_txt,'utf-8')
 			self.send_response(200)
 			#self.send_header('Set-Cookie','A=Bcdfgh')
@@ -655,6 +674,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					st_o = i.split('=')[-1]
 				elif i.startswith('s='):
 					srch = i.split('=')[-1]
+					if srch.endswith('.pls') or srch.endswith('.m3u'):
+						srch = srch.rsplit('.',1)[0]
 					srch = srch.replace('+',' ')
 				elif i.startswith('exact'):
 					srch_exact = True
@@ -18097,8 +18118,9 @@ class Ui_MainWindow(object):
 							if '.' in j:
 								k = j.rsplit('.',1)[1]
 								if (k in self.music_type_arr 
-										or k in self.video_type_arr or k == 'm3u'):
-									if k != 'm3u':
+										or k in self.video_type_arr or k == 'm3u'
+										or k == 'pls'):
+									if k != 'm3u' and k != 'pls':
 										new_val = j+'	'+i+'	'+'NONE'
 										epnArrList.append(new_val)
 										self.list2.addItem(j)
@@ -19512,17 +19534,29 @@ def watch_external_video(var):
 		if 'http' in t:
 			t = re.search('http[^"]*',t).group()
 			print(t,'--hello-again--')
-		if t.endswith('.m3u'):
+		if t.endswith('.m3u') or t.endswith('.pls'):
 			t = urllib.parse.unquote(t)
 			if os.path.exists(t):
 				lines = open(t,'r').readlines()
-				if lines:
-					epnArrList[:] = []
-					cnt = len(lines)
-					i = 0
-					site = "PlayLists"
-					ui.btn1.setCurrentIndex(ui.btn1.findText(site))
-					ui.list2.clear()
+				print(lines)
+			elif t.startswith('http'):
+				content = ccurl(t)
+				print(content)
+				if content:
+					lines = content.split('\n')
+				else:
+					lines = None
+				print(lines)
+			else:
+				lines = None
+			if lines:
+				epnArrList[:] = []
+				cnt = len(lines)
+				i = 0
+				site = "PlayLists"
+				ui.btn1.setCurrentIndex(ui.btn1.findText(site))
+				ui.list2.clear()
+				if t.endswith('.m3u'):
 					while i < cnt:
 						try:
 							if 'EXTINF' in lines[i]:
@@ -19538,12 +19572,38 @@ def watch_external_video(var):
 								i = i+1
 						except Exception as e:
 							print(e)
-					if epnArrList:
-						file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
-						f = open(file_name,'w').close()
-						write_files(file_name,epnArrList,True)
-						ui.list1.clear()
-						ui.list1.addItem('TMP_PLAYLIST')
+							i = i+1
+				else:
+					while i < cnt:
+						try:
+							if lines[i].lower().startswith('file'):
+								n_url = lines[i].strip().split('=',1)[1]
+								if i+1 < cnt:
+									n_epn = str(i)
+									if lines[i+1].lower().startswith('title'):
+										n_epn = (lines[i+1].strip()).split('=',1)[1]
+										i = i+2
+									elif lines[i-1].lower().startswith('title'):
+										n_epn = (lines[i+1].strip()).split('=',1)[1]
+										i = i+1
+									else:
+										i = i+2
+									if n_epn.startswith('NONE - '):
+										n_epn = n_epn.replace('NONE - ','',1)
+									ui.list2.addItem(n_epn)
+									entry_epn = n_epn+'	'+n_url+'	'+'NONE'
+									epnArrList.append(entry_epn)
+							else:
+								i = i+1
+						except Exception as e:
+							print(e)
+							i = i+1
+				if epnArrList:
+					file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
+					f = open(file_name,'w').close()
+					write_files(file_name,epnArrList,True)
+					ui.list1.clear()
+					ui.list1.addItem('TMP_PLAYLIST')
 		elif t.startswith('http'):
 			site = "PlayLists"
 			t = urllib.parse.unquote(t)
