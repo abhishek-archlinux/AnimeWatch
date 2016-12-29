@@ -592,6 +592,8 @@ class Browser(QtWebKitWidgets.QWebView):
 		elif option.lower() == 'artist link' or option.lower() == 'series link':
 			self.ui.posterfound(url.toString())
 			self.ui.copyImg()
+			if option.lower() == 'series link':
+				self.ui.copyFanart()
 			self.ui.copySummary()
 		else:
 			print ("Hello")
@@ -636,6 +638,9 @@ class Browser(QtWebKitWidgets.QWebView):
 					thumb = os.path.join(self.ui.tmp_download_folder,name1+'.jpg')
 				else:
 					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
+				if str(option) == "Download As Fanart":
+					thumb = thumb.rsplit('.',1)[0]
+					thumb = thumb+'-fanart.jpg'
 				ccurl(final+'#'+'-o'+'#'+thumb)
 			else:
 				if (self.site == "Music" and (option == "Download As Fanart" 
