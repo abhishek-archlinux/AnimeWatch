@@ -713,6 +713,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif option.lower() == 'artist link' or option.lower() == 'series link':
 			self.ui.posterfound(url)
 			self.ui.copyImg()
+			if option.lower() == 'series link':
+				self.ui.copyFanart()
 			self.ui.copySummary()
 		elif option.lower() == 'copy summary':
 			self.ui.copySummary(copy_sum=copy_summary)
@@ -763,6 +765,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 					thumb = os.path.join(self.ui.tmp_download_folder,name1+'.jpg')
 				else:
 					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
+				if str(option) == "Download As Fanart":
+					thumb = thumb.rsplit('.',1)[0]
+					thumb = thumb+'-fanart.jpg'
 				ccurl(final+'#'+'-o'+'#'+thumb)
 			else:
 				if (self.site == "Music" and (option == "Download As Fanart" 
