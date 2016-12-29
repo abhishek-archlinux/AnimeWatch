@@ -3437,8 +3437,8 @@ class List1(QtWidgets.QListWidget):
 				thumbnail = menu.addAction("Show Thumbnail View (Ctrl+Z)")
 				history = menu.addAction("History")
 				#rmPoster = menu.addAction("Remove Poster")
-				tvdb	= menu.addAction("Find Image(TVDB)")
-				tvdbM	= menu.addAction("Find Image(TVDB Manually)")
+				tvdb	= menu.addAction("Find Poster(TVDB)")
+				tvdbM	= menu.addAction("Find Poster(TVDB Manually)")
 				cache = menu.addAction("Clear Cache")
 				del_history = menu.addAction("Delete (Only For History)")
 				rem_fanart = menu.addAction("Remove Fanart")
@@ -3496,13 +3496,13 @@ class List1(QtWidgets.QListWidget):
 						ui.posterfound("")
 						r = self.currentRow()
 						ui.copyImg()
+						ui.copyFanart()
 						ui.copySummary()
 				elif action == history:
 					ui.setPreOpt()
 				elif action == tvdbM:
 					ui.reviewsWeb(
-						srch_txt=name,review_site='tvdb',action='context_menu'
-						)
+						srch_txt=name,review_site='tvdb',action='context_menu')
 				elif action == rem_fanart:
 					path = ui.get_current_directory()
 					fanart = os.path.join(path,'fanart.jpg')
@@ -3634,6 +3634,53 @@ class List2(QtWidgets.QListWidget):
 						txt = txt.replace('#','',1)
 					ui.list6.addItem(txt)
 					
+	def edit_name_list2(self,row):
+		global epnArrList
+		if '	' in epnArrList[row]:
+			default_text = epnArrList[row].split('	')[0]
+			default_path_name = epnArrList[row].split('	')[1]
+			default_basename = os.path.basename(default_path_name)
+			default_text = default_text+':'+default_basename
+		else:
+			default_text = epnArrList[row]
+		item, ok = QtWidgets.QInputDialog.getText(
+					MainWindow,'Input Dialog',
+					'Enter Episode Name Manually',
+					QtWidgets.QLineEdit.Normal,default_text)
+		if ok and item:
+			nm = item
+			#row = self.currentRow()
+			t = epnArrList[row]
+			print(nm,row,t)
+			if ('	' in t and '	' not in nm and site!= "Video" 
+					and site!="None" and site!= 'PlayLists'):
+				r = t.split('	')[1]
+				epnArrList[row]=nm + '	'+r
+				ui.mark_History()
+			elif site == 'PlayLists':
+				tmp = epnArrList[row]
+				tmp = re.sub('[^	]*',nm,tmp,1)
+				epnArrList[row] = tmp
+				if ui.list1.currentItem():
+					pls_n = os.path.join(
+							home,'Playlists',
+							ui.list1.currentItem().text())
+					ui.update_playlist_original(pls_n)
+					self.setCurrentRow(row)
+			elif site=="Video":
+				video_db = os.path.join(home,'VideoDB','Video.db')
+				conn = sqlite3.connect(video_db)
+				cur = conn.cursor()
+				txt = epnArrList[row].split('	')[1]
+				qr = 'Update Video Set EP_NAME=? Where Path=?'
+				cur.execute(qr,(item,txt))
+				conn.commit()
+				conn.close()
+				tmp = epnArrList[row]
+				tmp = re.sub('[^	]*',item,tmp,1)
+				epnArrList[row] = tmp
+			ui.update_list2()
+			
 	def keyPressEvent(self, event):
 		global wget,queueNo,mpvAlive,mpv,downloadVideo,quality,mirrorNo
 		global startPlayer,getSize,finalUrl,site,hdr,rfr_url,curR,base_url
@@ -3644,6 +3691,12 @@ class List2(QtWidgets.QListWidget):
 		if (event.modifiers() == QtCore.Qt.ControlModifier 
 				and event.key() == QtCore.Qt.Key_Left):
 			ui.tab_5.setFocus()
+		elif (event.key() == QtCore.Qt.Key_F2):
+			#ui.tab_5.setFocus()
+			if epnArrList:
+				print('F2 Pressed')
+				if self.currentItem():
+					self.edit_name_list2(self.currentRow())
 		elif (event.modifiers() == QtCore.Qt.ControlModifier 
 				and event.key() == QtCore.Qt.Key_Up):
 			self.setCurrentRow(0)
@@ -4084,6 +4137,8 @@ class List2(QtWidgets.QListWidget):
 			nam1 = nam
 			print (nam)
 			index = ""
+			final_link_found = False
+			final_link_arr = []
 			if not self.downloadWget:
 				self.downloadWget[:] = []
 				self.downloadWget_cnt = 0
@@ -4104,8 +4159,7 @@ class List2(QtWidgets.QListWidget):
 				scode = subprocess.check_output(
 						["zenity","--entry","--text",
 						"Enter Anime Name Manually"
-						]
-						)
+						])
 				nam = re.sub("\n","",scode)
 				nam = re.sub("[ ]","+",nam)
 				nam1 = nam
@@ -4136,12 +4190,32 @@ class List2(QtWidgets.QListWidget):
 						link = "http://thetvdb.com/?string="+nam+"&searchseriesid=&tab=listseries&function=Search"
 						content = ccurl(link)
 						m = re.findall('/[^"]tab=series[^"]*lid=7',content)
+						if not m:
+							final_link_found = False
+						else:
+							final_link_found = True
+							final_link_arr = m
+					else:
+						final_link_found = True
+						final_link_arr = m
+				else:
+					final_link_found = True
+					final_link_arr = m
 			else:
 				content = ccurl(link)
 				m = re.findall('http://thetvdb.com/[^"]tab=series[^"]*',content)
 				print (m)
 				if m:
 					m[0] = m[0].replace('http://thetvdb.com','')
+			print(final_link_arr)
+			if final_link_found and final_link_arr:
+				n = re.sub('amp;','',final_link_arr[0])
+				elist = re.sub('tab=series','tab=seasonall',n)
+				url ="http://thetvdb.com" + n
+				elist_url = "http://thetvdb.com" + elist
+				ui.getTvdbEpnInfo(elist_url)
+				
+			"""
 			if m:
 				n = re.sub('amp;','',m[0])
 				elist = re.sub('tab=series','tab=seasonall',n)
@@ -4189,9 +4263,10 @@ class List2(QtWidgets.QListWidget):
 					k = k + 2
 				f.close()
 				ep_txt = os.path.join(TMPDIR,name+'-Ep.txt')
-				f = open(ep_txt,'r')
-				lines = f.readlines()
-				f.close()
+				#f = open(ep_txt,'r')
+				#lines = f.readlines()
+				#f.close()
+				lines = open_files(ep_txt,True)
 				thumbArr = []
 				nameArr= []
 				nameArr[:]=[]
@@ -4209,10 +4284,11 @@ class List2(QtWidgets.QListWidget):
 					else:
 						if os.path.exists(os.path.join(home,'History',site,name,'Ep.txt')):
 							file_path = os.path.join(home,'History',site,name,'Ep.txt')
-					if not index:	
-						f = open(file_path,'r')
-						lines = f.readlines()
-						f.close()
+					if not index and file_path:	
+						#f = open(file_path,'r')
+						#lines = f.readlines()
+						#f.close()
+						lines = open_files(file_path,True)
 						linesEp = []
 						linesEp[:]=[]
 						for i in lines:
@@ -4245,10 +4321,11 @@ class List2(QtWidgets.QListWidget):
 								f.write('\n'+k)
 							j = j+1
 						f.close()
-					else:
-						f = open(file_path,'r')
-						lines = f.readlines()
-						f.close()
+					elif file_path:
+						#f = open(file_path,'r')
+						#lines = f.readlines()
+						#f.close()
+						lines = open_files(file_path,True)
 						linesEp = []
 						linesEp[:]=[]
 						row = ui.list2.currentRow()
@@ -4327,7 +4404,7 @@ class List2(QtWidgets.QListWidget):
 				for i in range(5):
 					if i < length:
 						self.downloadWget[i].start()
-						
+			"""
 	def download_thread_finished(self,dest):
 		print ("Download tvdb image: {0} :completed".format(dest))
 		ui.image_fit_option(dest,dest,fit_size=6,widget=ui.label)
@@ -4657,9 +4734,19 @@ class List2(QtWidgets.QListWidget):
 					
 			fix_ord = menu.addAction("Lock Order")
 			submenu = QtWidgets.QMenu(menu)
-			eplist = menu.addAction("Get Episode Thumbnails(TVDB)")
+			
+			eplist_info = False
+			if (site.lower() == 'video' or site.lower() == 'local'):
+				eplist = menu.addAction("Get Episode Title(TVDB)")
+				eplist_info = True
+			elif site.lower().startswith('playlist') or site.lower() == 'none':
+				eplist_info = False
+			else:
+				eplist = menu.addAction("Get Episode Thumbnails(TVDB)")
+				eplist_info = True
+				
 			eplistM = menu.addAction("Go To TVDB")
-			editN = menu.addAction("Edit Name")
+			editN = menu.addAction("Edit Name (F2)")
 			remove = menu.addAction("Remove Thumbnails")
 			
 			action = menu.exec_(self.mapToGlobal(event.pos()))
@@ -4682,12 +4769,14 @@ class List2(QtWidgets.QListWidget):
 					if ok and item:
 						file_path = home+'/Playlists/'+item
 						write_files(file_path,epnArrList,True)
-							
+			if eplist_info:
+				if action == eplist:
+					if self.currentItem():
+						self.find_info(0)
 			if action == new_pls:
 				print ("creating")
 				item, ok = QtWidgets.QInputDialog.getText(
-					MainWindow,'Input Dialog','Enter Playlist Name'
-					)
+					MainWindow,'Input Dialog','Enter Playlist Name')
 				if ok and item:
 					file_path = home+'/Playlists/'+item
 					if not os.path.exists(file_path):
@@ -4748,43 +4837,15 @@ class List2(QtWidgets.QListWidget):
 								os.remove(new_small_thumb)
 					r = r+1
 			elif action == editN and not ui.list1.isHidden():
-				row = self.currentRow()
-				default_text = epnArrList[row].split('	')[0]
-				item, ok = QtWidgets.QInputDialog.getText(
-							MainWindow,'Input Dialog',
-							'Enter Episode Name Manually',
-							QtWidgets.QLineEdit.Normal,default_text
-							)
-				if ok and item:
-					nm = item
-					row = self.currentRow()
-					t = epnArrList[row]
-					print(nm,row,t)
-					if ('	' in t and '	' not in nm and site!= "Video" 
-							and site!="None" and site!= 'PlayLists'):
-						r = t.split('	')[1]
-						epnArrList[row]=nm + '	'+r
-						ui.mark_History()
-					elif site == 'PlayLists':
-						tmp = epnArrList[row]
-						tmp = re.sub('[^	]*',nm,tmp,1)
-						epnArrList[row] = tmp
-						if ui.list1.currentItem():
-							pls_n = os.path.join(
-									home,'Playlists',
-									ui.list1.currentItem().text()
-									)
-							ui.update_playlist_original(pls_n)
-							self.setCurrentRow(row)
+					if epnArrList:
+						print('Editing Name')
+						if self.currentItem():
+							self.edit_name_list2(self.currentRow())
 			elif action == eplistM:
 				if ui.list1.currentItem():
 					name1 = (ui.list1.currentItem().text())
 					ui.reviewsWeb(
-						srch_txt=name1,review_site='tvdb',action='search_by_name'
-						)
-			elif action == eplist:
-				if self.currentItem():
-					self.find_info(0)
+						srch_txt=name1,review_site='tvdb',action='search_by_name')
 			elif action == thumb:
 				if self.currentItem() and ui.float_window.isHidden():
 					ui.IconViewEpn()
@@ -8658,9 +8719,6 @@ class Ui_MainWindow(object):
 		item  = self.listLibrary.item(index)
 		if item:
 			file_name = os.path.join(home,'local.txt')
-			#f = open(file_name,'r')
-			#lines = f.readlines()
-			#f.close()
 			lines = open_files(file_name,True)
 			print (self.listLibrary.item(index).text())
 			self.listLibrary.takeItem(index)
@@ -11104,7 +11162,10 @@ class Ui_MainWindow(object):
 		
 		if '/' in name:
 			name = name.replace('/','-')
-		picn = os.path.join(TMPDIR,name+'.jpg')
+		picn = os.path.join(TMPDIR,name+'-fanart.jpg')
+		if (not os.path.exists(picn) or ((os.path.exists(picn) 
+				and not os.stat(picn).st_size))):
+			picn = os.path.join(TMPDIR,name+'.jpg')
 		if site == "Local":
 			r = self.list1.currentRow()
 			name = original_path_name[r]
@@ -11130,8 +11191,7 @@ class Ui_MainWindow(object):
 					ui.videoImage(
 						picn,os.path.join(home,'History',site,siteName,
 						name,'thumbnail.jpg'),os.path.join(home,'History',
-						site,siteName,name,'fanart.jpg'),''
-						)
+						site,siteName,name,'fanart.jpg'),'')
 				else:
 					shutil.copy(picn,
 								os.path.join(home,'History',site,name,
@@ -11143,8 +11203,7 @@ class Ui_MainWindow(object):
 					ui.videoImage(
 						picn,os.path.join(home,'History',site,name,
 						'thumbnail.jpg'),os.path.join(home,'History',site,name,
-						'fanart.jpg'),''
-						)
+						'fanart.jpg'),'')
 			except Exception as e:
 				print(e,'--line--11010--')
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
@@ -11186,8 +11245,7 @@ class Ui_MainWindow(object):
 				ui.videoImage(
 					picn,os.path.join(home,'Music','Artist',nm,
 					'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,
-					'fanart.jpg'),''
-					)
+					'fanart.jpg'),'')
 				
 	def copySummary(self,copy_sum=None):
 		global name,site,opt,pre_opt,home,siteName,original_path_name
@@ -11260,6 +11318,8 @@ class Ui_MainWindow(object):
 		soup = BeautifulSoup(content,'lxml')
 		m=[]
 		link1 = soup.find('div',{'class':'section'})
+		if not link1:
+			return 0
 		link = link1.findAll('td')
 		n = []
 
@@ -11494,269 +11554,278 @@ class Ui_MainWindow(object):
 				print (thumb)
 				final_link = ""
 				m = []
-				if (not os.path.isfile(fan_text) or not os.path.isfile(post_text)):
-					if not nav:
-						nam = re.sub('Dub|Sub|subbed|dubbed','',name)
-						nam = re.sub('-|_|[ ]','+',nam)
-						print (nam)
-						if posterManually == 1:
-							scode, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Name Manually \n or prefix "url:" for direct url \n or "g:" for google Search')
-							if ok and scode:
-								scode = str(scode)
-								nam = re.sub("\n","",scode)
-								nam = nam.replace(' ','+')
-								posterManually = 0
-								if "g:" in nam:
-									na = nam.replace('g:','')
-									link = "https://www.google.co.in/search?q="+na+"+site:thetvdb.com"
-									print (link)
-							else:
-								return 0
-									
-					if "g:" not in nam and 'url:' not in nam:
-						link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=1&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
-						print (link)
+				if not nav:
+					nam = re.sub('Dub|Sub|subbed|dubbed','',name)
+					nam = re.sub('-|_|[ ]','+',nam)
+					print (nam)
+					if posterManually == 1:
+						scode, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Name Manually \n or prefix "url:" for direct url \n or "g:" for google Search')
+						if ok and scode:
+							scode = str(scode)
+							nam = re.sub("\n","",scode)
+							nam = nam.replace(' ','+')
+							posterManually = 0
+							if "g:" in nam:
+								na = nam.replace('g:','')
+								link = "https://www.google.co.in/search?q="+na+"+site:thetvdb.com"
+								print (link)
+						else:
+							return 0
+								
+				if "g:" not in nam and 'url:' not in nam:
+					link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=1&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
+					print (link)
+					content = ccurl(link)
+					m = re.findall('/index.php[^"]tab=[^"]*',content)
+					if not m:
+						link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=2&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
 						content = ccurl(link)
 						m = re.findall('/index.php[^"]tab=[^"]*',content)
 						if not m:
-							link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=2&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
+							link = "http://thetvdb.com/?string="+nam+"&searchseriesid=&tab=listseries&function=Search"
 							content = ccurl(link)
-							m = re.findall('/index.php[^"]tab=[^"]*',content)
-							if not m:
-								link = "http://thetvdb.com/?string="+nam+"&searchseriesid=&tab=listseries&function=Search"
-								content = ccurl(link)
-								m = re.findall('/[^"]tab=series[^"]*lid=7',content)
-					elif "g:" in nam:
-						content = ccurl(link)
-						m = re.findall('http://thetvdb.com/[^"]tab=series[^"]*',content)
-						print (m)
-						if m:
-							m[0] = m[0].replace('http://thetvdb.com','')
-							m[0] = m[0].replace('amp;','')
-					elif "url:" in nam:
-						url = nam.replace('url:','')
-						if (".jpg" in url or ".png" in url) and "http" in url:
-							picn = os.path.join(TMPDIR,name+'.jpg')
-							if not nav:
-								ccurl(url+'#'+'-o'+'#'+picn)
-								self.label.clear()
-								if os.path.isfile(picn):
-									picn_tmp = self.change_aspect_only(picn)
-									img = QtGui.QPixmap(picn_tmp, "1")
-									self.label.setPixmap(img)
-							else:
-								self.videoImage(picn,thumb,fanart,'')
-							return 0
-						elif "http" in url:
-							final_link = url
-							print (final_link)
-							m.append(final_link)
+							m = re.findall('/[^"]tab=series[^"]*lid=7',content)
+				elif "g:" in nam:
+					content = ccurl(link)
+					m = re.findall('http://thetvdb.com/[^"]tab=series[^"]*',content)
+					print (m)
 					if m:
-						if not final_link:
-							n = re.sub('amp;','',m[0])
-							elist = re.sub('tab=series','tab=seasonall',n)
-							url ="http://thetvdb.com" + n
-							print (url)
-							elist_url = "http://thetvdb.com" + elist
+						m[0] = m[0].replace('http://thetvdb.com','')
+						m[0] = m[0].replace('amp;','')
+				elif "url:" in nam:
+					url = nam.replace('url:','')
+					if (".jpg" in url or ".png" in url) and "http" in url:
+						picn = os.path.join(TMPDIR,name+'.jpg')
+						if not nav:
+							ccurl(url+'#'+'-o'+'#'+picn)
+							self.label.clear()
+							if os.path.isfile(picn):
+								picn_tmp = self.change_aspect_only(picn)
+								img = QtGui.QPixmap(picn_tmp, "1")
+								self.label.setPixmap(img)
 						else:
-							url = final_link
-						content = ccurl(url)
-						soup = BeautifulSoup(content,'lxml')
-						sumry = soup.find('div',{'id':'content'})
-						linkLabels = soup.findAll('div',{'id':'content'})
-						print (sumry)
-						t_sum = re.sub('</h1>','</h1><p>',str(sumry))
-						t_sum = re.sub('</div>','</p></div>',str(t_sum))
-						soup = BeautifulSoup(t_sum)
+							self.videoImage(picn,thumb,fanart,'')
+						return 0
+					elif "http" in url:
+						final_link = url
+						print (final_link)
+						m.append(final_link)
+				if m:
+					if not final_link:
+						n = re.sub('amp;','',m[0])
+						elist = re.sub('tab=series','tab=seasonall',n)
+						url ="http://thetvdb.com" + n
+						print (url)
+						elist_url = "http://thetvdb.com" + elist
+					else:
+						url = final_link
+					content = ccurl(url)
+					soup = BeautifulSoup(content,'lxml')
+					sumry = soup.find('div',{'id':'content'})
+					linkLabels = soup.findAll('div',{'id':'content'})
+					print (sumry)
+					t_sum = re.sub('</h1>','</h1><p>',str(sumry))
+					t_sum = re.sub('</div>','</p></div>',str(t_sum))
+					soup = BeautifulSoup(t_sum,'lxml')
+					try:
 						title = (soup.find('h1')).text
-						title = re.sub('&amp;','&',title)
-						sumr = (soup.find('p')).text
+					except Exception as err_val:
+						print(err_val)
+						return 0
+					title = re.sub('&amp;','&',title)
+					sumr = (soup.find('p')).text
+					
+					try:
+						link1 = linkLabels[1].findAll('td',{'id':'labels'})
+						print (link1)
+						labelId = ""
+						for i in link1:
+							j = i.text 
+							if "Genre" in j:
+								k = str(i.findNext('td'))
+								l = re.findall('>[^<]*',k)
+								q = ""
+								for p in l:
+									q = q + " "+p.replace('>','')
+								k = q 
+							else:
+								k = i.findNext('td').text
+								k = re.sub('\n|\t','',k)
+							labelId = labelId + j +" "+k + '\n'
+					except:
+						labelId = ""
 						
-						try:
-							link1 = linkLabels[1].findAll('td',{'id':'labels'})
-							print (link1)
-							labelId = ""
-							for i in link1:
-								j = i.text 
-								if "Genre" in j:
-									k = str(i.findNext('td'))
-									l = re.findall('>[^<]*',k)
-									q = ""
-									for p in l:
-										q = q + " "+p.replace('>','')
-									k = q 
-								else:
-									k = i.findNext('td').text
-									k = re.sub('\n|\t','',k)
-								labelId = labelId + j +" "+k + '\n'
-						except:
-							labelId = ""
-							
-						summary = title+'\n\n'+labelId+ sumr
-						summary = re.sub('\t','',summary)
-						sum_file = os.path.join(TMPDIR,name+'-summary.txt')
+					summary = title+'\n\n'+labelId+ sumr
+					summary = re.sub('\t','',summary)
+					sum_file = os.path.join(TMPDIR,name+'-summary.txt')
+					
+					write_files(sum_file,summary,line_by_line=False)
+					self.text.clear()
+					self.text.lineWrapMode()
+					self.text.insertPlainText(summary)
+					fan_all = re.findall('/[^"]tab=seriesfanart[^"]*',content)
+					print (fan_all)
+					content1 = ""
+					content2 = ""
+					post_all = re.findall('/[^"]tab=seriesposters[^"]*',content)
+					print (post_all)
+					
+					if fan_all:
+						url_fan_all = "http://thetvdb.com" + fan_all[0]
+						print (url_fan_all)
+						content1 = ccurl(url_fan_all)
+						m = re.findall('banners/fanart/[^"]*jpg',content1)
+						m = list(set(m))
+						m.sort()
+						length = len(m) - 1
+						print (m)
+						fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+						if not os.path.isfile(fanart_text):
+							f = open(fanart_text,'w')
+							f.write(m[0])
+							i = 1
+							while(i <= length):
+								if not "vignette" in m[i]:
+									f.write('\n'+m[i])
+								i = i + 1
+							f.close()
+					else:
+						m = re.findall('banners/fanart/[^"]*.jpg',content)
+						m = list(set(m))
+						m.sort()
+						length = len(m) - 1
+						print (m)
+						fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+						if not os.path.isfile(fanart_text) and m:
+							f = open(fanart_text,'w')
+							f.write(m[0])
+							i = 1
+							while(i <= length):
+								if not "vignette" in m[i]:
+									f.write('\n'+m[i])
+								i = i + 1
+							f.close()
+					
+					if post_all:
+						url_post_all = "http://thetvdb.com" + post_all[0]
+						print (url_post_all)
+						content2 = ccurl(url_post_all)
+						r = re.findall('banners/posters/[^"]*jpg',content2)
+						r = list(set(r))
+						r.sort()
+						print (r)
+						length = len(r) - 1
 						
-						write_files(sum_file,summary,line_by_line=False)
-						self.text.clear()
-						self.text.lineWrapMode()
-						self.text.insertPlainText(summary)
-						fan_all = re.findall('/[^"]tab=seriesfanart[^"]*',content)
-						print (fan_all)
-						content1 = ""
-						content2 = ""
-						post_all = re.findall('/[^"]tab=seriesposters[^"]*',content)
-						print (post_all)
-						
-						if fan_all:
-							url_fan_all = "http://thetvdb.com" + fan_all[0]
-							print (url_fan_all)
-							content1 = ccurl(url_fan_all)
-							m = re.findall('banners/fanart/[^"]*jpg',content1)
-							m = list(set(m))
-							m.sort()
-							length = len(m) - 1
-							print (m)
-							fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
-							if not os.path.isfile(fanart_text):
-								f = open(fanart_text,'w')
-								f.write(m[0])
-								i = 1
-								while(i <= length):
-									if not "vignette" in m[i]:
-										f.write('\n'+m[i])
-									i = i + 1
-								f.close()
-						else:
-							m = re.findall('banners/fanart/[^"]*.jpg',content)
-							m = list(set(m))
-							m.sort()
-							length = len(m) - 1
-							print (m)
-							fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
-							if not os.path.isfile(fanart_text) and m:
-								f = open(fanart_text,'w')
-								f.write(m[0])
-								i = 1
-								while(i <= length):
-									if not "vignette" in m[i]:
-										f.write('\n'+m[i])
-									i = i + 1
-								f.close()
-						
-						if post_all:
-							url_post_all = "http://thetvdb.com" + post_all[0]
-							print (url_post_all)
-							content2 = ccurl(url_post_all)
-							r = re.findall('banners/posters/[^"]*jpg',content2)
-							r = list(set(r))
-							r.sort()
-							print (r)
-							length = len(r) - 1
-							
-							poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-							
-							if not os.path.isfile(poster_text):
-								f = open(poster_text,'w')
-								f.write(r[0])
-								i = 1
-								while(i <= length):
-									f.write('\n'+r[i])
-									i = i + 1
-								f.close()
-						else:
-							r = re.findall('banners/posters/[^"]*.jpg',content)
-							r = list(set(r))
-							r.sort()
-							print (r)
-							length = len(r) - 1
-							poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-							if (r) and (not os.path.isfile(poster_text)):
-								f = open(poster_text,'w')
-								f.write(r[0])
-								i = 1
-								while(i <= length):
-									f.write('\n'+r[i])
-									i = i + 1
-								f.close()
-								
 						poster_text = os.path.join(TMPDIR,name+'-poster.txt')
 						
-						if os.path.isfile(poster_text):
-							f = open(poster_text,'r')
-							lines=f.readlines()
-							print (lines)
-							url1 = re.sub('\n|#','',lines[0])
-							url = "http://thetvdb.com/" + url1
-							ccurl(url+'#'+'-o'+'#'+thumb)
-							picn = thumb
-							self.label.clear()
-							if os.path.isfile(picn):
-								picn_tmp = self.change_aspect_only(picn)
-								img = QtGui.QPixmap(picn_tmp, "1")
-								self.label.setPixmap(img)
-							lines[0] = "#" + url1 + '\n'
+						if not os.path.isfile(poster_text):
 							f = open(poster_text,'w')
-							for i in lines:
-								f.write(i)
-				else:
+							f.write(r[0])
+							i = 1
+							while(i <= length):
+								f.write('\n'+r[i])
+								i = i + 1
+							f.close()
+					else:
+						r = re.findall('banners/posters/[^"]*.jpg',content)
+						r = list(set(r))
+						r.sort()
+						print (r)
+						length = len(r) - 1
+						poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+						if (r) and (not os.path.isfile(poster_text)):
+							f = open(poster_text,'w')
+							f.write(r[0])
+							i = 1
+							while(i <= length):
+								f.write('\n'+r[i])
+								i = i + 1
+							f.close()
+							
 					poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-					if os.path.isfile(poster_text):
-						f = open(poster_text,'r')
-						lines =[]
-						lines=f.readlines()
-						fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
-						if os.path.isfile(fanart_text) and (os.stat(fanart_text).st_size != 0):
-							g = open(fanart_text,'r')
-							lines1 = g.readlines()
-							g.close()
-							g = open(fanart_text,'w')
-							g.close()
-							for i in lines1:
-								tmp = '\n'+i
-								lines.append(tmp)
+					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
 					
+					if os.path.isfile(poster_text):
+						lines = open_files(poster_text,True)
 						print (lines)
+						url1 = re.sub('\n|#','',lines[0])
+						url = "http://thetvdb.com/" + url1
+						ccurl(url+'#'+'-o'+'#'+thumb)
+					if os.path.isfile(fanart_text):
+						lines = open_files(fanart_text,True)
+						print (lines)
+						url1 = re.sub('\n|#','',lines[0])
+						url = "http://thetvdb.com/" + url1
+						ccurl(url+'#'+'-o'+'#'+fanart)
+					if os.path.exists(fanart_text):
+						os.remove(fanart_text)
+					if os.path.exists(poster_text):
+						os.remove(poster_text)
+			"""
+			else:
+				poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+				if os.path.isfile(poster_text):
+					#f = open(poster_text,'r')
+					lines =[]
+					#lines=f.readlines()
+					lines = open_files(poster_text,True)
+					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+					if os.path.isfile(fanart_text) and (os.stat(fanart_text).st_size != 0):
+						#g = open(fanart_text,'r')
+						#lines1 = g.readlines()
+						#g.close()
+						lines1 = open_files(fanart_text,True)
+						g = open(fanart_text,'w')
+						g.close()
+						for i in lines1:
+							tmp = '\n'+i
+							lines.append(tmp)
+				
+					print (lines)
+					f.close()
+					length = len(lines)-1
+					url = ""
+					j = 0
+					for i in lines:
+						if ('#' in i) or (i == '\n'):
+							print ("Hello")
+						else:
+							url = re.sub('\n','',i)
+							url = "http://thetvdb.com/" + url
+							lines[j] = "#" + i
+							break
+						j = j + 1
+					if url:
+						poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+						f = open(poster_text,'w')
+						for i in lines:
+							f.write(i)
 						f.close()
-						length = len(lines)-1
-						url = ""
+						ccurl(url+'#'+'-o'+'#'+thumb)
+						picn = thumb
+						self.label.clear()
+						if os.path.isfile(picn):
+							picn_tmp = self.change_aspect_only(picn)
+							img = QtGui.QPixmap(picn_tmp, "1")
+							self.label.setPixmap(img)
+					else:
+						poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+						#f = open(poster_text,'r')
+						#lines=f.readlines()
+						#print (lines)
+						lines = open_files(poster_text,True)
+						print(lines)
+						#f.close()
 						j = 0
 						for i in lines:
-							if ('#' in i) or (i == '\n'):
-								print ("Hello")
-							else:
-								url = re.sub('\n','',i)
-								url = "http://thetvdb.com/" + url
-								lines[j] = "#" + i
-								break
+							if '#' in i:
+								#url = i
+								lines[j] = re.sub('#','',i)
 							j = j + 1
-						if url:
-							poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-							f = open(poster_text,'w')
-							for i in lines:
-								f.write(i)
-							f.close()
-							ccurl(url+'#'+'-o'+'#'+thumb)
-							picn = thumb
-							self.label.clear()
-							if os.path.isfile(picn):
-								picn_tmp = self.change_aspect_only(picn)
-								img = QtGui.QPixmap(picn_tmp, "1")
-								self.label.setPixmap(img)
-						else:
-							poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-							f = open(poster_text,'r')
-							lines=f.readlines()
-							print (lines)
-							f.close()
-							j = 0
-							for i in lines:
-								if '#' in i:
-									#url = i
-									lines[j] = re.sub('#','',i)
-								j = j + 1
-							f = open(poster_text,'w')
-							for i in lines:
-								f.write(i)
+						f = open(poster_text,'w')
+						for i in lines:
+							f.write(i)
+			"""
 	
 	def chkMirrorTwo(self):
 		global site,mirrorNo
@@ -13991,8 +14060,6 @@ class Ui_MainWindow(object):
 			#tmp = site+':'+opt+':'+pre_opt+':'+base_url+':'+str(embed)+':'+name':'+
 			#finalUrlFound+':'+refererNeeded+':'+video_local_stream
 			#f = open(os.path.join(home,'Bookmark',status+'.txt'),'r')
-			#line_a = f.readlines()
-			#f.close()
 			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
 			r = self.list1.currentRow()
 			if r < 0:
@@ -19537,7 +19604,7 @@ def watch_external_video(var):
 		if t.endswith('.m3u') or t.endswith('.pls'):
 			t = urllib.parse.unquote(t)
 			if os.path.exists(t):
-				lines = open(t,'r').readlines()
+				lines = open_files(t,True)
 				print(lines)
 			elif t.startswith('http'):
 				content = ccurl(t)
@@ -20188,9 +20255,8 @@ def main():
 		f.close()
 	
 	if os.path.exists(os.path.join(home,'torrent_config.txt')):
-		f = open(os.path.join(home,'torrent_config.txt'),'r')
-		lines = f.readlines()
-		f.close()
+		lines = open_files(os.path.join(home,'torrent_config.txt'),True)
+		#print(lines)
 		for i in lines:
 			if not i.startswith('#'):
 				j = i.split('=')[-1]
@@ -20243,9 +20309,10 @@ def main():
 		ui.local_port = 8001
 		
 	if os.path.exists(os.path.join(home,'other_options.txt')):
-		f = open(os.path.join(home,'other_options.txt'),'r')
-		lines = f.readlines()
-		f.close()
+		lines = open_files(os.path.join(home,'other_options.txt'),True)
+		#lines = f.readlines()
+		#f.close()
+		#print(lines)
 		for i in lines:
 			i = i.strip()
 			j = i.split('=')[-1]
