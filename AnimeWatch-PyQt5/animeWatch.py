@@ -851,7 +851,7 @@ def stop_torrent_from_client(nm):
 	
 @pyqtSlot(str)
 def get_my_ip_regularly(nm):
-	new_thread = getIpThread(ui.get_ip_interval)
+	new_thread = getIpThread(interval=ui.get_ip_interval,ip_file=ui.cloud_ip_file)
 	new_thread.start()
 	
 class ThreadedHTTPServerLocal(ThreadingMixIn, HTTPServer):
@@ -984,14 +984,14 @@ class ThreadingExample(QtCore.QThread):
 
 class getIpThread(QtCore.QThread):
 	got_ip_signal = pyqtSignal(str)
-	def __init__(self,interval=None):
+	def __init__(self,interval=None,ip_file=None):
 		QtCore.QThread.__init__(self)
 		if not interval:
 			self.interval = (3600)
 		else:
 			self.interval = interval * (3600)
 		self.got_ip_signal.connect(set_my_ip_function)
-		
+		self.ip_file = ip_file
 	def __del__(self):
 		self.wait()                        
 	
@@ -1017,7 +1017,16 @@ def set_my_ip_function(my_ip):
 	global ui
 	if my_ip.lower() != 'none':
 		ui.my_public_ip = my_ip
-	
+		print(ui.cloud_ip_file)
+		if ui.cloud_ip_file:
+			if os.path.exists(ui.cloud_ip_file):
+				f = open(ui.cloud_ip_file,'w')
+				f.write(my_ip)
+				f.close()
+			else:
+				print('cloud ip file is not available')
+		else:
+			print('Cloud File Does not exists')
 	
 class downloadThread(QtCore.QThread):
     
@@ -7314,6 +7323,7 @@ class Ui_MainWindow(object):
 		self.my_public_ip = None
 		self.get_ip_interval = 1
 		self.access_from_outside_network = False
+		self.cloud_ip_file = None
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
 		self.default_background = os.path.join(home,'default.jpg')
@@ -20380,6 +20390,18 @@ def main():
 				except Exception as e:
 					print(e)
 					ui.access_from_outside_network = False
+			elif i.startswith('CLOUD_IP_FILE='):
+				try:
+					if j.lower() == 'none' or j.lower() == 'false' or not j:
+						ui.cloud_ip_file = None
+					else:
+						if os.path.isfile(j):
+							ui.cloud_ip_file = j
+						else:
+							ui.cloud_ip_file = None
+				except Exception as e:
+					print(e)
+					ui.cloud_ip_file = None
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
@@ -20389,6 +20411,7 @@ def main():
 		f.write("\nIMAGE_FIT_OPTION=1")
 		f.write("\nAUTH=NONE")
 		f.write("\nACCESS_FROM_OUTSIDE_NETWORK=False")
+		f.write("\nCLOUD_IP_FILE=none")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001
@@ -20585,7 +20608,7 @@ def main():
 		ui.list1.hide()
 		ui.frame.hide()
 	if ui.access_from_outside_network:
-		get_ip_thread = getIpThread(ui.get_ip_interval)
+		get_ip_thread = getIpThread(interval=ui.get_ip_interval,ip_file=ui.cloud_ip_file)
 		get_ip_thread.start()
 		print('--ip--thread--started--')
 	#MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
