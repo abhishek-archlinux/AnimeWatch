@@ -160,14 +160,16 @@ def change_config_file(ip,port):
 	f.close()
 
 
-def set_mainwindow_palette(fanart):
-	if not os.path.isfile(fanart):
+def set_mainwindow_palette(fanart,first_time=None):
+	if not os.path.isfile(fanart) or ui.keep_background_constant:
 		fanart = ui.default_background
 	if os.path.isfile(fanart):
-		palette	= QtGui.QPalette()
-		palette.setBrush(QtGui.QPalette.Background,
-						QtGui.QBrush(QtGui.QPixmap(fanart)))
-		MainWindow.setPalette(palette)
+		if not ui.keep_background_constant or first_time:
+			palette	= QtGui.QPalette()
+			palette.setBrush(QtGui.QPalette.Background,
+							QtGui.QBrush(QtGui.QPixmap(fanart)))
+			MainWindow.setPalette(palette)
+			ui.current_background = fanart
 
 
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
@@ -7324,6 +7326,7 @@ class Ui_MainWindow(object):
 		self.get_ip_interval = 1
 		self.access_from_outside_network = False
 		self.cloud_ip_file = None
+		self.keep_background_constant = False
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
 		self.default_background = os.path.join(home,'default.jpg')
@@ -11771,71 +11774,7 @@ class Ui_MainWindow(object):
 						os.remove(fanart_text)
 					if os.path.exists(poster_text):
 						os.remove(poster_text)
-			"""
-			else:
-				poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-				if os.path.isfile(poster_text):
-					#f = open(poster_text,'r')
-					lines =[]
-					#lines=f.readlines()
-					lines = open_files(poster_text,True)
-					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
-					if os.path.isfile(fanart_text) and (os.stat(fanart_text).st_size != 0):
-						#g = open(fanart_text,'r')
-						#lines1 = g.readlines()
-						#g.close()
-						lines1 = open_files(fanart_text,True)
-						g = open(fanart_text,'w')
-						g.close()
-						for i in lines1:
-							tmp = '\n'+i
-							lines.append(tmp)
-				
-					print (lines)
-					f.close()
-					length = len(lines)-1
-					url = ""
-					j = 0
-					for i in lines:
-						if ('#' in i) or (i == '\n'):
-							print ("Hello")
-						else:
-							url = re.sub('\n','',i)
-							url = "http://thetvdb.com/" + url
-							lines[j] = "#" + i
-							break
-						j = j + 1
-					if url:
-						poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-						f = open(poster_text,'w')
-						for i in lines:
-							f.write(i)
-						f.close()
-						ccurl(url+'#'+'-o'+'#'+thumb)
-						picn = thumb
-						self.label.clear()
-						if os.path.isfile(picn):
-							picn_tmp = self.change_aspect_only(picn)
-							img = QtGui.QPixmap(picn_tmp, "1")
-							self.label.setPixmap(img)
-					else:
-						poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-						#f = open(poster_text,'r')
-						#lines=f.readlines()
-						#print (lines)
-						lines = open_files(poster_text,True)
-						print(lines)
-						#f.close()
-						j = 0
-						for i in lines:
-							if '#' in i:
-								#url = i
-								lines[j] = re.sub('#','',i)
-							j = j + 1
-						f = open(poster_text,'w')
-						for i in lines:
-							f.write(i)
-			"""
+			
 	
 	def chkMirrorTwo(self):
 		global site,mirrorNo
@@ -20013,7 +19952,7 @@ def main():
 		if os.path.exists(picn_1):
 			shutil.copy(picn_1,picn)
 			
-	QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,picn))
+	QtCore.QTimer.singleShot(100, partial(set_mainwindow_palette,picn,first_time=True))
 	
 	ui.buttonStyle()
 	
@@ -20402,10 +20341,22 @@ def main():
 				except Exception as e:
 					print(e)
 					ui.cloud_ip_file = None
+			elif i.startswith('KEEP_BACKGROUND_CONSTANT='):
+				try:
+					k = j.lower()
+					if k:
+						if k == 'yes' or k == 'true' or k == '1':
+							ui.keep_background_constant = True
+						else:
+							ui.keep_background_constant = False
+				except Exception as e:
+					print(e)
+					ui.keep_background_constant = False
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
 		f.write("\nDEFAULT_DOWNLOAD_LOCATION="+TMPDIR)
+		f.write("\nKEEP_BACKGROUND_CONSTANT=no")
 		f.write("\nTMP_REMOVE=no")
 		f.write("\nGET_LIBRARY=pycurl")
 		f.write("\nIMAGE_FIT_OPTION=1")
