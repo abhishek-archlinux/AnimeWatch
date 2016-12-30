@@ -93,6 +93,7 @@ import json
 import base64
 import ipaddress
 import ssl
+import hashlib
 try:
 	try:
 		import taglib
@@ -270,16 +271,14 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		print(get_bytes)
 		
 		if ui.media_server_key:
-			key_en = base64.b64encode(bytes(ui.media_server_key,'utf-8'))
-			try:
-				key = str(key_en,'utf-8')
-				print(key,'--key--val--')
-			except Exception as err_val:
-				print(err_val)
-				key = (str(key_en).replace("b'",'',1))[:-1]
-			new_key = 'Basic '+key
-			cli_key = self.headers['Authorization'] 
-			#print(cli_key,new_key)
+			new_key = ui.media_server_key 
+			cli_key = self.headers['Authorization']
+			if cli_key: 
+				print(cli_key)
+				cli_key_byte = bytes(str(cli_key),'utf-8')
+				hash_obj = hashlib.sha256(cli_key_byte)
+				cli_key = hash_obj.hexdigest()
+				print(cli_key,new_key)
 			client_addr = str(self.client_address[0])
 			print(client_addr,'--cli--')
 			print(ui.client_auth_arr,'--auth--')
@@ -6795,11 +6794,9 @@ class Ui_MainWindow(object):
 		self.player_menu = QtWidgets.QMenu()
 		self.player_menu_option = [
 				'Show/Hide Video','Show/Hide Cover And Summary',
-				'Show/Hide Title List','Show/Hide Playlist',
-				'Lock Playlist','Lock File','Shuffle',
-				'Stop After Current File','Continue(default Mode)',
-				'Start Media Server','Set As Default Background',
-				'Show/Hide Web Browser'
+				'Lock Playlist','Shuffle','Stop After Current File',
+				'Continue(default Mode)','Set Media Server User/PassWord',
+				'Start Media Server','Set As Default Background','Settings'
 				]
 								
 		self.action_player_menu =[]
@@ -8407,11 +8404,9 @@ class Ui_MainWindow(object):
 		
 		self.player_menu_option = [
 			'Show/Hide Video','Show/Hide Cover And Summary',
-			'Show/Hide Title List','Show/Hide Playlist',
-			'Lock Playlist','Lock File','Shuffle',
-			'Stop After Current File','Continue(default Mode)',
-			'Start Media Server','Set As Default Background',
-			'Show/Hide Web Browser'
+			'Lock Playlist','Shuffle','Stop After Current File',
+			'Continue(default Mode)','Set Media Server User/PassWord',
+			'Start Media Server','Set As Default Background','Settings'
 			]
 		
 		print(val)
@@ -8442,7 +8437,6 @@ class Ui_MainWindow(object):
 				self.tab_5.show()
 				show_hide_player = 1
 		elif val == "Show/Hide Playlist":
-			v = str(self.action_player_menu[3].text())
 			#if self.tab_6.isHidden():
 			if not self.list2.isHidden():
 				self.list2.hide()
@@ -8457,7 +8451,6 @@ class Ui_MainWindow(object):
 			#else:
 			#	self.tab_6.hide()
 		elif val == "Show/Hide Title List":
-			v = str(self.action_player_menu[2].text())
 			if not self.list1.isHidden():
 				self.list1.hide()
 				self.frame.hide()
@@ -8487,13 +8480,13 @@ class Ui_MainWindow(object):
 					else:
 						mpvplayer.write(b'\n set_property loop -1 \n')
 		elif val == "Lock Playlist":
-			v = str(self.action_player_menu[4].text())
+			v = str(self.action_player_menu[2].text())
 			if v == "Lock Playlist":
 				self.playerPlaylist_setLoop_var = 1
-				self.action_player_menu[4].setText("UnLock Playlist")
+				self.action_player_menu[2].setText("UnLock Playlist")
 			elif v == "UnLock Playlist":
 					self.playerPlaylist_setLoop_var = 0
-					self.action_player_menu[4].setText("Lock Playlist")
+					self.action_player_menu[2].setText("Lock Playlist")
 		elif val == "Stop After Current File":
 			quitReally = "yes"
 			#self.player_setLoop_var = 0
@@ -8513,15 +8506,11 @@ class Ui_MainWindow(object):
 			else:
 				self.tab_5.hide()
 				show_hide_player = 0
-			#if idw and idw != str(int(self.tab_5.winId())) and idw != str(int(self.label.winId())):
-			#	p4="ui.label_epn_"+str(cur_label_num)+".show()"
-			#	exec (p4)
-			#	print('show thumbnail video')
 		elif val =="Start Media Server":
-			v= str(self.action_player_menu[9].text())
+			v= str(self.action_player_menu[7].text())
 			if v == 'Start Media Server':
 				self.start_streaming = True
-				self.action_player_menu[9].setText("Stop Media Server")
+				self.action_player_menu[7].setText("Stop Media Server")
 				if not self.local_http_server.isRunning():
 					if not self.local_ip_stream:
 						self.local_ip_stream = '127.0.0.1'
@@ -8534,13 +8523,17 @@ class Ui_MainWindow(object):
 					send_notification(msg)
 			elif v == 'Stop Media Server':
 				self.start_streaming = False
-				self.action_player_menu[9].setText("Start Media Server")
+				self.action_player_menu[7].setText("Start Media Server")
 				if self.local_http_server.isRunning():
 					httpd.shutdown()
 					self.local_http_server.quit()
 					msg = 'Stopping Media Server\n http://'+self.local_ip_stream+':'+str(self.local_port_stream)
 					#subprocess.Popen(["notify-send",msg])
 					send_notification(msg)
+		elif val.lower() == 'set media server user/password':
+			new_set = LoginAuth(parent=MainWindow,media_server=True)
+		elif val.lower() == 'settings':
+			new_set = LoginAuth(parent=MainWindow,settings=True)
 		elif val == "Set As Default Background":
 			if (os.path.exists(self.current_background) 
 						and self.current_background != self.default_background):
@@ -8713,8 +8706,7 @@ class Ui_MainWindow(object):
 		global home,lastDir
 		print ("add")
 		fname = QtWidgets.QFileDialog.getExistingDirectory(
-				self.LibraryDialog,'open folder',lastDir
-				)
+				self.LibraryDialog,'open folder',lastDir)
 		lastDir = fname
 		print (lastDir)
 		print (fname)
@@ -11776,6 +11768,232 @@ class Ui_MainWindow(object):
 						os.remove(poster_text)
 			
 	
+	def posterfound_new(
+			self,name=None,url=None,copy_poster=None,copy_fanart=None,
+			copy_summary=None,site=None):
+		
+			if site == "Video":
+				if not name:
+					name = str(self.list1.currentItem().text())
+			if nav:
+				nam = "url:"+nav
+			
+			fanart = os.path.join(TMPDIR,name+'-fanart.jpg')
+			thumb = os.path.join(TMPDIR,name+'.jpg')
+			fan_text = os.path.join(TMPDIR,name+'-fanart.txt')
+			post_text = os.path.join(TMPDIR,name+'-poster.txt')
+			print (fanart)
+			print (thumb)
+			final_link = ""
+			m = []
+			if not nav:
+				nam = re.sub('Dub|Sub|subbed|dubbed','',name)
+				nam = re.sub('-|_|[ ]','+',nam)
+				print (nam)
+				if posterManually == 1:
+					scode, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Name Manually \n or prefix "url:" for direct url \n or "g:" for google Search')
+					if ok and scode:
+						scode = str(scode)
+						nam = re.sub("\n","",scode)
+						nam = nam.replace(' ','+')
+						posterManually = 0
+						if "g:" in nam:
+							na = nam.replace('g:','')
+							link = "https://www.google.co.in/search?q="+na+"+site:thetvdb.com"
+							print (link)
+					else:
+						return 0
+							
+			if "g:" not in nam and 'url:' not in nam:
+				link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=1&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
+				print (link)
+				content = ccurl(link)
+				m = re.findall('/index.php[^"]tab=[^"]*',content)
+				if not m:
+					link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=2&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
+					content = ccurl(link)
+					m = re.findall('/index.php[^"]tab=[^"]*',content)
+					if not m:
+						link = "http://thetvdb.com/?string="+nam+"&searchseriesid=&tab=listseries&function=Search"
+						content = ccurl(link)
+						m = re.findall('/[^"]tab=series[^"]*lid=7',content)
+			elif "g:" in nam:
+				content = ccurl(link)
+				m = re.findall('http://thetvdb.com/[^"]tab=series[^"]*',content)
+				print (m)
+				if m:
+					m[0] = m[0].replace('http://thetvdb.com','')
+					m[0] = m[0].replace('amp;','')
+			elif "url:" in nam:
+				url = nam.replace('url:','')
+				if (".jpg" in url or ".png" in url) and "http" in url:
+					picn = os.path.join(TMPDIR,name+'.jpg')
+					if not nav:
+						ccurl(url+'#'+'-o'+'#'+picn)
+						self.label.clear()
+						if os.path.isfile(picn):
+							picn_tmp = self.change_aspect_only(picn)
+							img = QtGui.QPixmap(picn_tmp, "1")
+							self.label.setPixmap(img)
+					else:
+						self.videoImage(picn,thumb,fanart,'')
+					return 0
+				elif "http" in url:
+					final_link = url
+					print (final_link)
+					m.append(final_link)
+			if m:
+				if not final_link:
+					n = re.sub('amp;','',m[0])
+					elist = re.sub('tab=series','tab=seasonall',n)
+					url ="http://thetvdb.com" + n
+					print (url)
+					elist_url = "http://thetvdb.com" + elist
+				else:
+					url = final_link
+				content = ccurl(url)
+				soup = BeautifulSoup(content,'lxml')
+				sumry = soup.find('div',{'id':'content'})
+				linkLabels = soup.findAll('div',{'id':'content'})
+				print (sumry)
+				t_sum = re.sub('</h1>','</h1><p>',str(sumry))
+				t_sum = re.sub('</div>','</p></div>',str(t_sum))
+				soup = BeautifulSoup(t_sum,'lxml')
+				try:
+					title = (soup.find('h1')).text
+				except Exception as err_val:
+					print(err_val)
+					return 0
+				title = re.sub('&amp;','&',title)
+				sumr = (soup.find('p')).text
+				
+				try:
+					link1 = linkLabels[1].findAll('td',{'id':'labels'})
+					print (link1)
+					labelId = ""
+					for i in link1:
+						j = i.text 
+						if "Genre" in j:
+							k = str(i.findNext('td'))
+							l = re.findall('>[^<]*',k)
+							q = ""
+							for p in l:
+								q = q + " "+p.replace('>','')
+							k = q 
+						else:
+							k = i.findNext('td').text
+							k = re.sub('\n|\t','',k)
+						labelId = labelId + j +" "+k + '\n'
+				except:
+					labelId = ""
+					
+				summary = title+'\n\n'+labelId+ sumr
+				summary = re.sub('\t','',summary)
+				sum_file = os.path.join(TMPDIR,name+'-summary.txt')
+				
+				write_files(sum_file,summary,line_by_line=False)
+				self.text.clear()
+				self.text.lineWrapMode()
+				self.text.insertPlainText(summary)
+				fan_all = re.findall('/[^"]tab=seriesfanart[^"]*',content)
+				print (fan_all)
+				content1 = ""
+				content2 = ""
+				post_all = re.findall('/[^"]tab=seriesposters[^"]*',content)
+				print (post_all)
+				
+				if fan_all:
+					url_fan_all = "http://thetvdb.com" + fan_all[0]
+					print (url_fan_all)
+					content1 = ccurl(url_fan_all)
+					m = re.findall('banners/fanart/[^"]*jpg',content1)
+					m = list(set(m))
+					m.sort()
+					length = len(m) - 1
+					print (m)
+					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+					if not os.path.isfile(fanart_text):
+						f = open(fanart_text,'w')
+						f.write(m[0])
+						i = 1
+						while(i <= length):
+							if not "vignette" in m[i]:
+								f.write('\n'+m[i])
+							i = i + 1
+						f.close()
+				else:
+					m = re.findall('banners/fanart/[^"]*.jpg',content)
+					m = list(set(m))
+					m.sort()
+					length = len(m) - 1
+					print (m)
+					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+					if not os.path.isfile(fanart_text) and m:
+						f = open(fanart_text,'w')
+						f.write(m[0])
+						i = 1
+						while(i <= length):
+							if not "vignette" in m[i]:
+								f.write('\n'+m[i])
+							i = i + 1
+						f.close()
+				
+				if post_all:
+					url_post_all = "http://thetvdb.com" + post_all[0]
+					print (url_post_all)
+					content2 = ccurl(url_post_all)
+					r = re.findall('banners/posters/[^"]*jpg',content2)
+					r = list(set(r))
+					r.sort()
+					print (r)
+					length = len(r) - 1
+					
+					poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+					
+					if not os.path.isfile(poster_text):
+						f = open(poster_text,'w')
+						f.write(r[0])
+						i = 1
+						while(i <= length):
+							f.write('\n'+r[i])
+							i = i + 1
+						f.close()
+				else:
+					r = re.findall('banners/posters/[^"]*.jpg',content)
+					r = list(set(r))
+					r.sort()
+					print (r)
+					length = len(r) - 1
+					poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+					if (r) and (not os.path.isfile(poster_text)):
+						f = open(poster_text,'w')
+						f.write(r[0])
+						i = 1
+						while(i <= length):
+							f.write('\n'+r[i])
+							i = i + 1
+						f.close()
+						
+				poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+				fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+				
+				if os.path.isfile(poster_text):
+					lines = open_files(poster_text,True)
+					print (lines)
+					url1 = re.sub('\n|#','',lines[0])
+					url = "http://thetvdb.com/" + url1
+					ccurl(url+'#'+'-o'+'#'+thumb)
+				if os.path.isfile(fanart_text):
+					lines = open_files(fanart_text,True)
+					print (lines)
+					url1 = re.sub('\n|#','',lines[0])
+					url = "http://thetvdb.com/" + url1
+					ccurl(url+'#'+'-o'+'#'+fanart)
+				if os.path.exists(fanart_text):
+					os.remove(fanart_text)
+				if os.path.exists(poster_text):
+					os.remove(poster_text)
+	
 	def chkMirrorTwo(self):
 		global site,mirrorNo
 		mirrorNo = 2
@@ -14760,7 +14978,9 @@ class Ui_MainWindow(object):
 		if new_epn.startswith('.'):
 			new_epn = new_epn[1:]
 		opt_val = self.btn1.currentText().lower()
-		
+		if OSNAME == 'nt':
+			if '?' in new_epn:
+				new_epn = new_epn.replace('?','_')
 		try:
 			if (site.lower() == 'playlists' or (site.lower() == 'music' 
 					and self.list3.currentItem().text().lower() == 'playlist')):
@@ -19488,27 +19708,184 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 					self.right_menu.h_mode.setText('&Show')
 			
 class LoginAuth(QtWidgets.QDialog):
-	def __init__(self, parent=None, url=None):
+	
+	def __init__(self, parent=None, url=None,media_server=None,settings=None):
 		super(LoginAuth, self).__init__(parent)
-		self.text_name = QtWidgets.QLineEdit(self)
-		self.text_pass = QtWidgets.QLineEdit(self)
-		self.text_name.setPlaceholderText('USER')
-		self.text_pass.setPlaceholderText('PASSWORD')
-		self.text_pass.setEchoMode(QtWidgets.QLineEdit.Password)
-		self.btn_login = QtWidgets.QPushButton('Login', self)
-		self.btn_login.clicked.connect(self.handleLogin)
-		layout = QtWidgets.QVBoxLayout(self)
-		layout.addWidget(self.text_name)
-		layout.addWidget(self.text_pass)
-		layout.addWidget(self.btn_login)
-		self.auth_info = ''
-		self.auth_64 = ''
-		self.url = url
-		self.setWindowTitle('Credentials Required')
-		self.show()
-		self.count = 0
-		self.found = True
-
+		if settings:
+			self.grid = QtWidgets.QGridLayout(self)
+			self.set_ip = QtWidgets.QLineEdit(self)
+			self.set_ip.setText(ui.local_ip_stream+':'+str(ui.local_port_stream))
+			
+			self.set_ip_btn = QtWidgets.QPushButton('Check',self)
+			self.set_ip_btn.setToolTip('Check your current IP Address OR\nUser can manually enter the field in the form "ip_address:port_number"')
+			self.set_ip_btn.clicked.connect(self._set_local_ip)
+			
+			self.set_default_download = QtWidgets.QLineEdit(self)
+			self.set_default_download.setText(ui.default_download_location)
+			self.set_default_download.home(True)
+			self.set_default_download.deselect()
+			
+			self.default_download_btn = QtWidgets.QPushButton('Set Directory',self)
+			self.default_download_btn.setToolTip('Set Default Download Location')
+			self.default_download_btn.clicked.connect(self._set_download_location)
+			
+			self.backg = QtWidgets.QComboBox(self)
+			self.backg.addItem('KEEP_BACKGROUND_CONSTANT=yes')
+			self.backg.addItem('KEEP_BACKGROUND_CONSTANT=no')
+			self.backg.setToolTip('yes:Keep same default background for all\nno:keep changing the background as per title')
+			if ui.keep_background_constant:
+				self.backg.setCurrentIndex(0)
+			else:
+				self.backg.setCurrentIndex(1)
+			
+			self.img_opt = QtWidgets.QComboBox(self)
+			self.img_opt.setToolTip('Use Ctrl+1 to Ctrl+8 keyboard shortcuts to Experiment with various background image modes. \n1:Fit To Screen\n2:Fit To Width\n3:Fit To Height\n4:Fit Upto Playlist\nRestart to see the effect OR if want to see immediate effect, then directly use keyboard shortcuts')
+			img_opt_arr = ['IMAGE FIT OPTIONS','1','2','3','4','5','6','7','8']
+			for i in img_opt_arr:
+				self.img_opt.addItem(i)
+			img_val = str(ui.image_fit_option_val)
+			index = img_opt_arr.index(img_val)
+			try:
+				self.img_opt.setCurrentIndex(index)
+			except Exception as e:
+				print(e)
+				self.img_opt.setCurrentIndex(0)
+			self.ok_btn = QtWidgets.QPushButton('OK',self)
+			self.ok_btn.clicked.connect(self._set_params)
+			
+			self.cancel_btn = QtWidgets.QPushButton('Cancel',self)
+			self.cancel_btn.clicked.connect(self.hide)
+			
+			self.grid.addWidget(self.set_ip,0,0,1,1)
+			self.grid.addWidget(self.set_ip_btn,0,1,1,1)
+			self.grid.addWidget(self.set_default_download,1,0,1,1)
+			self.grid.addWidget(self.default_download_btn,1,1,1,1)
+			self.grid.addWidget(self.backg,2,0,1,1)
+			self.grid.addWidget(self.img_opt,2,1,1,1)
+			self.grid.addWidget(self.ok_btn,3,0,1,1)
+			self.grid.addWidget(self.cancel_btn,3,1,1,1)
+			self.show()
+		else:
+			self.text_name = QtWidgets.QLineEdit(self)
+			self.text_pass = QtWidgets.QLineEdit(self)
+			self.text_name.setPlaceholderText('USER')
+			self.text_pass.setPlaceholderText('PASSWORD')
+			self.text_pass.setEchoMode(QtWidgets.QLineEdit.Password)
+			if not media_server:
+				self.btn_login = QtWidgets.QPushButton('Login', self)
+				self.btn_login.clicked.connect(self.handleLogin)
+				self.setWindowTitle('Credentials Required')
+			else:
+				self.btn_login = QtWidgets.QPushButton('Set', self)
+				self.btn_login.clicked.connect(self._set_password)
+				self.setWindowTitle('SET User and Password')
+			layout = QtWidgets.QVBoxLayout(self)
+			layout.addWidget(self.text_name)
+			layout.addWidget(self.text_pass)
+			layout.addWidget(self.btn_login)
+			self.auth_info = ''
+			self.auth_64 = ''
+			self.url = url
+			self.show()
+			self.count = 0
+			self.found = True
+	
+	def _set_params(self):
+		new_ip_val = None
+		new_ip_port = None
+		try:
+			if ':' in self.set_ip.text():
+				new_ip_val,new_ip_port1 = self.set_ip.text().split(':')
+				new_ip_port = int(new_ip_port1)
+			if ipaddress.ip_address(new_ip_val):
+				ip = 'LOCAL_STREAM_IP='+new_ip_val+':'+str(new_ip_port)
+		except Exception as err_val:
+			print(err_val,'--ip--find--error--')
+			ip = 'LOCAL_STREAM_IP='+ui.local_ip_stream
+			new_ip_val = ui.local_ip_stream
+			new_ip_port = 9001
+		if os.path.exists(self.set_default_download.text()):
+			location = 'DEFAULT_DOWNLOAD_LOCATION='+self.set_default_download.text()
+			location_val = self.set_default_download.text()
+		else:
+			location = 'DEFAULT_DOWNLOAD_LOCATION='+ui.default_download_location
+			location_val = ui.default_download_location
+		backg = self.backg.currentText()
+		img_val = self.img_opt.currentIndex()
+		if img_val == 0:
+			img_val = 1
+		img_opt_str = 'IMAGE_FIT_OPTION='+str(img_val)
+		config_file = os.path.join(home,'other_options.txt')
+		lines = open_files(config_file,lines_read=True)
+		new_lines = []
+		for i in lines:
+			i = i.strip()
+			if i.startswith('LOCAL_STREAM_IP='):
+				i = ip
+			elif i.startswith('DEFAULT_DOWNLOAD_LOCATION='):
+				i = location
+			elif i.startswith('KEEP_BACKGROUND_CONSTANT='):
+				i = backg
+			elif i.startswith('IMAGE_FIT_OPTION='):
+				i = img_opt_str
+			new_lines.append(i)
+		write_files(config_file,new_lines,line_by_line=True)
+		ui.local_ip_stream = new_ip_val
+		ui.local_port_stream = new_ip_port
+		ui.default_download_location = location_val
+		ui.image_fit_option_val = img_val
+		back_g = backg.split('=')[1]
+		if back_g == 'no':
+			ui.keep_background_constant = False
+		else:
+			ui.keep_background_constant = True
+		self.hide()
+		
+	def _set_download_location(self):
+		global lastDir
+		fname = QtWidgets.QFileDialog.getExistingDirectory(
+				MainWindow,'Set Directory',lastDir)
+		if fname:
+			self.set_default_download.setText(fname)
+			
+	def _set_local_ip(self):
+		try:
+			ip = get_lan_ip()
+			self.set_ip.setText(ip+':'+str(ui.local_port_stream))
+		except Exception as e:
+			print(e)
+			self.set_ip.setText(ui.local_ip_stream+':'+str(ui.local_port_stream))
+		
+	def _set_password(self):
+		global home
+		text_val = self.text_name.text()
+		pass_val = self.text_pass.text()
+		if not text_val:
+			text_val = ''
+		if not pass_val:
+			pass_val = ''
+		new_combine = bytes(text_val+':'+pass_val,'utf-8')
+		new_txt = base64.b64encode(new_combine)
+		new_txt_str = 'Basic '+str(new_txt,'utf-8')
+		print(new_txt,new_txt_str)
+		new_txt_bytes = bytes(str(new_txt_str),'utf-8')
+		print(new_txt_bytes)
+		h = hashlib.sha256(new_txt_bytes)
+		h_digest = h.hexdigest()
+		new_pass = 'AUTH='+h_digest
+		config_file = os.path.join(home,'other_options.txt')
+		content = open_files(config_file,lines_read=False)
+		content = re.sub('AUTH=[^\n]*',new_pass,content)
+		write_files(config_file,content,line_by_line=False)
+		self.hide()
+		ui.media_server_key = h_digest
+		ui.client_auth_arr[:] = []
+		ui.client_auth_arr = ['127.0.0.1','0.0.0.0']
+		if ui.local_ip not in ui.client_auth_arr:
+			ui.client_auth_arr.append(ui.local_ip)
+		if ui.local_ip_stream not in ui.client_auth_arr:
+			ui.client_auth_arr.append(ui.local_ip_stream)
+			
 	def handleLogin(self):
 		self.hide()
 		text_val = self.text_name.text()
@@ -20300,7 +20677,7 @@ def main():
 				ui.image_fit_option_val = k
 			elif i.startswith('AUTH='):
 				try:
-					if (':' in j) and (j.lower() != 'none'):
+					if (j.lower() != 'none'):
 						ui.media_server_key = j
 					else:
 						ui.media_server_key = None
