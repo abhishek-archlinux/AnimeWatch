@@ -588,101 +588,38 @@ class Browser(QtWebKitWidgets.QWebView):
 		elif option.lower() == 'season episode link':
 			if self.site != "Music" and self.site != "PlayLists":
 				self.ui.getTvdbEpnInfo(url.toString())
-				
 		elif option.lower() == 'artist link' or option.lower() == 'series link':
-			self.ui.posterfound(url.toString())
-			self.ui.copyImg()
-			if option.lower() == 'series link':
-				self.ui.copyFanart()
-			self.ui.copySummary()
+			url = url.toString()
+			r = self.ui.list1.currentRow()
+			nm = self.ui.get_title_name(r)
+			self.ui.posterfound_new(
+				name=nm,site=self.site,url=url,direct_url=True,
+				copy_summary=True,copy_poster=True,copy_fanart=True)
 		else:
-			print ("Hello")
-			url1 = str(url.toString())
-			print (url1)
-			url_artist = url1
-			found = ""
-			url1Code = url1.split('/')[-1]
-			
-			final_found = False
-			
-			t_content = ccurl(url1+'#'+'-I')
-			if 'image/jpeg' in t_content and not 'Location:' in t_content:
-				final_found = True
-			elif 'image/jpeg' in t_content and 'Location:' in t_content:
-				m = re.findall('Location: [^\n]*',t_content)
-				found = re.sub('Location: |\r','',m[0])
-				url1 = found
-				final_found = True
-			elif not self.img_url.isEmpty():
-				url1 = self.img_url.toString()
-				final_found = True
-			if self.site == "Music":
-				if (self.ui.list3.currentItem().text())=="Artist":
-					name = str(self.ui.list1.currentItem().text())
+			url = url.toString()
+			if url:
+				t_content = ccurl(url+'#'+'-I')
+				if 'image/jpeg' in t_content and not 'Location:' in t_content:
+					pass
+				elif 'image/jpeg' in t_content and 'Location:' in t_content:
+					m = re.findall('Location: [^\n]*',t_content)
+					found = re.sub('Location: |\r','',m[0])
+					url = found
+				elif not self.img_url.isEmpty():
+					url = self.img_url.toString()
 				else:
-					r = self.ui.list2.currentRow()
-					name = self.epnArrList[r].split('	')[2]
-			else:
-				name = str(self.ui.list1.currentItem().text())
-				
-			if '/' in name:
-					name = name.replace('/','-')
+					return 0
 					
-			if (url1.endswith('.jpg') or final_found) and (self.site!='Music'):
-				final = url1
-				if self.site == "Local":
-					if name.startswith('@'):
-						name1 = name.split('@')[-1]
-					else:
-						name1 = name
-					thumb = os.path.join(self.ui.tmp_download_folder,name1+'.jpg')
-				else:
-					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
-				if str(option) == "Download As Fanart":
-					thumb = thumb.rsplit('.',1)[0]
-					thumb = thumb+'-fanart.jpg'
-				ccurl(final+'#'+'-o'+'#'+thumb)
-			else:
-				if (self.site == "Music" and (option == "Download As Fanart" 
-						or option == "Download As Cover")):
-					if 'last.fm' in url1:
-						print(url1,'--artist-link---')
-						#content = self.ccurl(url1,'')
-						content = ccurl(url1)
-						soup = BeautifulSoup(content,'lxml')
-						link = soup.findAll('img')
-						
-						for i in link:
-							if 'src' in str(i):
-								j = i['src']
-								k = j.split('/')[-1]
-								if url1Code == k:
-									found = j
-									break
-						print (str(found))
-						u1 = found.rsplit('/',2)[0]
-						u2 = found.split('/')[-1]
-						final = u1 + '/770x0/'+u2
-						print (final)
-					elif final_found:
-						final = url1
-					else:
-						final = ''
-						
-					if '/' in name:
-						name = name.replace('/','-')
-					thumb = os.path.join(self.ui.tmp_download_folder,name+'.jpg')
-					try:
-						if final.startswith('http'):
-							ccurl(final+'#'+'-o'+'#'+thumb)
-					except:
-						pass
-			print (option)
-			if str(option) == "Download As Fanart":
-				self.ui.copyFanart()
-			elif str(option) == "Download As Cover":
-				self.ui.copyImg()
-			
-	
-	def finishedDownload(self):
-		self.ui.copyImg()
+				if option.lower() == "download as fanart":
+					r = self.ui.list1.currentRow()
+					nm = self.ui.get_title_name(r)
+					print(option,'----')
+					self.ui.posterfound_new(
+						name=nm,site=self.site,url=url,direct_url=True,
+						copy_summary=False,copy_poster=False,copy_fanart=True)
+				elif option.lower() == "download as cover":
+					r = self.ui.list1.currentRow()
+					nm = self.ui.get_title_name(r)
+					self.ui.posterfound_new(
+						name=nm,site=self.site,url=url,direct_url=True,
+						copy_summary=False,copy_poster=True,copy_fanart=False)

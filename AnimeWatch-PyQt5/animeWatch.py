@@ -1124,6 +1124,334 @@ class ThreadingThumbnail(QtCore.QThread):
 				print("Thumbnail Generation Exception: {0}".format(e))
 
 
+class find_poster_thread(QtCore.QThread):
+	summary_signal = pyqtSignal(str,str,str)
+	def __init__(
+			self,name,url=None,direct_url=None,copy_fanart=None,
+			copy_poster=None,copy_summary=None):
+		QtCore.QThread.__init__(self)
+		self.name = name
+		self.url = url
+		self.direct_url = direct_url
+		self.copy_fanart = copy_fanart
+		self.copy_poster = copy_poster
+		self.copy_summary = copy_summary
+		self.summary_signal.connect(copy_information)
+		
+	def __del__(self):
+		self.wait()                        
+	
+	def run(self):
+		global site
+		name = self.name
+		url = self.url
+		direct_url = self.direct_url
+		print(name,url,direct_url,'--poster--thread--')
+		fanart = os.path.join(TMPDIR,name+'-fanart.jpg')
+		thumb = os.path.join(TMPDIR,name+'.jpg')
+		fan_text = os.path.join(TMPDIR,name+'-fanart.txt')
+		post_text = os.path.join(TMPDIR,name+'-poster.txt')
+		print (fanart)
+		print (thumb)
+		final_link = ""
+		m = []
+		
+		if site == 'Music':
+			final = ''
+			if (self.copy_fanart and self.copy_poster and self.copy_summary):
+				if not direct_url and not url:
+					nam = re.sub('-|_|[ ]','+',name)
+					url = "http://www.last.fm/search?q="+nam
+					print (url)
+					print (url)
+					wiki = ""
+					content = ccurl(url)
+					soup = BeautifulSoup(content,'lxml')
+					link = soup.findAll('div',{'class':'row clearfix'})
+					name3 = ""
+					for i in link:
+						j = i.findAll('a')
+						#print (j)
+						for k in j:
+							try:
+								url = k['href']
+								print (url)
+								break
+							except:
+								pass
+					print (url)
+				wiki = ""
+				content = ccurl(url)
+				soup = BeautifulSoup(content,'lxml')
+				link = soup.findAll('div',{'class':'row clearfix'})
+				name3 = ""
+				for i in link:
+					j = i.findAll('a')
+					#print (j)
+					for k in j:
+						try:
+							url = k['href']
+							print (url)
+							break
+						except:
+							pass
+				print (url)
+				if url.startswith('http'):
+					url = url
+				else:
+					url = "http://www.last.fm" + url
+				print (url)
+				img_url = url+'/+images'
+				wiki_url = url + '/+wiki'
+				print (wiki_url)
+				content = ccurl(wiki_url)
+				soup = BeautifulSoup(content,'lxml')
+				link = soup.find('div',{'class':'wiki-content'})
+				if link:
+					wiki = link.text
+					self.summary_signal.emit(name,wiki,'summary')
+				content = ccurl(img_url)
+				soup = BeautifulSoup(content,'lxml')
+				link = soup.findAll('ul',{'class':'image-list'})
+				img = []
+				for i in link:
+					j = i.findAll('img')
+					for k in j:
+						l = k['src']
+						u1 = l.rsplit('/',2)[0]
+						u2 = l.split('/')[-1]
+						u = u1 + '/770x0/'+u2
+						img.append(u)
+				img = list(set(img))
+				print (len(img))
+				thumb = os.path.join(TMPDIR,name+'.jpg')
+				if img:
+					url = img[0]
+					try:
+						ccurl(url+'#'+'-o'+'#'+thumb)
+					except:
+						pass
+			elif (self.copy_poster or self.copy_fanart) and url and direct_url:
+				if 'last.fm' in url:
+					print(url,'--artist-link---')
+					content = ccurl(url)
+					soup = BeautifulSoup(content,'lxml')
+					link = soup.findAll('img')
+					url1Code = url.split('/')[-1]
+					found = None
+					for i in link:
+						if 'src' in str(i):
+							j = i['src']
+							k = j.split('/')[-1]
+							if url1Code == k:
+								found = j
+								break
+					print (str(found))
+					if found:
+						u1 = found.rsplit('/',2)[0]
+						u2 = found.split('/')[-1]
+						final = u1 + '/770x0/'+u2
+						print (final)
+				elif (".jpg" in url or ".png" in url) and url.startswith('http'):
+					final = url
+				else:
+					final = ''
+				try:
+					if final.startswith('http'):
+						ccurl(final+'#'+'-o'+'#'+thumb)
+				except Exception as e:
+					print(e)
+		else:
+			nam = re.sub('Dub|Sub|subbed|dubbed','',name)
+			nam = re.sub('-|_|[ ]','+',nam)
+
+			if direct_url and url:
+				if (".jpg" in url or ".png" in url or url.endswith('.webp')) and "http" in url:
+					if self.copy_poster:
+						ccurl(url+'#'+'-o'+'#'+thumb)
+						#self.summary_signal.emit(name,'nothing','poster')
+					elif self.copy_fanart:
+						ccurl(url+'#'+'-o'+'#'+fanart)
+						#self.summary_signal.emit(name,'nothing','fanart')
+				elif 'tvdb' in url:
+					final_link = url
+					print (final_link)
+					m.append(final_link)
+			else:
+				link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=1&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
+				print (link)
+				content = ccurl(link)
+				m = re.findall('/index.php[^"]tab=[^"]*',content)
+				if not m:
+					link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=2&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
+					content = ccurl(link)
+					m = re.findall('/index.php[^"]tab=[^"]*',content)
+					if not m:
+						link = "http://thetvdb.com/?string="+nam+"&searchseriesid=&tab=listseries&function=Search"
+						content = ccurl(link)
+						m = re.findall('/[^"]tab=series[^"]*lid=7',content)
+			
+			if m:
+				if not final_link:
+					n = re.sub('amp;','',m[0])
+					elist = re.sub('tab=series','tab=seasonall',n)
+					url ="http://thetvdb.com" + n
+					print (url)
+					elist_url = "http://thetvdb.com" + elist
+				else:
+					url = final_link
+				content = ccurl(url)
+				soup = BeautifulSoup(content,'lxml')
+				sumry = soup.find('div',{'id':'content'})
+				linkLabels = soup.findAll('div',{'id':'content'})
+				print (sumry)
+				t_sum = re.sub('</h1>','</h1><p>',str(sumry))
+				t_sum = re.sub('</div>','</p></div>',str(t_sum))
+				soup = BeautifulSoup(t_sum,'lxml')
+				try:
+					title = (soup.find('h1')).text
+				except Exception as err_val:
+					print(err_val)
+					return 0
+				title = re.sub('&amp;','&',title)
+				sumr = (soup.find('p')).text
+				
+				try:
+					link1 = linkLabels[1].findAll('td',{'id':'labels'})
+					print (link1)
+					labelId = ""
+					for i in link1:
+						j = i.text 
+						if "Genre" in j:
+							k = str(i.findNext('td'))
+							l = re.findall('>[^<]*',k)
+							q = ""
+							for p in l:
+								q = q + " "+p.replace('>','')
+							k = q 
+						else:
+							k = i.findNext('td').text
+							k = re.sub('\n|\t','',k)
+						labelId = labelId + j +" "+k + '\n'
+				except:
+					labelId = ""
+					
+				summary = title+'\n\n'+labelId+ sumr
+				summary = re.sub('\t','',summary)
+				if self.copy_summary:
+					self.summary_signal.emit(name,summary,'summary')
+				fan_all = re.findall('/[^"]tab=seriesfanart[^"]*',content)
+				print (fan_all)
+				content1 = ""
+				content2 = ""
+				post_all = re.findall('/[^"]tab=seriesposters[^"]*',content)
+				print (post_all)
+				
+				if fan_all:
+					url_fan_all = "http://thetvdb.com" + fan_all[0]
+					print (url_fan_all)
+					content1 = ccurl(url_fan_all)
+					m = re.findall('banners/fanart/[^"]*jpg',content1)
+					m = list(set(m))
+					m.sort()
+					length = len(m) - 1
+					print (m)
+					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+					if not os.path.isfile(fanart_text):
+						f = open(fanart_text,'w')
+						f.write(m[0])
+						i = 1
+						while(i <= length):
+							if not "vignette" in m[i]:
+								f.write('\n'+m[i])
+							i = i + 1
+						f.close()
+				else:
+					m = re.findall('banners/fanart/[^"]*.jpg',content)
+					m = list(set(m))
+					m.sort()
+					length = len(m) - 1
+					print (m)
+					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+					if not os.path.isfile(fanart_text) and m:
+						f = open(fanart_text,'w')
+						f.write(m[0])
+						i = 1
+						while(i <= length):
+							if not "vignette" in m[i]:
+								f.write('\n'+m[i])
+							i = i + 1
+						f.close()
+				
+				if post_all:
+					url_post_all = "http://thetvdb.com" + post_all[0]
+					print (url_post_all)
+					content2 = ccurl(url_post_all)
+					r = re.findall('banners/posters/[^"]*jpg',content2)
+					r = list(set(r))
+					r.sort()
+					print (r)
+					length = len(r) - 1
+					
+					poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+					
+					if not os.path.isfile(poster_text):
+						f = open(poster_text,'w')
+						f.write(r[0])
+						i = 1
+						while(i <= length):
+							f.write('\n'+r[i])
+							i = i + 1
+						f.close()
+				else:
+					r = re.findall('banners/posters/[^"]*.jpg',content)
+					r = list(set(r))
+					r.sort()
+					print (r)
+					length = len(r) - 1
+					poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+					if (r) and (not os.path.isfile(poster_text)):
+						f = open(poster_text,'w')
+						f.write(r[0])
+						i = 1
+						while(i <= length):
+							f.write('\n'+r[i])
+							i = i + 1
+						f.close()
+						
+				poster_text = os.path.join(TMPDIR,name+'-poster.txt')
+				fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
+				
+				if os.path.isfile(poster_text):
+					lines = open_files(poster_text,True)
+					print (lines)
+					url1 = re.sub('\n|#','',lines[0])
+					url = "http://thetvdb.com/" + url1
+					ccurl(url+'#'+'-o'+'#'+thumb)
+				if os.path.isfile(fanart_text):
+					lines = open_files(fanart_text,True)
+					print (lines)
+					url1 = re.sub('\n|#','',lines[0])
+					url = "http://thetvdb.com/" + url1
+					ccurl(url+'#'+'-o'+'#'+fanart)
+				if os.path.exists(fanart_text):
+					os.remove(fanart_text)
+				if os.path.exists(poster_text):
+					os.remove(poster_text)
+			
+				
+@pyqtSlot(str,str,str)
+def copy_information(nm,txt,val):
+	if val == 'summary':
+		ui.copySummary(new_name=nm,copy_sum=txt)
+		new_copy_sum = 'Wait..Downloading Poster and Fanart..\n\n'+txt
+		ui.text.setText(new_copy_sum)
+	elif val == 'poster':
+		ui.copyImg(new_name=nm)
+	elif val == 'fanart':
+		ui.copyFanart(new_name=nm)
+	#QtWidgets.QApplication.processEvents()
+	
 class MainWindowWidget(QtWidgets.QWidget):
 	
 	def __init__(self):
@@ -2926,7 +3254,14 @@ class List1(QtWidgets.QListWidget):
 		
 		if (event.modifiers() == QtCore.Qt.ControlModifier 
 				and event.key() == QtCore.Qt.Key_Right):
-			ui.posterfound("")
+			#ui.posterfound("")
+			try:
+				nm = ui.get_title_name(self.currentRow())
+				ui.posterfound_new(
+					name=nm,site=site,url=False,copy_poster=True,copy_fanart=True,
+					copy_summary=True,direct_url=False)
+			except Exception as e:
+				print(e)
 		elif (event.modifiers() == QtCore.Qt.ControlModifier 
 				and event.key() == QtCore.Qt.Key_C):
 			ui.copyFanart()
@@ -3135,14 +3470,15 @@ class List1(QtWidgets.QListWidget):
 		elif event.key() == QtCore.Qt.Key_D:
 			ui.deleteArtwork()
 		elif event.key() == QtCore.Qt.Key_M:
-			poster = os.path.join(TMPDIR,name+"-poster.txt")
-			fanart = os.path.join(TMPDIR,name+"-fanart.txt")
-			if os.path.isfile(poster):
-				os.remove(poster)
-			if os.path.isfile(fanart):
-				os.remove(fanart)
-			posterManually = 1
-			ui.posterfound("")
+			#poster = os.path.join(TMPDIR,name+"-poster.txt")
+			#fanart = os.path.join(TMPDIR,name+"-fanart.txt")
+			#if os.path.isfile(poster):
+			#	os.remove(poster)
+			#if os.path.isfile(fanart):
+			#	os.remove(fanart)
+			#posterManually = 1
+			#ui.posterfound("")
+			print('hello')
 		elif event.key() == QtCore.Qt.Key_I:
 			ui.showImage()
 		elif event.key() == QtCore.Qt.Key_R:
@@ -3503,11 +3839,14 @@ class List1(QtWidgets.QListWidget):
 								os.remove(t)
 				elif action == tvdb:
 					if self.currentItem():
-						ui.posterfound("")
-						r = self.currentRow()
-						ui.copyImg()
-						ui.copyFanart()
-						ui.copySummary()
+						nm = ui.get_title_name(self.currentRow())
+						ui.posterfound_new(
+							name=nm,site=site,url=False,copy_poster=True,
+							copy_fanart=True,copy_summary=True,direct_url=False)
+						#r = self.currentRow()
+						#$ui.copyImg()
+						#ui.copyFanart()
+						#ui.copySummary()
 				elif action == history:
 					ui.setPreOpt()
 				elif action == tvdbM:
@@ -7324,6 +7663,7 @@ class Ui_MainWindow(object):
 		self.access_from_outside_network = False
 		self.cloud_ip_file = None
 		self.keep_background_constant = False
+		self.posterfound_arr = []
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
 		self.default_background = os.path.join(home,'default.jpg')
@@ -11049,89 +11389,98 @@ class Ui_MainWindow(object):
 		print("current directory is {0} and name is {1}".format(path,name))
 		return path
 		
-	def copyImg(self):
+	def copyImg(self,new_name=None):
 		global name,site,opt,pre_opt,home,siteName,epnArrList
 		global original_path_name
 		print (site)
 		print (opt)
 		print (pre_opt)
-		if '/' in name:
-			name = name.replace('/','-')
-		picn = os.path.join(TMPDIR,name+'.jpg')
-		if not name and site.lower() == 'music':
+		if not new_name:
+			new_name = name
+		if '/' in new_name:
+			new_name = new_name.replace('/','-')
+		picn = os.path.join(TMPDIR,new_name+'.jpg')
+		if not new_name and site.lower() == 'music':
 			try:
-					r = ui.list2.currentRow()
-					nm = epnArrList[r].split('	')[2]
-					nm = nm.replace('"','')
+				nm = ''
+				if new_name:
+					nm = new_name
+				else:
+					if str(self.list3.currentItem().text()) == "Artist":
+						nm = ui.list1.currentItem().text()
+					else:
+						r = ui.list2.currentRow()
+						nm = epnArrList[r].split('	')[2]
+						nm = nm.replace('"','')
 			except:
 				nm = ''
 			picn = os.path.join(TMPDIR,nm+'.jpg')
 		print (picn,'--copyimg--')
 		if site == "Local":
 			r = self.list1.currentRow()
-			name = original_path_name[r]
+			new_name = original_path_name[r]
 		if not os.path.isfile(picn):
 			picn = os.path.join(home,'default.jpg')
 		if (os.path.isfile(picn) and opt == "History" 
 				and (site.lower()!= 'video' and site.lower()!= 'music' 
 				and site.lower()!= 'local')):
-			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
+			thumbnail = os.path.join(TMPDIR,new_name+'-thumbnail.jpg')
 			try:
 				self.image_fit_option(picn,thumbnail,fit_size=450)
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					shutil.copy(picn,
-								os.path.join(home,'History',site,siteName,name,
+								os.path.join(home,'History',site,siteName,new_name,
 								'poster.jpg'))
 					if os.path.exists(thumbnail):
 						self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
 						shutil.copy(thumbnail,
 									os.path.join(home,'History',site,siteName,
-									name,'thumbnail.jpg'))
+									new_name,'thumbnail.jpg'))
 					ui.videoImage(
 						picn,os.path.join(home,'History',site,siteName,
-						name,'thumbnail.jpg'),os.path.join(home,'History',
-						site,siteName,name,'fanart.jpg'),''
-						)
+						new_name,'thumbnail.jpg'),os.path.join(home,'History',
+						site,siteName,new_name,'fanart.jpg'),'')
 				else:
 					shutil.copy(picn,
-								os.path.join(home,'History',site,name,
+								os.path.join(home,'History',site,new_name,
 								'poster.jpg'))
 					if os.path.exists(thumbnail):
 						self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
 						shutil.copy(thumbnail,
-									os.path.join(home,'History',site,name,
+									os.path.join(home,'History',site,new_name,
 									'thumbnail.jpg'))
 					ui.videoImage(
-						picn,os.path.join(home,'History',site,name,
+						picn,os.path.join(home,'History',site,new_name,
 						'thumbnail.jpg'),os.path.join(home,'History',site,
-						name,'fanart.jpg'),''
-						)
+						new_name,'fanart.jpg'),'')
 			except Exception as e:
 				print(e,'--line 10933--')
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
-			thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
+			thumbnail = os.path.join(TMPDIR,new_name+'-thumbnail.jpg')
 			try:
 				self.image_fit_option(picn,thumbnail,fit_size=450)
-				shutil.copy(picn,os.path.join(home,'Local',name,'poster.jpg'))
+				shutil.copy(picn,os.path.join(home,'Local',new_name,'poster.jpg'))
 				if os.path.exists(thumbnail):
 					self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
 					shutil.copy(thumbnail,
-								os.path.join(home,'Local',name,'thumbnail.jpg'))
-				#self.listfound()
+								os.path.join(home,'Local',new_name,'thumbnail.jpg'))
 				ui.videoImage(
-					picn,os.path.join(home,'Local',name,'thumbnail.jpg'),
-					os.path.join(home,'Local',name,'fanart.jpg'),''
-					)
+					picn,os.path.join(home,'Local',new_name,'thumbnail.jpg'),
+					os.path.join(home,'Local',new_name,'fanart.jpg'),'')
 			except Exception as e:
 				print(e,'--line 10948--')
 		elif os.path.isfile(picn) and (site == "Music"):
 			try:
-				if str(self.list3.currentItem().text()) == "Artist":
-					nm = ui.list1.currentItem().text()
+				nm = ''
+				if new_name:
+					nm = new_name
 				else:
-					r = ui.list2.currentRow()
-					nm = epnArrList[r].split('	')[2]
-					nm = nm.replace('"','')
+					if str(self.list3.currentItem().text()) == "Artist":
+						nm = ui.list1.currentItem().text()
+					else:
+						r = ui.list2.currentRow()
+						nm = epnArrList[r].split('	')[2]
+						nm = nm.replace('"','')
 			except Exception as e:
 					print(e)
 					nm = ""
@@ -11141,39 +11490,40 @@ class Ui_MainWindow(object):
 				thumbnail = os.path.join(TMPDIR,nm+'-thumbnail.jpg')
 				print(picn,thumbnail)
 				try:
-					self.image_fit_option(picn,thumbnail,fit_size=450)
-					shutil.copy(picn,
-								os.path.join(home,'Music','Artist',nm,
-								'poster.jpg'))
-					if os.path.exists(thumbnail):
-						self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
-						shutil.copy(thumbnail,
+					if os.path.exists(picn):
+						self.image_fit_option(picn,thumbnail,fit_size=450)
+						shutil.copy(picn,
 									os.path.join(home,'Music','Artist',nm,
-									'thumbnail.jpg'))
-					ui.videoImage(
-						picn,os.path.join(home,'Music','Artist',nm,
-						'thumbnail.jpg'),os.path.join(home,'Music',
-						'Artist',nm,'fanart.jpg'),''
-						)
+									'poster.jpg'))
+						if os.path.exists(thumbnail):
+							self.image_fit_option(picn,thumbnail,fit_size=6,widget=self.label)
+							shutil.copy(thumbnail,
+										os.path.join(home,'Music','Artist',nm,
+										'thumbnail.jpg'))
+						ui.videoImage(
+							picn,os.path.join(home,'Music','Artist',nm,
+							'thumbnail.jpg'),os.path.join(home,'Music',
+							'Artist',nm,'fanart.jpg'),'')
 				except Exception as e:
 					print(e,': line 10783')
 	
-	def copyFanart(self):
+	def copyFanart(self,new_name=None):
 		global name,site,opt,pre_opt,home,siteName,original_path_name
 		global screen_height,screen_width
 		print (site)
 		print (opt)
 		print (pre_opt)
-		
-		if '/' in name:
-			name = name.replace('/','-')
-		picn = os.path.join(TMPDIR,name+'-fanart.jpg')
+		if not new_name:
+			new_name = name
+		if '/' in new_name:
+			new_name = new_name.replace('/','-')
+		picn = os.path.join(TMPDIR,new_name+'-fanart.jpg')
 		if (not os.path.exists(picn) or ((os.path.exists(picn) 
 				and not os.stat(picn).st_size))):
-			picn = os.path.join(TMPDIR,name+'.jpg')
+			picn = os.path.join(TMPDIR,new_name+'.jpg')
 		if site == "Local":
 			r = self.list1.currentRow()
-			name = original_path_name[r]
+			new_name = original_path_name[r]
 		if self.image_fit_option_val in range(1,9):
 			if self.image_fit_option_val != 6:
 				img_opt = self.image_fit_option_val
@@ -11187,128 +11537,143 @@ class Ui_MainWindow(object):
 			try:
 				if site == "SubbedAnime" or site == "DubbedAnime":
 					shutil.copy(picn,
-								os.path.join(home,'History',site,siteName,name,
+								os.path.join(home,'History',site,siteName,new_name,
 								'original-fanart.jpg'))
 					self.image_fit_option(picn,picn,fit_size=img_opt)
 					shutil.copy(picn,
-								os.path.join(home,'History',site,siteName,name,
+								os.path.join(home,'History',site,siteName,new_name,
 								'fanart.jpg'))
 					ui.videoImage(
 						picn,os.path.join(home,'History',site,siteName,
-						name,'thumbnail.jpg'),os.path.join(home,'History',
-						site,siteName,name,'fanart.jpg'),'')
+						new_name,'thumbnail.jpg'),os.path.join(home,'History',
+						site,siteName,new_name,'fanart.jpg'),'')
 				else:
 					shutil.copy(picn,
-								os.path.join(home,'History',site,name,
+								os.path.join(home,'History',site,new_name,
 								'original-fanart.jpg'))
 					self.image_fit_option(picn,picn,fit_size=img_opt)
 					shutil.copy(picn,
-								os.path.join(home,'History',site,name,
+								os.path.join(home,'History',site,new_name,
 								'fanart.jpg'))
 					ui.videoImage(
-						picn,os.path.join(home,'History',site,name,
-						'thumbnail.jpg'),os.path.join(home,'History',site,name,
+						picn,os.path.join(home,'History',site,new_name,
+						'thumbnail.jpg'),os.path.join(home,'History',site,new_name,
 						'fanart.jpg'),'')
 			except Exception as e:
 				print(e,'--line--11010--')
 		elif os.path.isfile(picn) and (site == "Local" or site == "Video"):
 			try:
-				shutil.copy(picn,
-							os.path.join(home,'Local',name,
-							'original-fanart.jpg'))
+				shutil.copy(
+					picn,os.path.join(home,'Local',new_name,
+					'original-fanart.jpg'))
 				self.image_fit_option(picn,picn,fit_size=img_opt)
-				shutil.copy(picn,
-							os.path.join(home,'Local',name,'fanart.jpg'))
+				shutil.copy(
+					picn,os.path.join(home,'Local',new_name,'fanart.jpg'))
 				ui.videoImage(
-					picn,os.path.join(home,'Local',name,'thumbnail.jpg'),
-					os.path.join(home,'Local',name,'fanart.jpg'),''
-					)
+					picn,os.path.join(home,'Local',new_name,'thumbnail.jpg'),
+					os.path.join(home,'Local',new_name,'fanart.jpg'),'')
 			except Exception as e:
 				print(e,'--line--11023--')
 			#ui.listfound()
 		elif (site == "Music"):
 			try:
-				if str(self.list3.currentItem().text()) == "Artist":
-					nm = ui.list1.currentItem().text()
+				if new_name:
+					nm = new_name
 				else:
-					r = ui.list2.currentRow()
-					nm = epnArrList[r].split('	')[2]
-					nm = nm.replace('"','')
+					if str(self.list3.currentItem().text()) == "Artist":
+						nm = ui.list1.currentItem().text()
+					else:
+						r = ui.list2.currentRow()
+						nm = epnArrList[r].split('	')[2]
+						nm = nm.replace('"','')
 			except Exception as e:
 					print(e)
 					nm = ""
 			print('nm=',nm)
 			if nm and os.path.exists(os.path.join(home,'Music','Artist',nm)):
 				picn = os.path.join(TMPDIR,nm+'.jpg')
-				shutil.copy(picn,
-							os.path.join(home,'Music','Artist',nm,
-							'original-fanart.jpg'))
-				self.image_fit_option(picn,picn,fit_size=img_opt)
-				shutil.copy(picn,
-							os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
-				print(picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
-				ui.videoImage(
-					picn,os.path.join(home,'Music','Artist',nm,
-					'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,
-					'fanart.jpg'),'')
+				if os.path.exists(picn):
+					shutil.copy(
+						picn,os.path.join(home,'Music','Artist',nm,
+						'original-fanart.jpg'))
+					self.image_fit_option(picn,picn,fit_size=img_opt)
+					shutil.copy(
+						picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
+					print(picn,os.path.join(home,'Music','Artist',nm,'fanart.jpg'))
+					ui.videoImage(
+						picn,os.path.join(home,'Music','Artist',nm,
+						'thumbnail.jpg'),os.path.join(home,'Music','Artist',nm,
+						'fanart.jpg'),'')
 				
-	def copySummary(self,copy_sum=None):
+	def copySummary(self,copy_sum=None,new_name=None):
 		global name,site,opt,pre_opt,home,siteName,original_path_name
 		print (site)
 		print (opt)
 		print (pre_opt)
 		sumry = ''
+		if not new_name:
+			new_name = name
+		if '/' in new_name:
+			new_name = new_name.replace('/','-')
 		if site == "Local":
 			r = self.list1.currentRow()
-			name = str(self.list1.currentItem().text())
+			new_name = str(self.list1.currentItem().text())
 		elif site == "Music":
 			try:
 				nm = ''
-				if str(self.list3.currentItem().text()) == "Artist":
-					nm = ui.list1.currentItem().text()
+				if new_name:
+					nm = new_name
 				else:
-					r = ui.list2.currentRow()
-					nm = epnArrList[r].split('	')[2]
-					nm = nm.replace('"','')
+					if str(self.list3.currentItem().text()) == "Artist":
+						nm = ui.list1.currentItem().text()
+					else:
+						r = ui.list2.currentRow()
+						nm = epnArrList[r].split('	')[2]
+						nm = nm.replace('"','')
 			except Exception as e:
 				print(e)
 				nm = ""
 			sumry = os.path.join(TMPDIR,nm+'-bio.txt')
 		else:
-			sumry = os.path.join(TMPDIR,name+'-summary.txt')
+			sumry = os.path.join(TMPDIR,new_name+'-summary.txt')
 		if site == "Local":
 			r = self.list1.currentRow()
-			name = original_path_name[r]
-			print(sumry,'---',name,'--copysummary---')
+			new_name = original_path_name[r]
+			print(sumry,'---',new_name,'--copysummary---')
 		if copy_sum:
 			write_files(sumry,copy_sum,False)
 		if (os.path.isfile(sumry) and opt == "History" 
 				and (site != "Local" and site != "Video" and site != 'Music')):
 			if site == "SubbedAnime" or site == "DubbedAnime":
-				shutil.copy(sumry,os.path.join(home,'History',site,siteName,name,'summary.txt'))
+				shutil.copy(sumry,os.path.join(home,'History',site,siteName,new_name,'summary.txt'))
 			else:
-				shutil.copy(sumry,os.path.join(home,'History',site,name,'summary.txt'))
+				shutil.copy(sumry,os.path.join(home,'History',site,new_name,'summary.txt'))
 		elif os.path.isfile(sumry) and (site == "Local" or site == "Video"):
-				shutil.copy(sumry,os.path.join(home,'Local',name,'summary.txt'))
+				shutil.copy(sumry,os.path.join(home,'Local',new_name,'summary.txt'))
 		elif (site == "Music"):
 			try:
 				nm = ''
-				if str(self.list3.currentItem().text()) == "Artist":
-					nm = ui.list1.currentItem().text()
+				if new_name:
+					nm = new_name
 				else:
-					r = ui.list2.currentRow()
-					nm = epnArrList[r].split('	')[2]
-					nm = nm.replace('"','')
+					if str(self.list3.currentItem().text()) == "Artist":
+						nm = ui.list1.currentItem().text()
+					else:
+						r = ui.list2.currentRow()
+						nm = epnArrList[r].split('	')[2]
+						nm = nm.replace('"','')
 			except Exception as e:
 				print(e)
 				nm = ""
 			if nm and os.path.exists(os.path.join(home,'Music','Artist',nm)):
 				sumry = os.path.join(TMPDIR,nm+'-bio.txt')
-				shutil.copy(sumry,os.path.join(home,'Music','Artist',nm,'bio.txt'))
+				if os.path.exists(sumry):
+					shutil.copy(sumry,os.path.join(home,'Music','Artist',nm,'bio.txt'))
 		if os.path.exists(sumry):
 			txt = open_files(sumry,False)
+			print(txt,'--copy--summary--')
 			self.text.setText(txt)
-			
+	
 	def showImage(self):
 		global name
 		thumb = os.path.join(TMPDIR,name+'.jpg')
@@ -11316,7 +11681,6 @@ class Ui_MainWindow(object):
 		if os.path.exists(thumb):
 			Image.open(thumb).show()
 	
-			
 	def getTvdbEpnInfo(self,url):
 		global epnArrList,site,original_path_name,finalUrlFound,hdr,home
 		content = ccurl(url)
@@ -11769,231 +12133,33 @@ class Ui_MainWindow(object):
 			
 	
 	def posterfound_new(
-			self,name=None,url=None,copy_poster=None,copy_fanart=None,
-			copy_summary=None,site=None):
+			self,name,site=None,url=None,copy_poster=None,copy_fanart=None,
+			copy_summary=None,direct_url=None):
 		
-			if site == "Video":
-				if not name:
-					name = str(self.list1.currentItem().text())
-			if nav:
-				nam = "url:"+nav
+		print(url,direct_url,name,'--posterfound--new--')
+		
+		self.posterfound_arr.append(find_poster_thread(
+			name,url,direct_url,copy_fanart,copy_poster,copy_summary))
+		
+		self.posterfound_arr[len(self.posterfound_arr)-1].finished.connect(
+			lambda x=0:self.posterfound_thread_finished(name,copy_fanart,
+			copy_poster,copy_summary))
+		
+		self.posterfound_arr[len(self.posterfound_arr)-1].start()
 			
-			fanart = os.path.join(TMPDIR,name+'-fanart.jpg')
-			thumb = os.path.join(TMPDIR,name+'.jpg')
-			fan_text = os.path.join(TMPDIR,name+'-fanart.txt')
-			post_text = os.path.join(TMPDIR,name+'-poster.txt')
-			print (fanart)
-			print (thumb)
-			final_link = ""
-			m = []
-			if not nav:
-				nam = re.sub('Dub|Sub|subbed|dubbed','',name)
-				nam = re.sub('-|_|[ ]','+',nam)
-				print (nam)
-				if posterManually == 1:
-					scode, ok = QtWidgets.QInputDialog.getText(MainWindow, 'Input Dialog', 'Enter Name Manually \n or prefix "url:" for direct url \n or "g:" for google Search')
-					if ok and scode:
-						scode = str(scode)
-						nam = re.sub("\n","",scode)
-						nam = nam.replace(' ','+')
-						posterManually = 0
-						if "g:" in nam:
-							na = nam.replace('g:','')
-							link = "https://www.google.co.in/search?q="+na+"+site:thetvdb.com"
-							print (link)
-					else:
-						return 0
-							
-			if "g:" not in nam and 'url:' not in nam:
-				link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=1&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
-				print (link)
-				content = ccurl(link)
-				m = re.findall('/index.php[^"]tab=[^"]*',content)
-				if not m:
-					link = "http://thetvdb.com/index.php?seriesname="+nam+"&fieldlocation=2&language=7&genre=Animation&year=&network=&zap2it_id=&tvcom_id=&imdb_id=&order=translation&addedBy=&searching=Search&tab=advancedsearch"
-					content = ccurl(link)
-					m = re.findall('/index.php[^"]tab=[^"]*',content)
-					if not m:
-						link = "http://thetvdb.com/?string="+nam+"&searchseriesid=&tab=listseries&function=Search"
-						content = ccurl(link)
-						m = re.findall('/[^"]tab=series[^"]*lid=7',content)
-			elif "g:" in nam:
-				content = ccurl(link)
-				m = re.findall('http://thetvdb.com/[^"]tab=series[^"]*',content)
-				print (m)
-				if m:
-					m[0] = m[0].replace('http://thetvdb.com','')
-					m[0] = m[0].replace('amp;','')
-			elif "url:" in nam:
-				url = nam.replace('url:','')
-				if (".jpg" in url or ".png" in url) and "http" in url:
-					picn = os.path.join(TMPDIR,name+'.jpg')
-					if not nav:
-						ccurl(url+'#'+'-o'+'#'+picn)
-						self.label.clear()
-						if os.path.isfile(picn):
-							picn_tmp = self.change_aspect_only(picn)
-							img = QtGui.QPixmap(picn_tmp, "1")
-							self.label.setPixmap(img)
-					else:
-						self.videoImage(picn,thumb,fanart,'')
-					return 0
-				elif "http" in url:
-					final_link = url
-					print (final_link)
-					m.append(final_link)
-			if m:
-				if not final_link:
-					n = re.sub('amp;','',m[0])
-					elist = re.sub('tab=series','tab=seasonall',n)
-					url ="http://thetvdb.com" + n
-					print (url)
-					elist_url = "http://thetvdb.com" + elist
-				else:
-					url = final_link
-				content = ccurl(url)
-				soup = BeautifulSoup(content,'lxml')
-				sumry = soup.find('div',{'id':'content'})
-				linkLabels = soup.findAll('div',{'id':'content'})
-				print (sumry)
-				t_sum = re.sub('</h1>','</h1><p>',str(sumry))
-				t_sum = re.sub('</div>','</p></div>',str(t_sum))
-				soup = BeautifulSoup(t_sum,'lxml')
-				try:
-					title = (soup.find('h1')).text
-				except Exception as err_val:
-					print(err_val)
-					return 0
-				title = re.sub('&amp;','&',title)
-				sumr = (soup.find('p')).text
-				
-				try:
-					link1 = linkLabels[1].findAll('td',{'id':'labels'})
-					print (link1)
-					labelId = ""
-					for i in link1:
-						j = i.text 
-						if "Genre" in j:
-							k = str(i.findNext('td'))
-							l = re.findall('>[^<]*',k)
-							q = ""
-							for p in l:
-								q = q + " "+p.replace('>','')
-							k = q 
-						else:
-							k = i.findNext('td').text
-							k = re.sub('\n|\t','',k)
-						labelId = labelId + j +" "+k + '\n'
-				except:
-					labelId = ""
-					
-				summary = title+'\n\n'+labelId+ sumr
-				summary = re.sub('\t','',summary)
-				sum_file = os.path.join(TMPDIR,name+'-summary.txt')
-				
-				write_files(sum_file,summary,line_by_line=False)
-				self.text.clear()
-				self.text.lineWrapMode()
-				self.text.insertPlainText(summary)
-				fan_all = re.findall('/[^"]tab=seriesfanart[^"]*',content)
-				print (fan_all)
-				content1 = ""
-				content2 = ""
-				post_all = re.findall('/[^"]tab=seriesposters[^"]*',content)
-				print (post_all)
-				
-				if fan_all:
-					url_fan_all = "http://thetvdb.com" + fan_all[0]
-					print (url_fan_all)
-					content1 = ccurl(url_fan_all)
-					m = re.findall('banners/fanart/[^"]*jpg',content1)
-					m = list(set(m))
-					m.sort()
-					length = len(m) - 1
-					print (m)
-					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
-					if not os.path.isfile(fanart_text):
-						f = open(fanart_text,'w')
-						f.write(m[0])
-						i = 1
-						while(i <= length):
-							if not "vignette" in m[i]:
-								f.write('\n'+m[i])
-							i = i + 1
-						f.close()
-				else:
-					m = re.findall('banners/fanart/[^"]*.jpg',content)
-					m = list(set(m))
-					m.sort()
-					length = len(m) - 1
-					print (m)
-					fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
-					if not os.path.isfile(fanart_text) and m:
-						f = open(fanart_text,'w')
-						f.write(m[0])
-						i = 1
-						while(i <= length):
-							if not "vignette" in m[i]:
-								f.write('\n'+m[i])
-							i = i + 1
-						f.close()
-				
-				if post_all:
-					url_post_all = "http://thetvdb.com" + post_all[0]
-					print (url_post_all)
-					content2 = ccurl(url_post_all)
-					r = re.findall('banners/posters/[^"]*jpg',content2)
-					r = list(set(r))
-					r.sort()
-					print (r)
-					length = len(r) - 1
-					
-					poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-					
-					if not os.path.isfile(poster_text):
-						f = open(poster_text,'w')
-						f.write(r[0])
-						i = 1
-						while(i <= length):
-							f.write('\n'+r[i])
-							i = i + 1
-						f.close()
-				else:
-					r = re.findall('banners/posters/[^"]*.jpg',content)
-					r = list(set(r))
-					r.sort()
-					print (r)
-					length = len(r) - 1
-					poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-					if (r) and (not os.path.isfile(poster_text)):
-						f = open(poster_text,'w')
-						f.write(r[0])
-						i = 1
-						while(i <= length):
-							f.write('\n'+r[i])
-							i = i + 1
-						f.close()
-						
-				poster_text = os.path.join(TMPDIR,name+'-poster.txt')
-				fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
-				
-				if os.path.isfile(poster_text):
-					lines = open_files(poster_text,True)
-					print (lines)
-					url1 = re.sub('\n|#','',lines[0])
-					url = "http://thetvdb.com/" + url1
-					ccurl(url+'#'+'-o'+'#'+thumb)
-				if os.path.isfile(fanart_text):
-					lines = open_files(fanart_text,True)
-					print (lines)
-					url1 = re.sub('\n|#','',lines[0])
-					url = "http://thetvdb.com/" + url1
-					ccurl(url+'#'+'-o'+'#'+fanart)
-				if os.path.exists(fanart_text):
-					os.remove(fanart_text)
-				if os.path.exists(poster_text):
-					os.remove(poster_text)
-	
+			
+	def posterfound_thread_finished(self,name,copy_fan,copy_poster,copy_summary):
+		print(name,copy_fan,copy_poster,copy_summary)
+		copy_sum = 'Not Available'
+		if copy_summary:
+			copy_sum = self.text.toPlainText().replace('Wait..Downloading Poster and Fanart..\n\n','')
+		if copy_poster:
+			ui.copyImg(new_name=name)
+		if copy_fan:
+			ui.copyFanart(new_name=name)
+		if copy_summary:
+			self.text.setText(copy_sum)
+			
 	def chkMirrorTwo(self):
 		global site,mirrorNo
 		mirrorNo = 2
@@ -14208,6 +14374,42 @@ class Ui_MainWindow(object):
 							summary = "Not Available"
 		return epnArrList
 	
+	def get_title_name(self,row):
+		global original_path_name,site
+		name = ''
+		if (site != "PlayLists" and site != "Music" and site != "Video" 
+				and site!="Local" and site !="None"):
+			cur_row = row
+			new_name_with_info = original_path_name[cur_row].strip()
+			extra_info = ''
+			if '	' in new_name_with_info:
+				name = new_name_with_info.split('	')[0]
+				extra_info = new_name_with_info.split('	')[1]
+			else:
+				name = new_name_with_info
+		elif site == 'Music':
+			nm = ''
+			try:
+				if str(self.list3.currentItem().text()) == "Artist":
+					nm = ui.list1.item(row).text()
+				else:
+					nm = epnArrList[row].split('	')[2]
+					nm = nm.replace('"','')
+			except Exception as e:
+					print(e)
+					nm = ""
+			name = nm
+			if '/' in name:
+				name = name.replace('/','-')
+		elif site == 'Local':
+			name = original_path_name[row]
+		elif site == 'Video':
+			item = self.list1.item(row)
+			if item:
+				art_n = str(self.list1.item(row).text())
+				name = art_n
+		return name
+		
 	def listfound(self):
 		global site,name,base_url,name1,embed,opt,pre_opt,mirrorNo,list1_items
 		global list2_items,quality,row_history,home,epn,path_Local_Dir,bookmark
@@ -14958,9 +15160,6 @@ class Ui_MainWindow(object):
 			if self.list1.currentItem():
 				file_path = os.path.join(home,'Playlists',self.list1.currentItem().text())
 				write_files(file_path,epnArrList,line_by_line=True)
-	
-	
-	
 	
 	def get_file_name(self,row,list_widget):
 		global name,site,epnArrList
@@ -20193,7 +20392,7 @@ def main():
 		"Music",'Video','YouTube','None'
 		]
 	default_option_arr = [
-		"Select","Video","Music","Local","Bookmark",
+		"Select","Video","Music","Bookmark",
 		"PlayLists","YouTube","Addons"
 		]
 	
