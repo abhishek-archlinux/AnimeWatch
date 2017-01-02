@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
 <div class= "video_section">
-<video id="player" width="640" height = "480" controls loop=""></video>
+<video id="player" width="640" height = "480" controls></video>
 <br>
 <div id="title"></div>
 <br>
@@ -123,7 +123,7 @@ function siteChange(){
 }
 function playlistItemClick(clickedElement) {
     var selected = _playlist.querySelector(".selected");
-   try{
+   
     if (selected) {
         selected.classList.remove("selected");
     }
@@ -131,10 +131,7 @@ function playlistItemClick(clickedElement) {
 	
     _player.src = clickedElement.getAttribute("data-mp3");
     _player.play();
-	}catch(err){
-		//console.log(clickedElement.getAttribute("data-mp3"));
-		console.log(err);
-		}
+	
     //window.alert(selected)
      //document.write(selected)
 }
@@ -149,11 +146,11 @@ function playNext() {
     //console.log(selected.nextSibling.innerHTML)
     if (selected && selected.nextSibling) {
 		if (_loop.innerHTML == '\u21BA'){
-			//playlistItemClick(selected);
-			//_title.innerHTML = selected.innerHTML;
+			playlistItemClick(selected);
+			_title.innerHTML = selected.innerHTML;
 			//location.reload();
-			_player.src = selected.getAttribute("data-mp3");
-			_player.play();
+			//_player.src = selected.getAttribute("data-mp3");
+			//_player.play();
 		}
 		else{
 			playlistItemClick(selected.nextSibling);
@@ -260,11 +257,9 @@ _loop.addEventListener("click", function () {
     var old_var= _loop.innerHTML;
     if (old_var == 'Lock'){
 			_loop.innerHTML = '\u21BA';
-			//_player.loop = "loop"
 		}
 	else {
 		_loop.innerHTML = 'Lock';
-		//_player.loop = ""
 	}
 });
 
