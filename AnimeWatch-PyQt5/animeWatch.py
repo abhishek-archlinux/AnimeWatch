@@ -188,6 +188,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		print(os.getcwd())
 		_head_found = False
 		nm = ''
+		user_agent = self.headers['User-Agent']
 		if path.endswith('_playlist'):
 			row,pl = path.split('_',1)
 			row_num = int(row)
@@ -243,6 +244,12 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			else:
 				nm = nm.replace('"','')
 				self.send_response(200)
+				#if user_agent:
+				#if 'firefox' in user_agent.lower() or 'chrome' in user_agent.lower():
+				#	self.send_header('Content-type','video/webm')
+				#else:
+				#self.send_header('Content-type','video/mp4')
+				#else:
 				self.send_header('Content-type','video/mp4')
 				size = os.stat(nm).st_size
 				self.send_header('Content-Length', str(size))
@@ -269,6 +276,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		except Exception as e:
 			get_bytes = 0
 		print(get_bytes)
+		print(self.headers)
 		
 		if ui.media_server_key:
 			new_key = ui.media_server_key 
@@ -396,6 +404,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						#print(e,'--error--')
 						if 'Errno 104' in str(e):
 							break
+							print(e)
 					content = f.read(1024*512)
 					time.sleep(0.0001)
 			new_time = time.time()
@@ -425,14 +434,21 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		
 	def create_playlist(
 			self,site,site_option,name,epnArrList,new_video_local_stream,
-			siteName,my_ipaddress):
+			siteName,my_ipaddress,shuffle_list):
 		old_name = []
-		if not self.path.endswith('.pls'):
-			pls_txt = '#EXTM3U\n'
-		else:
+		if self.path.endswith('.pls'):
 			pls_txt = '[playlist]'
-		pls_txt = '#EXTM3U\n'
+		elif self.path.endswith('.htm') or self.path.endswith('.html'):
+			pls_txt = '<ol id="playlist">'
+		else:
+			pls_txt = '#EXTM3U\n'
+		#pls_txt = '#EXTM3U\n'
 		new_index = 0
+		if shuffle_list:
+			epnArrList = random.sample(epnArrList,len(epnArrList))
+		site_pls = False
+		if site.lower().startswith('playlist'):
+			site_pls = True
 		for  i in range(len(epnArrList)):
 			try:
 				k = epnArrList[i]
@@ -451,8 +467,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					else:
 						new_index = 0
 					old_name.append(n_art)
-						
+				if site_pls:
+					new_k = k.split('	')[-1]
+					if '##' in k:
+						name = new_k.rsplit('##',1)[-1]
+						n_art = name
 				n_url_file = ui.get_file_name_from_bookmark(site,site_option,name,i,epnArrList)
+				print(name)
 				if (site.lower() == 'video' or site.lower() == 'music' or 
 						site.lower() == 'local' or site.lower().startswith('playlist') 
 						or site.lower() == 'none'):
@@ -489,27 +510,82 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				n_url = n_url.replace('"','')
 				n_art = n_art.replace('"','')
 				out = 'http://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
-				if not self.path.endswith('.pls'):
-					pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
-				else:
+				if self.path.endswith('.pls'):
 					pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
+				elif self.path.endswith('.htm') or self.path.endswith('.html'):
+					pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
+				else:
+					pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
 			except Exception as e:
 				print(e)
 		if self.path.endswith('.pls'):
 			footer = '\nNumberOfEntries='+str(len(epnArrList))+'\n'
 			pls_txt = pls_txt+footer
+		elif self.path.endswith('.htm') or self.path.endswith('.html'):
+				pls_txt = pls_txt+'</ol>'
+				playlist_htm = os.path.join(BASEDIR,'playlist.html')
+				if os.path.exists(playlist_htm):
+					play_htm = open_files(playlist_htm,False)
+					#print(play_htm)
+					pls_txt = re.sub('<ol id="playlist"></ol>',pls_txt,play_htm)
+					new_field = ''
+					for i in html_default_arr:
+						new_field = new_field+'<option value="{0}">{1}</option>'.format(i.lower(),i)
+					new_field = '<select id="site" onchange="siteChange()">{0}</select>'.format(new_field)
+					print(new_field)
+					pls_txt = pls_txt.replace('<select id="site" onchange="siteChange()"></select>',new_field)
+					extra_fields = self.get_extra_fields()
+					print(extra_fields)
+					pls_txt = re.sub('<div id="site_option" hidden></div>',extra_fields,pls_txt)
 		return pls_txt
 		
-	
+	def get_extra_fields(self):
+		global html_default_arr,home
+		extra_fields = ''
+		for i in html_default_arr:
+			if i.lower() == 'video':
+				extra_fields = extra_fields+'Video:Available;Video:History;'
+			elif i.lower() == 'music':
+				extra_fields = extra_fields+'Music:Artist;Music:Album;Music:Directory;'
+			elif i.lower().startswith('playlist'):
+				home_n = os.path.join(home,'Playlists')
+				criteria = os.listdir(os.path.join(home,'Playlists'))
+				criteria = naturallysorted(criteria)
+				for j in criteria:
+					if '.' in j:
+						j = j.rsplit('.',1)[0]
+					extra_fields = extra_fields+'{0}:{1};'.format(i,j)
+			elif i.lower() == 'bookmark':
+				home_n = os.path.join(home,'Bookmark')
+				criteria = os.listdir(home_n)
+				criteria = naturallysorted(criteria)
+				for j in criteria:
+					if '.' in j:
+						j = j.rsplit('.',1)[0]
+					extra_fields = extra_fields+'{0}:{1};'.format(i,j)
+			elif i.lower() == 'subbedanime' or i.lower() == 'dubbedanime':
+				plugin_path = os.path.join(home,'src','Plugins',i+'.py')
+				if os.path.exists(plugin_path):
+					module = imp.load_source(i,plugin_path)
+					site_var = getattr(module,i)(TMPDIR)
+					if site_var:
+						criteria = site_var.getOptions() 
+						for j in criteria:
+							extra_fields = extra_fields+'{0}:{1};'.format(i,j)
+			else:
+				extra_fields = extra_fields+'{0}:History;'.format(i)
+		extra_fields = '<div id="site_option" hidden>{0}</div>'.format(extra_fields)
+		return extra_fields
 		
 	def get_the_content(self,path,get_bytes,my_ip_addr=None):
 		global current_playing_file_path,path_final_Url,ui,curR
-		global epnArrList
+		global epnArrList,html_default_arr
 		if not my_ip_addr:
 			my_ipaddress = ui.local_ip_stream
 		else:
 			my_ipaddress = my_ip_addr
-		if (path.lower().startswith('stream_continue') or path.lower() == 'stream_shuffle'):
+		if (path.lower().startswith('stream_continue') 
+				or path.lower().startswith('stream_shuffle')):
 			new_arr = []
 			n_out = ''
 			n_art = ''
@@ -533,14 +609,16 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						new_arr = new_arr[row_digit:]
 				print(row_digit)
 				print(new_arr)
-			if path.lower() == 'stream_shuffle':
+			if path.lower().startswith('stream_shuffle'):
 				new_arr = random.sample(new_arr,len(new_arr))
 			print(new_arr)
 			print(self.client_address)
-			if not path.endswith('.pls'):
-				pls_txt = '#EXTM3U\n'
-			else:
+			if path.endswith('.html') or path.endswith('.htm'):
+				pls_txt = '<ol id="playlist">'
+			elif path.endswith('.pls'):
 				pls_txt = '[playlist]'
+			else:
+				pls_txt = '#EXTM3U\n'
 			for  i in range(len(new_arr)):
 				try:
 					k = new_arr[i]
@@ -637,19 +715,40 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					#n_url = n_url.replace('"','')
 					n_art = n_art.replace('"','')
 					out = 'http://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
-					if not path.endswith('.pls'):
-						pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
-					else:
+					if path.endswith('.pls'):
 						pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
+					elif path.endswith('.htm') or path.endswith('.html'):
+						pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
+					else:
+						pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+					
 				except Exception as e:
 					print(e)
 			if path.endswith('.pls'):
 				footer = '\nNumberOfEntries='+str(len(new_arr))+'\n'
 				pls_txt = pls_txt+footer
+			elif path.endswith('.htm') or path.endswith('.html'):
+				pls_txt = pls_txt+'</ol>'
+				playlist_htm = os.path.join(BASEDIR,'playlist.html')
+				if os.path.exists(playlist_htm):
+					play_htm = open_files(playlist_htm,False)
+					pls_txt = re.sub('<ol id="playlist"></ol>',pls_txt,play_htm)
+					new_field = ''
+					for i in html_default_arr:
+						new_field = new_field+'<option value="{0}">{1}</option>'.format(i.lower(),i)
+					new_field = '<select id="site" onchange="siteChange()">{0}</select>'.format(new_field)
+					print(new_field)
+					pls_txt = pls_txt.replace('<select id="site" onchange="siteChange()"></select>',new_field)
+					extra_fields = self.get_extra_fields()
+					print(extra_fields)
+					pls_txt = re.sub('<div id="site_option" hidden></div>',extra_fields,pls_txt)
 			pls_txt = bytes(pls_txt,'utf-8')
 			self.send_response(200)
 			#self.send_header('Set-Cookie','A=Bcdfgh')
-			self.send_header('Content-type','audio/mpegurl')
+			if path.endswith('.htm') or path.endswith('.html'):
+				self.send_header('Content-type','text/html')
+			else:
+				self.send_header('Content-type','audio/mpegurl')
 			size = len(pls_txt)
 			#size = size - get_bytes
 			self.send_header('Content-Length', str(size))
@@ -666,6 +765,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			st_o = ''
 			srch = ''
 			srch_exact = False
+			shuffle_list = False
 			pls_txt = 'Nothing'
 			for i in new_arr:
 				print(i)
@@ -675,13 +775,21 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					st_o = i.split('=')[-1]
 				elif i.startswith('s='):
 					srch = i.split('=')[-1]
-					if srch.endswith('.pls') or srch.endswith('.m3u'):
+					if (srch.endswith('.pls') or srch.endswith('.m3u') 
+							or srch.endswith('.htm') or srch.endswith('.html')):
 						srch = srch.rsplit('.',1)[0]
 					srch = srch.replace('+',' ')
 				elif i.startswith('exact'):
 					srch_exact = True
+				elif i.startswith('shuffle'):
+					shuffle_list = True
 			if not st_o:
 				st_o = 'NONE'
+			if st:
+				if st.startswith('playlist'):
+					if st_o and not srch:
+						srch = st_o
+						#st_o = 'NONE'
 			if st and st_o and srch:
 				print(srch_exact,'=srch_exact')
 				epn_arr,st,st_o,new_str,st_nm = ui.options_from_bookmark(
@@ -689,8 +797,11 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				pls_txt = ''
 				if epn_arr:
 					pls_txt = self.create_playlist(
-						st,st_o,srch,epn_arr,new_str,st_nm,my_ipaddress)
+						st,st_o,srch,epn_arr,new_str,st_nm,my_ipaddress,
+						shuffle_list)
 			elif st and st_o:
+				#if not srch:
+				#	srch = st_o
 				print(srch_exact,'=srch_exact')
 				original_path_name = ui.options_from_bookmark(
 						st,st_o,srch,search_exact=srch_exact)
@@ -699,10 +810,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					pls_txt = self.create_option_playlist(
 						st,st_o,original_path_name)
 			self.send_response(200)
-			if '#EXTM3U' in pls_txt:
-				self.send_header('Content-type','audio/mpegurl')
-			else:
+			if path.endswith('.htm') or path.endswith('.html'):
 				self.send_header('Content-type','text/html')
+			else:
+				self.send_header('Content-type','audio/mpegurl')
 			pls_txt = bytes(pls_txt,'utf-8')
 			size = len(pls_txt)
 			#size = size - get_bytes
@@ -14324,6 +14435,7 @@ class Ui_MainWindow(object):
 							for i in lines:
 								i = i.strip()
 								if i:	
+									i = i+'##'+pls
 									epnArrList.append(i)
 		elif site.lower() == "video":
 			epnArrList = []
@@ -20360,7 +20472,7 @@ def main():
 	global show_hide_player,layout_mode,current_playing_file_path
 	global music_arr_setting,default_arr_setting,video_local_stream
 	global local_torrent_file_path,wait_player,platform_name
-	global addons_option_arr
+	global addons_option_arr,html_default_arr
 	
 	wait_player = False
 	local_torrent_file_path = ''
@@ -20395,7 +20507,7 @@ def main():
 		"Select","Video","Music","Bookmark",
 		"PlayLists","YouTube","Addons"
 		]
-	
+	html_default_arr = ["Select","Video","Music","Bookmark","PlayLists"]
 	addons_option_arr = []
 	audio_id = "auto"
 	sub_id = "auto"
@@ -21139,6 +21251,7 @@ def main():
 		get_ip_thread.start()
 		print('--ip--thread--started--')
 	#MainWindow.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+	html_default_arr = html_default_arr + addons_option_arr
 	MainWindow.show()
 	
 	if len(sys.argv) == 2:
