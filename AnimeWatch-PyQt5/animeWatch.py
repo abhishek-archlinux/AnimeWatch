@@ -94,6 +94,7 @@ import base64
 import ipaddress
 import ssl
 import hashlib
+import uuid
 try:
 	try:
 		import taglib
@@ -178,6 +179,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	protocol_version = 'HTTP/1.1'
 	old_get_bytes = 0
 	proc_req = True
+	client_auth_dict = {}
 	
 	def process_HEAD(self):
 		global current_playing_file_path,path_final_Url,ui,curR
@@ -271,14 +273,60 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		print(os.getcwd())
 		print(self.requestline)
 		#print(self.headers['Cookie'],'--cookie--')
+		playlist_id = None
 		try:
 			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
 		except Exception as e:
 			get_bytes = 0
 		print(get_bytes)
 		print(self.headers)
-		
-		if ui.media_server_key:
+		cookie_verified = False
+		cookie_set = False
+		cookie_val = self.headers['Cookie']
+		print(cookie_val,'--cookie--')
+		if cookie_val:
+			try:
+				uid_c = cookie_val.split('=')[1]
+				uid_val = (self.client_auth_dict[uid_c])
+				old_time,playlist_id = uid_val.split('&pl_id=')
+				print(old_time,playlist_id)
+				old_time = int(old_time)
+				cur_time = int(time.time())
+				print(self.client_auth_dict)
+				print(cur_time-old_time,'--time--')
+				if (cur_time - old_time) > 24*3600:
+					cookie_verified = False
+					del self.client_auth_dict[uid_c]
+					print('deleting client cookie due to timeout')
+				else:
+					cookie_verified = True
+				if '&pl_id=' in path:
+					path,pl_id = path.rsplit('&pl_id=',1)
+			except Exception as err_val:
+				print(err_val)
+		else:
+			if '&pl_id=' in path:
+				path,pl_id = path.rsplit('&pl_id=',1)
+				del_uid = None
+				found_uid = False
+				for i in self.client_auth_dict:
+					old_time,old_pl_id = self.client_auth_dict[i].split('&pl_id=')
+					print(old_time,'--time--',pl_id,'--time--pls--')
+					if pl_id == old_pl_id:
+						playlist_id = pl_id
+						found_uid = True
+						time_diff = int(time.time()) - int(old_time)
+						print(time_diff,'--time--diff--')
+						if (time_diff) > 24*3600:
+							del_uid = i
+						break
+				if found_uid and not del_uid:
+					cookie_verified = True
+				elif found_uid and del_uid:
+					del self.client_auth_dict[del_uid]
+					print('--timeout--')
+					
+		if ui.media_server_key and not ui.media_server_cookie:
 			new_key = ui.media_server_key 
 			cli_key = self.headers['Authorization']
 			if cli_key: 
@@ -346,6 +394,65 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						print(ui.client_auth_arr)
 			else:
 				txt = b'You are not authorized to access the content'
+				self.final_message(txt)
+		elif ui.media_server_cookie and ui.media_server_key:
+			new_key = ui.media_server_key 
+			cli_key = self.headers['Authorization']
+			if cli_key: 
+				print(cli_key)
+				cli_key_byte = bytes(str(cli_key),'utf-8')
+				hash_obj = hashlib.sha256(cli_key_byte)
+				cli_key = hash_obj.hexdigest()
+				print(cli_key,new_key)
+			client_addr = str(self.client_address[0])
+			print(client_addr,'--cli--')
+			print(ui.client_auth_arr,'--auth--')
+			if not cli_key and not cookie_verified:
+				self.auth_header()
+			elif (cli_key == new_key) and not cookie_verified:
+				if client_addr not in ui.client_auth_arr:
+					ui.client_auth_arr.append(client_addr)
+				uid = str(uuid.uuid4())
+				uid_pl = str(uuid.uuid4())
+				uid_pl = uid_pl.replace('-','')
+				cur_time = str(int(time.time()))
+				new_id = cur_time+'&pl_id='+uid_pl
+				self.client_auth_dict.update({uid:new_id})
+				set_cookie_id = "id="+uid
+				self.final_message(b'Session Established',set_cookie_id)
+				cookie_set = True
+			if cookie_set or cookie_verified:
+				if ipaddress.ip_address(client_addr).is_private:
+					if type_request == 'get':
+						self.get_the_content(path,get_bytes,play_id=playlist_id)
+					elif type_request == 'head':
+						self.process_HEAD()
+				elif ui.access_from_outside_network:
+					if not ui.my_public_ip:
+						try:
+							my_ip = str(ccurl('https://diagnostic.opendns.com/myip'))
+							try:
+								new_ip_object = ipaddress.ip_address(my_ip)
+							except Exception as e:
+								print(e)
+								my_ip = None
+						except Exception as e:
+							print(e)
+							my_ip = None
+					else:
+						my_ip = ui.my_public_ip
+					if my_ip:
+						if type_request == 'get':
+							self.get_the_content(path,get_bytes,my_ip_addr=my_ip,play_id=playlist_id)
+						elif type_request == 'head':
+							self.process_HEAD()
+					else:
+						self.final_message(b'Could not find your Public IP')
+				else:
+					txt = b'Access Not Allowed'
+					self.final_message(txt)
+			else:
+				txt = b'Access Not Allowed'
 				self.final_message(txt)
 		else:
 			client_addr = str(self.client_address[0])
@@ -434,7 +541,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		
 	def create_playlist(
 			self,site,site_option,name,epnArrList,new_video_local_stream,
-			siteName,my_ipaddress,shuffle_list):
+			siteName,my_ipaddress,shuffle_list,play_id):
 		old_name = []
 		if self.path.endswith('.pls'):
 			pls_txt = '[playlist]'
@@ -509,7 +616,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				#n_out = n_out.replace(' ','_')
 				n_url = n_url.replace('"','')
 				n_art = n_art.replace('"','')
-				out = 'http://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
+				http_val = "http"
+				if ui.https_media_server:
+					http_val = "https" 
+				if play_id:
+					out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)+'&pl_id='+play_id
+				else:
+					out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
 				if self.path.endswith('.pls'):
 					pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
 				elif self.path.endswith('.htm') or self.path.endswith('.html'):
@@ -577,13 +690,17 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		extra_fields = '<div id="site_option" hidden>{0}</div>'.format(extra_fields)
 		return extra_fields
 		
-	def get_the_content(self,path,get_bytes,my_ip_addr=None):
+	def get_the_content(self,path,get_bytes,my_ip_addr=None,play_id=None):
 		global current_playing_file_path,path_final_Url,ui,curR
 		global epnArrList,html_default_arr
 		if not my_ip_addr:
 			my_ipaddress = ui.local_ip_stream
 		else:
 			my_ipaddress = my_ip_addr
+		if play_id:
+			pl_id_val = '&pl_id='+play_id
+			if path.endswith(pl_id_val):
+				path = path.replace(pl_id_val,'',1)
 		if (path.lower().startswith('stream_continue') 
 				or path.lower().startswith('stream_shuffle')):
 			new_arr = []
@@ -714,7 +831,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					#n_out = n_out.replace(' ','_')
 					#n_url = n_url.replace('"','')
 					n_art = n_art.replace('"','')
-					out = 'http://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
+					http_val = "http"
+					if ui.https_media_server:
+						http_val = "https" 
+					if play_id:
+						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)+'&pl_id='+play_id
+					else:
+						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)
 					if path.endswith('.pls'):
 						pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
 					elif path.endswith('.htm') or path.endswith('.html'):
@@ -798,7 +921,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				if epn_arr:
 					pls_txt = self.create_playlist(
 						st,st_o,srch,epn_arr,new_str,st_nm,my_ipaddress,
-						shuffle_list)
+						shuffle_list,play_id)
 			elif st and st_o:
 				#if not srch:
 				#	srch = st_o
@@ -918,7 +1041,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Content-type','text/html')
 			self.end_headers()
 			
-	def final_message(self,txt):
+	def final_message(self,txt,cookie=None):
+		self.send_response(200)
+		if cookie:
+			self.send_header('Set-Cookie',cookie)
 		self.send_header('Content-type','text/html')
 		self.send_header('Content-Length', len(txt))
 		self.send_header('Connection', 'close')
@@ -977,24 +1103,33 @@ class MyTCPServer(TCPServer):
 
 				
 class ThreadServerLocal(QtCore.QThread):
-	
+	cert_signal = pyqtSignal(str)
 	def __init__(self,ip,port):
 		
 		QtCore.QThread.__init__(self)
 		self.ip = ip
 		self.port = int(port)
+		self.cert_signal.connect(generate_ssl_cert)
+		
 	def __del__(self):
 		self.wait()                        
 	
 	def run(self):
 		global httpd,home
 		print('starting server...')
+		httpd = None
 		try:
-			#import ssl
-			server_address = (self.ip,self.port)
-			httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
-			#cert = os.path.join(home,'cert.pem')
-			#httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert)
+			cert = os.path.join(home,'cert.pem')
+			if ui.https_media_server:
+				if not os.path.exists(cert):
+					self.cert_signal.emit(cert)
+			if not ui.https_media_server:
+				server_address = (self.ip,self.port)
+				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+			elif ui.https_media_server and os.path.exists(cert):
+				server_address = (self.ip,self.port)
+				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+				httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert)
 			#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
 		except OSError as e:
 			e_str = str(e)
@@ -1011,11 +1146,21 @@ class ThreadServerLocal(QtCore.QThread):
 				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
 			else:
 				pass
-		print('running server...at..'+self.ip+':'+str(self.port))
-		#httpd.allow_reuse_address = True
-		httpd.serve_forever()
-		print('quitting http server')
+		if httpd:
+			print('running server...at..'+self.ip+':'+str(self.port))
+			#httpd.allow_reuse_address = True
+			httpd.serve_forever()
+			print('quitting http server')
+		else:
+			print('server not started')
 
+@pyqtSlot(str)
+def generate_ssl_cert(cert):
+	global ui,MainWindow
+	if not os.path.exists(cert):
+		ui.action_player_menu[7].setText("Start Media Server")
+		new_ssl = LoginAuth(parent=MainWindow,ssl_cert=cert)
+		new_ssl.show()
 
 class ThreadingExample(QtCore.QThread):
     
@@ -7774,6 +7919,8 @@ class Ui_MainWindow(object):
 		self.access_from_outside_network = False
 		self.cloud_ip_file = None
 		self.keep_background_constant = False
+		self.https_media_server = False
+		self.media_server_cookie = False
 		self.posterfound_arr = []
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
@@ -20020,7 +20167,7 @@ class SystemAppIndicator(QtWidgets.QSystemTrayIcon):
 			
 class LoginAuth(QtWidgets.QDialog):
 	
-	def __init__(self, parent=None, url=None,media_server=None,settings=None):
+	def __init__(self, parent=None, url=None,media_server=None,settings=None,ssl_cert=None):
 		super(LoginAuth, self).__init__(parent)
 		if settings:
 			self.grid = QtWidgets.QGridLayout(self)
@@ -20076,6 +20223,21 @@ class LoginAuth(QtWidgets.QDialog):
 			self.grid.addWidget(self.ok_btn,3,0,1,1)
 			self.grid.addWidget(self.cancel_btn,3,1,1,1)
 			self.show()
+		elif ssl_cert:
+			self.ssl_cert = ssl_cert
+			self.pass_phrase = QtWidgets.QLineEdit(self)
+			self.repeat_phrase = QtWidgets.QLineEdit(self)
+			self.pass_phrase.setPlaceholderText('Enter Passphrase: atleast length 8')
+			self.repeat_phrase.setPlaceholderText('Repeat Correct Passphrase')
+			self.pass_phrase.setEchoMode(QtWidgets.QLineEdit.Password)
+			self.repeat_phrase.setEchoMode(QtWidgets.QLineEdit.Password)
+			self.btn_create = QtWidgets.QPushButton('Create SSL Certificate', self)
+			self.btn_create.clicked.connect(self.handleSsl)
+			self.setWindowTitle('SSL')
+			layout = QtWidgets.QVBoxLayout(self)
+			layout.addWidget(self.pass_phrase)
+			layout.addWidget(self.repeat_phrase)
+			layout.addWidget(self.btn_create)
 		else:
 			self.text_name = QtWidgets.QLineEdit(self)
 			self.text_pass = QtWidgets.QLineEdit(self)
@@ -20100,6 +20262,43 @@ class LoginAuth(QtWidgets.QDialog):
 			self.show()
 			self.count = 0
 			self.found = True
+	
+	def handleSsl(self):
+		if self.pass_phrase.text() == self.repeat_phrase.text():
+			self.hide()
+			pass_word = self.pass_phrase.text()
+			if len(pass_word) >=8:
+				my_ip = str(ui.local_ip_stream)
+				server_key = os.path.join(TMPDIR,'server.key')
+				server_csr = os.path.join(TMPDIR,'server.csr')
+				server_crt = os.path.join(TMPDIR,'server.crt')
+				cn = '/CN='+my_ip
+				if ui.my_public_ip and ui.access_from_outside_network:
+					my_ip = str(ui.my_public_ip)	
+				subprocess.call(['openssl','genrsa','-des3','-passout','pass:'+pass_word,'-out',server_key,'2048'])
+				print('key--generated')
+				subprocess.call(['openssl','rsa', '-in', server_key, '-out', server_key, '-passin', 'pass:'+pass_word])
+				print('next')
+				subprocess.call(['openssl', 'req', '-sha256', '-new', '-key', server_key, '-out', server_csr, '-subj', cn])
+				print('req')
+				subprocess.call(['openssl', 'x509', '-req', '-sha256', '-days', '365', '-in', server_csr, '-signkey', server_key, '-out', server_crt])
+				print('final')
+				f = open(self.ssl_cert,'w')
+				content1 = open(server_crt).read()
+				content2 = open(server_key).read()
+				f.write(content1+'\n'+content2)
+				f.close()
+				print('ssl generated')
+			else:
+				self.pass_phrase.clear()
+				self.repeat_phrase.clear()
+				self.pass_phrase.setPlaceholderText('Length of password less than 8 characters, Make it atleast 8')
+				self.show()
+		else:
+			self.pass_phrase.clear()
+			self.repeat_phrase.clear()
+			self.pass_phrase.setPlaceholderText('Wrong Values Try again')
+			self.show()
 	
 	def _set_params(self):
 		new_ip_val = None
@@ -21040,6 +21239,28 @@ def main():
 				except Exception as e:
 					print(e)
 					ui.keep_background_constant = False
+			elif i.startswith('HTTPS_ON='):
+				try:
+					k = j.lower()
+					if k:
+						if k == 'yes' or k == 'true' or k == '1':
+							ui.https_media_server = True
+						else:
+							ui.https_media_server = False
+				except Exception as e:
+					print(e)
+					ui.https_media_server = False
+			elif i.startswith('MEDIA_SERVER_COOKIE='):
+				try:
+					k = j.lower()
+					if k:
+						if k == 'yes' or k == 'true' or k == '1':
+							ui.media_server_cookie = True
+						else:
+							ui.media_server_cookie = False
+				except Exception as e:
+					print(e)
+					ui.media_server_cookie = False
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
@@ -21051,6 +21272,8 @@ def main():
 		f.write("\nAUTH=NONE")
 		f.write("\nACCESS_FROM_OUTSIDE_NETWORK=False")
 		f.write("\nCLOUD_IP_FILE=none")
+		f.write("\nHTTPS_ON=False")
+		f.write("\nMEDIA_SERVER_COOKIE=False")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001
