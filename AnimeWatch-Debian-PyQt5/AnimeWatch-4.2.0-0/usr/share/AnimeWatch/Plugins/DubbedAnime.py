@@ -600,7 +600,10 @@ class DubbedAnime():
 							print('----------------',content,'-------------------')
 							
 							n = re.findall('Location: [^\n]*',content)
-							final = re.sub('Location: |\r','',n[-1])
+							if n:
+								final = re.sub('Location: |\r','',n[-1])
+							else:
+								final = k
 							print(final)
 							final = re.sub(' ','%20',final)
 							if final:
