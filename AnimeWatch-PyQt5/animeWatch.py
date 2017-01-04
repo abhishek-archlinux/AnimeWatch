@@ -294,7 +294,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				cur_time = int(time.time())
 				print(self.client_auth_dict)
 				print(cur_time-old_time,'--time--')
-				if (cur_time - old_time) > 24*3600:
+				if (cur_time - old_time) > ui.cookie_expiry_limit*3600:
 					cookie_verified = False
 					del self.client_auth_dict[uid_c]
 					print('deleting client cookie due to timeout')
@@ -316,7 +316,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						found_uid = True
 						time_diff = int(time.time()) - int(old_time)
 						print(time_diff,'--time--diff--')
-						if (time_diff) > 24*3600:
+						if (time_diff) > ui.cookie_playlist_expiry_limit*3600:
 							del self.playlist_auth_dict[pl_id]
 							del_uid = True
 				except Exception as err_val:
@@ -340,59 +340,22 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			print(client_addr,'--cli--')
 			print(ui.client_auth_arr,'--auth--')
 			if not cli_key and (not client_addr in ui.client_auth_arr):
-				self.auth_header()
+				if ipaddress.ip_address(client_addr).is_private:
+					self.auth_header()
+				else:
+					self.final_message(b'Access from outside not allowed')
 			elif (cli_key == new_key) or (client_addr in ui.client_auth_arr):
 				first_time = False
 				if client_addr not in ui.client_auth_arr:
-					ui.client_auth_arr.append(client_addr)
-					if not ipaddress.ip_address(client_addr).is_private:
-						first_time = True
-				elif client_addr in ui.client_auth_arr:
-					if not ipaddress.ip_address(client_addr).is_private:
-						if (path.startswith('abs_path=') or 
-								path.startswith('relative_path=') 
-								or (cli_key == new_key)):
-							first_time = True
+					if ipaddress.ip_address(client_addr).is_private:
+						ui.client_auth_arr.append(client_addr)
 				if ipaddress.ip_address(client_addr).is_private:
 					if type_request == 'get':
 						self.get_the_content(path,get_bytes)
 					elif type_request == 'head':
 						self.process_HEAD()
 				else:
-					if ui.access_from_outside_network:
-						if not ui.my_public_ip:
-							try:
-								my_ip = str(ccurl('https://diagnostic.opendns.com/myip'))
-								try:
-									new_ip_object = ipaddress.ip_address(my_ip)
-								except Exception as e:
-									print(e)
-									my_ip = None
-							except Exception as e:
-								print(e)
-								my_ip = None
-						else:
-							my_ip = ui.my_public_ip
-						if my_ip:
-							if first_time:
-								if type_request == 'get':
-									self.get_the_content(path,get_bytes,my_ip_addr=my_ip)
-								elif type_request == 'head':
-									self.process_HEAD()
-							else:
-								#self.final_message(b'No More Activity Allowed')
-								self.auth_header()
-						else:
-							self.final_message(b'Could not find your Public IP')
-					else:
-						txt = b'Access From Outside Network Not Allowed'
-						self.final_message(txt)
-						try:
-							index = ui.client_auth_arr.index(client_addr)
-							del ui.client_auth_arr[index]
-						except Exception as e:
-							print(e)
-						print(ui.client_auth_arr)
+					self.final_message(b'Access from outside not allowed')
 			else:
 				txt = b'You are not authorized to access the content'
 				self.final_message(txt)
@@ -430,7 +393,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.playlist_auth_dict.update({uid_pl:cur_time})
 				self.client_auth_dict.update({uid:new_id})
 				set_cookie_id = "id="+uid
-				self.final_message(b'Session Established',set_cookie_id)
+				self.final_message(b'Session Established, Now reload page again',set_cookie_id)
 				cookie_set = True
 			if cookie_set or cookie_verified:
 				if ipaddress.ip_address(client_addr).is_private:
@@ -441,6 +404,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				elif ui.access_from_outside_network:
 					if not ui.my_public_ip:
 						try:
+							print('trying to get external public ip')
 							my_ip = str(ccurl('https://diagnostic.opendns.com/myip'))
 							try:
 								new_ip_object = ipaddress.ip_address(my_ip)
@@ -1047,6 +1011,31 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					ui.client_auth_arr.append(ui.local_ip_stream)
 			except Exception as e:
 				print(e)
+		elif path.startswith('logout'):
+			try:
+				client_addr = str(self.client_address[0])
+				if client_addr in ui.client_auth_arr:
+					index = ui.client_auth_arr.index(client_addr)
+					del ui.client_auth_arr[index]
+					
+				cookie_val = self.headers['Cookie']
+				print(cookie_val,'--cookie--')
+				if cookie_val:
+					try:
+						uid_c = cookie_val.split('=')[1]
+						if uid_c in self.client_auth_dict:
+							del self.client_auth_dict[uid_c]
+							print('deleting client cookie')
+					except Exception as err_val:
+						print(err_val)
+				print(self.client_auth_dict)
+				print(self.playlist_auth_dict)
+				print("client: {0} logged out".format(client_addr))
+				txt = "logged out. Now Clear Browser Cache, and ACTIVE LOGINS, to avoid auto-login"
+				txt_b = bytes(txt,'utf-8')
+				self.final_message(txt_b)
+			except Exception as e:
+				print(e)
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
@@ -1115,12 +1104,14 @@ class MyTCPServer(TCPServer):
 				
 class ThreadServerLocal(QtCore.QThread):
 	cert_signal = pyqtSignal(str)
+	media_server_start = pyqtSignal(str)
 	def __init__(self,ip,port):
 		
 		QtCore.QThread.__init__(self)
 		self.ip = ip
 		self.port = int(port)
 		self.cert_signal.connect(generate_ssl_cert)
+		self.media_server_start.connect(media_server_started)
 		
 	def __del__(self):
 		self.wait()                        
@@ -1137,10 +1128,12 @@ class ThreadServerLocal(QtCore.QThread):
 			if not ui.https_media_server:
 				server_address = (self.ip,self.port)
 				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
+				self.media_server_start.emit('http')
 			elif ui.https_media_server and os.path.exists(cert):
 				server_address = (self.ip,self.port)
 				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
 				httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert,ssl_version=ssl.PROTOCOL_TLSv1_1)
+				self.media_server_start.emit('https')
 			#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
 		except OSError as e:
 			e_str = str(e)
@@ -1172,6 +1165,18 @@ def generate_ssl_cert(cert):
 		ui.action_player_menu[7].setText("Start Media Server")
 		new_ssl = LoginAuth(parent=MainWindow,ssl_cert=cert)
 		new_ssl.show()
+		send_notification("1.Generating SSL as you've chosen HTTPS.\n2.Enter Atleast 8-character Passphrase in the dialog box\n3.")
+		
+
+@pyqtSlot(str)
+def media_server_started(val):
+	global ui
+	if val == 'http':
+		msg = 'Media Server Started at\nhttp://{0}:{1}'.format(ui.local_ip_stream,str(ui.local_port_stream))
+		send_notification(msg)
+	elif val == 'https':
+		msg = 'Media Server Started at\nhttps://{0}:{1}\nwith SSL support'.format(ui.local_ip_stream,str(ui.local_port_stream))
+		send_notification(msg)
 
 class ThreadingExample(QtCore.QThread):
     
@@ -7932,6 +7937,8 @@ class Ui_MainWindow(object):
 		self.keep_background_constant = False
 		self.https_media_server = False
 		self.media_server_cookie = False
+		self.cookie_expiry_limit = 24
+		self.cookie_playlist_expiry_limit = 24
 		self.posterfound_arr = []
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
@@ -9127,16 +9134,14 @@ class Ui_MainWindow(object):
 					self.local_http_server = ThreadServerLocal(
 						self.local_ip_stream,self.local_port_stream)
 					self.local_http_server.start()
-					msg = 'Media Server Started at \n http://'+self.local_ip_stream+':'+str(self.local_port_stream)
-					#subprocess.Popen(["notify-send",msg])
-					send_notification(msg)
+					
 			elif v == 'Stop Media Server':
 				self.start_streaming = False
 				self.action_player_menu[7].setText("Start Media Server")
 				if self.local_http_server.isRunning():
 					httpd.shutdown()
 					self.local_http_server.quit()
-					msg = 'Stopping Media Server\n http://'+self.local_ip_stream+':'+str(self.local_port_stream)
+					msg = 'Stopping Media Server\n '+self.local_ip_stream+':'+str(self.local_port_stream)
 					#subprocess.Popen(["notify-send",msg])
 					send_notification(msg)
 		elif val.lower() == 'set media server user/password':
@@ -20300,6 +20305,7 @@ class LoginAuth(QtWidgets.QDialog):
 				f.write(content1+'\n'+content2)
 				f.close()
 				print('ssl generated')
+				send_notification("Certificate Successfully Generated.\nNow Start Media Server Again.")
 			else:
 				self.pass_phrase.clear()
 				self.repeat_phrase.clear()
@@ -21272,6 +21278,20 @@ def main():
 				except Exception as e:
 					print(e)
 					ui.media_server_cookie = False
+			elif i.startswith('COOKIE_EXPIRY_LIMIT='):
+				try:
+					k = float(j)
+					ui.cookie_expiry_limit = k
+				except Exception as e:
+					print(e)
+					ui.cookie_expiry_limit = 24
+			elif i.startswith('COOKIE_PLAYLIST_EXPIRY_LIMIT='):
+				try:
+					k = float(j)
+					ui.cookie_playlist_expiry_limit = k
+				except Exception as e:
+					print(e)
+					ui.cookie_playlist_expiry_limit = 24
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
@@ -21285,6 +21305,8 @@ def main():
 		f.write("\nCLOUD_IP_FILE=none")
 		f.write("\nHTTPS_ON=False")
 		f.write("\nMEDIA_SERVER_COOKIE=False")
+		f.write("\nCOOKIE_EXPIRY_LIMIT=24")
+		f.write("\nCOOKIE_PLAYLIST_EXPIRY_LIMIT=24")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001

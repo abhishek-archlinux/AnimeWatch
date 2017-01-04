@@ -12,6 +12,8 @@
 <button id="prev">Prev</button>
 <button id="next">Next</button>
 <button id="shuffle">Shuffle</button>
+<button id="m3u">Get M3U</button>
+<button id="logout">Logout</button>
 </div>
 <br>
 <div class="site_selection">
@@ -44,6 +46,8 @@ var _player = document.getElementById("player"),
     _play = document.getElementById("play"),
     _title = document.getElementById("title"),
     _shuffle = document.getElementById("shuffle"),
+    _m3u = document.getElementById("m3u"),
+    _logout = document.getElementById("logout"),
     _prev = document.getElementById("prev");
 
 // functions
@@ -187,6 +191,16 @@ _shuffle.addEventListener("click", function () {
 	window.location.href = new_shuffle;
 });
 
+_m3u.addEventListener("click", function () {
+    var x = window.location.href;
+    x = x.replace(".htm","");
+    x = x.concat(".m3u");
+    window.location.href = x;
+});
+
+_logout.addEventListener("click", function () {
+    window.location.href = 'logout'
+});
 
 _stop.addEventListener("click", function () {
     _player.pause();
