@@ -96,7 +96,12 @@ def ccurl_string_get(url,opt,extra,download_manager=None):
 		command = ["curl",'-L',"-I","-A",hdr,'-b',extra,url]
 	elif opt == '-d':
 		command = ["curl",'-L',"-A",hdr,'-d',extra,url]
-		
+	ver_peer = url.split('/')
+	if len(ver_peer) > 3:
+		ver_peer_get = ver_peer[3]
+		if ver_peer_get.startswith('abs_path') and '&pl_id=' in ver_peer_get:
+			if '-k' not in command:
+				command.append('-k')
 	print(command)
 	return command
 
@@ -160,7 +165,12 @@ def wget_string_get(url,dest,opt,extra,tmp_log,download_manager=None):
 		#	command.append(cert)
 		#else:
 		command.append('--no-check-certificate')
-			
+	ver_peer = url.split('/')
+	if len(ver_peer) > 3:
+		ver_peer_get = ver_peer[3]
+		if ver_peer_get.startswith('abs_path') and '&pl_id=' in ver_peer_get:
+			if '--no-check-command' not in command:
+				command.append('--no-check-certificate')
 	print(command)
 	return command
 
@@ -493,6 +503,11 @@ def ccurl(url,external_cookie=None,user_auth=None):
 			if user_auth != None:
 				c.setopt(c.HTTPAUTH,c.HTTPAUTH_BASIC)
 				c.setopt(c.USERPWD,user_auth)
+			ver_peer = url.split('/')
+			if len(ver_peer) > 3 and os.name != 'nt':
+				ver_peer_get = ver_peer[3]
+				if ver_peer_get.startswith('abs_path') and '&pl_id=' in ver_peer_get:
+					c.setopt(c.SSL_VERIFYPEER,False)
 			c.perform()
 			c.close()
 			content = storage.getvalue()

@@ -180,7 +180,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	old_get_bytes = 0
 	proc_req = True
 	client_auth_dict = {}
-	
+	playlist_auth_dict = {}
 	def process_HEAD(self):
 		global current_playing_file_path,path_final_Url,ui,curR
 		global epnArrList
@@ -307,23 +307,24 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		else:
 			if '&pl_id=' in path:
 				path,pl_id = path.rsplit('&pl_id=',1)
-				del_uid = None
+				del_uid = False
 				found_uid = False
-				for i in self.client_auth_dict:
-					old_time,old_pl_id = self.client_auth_dict[i].split('&pl_id=')
-					print(old_time,'--time--',pl_id,'--time--pls--')
-					if pl_id == old_pl_id:
-						playlist_id = pl_id
+				try:
+					if pl_id in self.playlist_auth_dict:
+						print(pl_id,self.playlist_auth_dict[pl_id],'--playlist--id--')
+						old_time = self.playlist_auth_dict[pl_id]
 						found_uid = True
 						time_diff = int(time.time()) - int(old_time)
 						print(time_diff,'--time--diff--')
 						if (time_diff) > 24*3600:
-							del_uid = i
-						break
+							del self.playlist_auth_dict[pl_id]
+							del_uid = True
+				except Exception as err_val:
+					print(err_val,'--316--')
+					
 				if found_uid and not del_uid:
 					cookie_verified = True
 				elif found_uid and del_uid:
-					del self.client_auth_dict[del_uid]
 					print('--timeout--')
 					
 		if ui.media_server_key and not ui.media_server_cookie:
@@ -413,10 +414,20 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				if client_addr not in ui.client_auth_arr:
 					ui.client_auth_arr.append(client_addr)
 				uid = str(uuid.uuid4())
+				while uid in self.client_auth_dict:
+					print("no unique ID, Generating again")
+					uid = str(uuid.uuid4())
+					time.sleep(0.5)
 				uid_pl = str(uuid.uuid4())
 				uid_pl = uid_pl.replace('-','')
+				while uid_pl in self.playlist_auth_dict:
+					print("no unique playlist ID, Generating again")
+					uid_pl = str(uuid.uuid4())
+					uid_pl = uid_pl.replace('-','')
+					time.sleep(0.5)
 				cur_time = str(int(time.time()))
 				new_id = cur_time+'&pl_id='+uid_pl
+				self.playlist_auth_dict.update({uid_pl:cur_time})
 				self.client_auth_dict.update({uid:new_id})
 				set_cookie_id = "id="+uid
 				self.final_message(b'Session Established',set_cookie_id)
@@ -1129,7 +1140,7 @@ class ThreadServerLocal(QtCore.QThread):
 			elif ui.https_media_server and os.path.exists(cert):
 				server_address = (self.ip,self.port)
 				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
-				httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert)
+				httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert,ssl_version=ssl.PROTOCOL_TLSv1_1)
 			#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
 		except OSError as e:
 			e_str = str(e)
@@ -15470,7 +15481,7 @@ class Ui_MainWindow(object):
 			elif list_widget == self.list6:
 				st = self.queue_url_list[row].split('	')[1]
 			st = st.replace('"','')
-			if 'youtube.com' in st:
+			if st.startswith('http'):
 				new_epn_mkv = new_epn+'.mp4'
 				new_epn_mp4 = new_epn+'.mp4'
 				file_name_mkv = os.path.join(self.default_download_location,title,new_epn_mkv)
@@ -16800,7 +16811,7 @@ class Ui_MainWindow(object):
 		print('----------------')
 		try:
 			a = str(p.readAllStandardOutput(),'utf-8').strip()
-			print(a)
+			#print(a)
 		except:
 			a =''
 		if self.get_fetch_library.lower() == 'wget':
