@@ -135,10 +135,14 @@ Note: Key 'q' used on playing video will quit the playing instance, and the same
 ######[Index](#index)
 From version 2.6.0-0, it's possible to use AnimeWatch player as media server. The media server functionality can be started by clicking 'More' button, and selecting 'Start Media Server' option. By default media server will start on 'http://127.0.0.1:9001' i.e. default loop-back address of your machine. In order to use it as media server which can be accessed from any device on the same local network, you have to change this loop-back address '127.0.0.1' to your local network address which normally starts with '192.168.x.y'. You can check, default local network address using cli tools like 'ifconfig' on any gnu/linux based systems. Once you know local network address of your server, then manually edit '~/.config/AnimeWatch/other_options.txt' file and change the field "LOCAL_STREAM_IP" appropriately with local network address. Once you've set up the 'LOCAL_STREAM_IP' field properly, then you should be able to access the current playlist on the AnimeWatch, from any device on the network. 
 
-For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current selected file in the playlist at the address 'http://192.168.1.1:9001/play'. Next and previous files in the playlist can be accessed using url's 'http://192.168.1.1:9001/next' and 'http://192.168.1.1:9001/prev' respectively.
+For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current selected file in the playlist at the address 'http://192.168.1.1:9001/play'.
+
+**Update:**A very simple web interface is provided for media server in the latest git commit, from which users can access their audio/video collection managed by AnimeWatch player. If your media server is '192.168.1.1:9001', then web interface can be opened at **192.168.2.1:9001/stream_continue.htm**. From this interface, users can generate universal media server playlist in m3u format which can be played by any media player on the local network, which supports http streaming such as mpv,vlc etc..and that too on any platform.
 
 Note: You need to use separate port number for media server and torrent streaming feature. Port number along with local IP for torrent streaming feature needs to be set in 'torrent_config.txt' (TORRENT_STREAM_IP field) and that of media server in 'other_options.txt' (LOCAL_STREAM_IP field). 
 Default Settings: 'TORRENT_STREAM_IP=127.0.0.1:8001' and 'LOCAL_STREAM_IP=127.0.0.1:9001'. In default settings one can't access local media from another computer. Users need to change default loopback address to local ip address. Users have to set local IP address and port once only. If local IP address of the media server changes dynamically next time, then the AnimeWatch application will try to find out new address automatically. If the application can't find new address then users have to manually change the config files again.
+
+
 
 ## YouTube Support
 ######[Index](#index)
