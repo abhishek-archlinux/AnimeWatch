@@ -29,16 +29,44 @@ from io import StringIO,BytesIO
 import subprocess
 import re
 from get_functions import wget_string,get_ca_certificate
+from PyQt5 import QtWidgets,QtGui,QtCore
+if os.name == 'nt':
+	import tkinter
 
-		
 def send_notification(txt):
-	if os.name == 'posix':
-		try:
+	try:
+		if os.name == 'posix':
 			subprocess.Popen(['notify-send',txt])
-		except Exception as e:
-			print(e)
+		elif os.name == 'nt':
+			qmsg_message(txt)
+	except Exception as e:
+		print(e)
 
-			
+def qmsg_message(txt):
+	print(txt)
+	root = tkinter.Tk()
+	width = root.winfo_screenwidth()
+	height = root.winfo_screenheight()
+	print(width,height,'--screen--tk--')
+	msg = QtWidgets.QMessageBox()
+	msg.setGeometry(width,0,50,20)
+	#msg.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
+	msg.setWindowModality(QtCore.Qt.NonModal)
+	msg.setWindowTitle("AnimeWatch MessageBox")
+	
+	msg.setIcon(QtWidgets.QMessageBox.Information)
+	msg.setText(txt+'\n\n(Message Will Autohide in 5 seconds)')
+	msg.show()
+	
+	frame_timer = QtCore.QTimer()
+	frame_timer.timeout.connect(lambda x=0:frame_options(msg))
+	frame_timer.setSingleShot(True)
+	frame_timer.start(5000)
+	msg.exec_()
+	
+def frame_options(box):
+	box.hide()
+	
 def open_files(file_path,lines_read=True):
 	if os.path.exists(file_path):
 		if lines_read:

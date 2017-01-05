@@ -1165,7 +1165,7 @@ def generate_ssl_cert(cert):
 		ui.action_player_menu[7].setText("Start Media Server")
 		new_ssl = LoginAuth(parent=MainWindow,ssl_cert=cert)
 		new_ssl.show()
-		send_notification("1.Generating SSL as you've chosen HTTPS.\n2.Enter Atleast 8-character Passphrase in the dialog box\n3.")
+		send_notification("1.Generating SSL as you've chosen HTTPS.\n2.Enter Atleast 8-character Passphrase in the dialog box.\n")
 		
 
 @pyqtSlot(str)
@@ -20186,6 +20186,7 @@ class LoginAuth(QtWidgets.QDialog):
 	def __init__(self, parent=None, url=None,media_server=None,settings=None,ssl_cert=None):
 		super(LoginAuth, self).__init__(parent)
 		if settings:
+			self.setWindowTitle("AnimeWatch Settings")
 			self.grid = QtWidgets.QGridLayout(self)
 			self.set_ip = QtWidgets.QLineEdit(self)
 			self.set_ip.setText(ui.local_ip_stream+':'+str(ui.local_port_stream))
