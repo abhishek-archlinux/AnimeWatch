@@ -129,26 +129,34 @@ try:
 	from stream import ThreadServer,TorrentThread,get_torrent_info
 	from stream import set_torrent_info,get_torrent_info_magnet
 	from stream import set_new_torrent_file_limit
-	
 except Exception as e:
 	print(e)
 	notify_txt = 'python3 bindings for libtorrent are broken\nTorrent Streaming feature will be disabled'
-	send_notification(notify_txt)
+	send_notification(notify_txt,display='posix')
 
 
 def get_lan_ip():
-	a = subprocess.check_output(['ip','addr','show'])
-	b = str(a,'utf-8')
-	print(b)
-	c = re.findall('inet [^ ]*',b)
-	final = ''
-	for i in c:
-		if '127.0.0.1' not in i:
-			final = i.replace('inet ','')
-			final = re.sub('/[^"]*','',final)
-	print(c)
-	print(final)
-	return final
+	if OSNAME == 'posix':
+		a = subprocess.check_output(['ip','addr','show'])
+		b = str(a,'utf-8')
+		print(b)
+		c = re.findall('inet [^ ]*',b)
+		final = ''
+		for i in c:
+			if '127.0.0.1' not in i:
+				final = i.replace('inet ','')
+				final = re.sub('/[^"]*','',final)
+		print(c)
+		print(final)
+		return final
+	elif OSNAME == 'nt':
+		a = subprocess.check_output(['ipconfig'])
+		a = str(a,'utf-8').lower()
+		b = re.search('ipv4[^\n]*',a).group()
+		c = re.search(':[^\n]*',b).group()
+		final = c[1:].strip()
+		print(c)
+		return final
 
 
 def change_config_file(ip,port):
@@ -1172,10 +1180,10 @@ def generate_ssl_cert(cert):
 def media_server_started(val):
 	global ui
 	if val == 'http':
-		msg = 'Media Server Started at\nhttp://{0}:{1}'.format(ui.local_ip_stream,str(ui.local_port_stream))
+		msg = 'Media Server Started.\nWeb interface is available at\nhttp://{0}:{1}/stream_continue.htm'.format(ui.local_ip_stream,str(ui.local_port_stream))
 		send_notification(msg)
 	elif val == 'https':
-		msg = 'Media Server Started at\nhttps://{0}:{1}\nwith SSL support'.format(ui.local_ip_stream,str(ui.local_port_stream))
+		msg = 'Media Server Started with SSL support.\nWeb interface available at \nhttps://{0}:{1}/stream_continue.htm'.format(ui.local_ip_stream,str(ui.local_port_stream))
 		send_notification(msg)
 
 class ThreadingExample(QtCore.QThread):
@@ -20292,21 +20300,25 @@ class LoginAuth(QtWidgets.QDialog):
 				cn = '/CN='+my_ip
 				if ui.my_public_ip and ui.access_from_outside_network:
 					my_ip = str(ui.my_public_ip)	
-				subprocess.call(['openssl','genrsa','-des3','-passout','pass:'+pass_word,'-out',server_key,'2048'])
-				print('key--generated')
-				subprocess.call(['openssl','rsa', '-in', server_key, '-out', server_key, '-passin', 'pass:'+pass_word])
-				print('next')
-				subprocess.call(['openssl', 'req', '-sha256', '-new', '-key', server_key, '-out', server_csr, '-subj', cn])
-				print('req')
-				subprocess.call(['openssl', 'x509', '-req', '-sha256', '-days', '365', '-in', server_csr, '-signkey', server_key, '-out', server_crt])
-				print('final')
-				f = open(self.ssl_cert,'w')
-				content1 = open(server_crt).read()
-				content2 = open(server_key).read()
-				f.write(content1+'\n'+content2)
-				f.close()
-				print('ssl generated')
-				send_notification("Certificate Successfully Generated.\nNow Start Media Server Again.")
+				try:
+					subprocess.call(['openssl','genrsa','-des3','-passout','pass:'+pass_word,'-out',server_key,'2048'])
+					print('key--generated')
+					subprocess.call(['openssl','rsa', '-in', server_key, '-out', server_key, '-passin', 'pass:'+pass_word])
+					print('next')
+					subprocess.call(['openssl', 'req', '-sha256', '-new', '-key', server_key, '-out', server_csr, '-subj', cn])
+					print('req')
+					subprocess.call(['openssl', 'x509', '-req', '-sha256', '-days', '365', '-in', server_csr, '-signkey', server_key, '-out', server_crt])
+					print('final')
+					f = open(self.ssl_cert,'w')
+					content1 = open(server_crt).read()
+					content2 = open(server_key).read()
+					f.write(content1+'\n'+content2)
+					f.close()
+					print('ssl generated')
+					send_notification("Certificate Successfully Generated.\nNow Start Media Server Again.")
+				except Exception as e:
+					print(e)
+					send_notification("Error in Generating SSL Certificate. Either 'openssl' or 'openssl.cnf' is not available in system path! Create 'cert.pem' manually, and keep it in AnimeWatch config directory.")
 			else:
 				self.pass_phrase.clear()
 				self.repeat_phrase.clear()

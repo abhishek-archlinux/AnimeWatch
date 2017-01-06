@@ -30,26 +30,27 @@ import subprocess
 import re
 from get_functions import wget_string,get_ca_certificate
 from PyQt5 import QtWidgets,QtGui,QtCore
-if os.name == 'nt':
-	import tkinter
+#if os.name == 'nt':
+#import tkinter
 
-def send_notification(txt):
+def send_notification(txt,display=None):
 	try:
 		if os.name == 'posix':
 			subprocess.Popen(['notify-send',txt])
-		elif os.name == 'nt':
+			#qmsg_message(txt)
+		elif os.name == 'nt' and display != 'posix':
 			qmsg_message(txt)
 	except Exception as e:
 		print(e)
 
 def qmsg_message(txt):
 	print(txt)
-	root = tkinter.Tk()
-	width = root.winfo_screenwidth()
-	height = root.winfo_screenheight()
-	print(width,height,'--screen--tk--')
+	#root = tkinter.Tk()
+	#width = root.winfo_screenwidth()
+	#height = root.winfo_screenheight()
+	#print(width,height,'--screen--tk--')
 	msg = QtWidgets.QMessageBox()
-	msg.setGeometry(width,0,50,20)
+	msg.setGeometry(0,0,50,20)
 	#msg.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)
 	msg.setWindowModality(QtCore.Qt.NonModal)
 	msg.setWindowTitle("AnimeWatch MessageBox")
