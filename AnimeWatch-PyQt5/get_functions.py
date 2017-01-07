@@ -102,7 +102,7 @@ def ccurl_string_get(url,opt,extra,download_manager=None):
 		if ver_peer_get.startswith('abs_path') and '&pl_id=' in ver_peer_get:
 			if '-k' not in command:
 				command.append('-k')
-	print(command)
+	#print(command)
 	return command
 
 
@@ -157,7 +157,7 @@ def wget_string_get(url,dest,opt,extra,tmp_log,download_manager=None):
 	elif opt == '-d':
 		post = '--post-data='+'"'+extra+'"'
 		command = ["wget","--read-timeout=60", "--user-agent="+hdr,post,url,"-O", dest]
-	print(command)
+	#print(command)
 	if os.name == 'nt':
 		#ca_cert = get_ca_certificate()
 		#if ca_cert:
@@ -171,21 +171,21 @@ def wget_string_get(url,dest,opt,extra,tmp_log,download_manager=None):
 		if ver_peer_get.startswith('abs_path') and '&pl_id=' in ver_peer_get:
 			if '--no-check-command' not in command:
 				command.append('--no-check-certificate')
-	print(command)
+	#print(command)
 	return command
 
 
 def getContentUnicode(content):
 	if isinstance(content,bytes):
-		print("I'm byte")
+		#print("I'm byte")
 		try:
 			content = str((content).decode('utf-8'))
 		except:
 			content = str(content)
 	else:
-		print(type(content))
+		#print(type(content))
 		content = str(content)
-		print("I'm unicode")
+		#print("I'm unicode")
 	return content
 
 def ccurlCmd(url,external_cookie=None,user_auth=None):
@@ -324,7 +324,7 @@ def ccurlWget(url,external_cookie=None,user_auth=None):
 		except Exception as e:
 			print(e)
 	content = ''
-	print(' '.join(command))
+	#print(' '.join(command))
 	try:
 		if curl_opt != '-L' and curl_opt != '-d':
 			if os.name == 'posix':
@@ -350,14 +350,16 @@ def ccurlWget(url,external_cookie=None,user_auth=None):
 	
 	if os.path.exists(tmp_html):
 		os.remove(tmp_html)
-		print('removed ',tmp_html)
+		#print('removed ',tmp_html)
 	if os.path.exists(tmp_log):
 		os.remove(tmp_log)
-		print('removed ',tmp_log)
+		#print('removed ',tmp_log)
 	if '-I' in curl_opt:
-		print('***************----------\n',content,'\n-------------*********')
+		pass
+		#print('***************----------\n',content,'\n-------------*********')
 	elif curl_opt == '-d':
-		print(type(content))
+		#print(type(content))
+		print('hello')
 	return content
 
 	

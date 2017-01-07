@@ -53,7 +53,7 @@ class MprisServer():
 					queue_list = True
 				else:
 					r = self.ui.list2.currentRow()
-					print(epnArrList[r])
+					self.ui.logger.info(epnArrList[r])
 					t1 = epnArrList[r].split('	')
 				if len(t1) > 2:
 					t = t1[0]
@@ -62,11 +62,11 @@ class MprisServer():
 					t = t1[0]
 					art = t
 				if 'internet-radio#' in info:
-					print(info,'---------_emitMeta--------')
+					self.ui.logger.info('emitMeta: {0}'.format(info))
 					art = info.split('#')[1]
 					t = epnArrList[self.ui.list2.currentRow()].split('	')[0]
 					t = t.replace('#','')
-					print(art,t)
+					self.ui.logger.info('art:{0}; title:{1}'.format(art,t))
 				if (site == 'Music' and self.ui.list3.currentItem()) or (site == 'PlayLists'): 
 					if ((site == 'Music' and self.ui.list3.currentItem().text().lower() == 'playlist') 
 							or (site == 'PlayLists')):
@@ -83,7 +83,7 @@ class MprisServer():
 						if pls_entry.startswith(self.ui.check_symbol):
 							pls_entry = pls_entry[1:] 
 						img_place = os.path.join(self.home,'thumbnails','PlayLists',pls,pls_entry)
-						print(img_place,'--img--place')
+						self.ui.logger.info('img_place={0}'.format(img_place))
 						title = re.sub('.jpg','',pls_entry)
 						art_u = img_place
 					elif site == 'Music':
@@ -102,7 +102,7 @@ class MprisServer():
 		else:
 			try:
 				r = self.ui.list2.currentRow()
-				print(epnArrList[r])
+				self.ui.logger.info(epnArrList[r])
 				t1 = epnArrList[r].split('	')
 				title = t1[0]
 				if title.startswith(self.ui.check_symbol):
@@ -110,10 +110,10 @@ class MprisServer():
 				artist = self.ui.list1.currentItem().text()
 				art_u = os.path.join(self.home,'thumbnails',artist,title+'.jpg')
 				if 'internet-radio#' in info:
-					print(info,'---------_emitMeta--------')
+					self.ui.logger.info('emitMeta: {0}'.format(info))
 					artist = info.split('#')[1]
 					title = epnArrList[self.ui.list2.currentRow()].split('	')[0]
-					print(artist,title)
+					self.ui.logger.info('artist={0}; title={1}'.format(artist,title))
 				title = title.replace('#','')
 				#if os.path.exists(art_u):
 				#	art_url = art_u

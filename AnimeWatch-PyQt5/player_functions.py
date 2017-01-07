@@ -30,6 +30,7 @@ import subprocess
 import re
 from get_functions import wget_string,get_ca_certificate
 from PyQt5 import QtWidgets,QtGui,QtCore
+import logging
 #if os.name == 'nt':
 #import tkinter
 
@@ -164,6 +165,17 @@ def get_tmp_dir():
 		TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
 	return TMPDIR
 
+def set_logger(file_name,TMPDIR):
+	file_name_log = os.path.join(TMPDIR,file_name)
+	log_file = open(file_name_log, "w", encoding="utf-8")
+	logging.basicConfig(level=logging.DEBUG)
+	formatter = logging.Formatter('%(asctime)-15s: %(levelname)-7s - %(message)s')
+	ch = logging.StreamHandler(log_file)
+	ch.setLevel(logging.DEBUG)
+	ch.setFormatter(formatter)
+	log = logging.getLogger(__name__)
+	log.addHandler(ch)
+	return log
 
 def write_files(file_name,content,line_by_line):
 	tmp_new_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp','tmp_write.txt')
@@ -172,7 +184,7 @@ def write_files(file_name,content,line_by_line):
 	if os.path.exists(file_name):
 		file_exists = True
 		shutil.copy(file_name,tmp_new_file)
-		print('copying ',file_name,' to ',tmp_new_file)
+		#print('copying ',file_name,' to ',tmp_new_file)
 	try:
 		if type(content) is list:
 			bin_mode = False
@@ -184,7 +196,7 @@ def write_files(file_name,content,line_by_line):
 					try:
 						f.write(fname)
 					except UnicodeEncodeError as e:
-						print(e,file_name+' will be written in binary mode')
+						#print(e,file_name+' will be written in binary mode')
 						bin_mode = True
 						f.close()
 						break
@@ -192,7 +204,7 @@ def write_files(file_name,content,line_by_line):
 					try:
 						f.write('\n'+fname)
 					except UnicodeEncodeError as e:
-						print(e,file_name+' will be written in binary mode')
+						#print(e,file_name+' will be written in binary mode')
 						bin_mode = True
 						f.close()
 						break
@@ -219,7 +231,7 @@ def write_files(file_name,content,line_by_line):
 					try:
 						f.write(content)
 					except UnicodeEncodeError as e:
-						print(e,file_name+' will be written in binary mode')
+						#print(e,file_name+' will be written in binary mode')
 						f.close()
 						bin_mode = True
 						
@@ -233,7 +245,7 @@ def write_files(file_name,content,line_by_line):
 					try:
 						f.write('\n'+content)
 					except UnicodeEncodeError as e:
-						print(e,file_name+' will be written in binary mode')
+						#print(e,file_name+' will be written in binary mode')
 						f.close()
 						bin_mode = True
 						
@@ -247,7 +259,7 @@ def write_files(file_name,content,line_by_line):
 				try:
 					f.write(content)
 				except UnicodeEncodeError as e:
-					print(e,file_name+' will be written in binary mode')
+					#print(e,file_name+' will be written in binary mode')
 					f.close()
 					bin_mode = True
 				if bin_mode:
@@ -259,12 +271,15 @@ def write_files(file_name,content,line_by_line):
 		print(e,'error in handling file, hence restoring original')
 		if file_exists:
 			shutil.copy(tmp_new_file,file_name)
-			print('copying ',tmp_new_file,' to ',file_name)
+			#print('copying ',tmp_new_file,' to ',file_name)
 	if os.path.exists(tmp_new_file):
 		if write_operation:
-			print('write operation on '+file_name+' successful')
+			#print('write operation on '+file_name+' successful')
+			#print('Debug:write operation successful')
+			pass
 		else:
-			print('write operation on '+file_name+' failed hence original restored')
+			print('Debug:write operation failed hence restored original')
+			#print('write operation on '+file_name+' failed hence original restored')
 
 
 get_lib = get_config_options(
