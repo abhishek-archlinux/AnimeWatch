@@ -37,8 +37,8 @@ setup(
     long_description="README.md",
     packages=['AnimeWatch_PyQt5','AnimeWatch_PyQt5.Plugins'],
     include_package_data=True,
-    entry_points={'gui_scripts':['animewatch = AnimeWatch_PyQt5.animeWatch:main'],},
-    package_data={'AnimeWatch_PyQt5':['tray.png','default.jpg','AnimeWatch.desktop','input.conf','animewatch-start','1.png','Instructions']},
+    entry_points={'gui_scripts':['animewatch = AnimeWatch_PyQt5.animeWatch:main'],'console_scripts':['animewatch_console = AnimeWatch_PyQt5.animeWatch:main']},
+    package_data={'AnimeWatch_PyQt5':['tray.png','default.jpg','AnimeWatch.desktop','input.conf','animewatch-start','1.png','Instructions','playlist.html']},
     install_requires=install_dependencies,
     description="A Audio/Video manager and Front End for mpv/mplayer with special emphasis on Anime Collection",
 )

@@ -7,3 +7,4 @@ include AnimeWatch_PyQt5/1.png
 include AnimeWatch_PyQt5/input.conf
 include AnimeWatch_PyQt5/tray.png
 include AnimeWatch_PyQt5/anime-watch
+include AnimeWatch_PyQt5/playlist.html

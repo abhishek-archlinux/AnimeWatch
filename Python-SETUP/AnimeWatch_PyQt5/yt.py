@@ -137,9 +137,9 @@ def get_yt_sub(url,name,dest_dir,tmp_dir):
 			pass
 	fh,TMPFILE = mkstemp(suffix=None,prefix='youtube-sub')
 	dir_name,sub_name = os.path.split(TMPFILE)
-	print(TMPFILE,'--output-dest--',dest_dir_sub,'--',dir_name,' ---',sub_name)
+	#print(TMPFILE,'--output-dest--',dest_dir_sub,'--',dir_name,' ---',sub_name)
 	command = "youtube-dl --all-sub --skip-download --output "+TMPFILE+" "+url
-	print(command)
+	#print(command)
 	
 	yt_sub_process = QtCore.QProcess()
 	yt_sub_process.started.connect(yt_sub_started)
@@ -164,7 +164,7 @@ def yt_sub_finished():
 	name = name_epn
 	dest_dir = dest_dir_sub
 	dir_name,sub_name = os.path.split(TMPFILE)
-	print(dir_name,sub_name)
+	#print(dir_name,sub_name)
 	m = os.listdir(dir_name)
 	new_name = name.replace('/','-')
 	if new_name.startswith('.'):
@@ -182,9 +182,9 @@ def yt_sub_finished():
 			ext = k1+'.'+k2
 			sub_ext = ext+','+sub_ext
 			dest_name = new_name + '.'+ ext
-			print(dest_name)
+			#print(dest_name)
 			dest_path = os.path.join(dest_dir,dest_name)
-			print(src_path,dest_path)
+			#print(src_path,dest_path)
 			if os.path.exists(src_path):
 				shutil.copy(src_path,dest_path)
 				os.remove(src_path)
