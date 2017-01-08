@@ -341,7 +341,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		if 'youtube.com/watch?v=' in url:
 			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
-			final_url = get_yt_url(url,self.ui.quality_val)
+			final_url = get_yt_url(url,self.ui.quality_val,self.ui.ytdl_path,self.ui.logger)
 			if final_url:
 				print(final_url,'--youtube--')
 				self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
@@ -655,7 +655,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.ui.logger.info(self.ui.epn_name_in_list)
 			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
-			final_url = get_yt_url(url,self.ui.quality_val)
+			final_url = get_yt_url(url,self.ui.quality_val,self.ui.ytdl_path,self.ui.logger)
 			if final_url:
 				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'no')
 				self.ui.tab_5.show()
@@ -673,7 +673,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				quality = 'hd'
 			else:
 				quality = self.ui.quality_val
-			finalUrl = get_yt_url(url,quality)
+			finalUrl = get_yt_url(url,quality,self.ui.ytdl_path,self.ui.logger)
 			finalUrl = finalUrl.replace('\n','')
 			title = self.title_page+'.mp4'
 			title = title.replace('"','')
@@ -688,8 +688,9 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif option.lower() == 'get subtitle (if available)':
 			self.ui.epn_name_in_list = self.title_page
 			self.ui.logger.info(self.ui.epn_name_in_list)
-			get_yt_sub(url,self.ui.epn_name_in_list,
-						self.yt_sub_folder,self.ui.tmp_download_folder)
+			get_yt_sub(
+				url,self.ui.epn_name_in_list,self.yt_sub_folder,
+				self.ui.tmp_download_folder,self.ui.ytdl_path,self.ui.logger)
 		elif option.lower() == 'queue item':
 			file_path = os.path.join(self.home,'Playlists','Queue')
 			if not os.path.exists(file_path):

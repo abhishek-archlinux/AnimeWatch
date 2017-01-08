@@ -26,13 +26,35 @@ import subprocess
 import shutil
 import os
 from tempfile import mkstemp
-from player_functions import send_notification
+from player_functions import send_notification,ccurl
 
 
-def get_yt_url(url,quality):
+def get_yt_url(url,quality,ytdl_path,logger):
 	final_url = ''
 	url = url.replace('"','')
 	m = []
+	if ytdl_path:
+		if ytdl_path == 'default':
+			youtube_dl = 'youtube-dl'
+		else:
+			if os.path.exists(ytdl_path):
+				youtube_dl = ytdl_path
+			else:
+				if ytdl_path.endswith('ytdl') or ytdl_path.endswith('ytdl.exe'):
+					send_notification('Please Wait! Getting Latest youtube-dl')
+					youtube_dl = ytdl_path
+					if ytdl_path.endswith('ytdl'):
+						ccurl('https://yt-dl.org/downloads/latest/youtube-dl'+'#-o#'+ytdl_path)
+						subprocess.Popen(['chmod','+x',ytdl_path])
+					else:
+						ccurl('https://yt-dl.org/latest/youtube-dl.exe'+'#-o#'+ytdl_path)
+				else:
+					send_notification('youtube-dl path does not exists!')
+					youtube_dl = 'youtube-dl'
+	else:
+		youtube_dl = 'youtube-dl'
+		
+	logger.info(youtube_dl)
 	if '/watch?' in url:
 		a = url.split('?')[-1]
 		b = a.split('&')
@@ -46,7 +68,7 @@ def get_yt_url(url,quality):
 			k = (j[0],j[1])
 			m.append(k)
 		d = dict(m)
-		print(d,'----dict--arguments---generated---')
+		logger.info('----dict--arguments---generated---{0}'.format(d))
 		try:
 			url = 'https://m.youtube.com/watch?v='+d['v']
 		except:
@@ -55,62 +77,71 @@ def get_yt_url(url,quality):
 		if os.name == 'posix':
 			if quality == 'sd480p':
 				final_url = subprocess.check_output(
-							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							[youtube_dl,'--youtube-skip-dash-manifest','-f',
 							'18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
 			elif quality == 'sd':
 				final_url = subprocess.check_output(
-							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							[youtube_dl,'--youtube-skip-dash-manifest','-f',
 							'18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
 			elif quality == 'hd':
 				try:
 					final_url = subprocess.check_output(
-								['youtube-dl','--youtube-skip-dash-manifest',
+								[youtube_dl,'--youtube-skip-dash-manifest',
 								'-f','22','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
 				except:
 					final_url = subprocess.check_output(
-								['youtube-dl','--youtube-skip-dash-manifest',
+								[youtube_dl,'--youtube-skip-dash-manifest',
 								'-f','18','-g','--playlist-end','1',url])
 					final_url = str(final_url,'utf-8')
 		else:
 			if quality == 'sd480p':
 				final_url = subprocess.check_output(
-							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							[youtube_dl,'--youtube-skip-dash-manifest','-f',
 							'18','-g','--playlist-end','1',url],shell=True)
 				final_url = str(final_url,'utf-8')
 			elif quality == 'sd':
 				final_url = subprocess.check_output(
-							['youtube-dl','--youtube-skip-dash-manifest','-f',
+							[youtube_dl,'--youtube-skip-dash-manifest','-f',
 							'18','-g','--playlist-end','1',url],shell=True)
 				final_url = str(final_url,'utf-8')
 			elif quality == 'hd':
 				try:
 					final_url = subprocess.check_output(
-								['youtube-dl','--youtube-skip-dash-manifest',
+								[youtube_dl,'--youtube-skip-dash-manifest',
 								'-f','22','-g','--playlist-end','1',url],
 								shell=True)
 					final_url = str(final_url,'utf-8')
 				except:
 					final_url = subprocess.check_output(
-								['youtube-dl','--youtube-skip-dash-manifest',
+								[youtube_dl,'--youtube-skip-dash-manifest',
 								'-f','18','-g','--playlist-end','1',url],
 								shell=True)
 					final_url = str(final_url,'utf-8')
 	except Exception as e:
 		print(e,'--error in processing youtube url--')
 		txt ='Please Update youtube-dl'
-		#subprocess.Popen(['notify-send',txt])
 		send_notification(txt)
 		final_url = ''
+		if ytdl_path.endswith('ytdl') or ytdl_path.endswith('ytdl.exe'):
+			send_notification('Please Wait! Getting Latest youtube-dl')
+			if ytdl_path.endswith('ytdl'):
+				ccurl('https://yt-dl.org/downloads/latest/youtube-dl'+'#-o#'+ytdl_path)
+				subprocess.Popen(['chmod','+x',ytdl_path])
+			else:
+				ccurl('https://yt-dl.org/latest/youtube-dl.exe'+'#-o#'+ytdl_path)
 		
 		
-	print(final_url)
+	logger.info(final_url)
 	return final_url
 
-def get_yt_sub(url,name,dest_dir,tmp_dir):
-	global name_epn, dest_dir_sub,tmp_dir_sub,TMPFILE
+def get_yt_sub(url,name,dest_dir,tmp_dir,ytdl_path,log):
+	global name_epn, dest_dir_sub,tmp_dir_sub,TMPFILE,logger
+	logger = log
+	if not ytdl_path:
+		youtube_dl = 'youtube-dl'
 	name_epn = name
 	dest_dir_sub = dest_dir
 	tmp_dir_sub = tmp_dir
@@ -137,9 +168,13 @@ def get_yt_sub(url,name,dest_dir,tmp_dir):
 			pass
 	fh,TMPFILE = mkstemp(suffix=None,prefix='youtube-sub')
 	dir_name,sub_name = os.path.split(TMPFILE)
-	#print(TMPFILE,'--output-dest--',dest_dir_sub,'--',dir_name,' ---',sub_name)
-	command = "youtube-dl --all-sub --skip-download --output "+TMPFILE+" "+url
-	#print(command)
+	logger.info("TMPFILE={0};Output-dest={1};dir_name={2};sub_name={3}".format(TMPFILE,dest_dir_sub,dir_name,sub_name))
+	if ytdl_path == 'default':
+		youtube_dl = 'youtube-dl'
+	else:
+		youtube_dl = ytdl_path
+	command = youtube_dl+" --all-sub --skip-download --output "+TMPFILE+" "+url
+	logger.info(command)
 	
 	yt_sub_process = QtCore.QProcess()
 	yt_sub_process.started.connect(yt_sub_started)
