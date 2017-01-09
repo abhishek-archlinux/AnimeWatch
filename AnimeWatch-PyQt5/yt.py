@@ -27,12 +27,15 @@ import shutil
 import os
 from tempfile import mkstemp
 from player_functions import send_notification,ccurl
-
+import time
 
 def get_yt_url(url,quality,ytdl_path,logger):
 	final_url = ''
 	url = url.replace('"','')
 	m = []
+	ytdl_stamp = os.path.join(
+		os.path.expanduser('~'),'.config','AnimeWatch','tmp',
+		'ytdl_update_stamp.txt')
 	if ytdl_path:
 		if ytdl_path == 'default':
 			youtube_dl = 'youtube-dl'
@@ -48,6 +51,11 @@ def get_yt_url(url,quality,ytdl_path,logger):
 						subprocess.Popen(['chmod','+x',ytdl_path])
 					else:
 						ccurl('https://yt-dl.org/latest/youtube-dl.exe'+'#-o#'+ytdl_path)
+					update_time = str(int(time.time()))
+					if not os.path.exists(ytdl_stamp):
+						f = open(ytdl_stamp,'w')
+						f.write(update_time)
+						f.close() 
 				else:
 					send_notification('youtube-dl path does not exists!')
 					youtube_dl = 'youtube-dl'
@@ -121,18 +129,37 @@ def get_yt_url(url,quality,ytdl_path,logger):
 								shell=True)
 					final_url = str(final_url,'utf-8')
 	except Exception as e:
-		print(e,'--error in processing youtube url--')
+		logger.info('--error in processing youtube url--{0}'.format(e))
 		txt ='Please Update youtube-dl'
 		send_notification(txt)
 		final_url = ''
+		updated_already = False
 		if ytdl_path.endswith('ytdl') or ytdl_path.endswith('ytdl.exe'):
-			send_notification('Please Wait! Getting Latest youtube-dl')
-			if ytdl_path.endswith('ytdl'):
-				ccurl('https://yt-dl.org/downloads/latest/youtube-dl'+'#-o#'+ytdl_path)
-				subprocess.Popen(['chmod','+x',ytdl_path])
+			if os.path.exists(ytdl_stamp):
+				content = open(ytdl_stamp,'r').read()
+				try:
+					old_time = int(content)
+				except Exception as e:
+					log.info(e)
+					old_time = int(time.time()) - 3600
+				cur_time = int(time.time())
+				if (cur_time - old_time < 24*3600):
+					updated_already = True
+			if not updated_already:
+				send_notification('Please Wait! Getting Latest youtube-dl')
+				if ytdl_path.endswith('ytdl'):
+					ccurl('https://yt-dl.org/downloads/latest/youtube-dl'+'#-o#'+ytdl_path)
+					subprocess.Popen(['chmod','+x',ytdl_path])
+				else:
+					ccurl('https://yt-dl.org/latest/youtube-dl.exe'+'#-o#'+ytdl_path)
+				send_notification('Updated youtube-dl, Now Try Playing Video Again!')
+				update_time = str(int(time.time()))
+				if not os.path.exists(ytdl_stamp):
+					f = open(ytdl_stamp,'w')
+					f.write(update_time)
+					f.close()
 			else:
-				ccurl('https://yt-dl.org/latest/youtube-dl.exe'+'#-o#'+ytdl_path)
-		
+				send_notification('youtube-dl is already newest version')
 		
 	logger.info(final_url)
 	return final_url
