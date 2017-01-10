@@ -61,7 +61,7 @@ class musicArtist():
 			url = "http://www.last.fm/search?q="+name
 		else:
 			url = name_url
-		print (url)
+		#print(url)
 		wiki = ""
 		if not name_url:
 			#content = self.ccurl(url,'')
@@ -73,7 +73,7 @@ class musicArtist():
 			#print link
 			for i in link:
 				j = i.findAll('a')
-				print (j)
+				#print (j)
 				for k in j:
 					try:
 						url = k['href']
@@ -81,8 +81,8 @@ class musicArtist():
 						break
 					except:
 						pass
-			print (name)
-			print (url)
+			#print(name)
+			#print(url)
 		
 		
 		if url.startswith('http'):
@@ -90,15 +90,15 @@ class musicArtist():
 		else:
 			url = "http://www.last.fm" + url
 		
-		print (url,'--music-artist--')
+		#print(url,'--music-artist--')
 		img_url = url+'/+images'
 		wiki_url = url + '/+wiki'
-		print (wiki_url)
+		#print(wiki_url)
 		#content = self.ccurl(wiki_url,'')
 		content = ccurl(wiki_url)
 		soup = BeautifulSoup(content,'lxml')
 		link = soup.find('div',{'class':'wiki-content'})
-		print (link)
+		#print(link)
 
 		if link:
 			
@@ -120,6 +120,6 @@ class musicArtist():
 				img.append(u)
 		img = list(set(img))
 		#print img
-		print (len(img))
+		print(len(img))
 		img.append(wiki)
 		return img

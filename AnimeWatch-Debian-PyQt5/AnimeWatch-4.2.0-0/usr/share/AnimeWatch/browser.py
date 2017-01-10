@@ -337,11 +337,11 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		final_url = ''
 		url = link
 		self.epn_name_in_list = self.title_page
-		print(url,'clicked_link')
+		self.ui.logger.info('--clicked--link: {0}'.format(url))
 		if 'youtube.com/watch?v=' in url:
 			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
-			final_url = get_yt_url(url,self.ui.quality_val)
+			final_url = get_yt_url(url,self.ui.quality_val,self.ui.ytdl_path,self.ui.logger)
 			if final_url:
 				print(final_url,'--youtube--')
 				self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
@@ -424,8 +424,8 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		self.get_playlist = False
 		
 	def triggerPlaylist(self,value,url,title):
-		print ('Menu Clicked')
-		print (value)
+		print('Menu Clicked')
+		print(value)
 		file_path = os.path.join(self.home,'Playlists',str(value))
 		if '/' in title:
 			title = title.replace('/','-')
@@ -460,7 +460,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			url = data.linkUrl().url()
 			self.title_page = data.linkText()
 			self.selected_text = data.selectedText()
-			print(self.selected_text)
+			self.ui.logger.info(self.selected_text)
 			#print(data.selectedText(),'--selected-text--')
 			try:
 				#self.title_page = self.title_page.strip()
@@ -489,10 +489,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		except:
 			url = self.hoveredLink
 			pass
-		print(url)
+		self.ui.logger.info(url)
 		if not url.startswith('http'):
 			url = self.media_url
-			print(url)
+			self.ui.logger.info(url)
 			
 		arr = ['Download As Fanart','Download As Cover','Copy Summary']
 		arr_extra_tvdb = ['Series Link','Season Episode Link']
@@ -623,7 +623,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 							f.close()
 			elif ('tvdb' in self.url().url() or 'last.fm' in self.url().url() 
 					or self.selected_text):
-				print(self.url().url(),'--tvdb-url--')
+				self.ui.logger.info(self.url().url())
 				if 'tvdb' in self.url().url():
 					arr = arr + arr_extra_tvdb
 				elif 'last.fm' in self.url().url():
@@ -652,10 +652,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		if option.lower() == 'play with animewatch':
 			final_url = ''
 			self.ui.epn_name_in_list = self.title_page
-			print(self.ui.epn_name_in_list)
+			self.ui.logger.info(self.ui.epn_name_in_list)
 			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
-			final_url = get_yt_url(url,self.ui.quality_val)
+			final_url = get_yt_url(url,self.ui.quality_val,self.ui.ytdl_path,self.ui.logger)
 			if final_url:
 				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'no')
 				self.ui.tab_5.show()
@@ -664,7 +664,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 		elif option.lower() == 'add as local playlist':
 			self.get_playlist = True
 			if self.playlist_dict:
-				print(self.get_playlist,'=get_playlist')
+				self.ui.logger.info(self.get_playlist,'=get_playlist')
 				self.add_playlist(self.playlist_name)
 		elif option.lower() == 'download':
 			if self.ui.quality_val == 'sd480p':
@@ -673,7 +673,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				quality = 'hd'
 			else:
 				quality = self.ui.quality_val
-			finalUrl = get_yt_url(url,quality)
+			finalUrl = get_yt_url(url,quality,self.ui.ytdl_path,self.ui.logger)
 			finalUrl = finalUrl.replace('\n','')
 			title = self.title_page+'.mp4'
 			title = title.replace('"','')
@@ -687,9 +687,10 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.ui.infoWget(command,0)
 		elif option.lower() == 'get subtitle (if available)':
 			self.ui.epn_name_in_list = self.title_page
-			print(self.ui.epn_name_in_list)
-			get_yt_sub(url,self.ui.epn_name_in_list,
-						self.yt_sub_folder,self.ui.tmp_download_folder)
+			self.ui.logger.info(self.ui.epn_name_in_list)
+			get_yt_sub(
+				url,self.ui.epn_name_in_list,self.yt_sub_folder,
+				self.ui.tmp_download_folder,self.ui.ytdl_path,self.ui.logger)
 		elif option.lower() == 'queue item':
 			file_path = os.path.join(self.home,'Playlists','Queue')
 			if not os.path.exists(file_path):
