@@ -1,6 +1,6 @@
 ﻿# AnimeWatch
 
-AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge frontend like smplayer or vlc, but it tries to incorporate many new features which are normally absent from most of the media player frontend designed for GNU/linux systems.
+AnimeWatch Player is Audio/Video manager and mutlimedia player (based on mpv and mplayer), along with functionalities of portable media server. It can be simply used as normal mutimedia frontend for mpv/mplayer, or it can be turned into portable media server on the fly.
 
 ## Index
 
