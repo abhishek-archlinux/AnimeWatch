@@ -35,6 +35,7 @@ import subprocess,re
 from player_functions import send_notification
 import select
 import base64
+import ssl
 
 class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	
@@ -246,13 +247,15 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	
 class ThreadServer(QtCore.QThread):
 	
-	def __init__(self,ip,port,key=None,client_arr=None):
+	def __init__(self,ip,port,key=None,client_arr=None,https_conn=None,cert_file=None):
 		global thread_signal,media_server_key,client_auth_arr
 		QtCore.QThread.__init__(self)
 		self.ip = ip
 		self.port = int(port)
 		media_server_key = key
 		client_auth_arr = client_arr
+		self.https_allow = https_conn
+		self.cert_file = cert_file
 		
 	def __del__(self):
 		self.wait()                        
@@ -263,6 +266,11 @@ class ThreadServer(QtCore.QThread):
 		server_address = (self.ip,self.port)
 		try:
 			httpd = ThreadedHTTPServer(server_address, testHTTPServer_RequestHandler)
+			if self.https_allow and self.cert_file:
+				if os.path.exists(self.cert_file):
+					httpd.socket = ssl.wrap_socket(
+						httpd.socket,certfile=self.cert_file,
+						ssl_version=ssl.PROTOCOL_TLSv1_1)
 		except:
 			txt = 'Your local IP changed..or port is blocked\n..Trying to find new IP'
 			#subprocess.Popen(['notify-send',txt])

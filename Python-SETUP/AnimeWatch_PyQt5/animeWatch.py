@@ -185,12 +185,14 @@ def set_mainwindow_palette(fanart,first_time=None):
 
 
 class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
+	
 	content_binary = 0
 	protocol_version = 'HTTP/1.1'
 	old_get_bytes = 0
 	proc_req = True
 	client_auth_dict = {}
 	playlist_auth_dict = {}
+	
 	def process_HEAD(self):
 		global current_playing_file_path,path_final_Url,ui,curR
 		global epnArrList
@@ -220,7 +222,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nm = str(base64.b64decode(nm).decode('utf-8'))
 				logger.info(nm)
 				if 'youtube.com' in nm:
-					nm = get_yt_url(nm,ui.quality_val).strip()
+					nm = get_yt_url(nm,ui.quality_val,ui.ytdl_path,logger).strip()
 			except Exception as e:
 				print(e)
 		elif path.startswith('relative_path='):
@@ -232,7 +234,11 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					old_nm = nm
 					#nm = ui.epn_return_from_bookmark(nm)
 					new_torrent_signal = doGETSignal()
-					nm = "http://"+ui.local_ip+':'+str(ui.local_port)+'/'
+					if ui.https_media_server:
+						https_val = 'https'
+					else:
+						https_val = 'http'
+					nm = https_val+"://"+ui.local_ip+':'+str(ui.local_port)+'/'
 					new_torrent_signal.new_signal.emit(old_nm)
 				else:
 					nm = ui.epn_return_from_bookmark(nm,from_client=True)
@@ -962,7 +968,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nm = str(base64.b64decode(nm).decode('utf-8'))
 				logger.info(nm)
 				if 'youtube.com' in nm:
-					nm = get_yt_url(nm,ui.quality_val).strip()
+					nm = get_yt_url(nm,ui.quality_val,ui.ytdl_path,logger).strip()
 				self.process_url(nm,get_bytes)
 			except Exception as e:
 				print(e)
@@ -976,11 +982,16 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					old_nm = nm
 					#nm = ui.epn_return_from_bookmark(nm)
 					new_torrent_signal = doGETSignal()
-					if not my_ip_addr:
-						nm = "http://"+str(ui.local_ip)+':'+str(ui.local_port)+'/'
+					if ui.https_media_server:
+						https_val = 'https'
 					else:
-						nm = "http://"+str(my_ip_addr)+':'+str(ui.local_port)+'/'
+						https_val = 'http'
+					if not my_ip_addr:
+						nm = https_val+"://"+str(ui.local_ip)+':'+str(ui.local_port)+'/'
+					else:
+						nm = https_val+"://"+str(my_ip_addr)+':'+str(ui.local_port)+'/'
 					new_torrent_signal.new_signal.emit(old_nm)
+					print(nm,'--nm---')
 				else:
 					nm = ui.epn_return_from_bookmark(nm,from_client=True)
 				self.process_url(nm,get_bytes)
@@ -1078,7 +1089,6 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		except Exception as e:
 			print(e)
 			
-	
 					
 class doGETSignal(QtCore.QObject):
 	new_signal = pyqtSignal(str)
@@ -1088,19 +1098,23 @@ class doGETSignal(QtCore.QObject):
 		self.new_signal.connect(goToUi_jump)
 		self.stop_signal.connect(stop_torrent_from_client)
 		
+		
 @pyqtSlot(str)
 def goToUi_jump(nm):
 	global ui
 	url = ui.epn_return_from_bookmark(nm,from_client=True)
 	
+	
 @pyqtSlot(str)
 def stop_torrent_from_client(nm):
 	ui.stop_torrent(from_client=True)
+	
 	
 @pyqtSlot(str)
 def get_my_ip_regularly(nm):
 	new_thread = getIpThread(interval=ui.get_ip_interval,ip_file=ui.cloud_ip_file)
 	new_thread.start()
+	
 	
 class ThreadedHTTPServerLocal(ThreadingMixIn, HTTPServer):
 	pass
@@ -1113,10 +1127,11 @@ class MyTCPServer(TCPServer):
 
 				
 class ThreadServerLocal(QtCore.QThread):
+	
 	cert_signal = pyqtSignal(str)
 	media_server_start = pyqtSignal(str)
+	
 	def __init__(self,ip,port):
-		
 		QtCore.QThread.__init__(self)
 		self.ip = ip
 		self.port = int(port)
@@ -1168,6 +1183,7 @@ class ThreadServerLocal(QtCore.QThread):
 		else:
 			logger.info('server not started')
 
+
 @pyqtSlot(str)
 def generate_ssl_cert(cert):
 	global ui,MainWindow
@@ -1187,6 +1203,7 @@ def media_server_started(val):
 	elif val == 'https':
 		msg = 'Media Server Started with SSL support.\nWeb interface available at \nhttps://{0}:{1}/stream_continue.htm'.format(ui.local_ip_stream,str(ui.local_port_stream))
 		send_notification(msg)
+
 
 class ThreadingExample(QtCore.QThread):
     
@@ -1265,7 +1282,9 @@ class ThreadingExample(QtCore.QThread):
 
 
 class getIpThread(QtCore.QThread):
+	
 	got_ip_signal = pyqtSignal(str)
+	
 	def __init__(self,interval=None,ip_file=None):
 		QtCore.QThread.__init__(self)
 		if not interval:
@@ -1274,6 +1293,7 @@ class getIpThread(QtCore.QThread):
 			self.interval = interval * (3600)
 		self.got_ip_signal.connect(set_my_ip_function)
 		self.ip_file = ip_file
+		
 	def __del__(self):
 		self.wait()                        
 	
@@ -1296,7 +1316,9 @@ class getIpThread(QtCore.QThread):
 			
 @pyqtSlot(str)
 def set_my_ip_function(my_ip):
+	
 	global ui
+	
 	if my_ip.lower() != 'none':
 		ui.my_public_ip = my_ip
 		print(ui.cloud_ip_file)
@@ -1309,6 +1331,7 @@ def set_my_ip_function(my_ip):
 				print('cloud ip file is not available')
 		else:
 			print('Cloud File Does not exists')
+	
 	
 class downloadThread(QtCore.QThread):
     
@@ -1328,8 +1351,11 @@ class downloadThread(QtCore.QThread):
 		except Exception as e:
 			print(e)
 
+
 class PlayerWaitThread(QtCore.QThread):
+	
 	wait_signal = pyqtSignal(str)
+	
 	def __init__(self,command):
 		QtCore.QThread.__init__(self)
 		self.command = command
@@ -1346,9 +1372,11 @@ class PlayerWaitThread(QtCore.QThread):
 		#ui.infoPlayThread(self.command)
 		self.wait_signal.emit(self.command)
 
+
 @pyqtSlot(str)
 def start_new_player_instance(command):
 	ui.infoPlay(command)
+
 	
 class updateListThread(QtCore.QThread):
 	
@@ -1406,7 +1434,9 @@ class ThreadingThumbnail(QtCore.QThread):
 
 
 class find_poster_thread(QtCore.QThread):
+	
 	summary_signal = pyqtSignal(str,str,str)
+	
 	def __init__(
 			self,name,url=None,direct_url=None,copy_fanart=None,
 			copy_poster=None,copy_summary=None):
@@ -1731,6 +1761,7 @@ def copy_information(nm,txt,val):
 		ui.copyFanart(new_name=nm)
 	#QtWidgets.QApplication.processEvents()
 	
+	
 class MainWindowWidget(QtWidgets.QWidget):
 	
 	def __init__(self):
@@ -1835,6 +1866,7 @@ class labelDock(QtWidgets.QLabel):
 	def mouseMoveEvent(self,event):
 		logger.info(event.pos())
 
+
 class QLabelFloat(QtWidgets.QLabel):
 
 	def __init(self, parent):
@@ -1855,6 +1887,7 @@ class QLabelFloat(QtWidgets.QLabel):
 		print('float')
 	def mouseEnterEvent(self,event):
 		print('Enter Float')
+		
 		
 class ExtendedQLabel(QtWidgets.QLabel):
 
@@ -2418,8 +2451,6 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 									ui.float_window.showNormal()
 							
 		super(ExtendedQLabelEpn, self).keyPressEvent(event)				
-		
-	
 	
 			
 	def mouseMoveEvent(self,event):
@@ -2789,8 +2820,6 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 			ui.labelFrame2.setText(ui.epn_name_in_list)
 			#QtCore.QTimer.singleShot(3000, partial(ui.update_thumbnail_position))
 		elif var_mode == 5:
-			
-				
 			tab_6_player = "True"
 			self.arrow_timer = QtCore.QTimer()
 			self.arrow_timer.timeout.connect(self.arrow_hide)
@@ -3360,8 +3389,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 							["mpv","--no-sub","--ytdl=no","--quiet","--no-audio",
 							"--vo=image:outdir="+TMPDIR,
 							"--start="+str(interval)+"%","--frames=1",
-							path_final_Url]
-							)
+							path_final_Url])
 					tmp_img = os.path.join(TMPDIR,'00000001.jpg')
 					if os.path.exists(tmp_img):
 						tmp_new_img = ui.change_aspect_only(tmp_img)
@@ -3385,8 +3413,6 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				logger.info(new_small_thumb)
 				if os.path.exists(new_small_thumb):
 					os.remove(new_small_thumb)
-
-
 
 
 class MySlider(QtWidgets.QSlider):
@@ -3438,7 +3464,6 @@ class MySlider(QtWidgets.QSlider):
 					var = bytes('\n '+"seek "+str(seek_val)+' \n','utf-8')
 					mpvplayer.write(var)
 				
-
 
 class List1(QtWidgets.QListWidget):
 	
@@ -4062,7 +4087,7 @@ class List1(QtWidgets.QListWidget):
 				thumbnail = menu.addAction("Show Thumbnail View (Ctrl+Z)")
 				history = menu.addAction("History")
 				#rmPoster = menu.addAction("Remove Poster")
-				tvdb	= menu.addAction("Find Poster(TVDB)")
+				tvdb	= menu.addAction("Find Poster(TVDB) (Ctrl+Right)")
 				tvdbM	= menu.addAction("Find Poster(TVDB Manually)")
 				cache = menu.addAction("Clear Cache")
 				del_history = menu.addAction("Delete (Only For History)")
@@ -4084,8 +4109,7 @@ class List1(QtWidgets.QListWidget):
 				if action == new_pls:
 					print("creating new bookmark category")
 					item, ok = QtWidgets.QInputDialog.getText(
-								MainWindow,'Input Dialog','Enter Playlist Name'
-								)
+								MainWindow,'Input Dialog','Enter Playlist Name')
 					if ok and item:
 						file_path = os.path.join(home,'Bookmark',item+'.txt')
 						if not os.path.exists(file_path):
@@ -4152,6 +4176,7 @@ class List1(QtWidgets.QListWidget):
 					fanart_original = os.path.join(path,'thumbnail.jpg')
 					if os.path.exists(fanart_original):
 						os.remove(fanart_original)
+						
 						
 class List2(QtWidgets.QListWidget):
 	
@@ -4981,8 +5006,7 @@ class List2(QtWidgets.QListWidget):
 			home_n = os.path.join(home,'Playlists')
 			pls = sorted(
 				pls,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),
-				reverse=True
-				)
+				reverse=True)
 			j = 0
 			item_m = []
 			for i in pls:
@@ -4999,8 +5023,7 @@ class List2(QtWidgets.QListWidget):
 			if action == new_pls:
 				print("creating")
 				item, ok = QtWidgets.QInputDialog.getText(
-						MainWindow,'Input Dialog','Enter Playlist Name'
-						)
+						MainWindow,'Input Dialog','Enter Playlist Name')
 				if ok and item:
 					file_path = os.path.join(home,'Playlists',item)
 					if not os.path.exists(file_path):
@@ -5116,8 +5139,7 @@ class List2(QtWidgets.QListWidget):
 									shutil.copy(default_wall,fanart)
 									ui.videoImage(
 										picn,os.path.join(home,'Music','Artist',
-										nam,'thumbnail.jpg'),fanart,''
-										)
+										nam,'thumbnail.jpg'),fanart,'')
 		else:
 			menu = QtWidgets.QMenu(self)
 			submenuR = QtWidgets.QMenu(menu)
@@ -5134,8 +5156,7 @@ class List2(QtWidgets.QListWidget):
 			
 			pls = sorted(
 				pls,key = lambda x:os.path.getmtime(os.path.join(home_n,x)),
-				reverse=True
-				)
+				reverse=True)
 						
 			item_m = []
 			for i in pls:
@@ -5561,6 +5582,7 @@ class QLineCustomEpn(QtWidgets.QLineEdit):
 		elif event.key() == QtCore.Qt.Key_Up:
 			ui.list5.setFocus()
 		super(QLineCustomEpn, self).keyPressEvent(event)
+
 
 class QLineProgress(QtWidgets.QProgressBar):
 	
@@ -6061,6 +6083,7 @@ class Btn1(QtWidgets.QComboBox):
 		
 
 class tab6(QtWidgets.QWidget):
+	
 	def __init__(self, parent):
 		super(tab6, self).__init__(parent)
 		
@@ -6722,11 +6745,13 @@ def findimg(img):
 			subprocess.Popen(["wget",img[0],"-O",picn])
 	return picn
 
+
 try:
 	_fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
 	def _fromUtf8(s):
 		return s
+
 
 try:
 	_encoding = QtWidgets.QApplication.UnicodeUTF8
@@ -6735,6 +6760,7 @@ try:
 except AttributeError:
 	def _translate(context, text, disambig):
 		return QtWidgets.QApplication.translate(context, text, disambig)
+
 
 class Ui_MainWindow(object):
 	def setupUi(self, MainWindow):
@@ -7757,6 +7783,8 @@ class Ui_MainWindow(object):
 		self.cookie_expiry_limit = 24
 		self.cookie_playlist_expiry_limit = 24
 		self.logging_module = False
+		self.ytdl_path = 'default'
+		self.https_cert_file = os.path.join(home,'cert.pem')
 		self.posterfound_arr = []
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
@@ -8237,27 +8265,6 @@ class Ui_MainWindow(object):
 				
 				if os.path.exists(picn) and os.stat(picn).st_size:
 					self.image_fit_option(picn,picn,fit_size=6,widget=self.label)
-					"""
-					basewidth = self.label.width()
-					baseheight = self.label.height()
-					bg = Image.new('RGBA', (basewidth,baseheight))
-					try:
-						img = Image.open(str(picn))
-						w = img.size[0]
-						h = img.size[1]
-						if h > baseheight:
-							wp = float(baseheight/h)
-							nbw = int(float(wp)*float(basewidth))
-							img = img.resize((nbw,baseheight), PIL.Image.ANTIALIAS)
-							offset = (int((basewidth-nbw)/2),0)
-						else:
-							offset = (0,int((baseheight-h)/2))
-						bg.paste(img,offset)
-						bg.save(str(picn),'JPEG',quality=100)
-					except Exception as e:
-						print(e,'Error in opening image, videoImage,---6617')
-				else:
-					print('No Video Stream for thumbnail generation')"""
 			else:
 				if inter.endswith('s'):
 					inter = inter[:-1]
@@ -8984,8 +8991,7 @@ class Ui_MainWindow(object):
 				try:
 					epnArrList = sorted(
 						epnArrList,key = lambda x : str(x).split('	')[0],
-						reverse=True
-						)
+						reverse=True)
 					#epnArrList = naturallysorted(epnArrList)
 				except:
 					epnArrList = sorted(epnArrList,
@@ -8999,15 +9005,13 @@ class Ui_MainWindow(object):
 					#					key = lambda x : str(x).split('	')[0])
 				except:
 					epnArrList = sorted(
-						epnArrList,key = lambda x : x.split('	')[0]
-						)
+						epnArrList,key = lambda x : x.split('	')[0])
 				self.update_list2()
 			elif val == "Order by Date(Descending)":
 				try:
 					epnArrList = sorted(
 						epnArrList,key = lambda x : os.path.getmtime((
-						str(x).split('	')[1]).replace('"','')),reverse=True
-						)
+						str(x).split('	')[1]).replace('"','')),reverse=True)
 				except Exception as e:
 					print(e,'--playlist--contains--online--and --offline--content--')
 					"""epnArrList = sorted(epnArrList,
@@ -9019,8 +9023,7 @@ class Ui_MainWindow(object):
 				try:
 					epnArrList = sorted(
 						epnArrList,key = lambda x : os.path.getmtime((
-						str(x).split('	')[1]).replace('"',''))
-						)
+						str(x).split('	')[1]).replace('"','')))
 				except Exception as e:
 					print(e,'--playlist--contains--online--and --offline--content--')
 					"""epnArrList = sorted(epnArrList,
@@ -10831,7 +10834,6 @@ class Ui_MainWindow(object):
 					finalUrl = re.sub('Location: |\r','',m[-1])
 		return finalUrl
 			
-		
 	def epnClicked(self,dock_check=None):
 		global queueNo,mpvAlive,curR,idw,Player,mpvplayer,ui,epnArrList
 		#print(epnArrList)
@@ -12937,7 +12939,7 @@ class Ui_MainWindow(object):
 			for i in criteria:
 				self.list1.addItem(i)
 				original_path_name.append(i)
-			criteria = ['List','Open File','Open Url']
+			criteria = ['List','Open File','Open Url','Open Directory']
 			for i in criteria:
 				self.list3.addItem(i)
 			video_local_stream = False
@@ -15385,7 +15387,11 @@ class Ui_MainWindow(object):
 								f = open(row_file,'w')
 								f.write(str(row))
 								f.close()
-								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+								if ui.https_media_server:
+									https_val = 'https'
+								else:
+									https_val = 'http'
+								finalUrl = https_val+"://"+self.local_ip+':'+str(self.local_port)+'/'
 							else:
 								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session)
 						else:
@@ -15420,7 +15426,7 @@ class Ui_MainWindow(object):
 				epn = self.epn_name_in_list
 				self.playlistUpdate()
 				if 'youtube.com' in finalUrl:
-					finalUrl = get_yt_url(finalUrl,quality).strip()
+					finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 				#if is_artist_exists(row):
 					
 		elif finalUrlFound == True:
@@ -15550,11 +15556,11 @@ class Ui_MainWindow(object):
 					finalUrl = self.local_torrent_open(local_torrent_file_path)
 			elif site == 'None' and self.btn1.currentText().lower() == 'youtube':
 					finalUrl = finalUrl.replace('"','')
-					finalUrl = get_yt_url(finalUrl,quality).strip()
+					finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 					finalUrl = '"'+finalUrl+'"'
 			if 'youtube.com' in finalUrl.lower():
 				finalUrl = finalUrl.replace('"','')
-				finalUrl = get_yt_url(finalUrl,quality).strip()
+				finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 				finalUrl = '"'+finalUrl+'"'
 				
 		new_epn = self.epn_name_in_list
@@ -15824,7 +15830,11 @@ class Ui_MainWindow(object):
 		site_home = os.path.join(home,'History',site_name_val)
 		torrent_dest = os.path.join(site_home,name_file+'.torrent')
 		logger.info('torrent_dest={0} ; index={1}; path={2}'.format(torrent_dest,index,path))
-		url = 'http://'+ip+':'+str(port)+'/'
+		if ui.https_media_server:
+			https_val = 'https'
+		else:
+			https_val = 'http'
+		url = https_val+'://'+ip+':'+str(port)+'/'
 		print(url,'-local-ip-url',status)
 		
 		if status.lower() == 'get next':
@@ -15835,7 +15845,8 @@ class Ui_MainWindow(object):
 			print('--line--15410--',self.thread_server.isRunning(),'=thread_server')
 			if status.lower() =='first run' and not self.thread_server.isRunning():
 				thread_server = ThreadServer(
-					ip,port,ui.media_server_key,ui.client_auth_arr)
+					ip,port,ui.media_server_key,ui.client_auth_arr,
+					ui.https_media_server,ui.https_cert_file)
 				thread_server.start()
 			print('--line--15415--',self.thread_server.isRunning(),'=thread_server')
 			handle,ses,info,cnt,cnt_limit,file_name = get_torrent_info(
@@ -15897,7 +15908,8 @@ class Ui_MainWindow(object):
 		port = int(self.local_port)
 		if not self.thread_server.isRunning():
 			self.thread_server = ThreadServer(
-				ip,port,ui.media_server_key,ui.client_auth_arr)
+				ip,port,ui.media_server_key,ui.client_auth_arr,
+				ui.https_media_server,ui.https_cert_file)
 			self.thread_server.start()
 		logger.info(tmp)
 		tmp = str(tmp)
@@ -15939,8 +15951,11 @@ class Ui_MainWindow(object):
 						self.torrent_handle,cnt,cnt_limit,self.stream_session
 						)
 				self.do_get_thread.start()
-			
-				url = 'http://'+ip+':'+str(port)+'/'
+				if ui.https_media_server:
+					https_val = 'https'
+				else:
+					https_val = 'http'
+				url = https_val+'://'+ip+':'+str(port)+'/'
 				print(url,'-local-ip-url')
 			
 				return url
@@ -15964,8 +15979,11 @@ class Ui_MainWindow(object):
 					self.torrent_handle,cnt,cnt_limit,self.stream_session
 					)
 			self.do_get_thread.start()
-			
-			url = 'http://'+ip+':'+str(port)+'/'
+			if ui.https_media_server:
+				https_val = 'https'
+			else:
+				https_val = 'http'
+			url = https_val+'://'+ip+':'+str(port)+'/'
 			print(url,'-local-ip-url',site)
 			
 			return url
@@ -16012,7 +16030,7 @@ class Ui_MainWindow(object):
 					refererNeeded = False
 				epn = arr[0]
 				if 'youtube.com' in finalUrl:
-					finalUrl = get_yt_url(finalUrl,quality).strip()
+					finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 		
 		if (site != "SubbedAnime" and site!= "DubbedAnime" and site!="PlayLists" 
 				and finalUrlFound == False and site!= "None" and site != "Music" 
@@ -16020,7 +16038,11 @@ class Ui_MainWindow(object):
 			if site != "Local":
 				try:
 					if video_local_stream:
-						finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+						if ui.https_media_server:
+							https_val = 'https'
+						else:
+							https_val = 'http'
+						finalUrl = https_val+"://"+self.local_ip+':'+str(self.local_port)+'/'
 						print(finalUrl,'=finalUrl--torrent--')
 						if self.thread_server.isRunning():
 							if self.do_get_thread.isRunning():
@@ -16028,7 +16050,7 @@ class Ui_MainWindow(object):
 								f = open(row_file,'w')
 								f.write(str(row))
 								f.close()
-								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+								finalUrl = https_val+"://"+self.local_ip+':'+str(self.local_port)+'/'
 							else:
 								finalUrl,self.do_get_thread,self.stream_session,self.torrent_handle = self.start_torrent_stream(name,row,self.local_ip+':'+str(self.local_port),'Next',self.torrent_download_folder,self.stream_session)
 						else:
@@ -16090,11 +16112,11 @@ class Ui_MainWindow(object):
 				finalUrl = '"'+(epnArrList[row]).replace('#','',1)+'"'
 			if site == 'None' and self.btn1.currentText().lower() == 'youtube':
 					finalUrl = finalUrl.replace('"','')
-					finalUrl = get_yt_url(finalUrl,quality).strip()
+					finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 					finalUrl = '"'+finalUrl+'"'
 			if 'youtube.com' in finalUrl.lower():
 				finalUrl = finalUrl.replace('"','')
-				finalUrl = get_yt_url(finalUrl,quality).strip()
+				finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 		return finalUrl
 	
 	def epn_return_from_bookmark(self,tmp_bookmark,from_client=None):
@@ -16139,7 +16161,11 @@ class Ui_MainWindow(object):
 		else:
 			try:
 				if vi_deo_local_stream:
-					finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+					if ui.https_media_server:
+						https_val = 'https'
+					else:
+						https_val = 'http'
+					finalUrl = https_val+"://"+self.local_ip+':'+str(self.local_port)+'/'
 					print(finalUrl,'=finalUrl--torrent--')
 					if self.thread_server.isRunning():
 						if self.do_get_thread.isRunning():
@@ -17276,7 +17302,7 @@ class Ui_MainWindow(object):
 			self.list2.setCurrentRow(row)
 			if 'youtube.com' in finalUrl.lower():
 				finalUrl = finalUrl.replace('"','')
-				finalUrl = get_yt_url(finalUrl,quality).strip()
+				finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 			self.external_url = self.get_external_url_status(finalUrl)
 			#if not self.external_url:
 			#finalUrl = self.get_redirected_url_if_any(finalUrl,self.external_url)
@@ -17445,7 +17471,7 @@ class Ui_MainWindow(object):
 				idw = str(int(self.tab_5.winId()))
 			if 'youtube.com' in epnShow.lower():
 				finalUrl = epnShow.replace('"','')
-				finalUrl = get_yt_url(finalUrl,quality).strip()
+				finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 				epnShow = finalUrl
 			self.external_url = self.get_external_url_status(epnShow)
 			#if not self.external_url and Player == 'mplayer':
@@ -17568,7 +17594,7 @@ class Ui_MainWindow(object):
 				self.playlistUpdate()
 				self.list2.setCurrentRow(row)
 				if 'youtube.com' in finalUrl:
-					finalUrl = get_yt_url(finalUrl,quality).strip()
+					finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 		
 		self.adjust_thumbnail_window(row)
 		
@@ -17598,7 +17624,11 @@ class Ui_MainWindow(object):
 					if video_local_stream:
 						if self.thread_server.isRunning():
 							if self.do_get_thread.isRunning():
-								finalUrl = "http://"+self.local_ip+':'+str(self.local_port)+'/'
+								if ui.https_media_server:
+									https_val = 'https'
+								else:
+									https_val = 'http'
+								finalUrl = https_val+"://"+self.local_ip+':'+str(self.local_port)+'/'
 								if self.torrent_handle.file_priority(row):
 									self.start_torrent_stream(name,row,self.local_ip+':'+str(self.local_port),'Get Next',self.torrent_download_folder,self.stream_session)
 								else:
@@ -17703,7 +17733,7 @@ class Ui_MainWindow(object):
 					self.updateMusicCount('count',finalUrl)
 			if 'youtube.com' in finalUrl.lower():
 				finalUrl = finalUrl.replace('"','')
-				finalUrl = get_yt_url(finalUrl,quality).strip()
+				finalUrl = get_yt_url(finalUrl,quality,ui.ytdl_path,logger).strip()
 				finalUrl = '"'+finalUrl+'"'
 				
 		new_epn = self.epn_name_in_list
@@ -17884,6 +17914,7 @@ class Ui_MainWindow(object):
 		global nameListArr,original_path_name,show_hide_playlist,show_hide_titlelist
 		global pict_arr,name_arr,summary_arr,total_till,browse_cnt,tmp_name
 		global hist_arr,list2_items,bookmark,status,viewMode,video_local_stream
+		global lastDir
 		
 		hist_arr[:]=[]
 		pict_arr[:]=[]
@@ -18364,7 +18395,13 @@ class Ui_MainWindow(object):
 						self.list1.clear()
 						if item.startswith('http'):
 							watch_external_video(item)
-			
+				elif txt == 'open directory':
+					fname = QtWidgets.QFileDialog.getExistingDirectory(
+							MainWindow,'Add Directory',lastDir)
+					if fname:
+						if os.path.exists(fname):
+							lastDir = fname
+							watch_external_video(fname)
 		self.page_number.setText(str(self.list1.count()))
 		insidePreopt = 0
 		if opt == "History":
@@ -20092,24 +20129,46 @@ def watch_external_video(var):
 						ui.list1.addItem('TMP_PLAYLIST')
 			else:
 				site == 'None'
+				finalUrl = t
 				if 'youtube.com' in t:
-					t = get_yt_url(t,ui.quality_val)
-				ui.watchDirectly(t,'','no')
+					finalUrl = get_yt_url(t,ui.quality_val,ui.ytdl_path,logger)
+				epnArrList[:] = []
+				epnArrList.append(t+'	'+finalUrl+'	'+'NONE')
+				ui.watchDirectly(finalUrl,'','no')
+				if epnArrList:
+					file_name = os.path.join(home,'Playlists','TMP_PLAYLIST')
+					f = open(file_name,'w').close()
+					write_files(file_name,epnArrList,True)
+					ui.list1.clear()
+					ui.list1.addItem('TMP_PLAYLIST')
 		else:
-			new_epn = os.path.basename(t)
-			ui.epn_name_in_list = urllib.parse.unquote(new_epn)
-			ui.watchDirectly(urllib.parse.unquote('"'+t+'"'),'','no')
-			ui.dockWidget_3.hide()
-			site = "PlayLists"
-			ui.btn1.setCurrentIndex(ui.btn1.findText(site))
-			ui.list2.clear()
-			m = []
-			try:
-				path_Local_Dir,name = os.path.split(t)
-				list_dir = os.listdir(path_Local_Dir)
-			except Exception as e:
-				print(e)
-				return 0
+			if os.path.isfile(t):
+				new_epn = os.path.basename(t)
+				ui.epn_name_in_list = urllib.parse.unquote(new_epn)
+				ui.watchDirectly(urllib.parse.unquote('"'+t+'"'),'','no')
+				ui.dockWidget_3.hide()
+				site = "PlayLists"
+				ui.btn1.setCurrentIndex(ui.btn1.findText(site))
+				ui.list2.clear()
+				m = []
+				try:
+					path_Local_Dir,name = os.path.split(t)
+					list_dir = os.listdir(path_Local_Dir)
+				except Exception as e:
+					print(e)
+					return 0
+			else:
+				ui.dockWidget_3.hide()
+				site = "PlayLists"
+				ui.btn1.setCurrentIndex(ui.btn1.findText(site))
+				ui.list2.clear()
+				m = []
+				try:
+					path_Local_Dir = t
+					list_dir = os.listdir(path_Local_Dir)
+				except Exception as e:
+					print(e)
+					return 0
 			for z in list_dir:
 				if ('.mkv' in z or '.mp4' in z or '.avi' in z or '.mp3' in z 
 							or '.flv' in z or '.flac' in z or '.wma' in z
@@ -20821,6 +20880,24 @@ def main():
 				except Exception as e:
 					print(e)
 					ui.logging_module = False
+			elif i.startswith('YTDL_PATH='):
+				try:
+					k = j.lower()
+					if k == 'default':
+						ui.ytdl_path = 'default'
+					elif k == 'automatic':
+						if OSNAME == 'posix':
+							ui.ytdl_path = os.path.join(home,'src','ytdl')
+						elif OSNAME == 'nt':
+							ui.ytdl_path = os.path.join(home,'src','ytdl.exe') 
+					else:
+						if os.path.exists(j):
+							ui.ytdl_path = j
+						else:
+							ui.ytdl_path = 'default'
+				except Exception as e:
+					print(e)
+					ui.ytdl_path = 'default'
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
 		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
@@ -20837,6 +20914,7 @@ def main():
 		f.write("\nCOOKIE_EXPIRY_LIMIT=24")
 		f.write("\nCOOKIE_PLAYLIST_EXPIRY_LIMIT=24")
 		f.write("\nLOGGING=Off")
+		f.write("\nYTDL_PATH=DEFAULT")
 		f.close()
 		ui.local_ip_stream = '127.0.0.1'
 		ui.local_port_stream = 9001

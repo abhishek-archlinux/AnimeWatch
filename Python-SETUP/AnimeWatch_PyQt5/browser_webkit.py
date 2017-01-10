@@ -301,7 +301,7 @@ class Browser(QtWebKitWidgets.QWebView):
 		if 'youtube.com/watch?v=' in url:
 			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
-			final_url = get_yt_url(url,self.ui.quality_val)
+			final_url = get_yt_url(url,self.ui.quality_val,self.ui.ytdl_path,self.ui.logger)
 			if final_url:
 				print(final_url,'--youtube--')
 				self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
@@ -533,7 +533,7 @@ class Browser(QtWebKitWidgets.QWebView):
 			print(self.ui.epn_name_in_list)
 			if self.ui.mpvplayer_val.processId() > 0:
 				self.ui.mpvplayer_val.kill()
-			final_url = get_yt_url(url.toString(),self.ui.quality_val)
+			final_url = get_yt_url(url.toString(),self.ui.quality_val,self.ui.ytdl_path,self.ui.logger)
 			if final_url:
 				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'no')
 				self.ui.tab_5.show()
@@ -551,7 +551,7 @@ class Browser(QtWebKitWidgets.QWebView):
 				quality = 'hd'
 			else:
 				quality = self.ui.quality_val
-			finalUrl = get_yt_url(url.toString(),quality)
+			finalUrl = get_yt_url(url.toString(),quality,self.ui.ytdl_path,self.ui.logger)
 			finalUrl = finalUrl.replace('\n','')
 			title = self.title_page+'.mp4'
 			title = title.replace('"','')
@@ -568,7 +568,8 @@ class Browser(QtWebKitWidgets.QWebView):
 			self.ui.epn_name_in_list = self.title_page
 			print(self.ui.epn_name_in_list)
 			get_yt_sub(url.toString(),self.ui.epn_name_in_list,
-						self.yt_sub_folder,self.ui.tmp_download_folder)
+						self.yt_sub_folder,self.ui.tmp_download_folder,
+						self.ui.ytdl_path,self.ui.logger)
 			
 		elif option.lower() == 'queue item':
 			file_path = os.path.join(self.home,'Playlists','Queue')

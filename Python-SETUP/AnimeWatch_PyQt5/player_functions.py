@@ -165,6 +165,7 @@ def get_tmp_dir():
 		TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
 	return TMPDIR
 
+
 def set_logger(file_name,TMPDIR):
 	file_name_log = os.path.join(TMPDIR,file_name)
 	log_file = open(file_name_log, "w", encoding="utf-8")
@@ -176,6 +177,7 @@ def set_logger(file_name,TMPDIR):
 	log = logging.getLogger(__name__)
 	log.addHandler(ch)
 	return log
+
 
 def write_files(file_name,content,line_by_line):
 	tmp_new_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp','tmp_write.txt')
