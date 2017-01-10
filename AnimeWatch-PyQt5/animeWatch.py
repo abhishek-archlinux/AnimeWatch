@@ -4087,7 +4087,7 @@ class List1(QtWidgets.QListWidget):
 				thumbnail = menu.addAction("Show Thumbnail View (Ctrl+Z)")
 				history = menu.addAction("History")
 				#rmPoster = menu.addAction("Remove Poster")
-				tvdb	= menu.addAction("Find Poster(TVDB)")
+				tvdb	= menu.addAction("Find Poster(TVDB) (Ctrl+Right)")
 				tvdbM	= menu.addAction("Find Poster(TVDB Manually)")
 				cache = menu.addAction("Clear Cache")
 				del_history = menu.addAction("Delete (Only For History)")
@@ -4109,8 +4109,7 @@ class List1(QtWidgets.QListWidget):
 				if action == new_pls:
 					print("creating new bookmark category")
 					item, ok = QtWidgets.QInputDialog.getText(
-								MainWindow,'Input Dialog','Enter Playlist Name'
-								)
+								MainWindow,'Input Dialog','Enter Playlist Name')
 					if ok and item:
 						file_path = os.path.join(home,'Bookmark',item+'.txt')
 						if not os.path.exists(file_path):
