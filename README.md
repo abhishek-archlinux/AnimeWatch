@@ -283,7 +283,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 	
 	Note: GNU/Linux distros should install PyQt5 and other python based dependencies from their own repositories using their native package manager instead of using pip, in order to avoid conflicting files or other dependecies problems due to differing naming schemes of the package. They should remove or comment out the 'install_requires' field in the setup.py, before using this method.
 	
-	Once application is installed, launch the application using command **animewatch** from the terminal.
+	Once application is installed, launch the application using command **animewatch** or **animewatch_console** from the terminal.
 
 4. Common Method: Users have to manually install all the dependencies listed below. Then they should clone the repository and go to AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable directory. Open terminal in that directory and run 'python3 install.py' (or 'python install.py' if default python points to python3). Application launcher will be created in '~/.local/share/applications/'.
 Or they can simply click (or execute using command line) **'animewatch-start'** shell script located in the directory to start the player directly **without copying files anywhere**.
