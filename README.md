@@ -20,6 +20,8 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 [Media Server](#media-server)
 
+[Universal Playlist Generation](#universal-playlist-generation)
+
 [YouTube Player](#youtube-support)
 
 [Addons (Plugins) Structure] (#addon-structure)
@@ -72,7 +74,9 @@ AnimeWatch Player acts as Front End for mpv and mplayer. It is not full fledge f
 
 20. Youtube wrapper using qtwebengine/qtwebkit.
 
-21. Detached Video Mode
+21. Detached Video Mode.
+
+22. Universal Playlist Generation.
 
 ## Normal Mode 
 ######[Index](#index)
@@ -125,7 +129,8 @@ Alternatively, Torrent file can be directly played by opening it with AnimeWatch
 
 This feature is based on libtorrent-rasterbar {which is being used by bittorrent clients like qBittorrent and deluge} and it's python3 bindings. If you've installed latest version of libtorrent-rasterbar then python3 bindings are included along with it. In systems where older version of libtorrent-rasterbar is installed (for example in Ubuntu 14.04) , users need to install python3-libtorrent to use this feature.  
 
-If you are using mpv as backend for watching streaming torrent then it might be possible that seeking within the stream won't work. Therefore, in order to enable seeking within torrent stream forcibly using mpv, open '~/.mpv/config' file and insert line 'force-seekable=yes' into it. Seeking within torrent is not perfect, and sometime playback stops. In such case, first focus the video by taking mouse pointer over the video and press key 'q' to quit the current playing instance, and then restart the video again. If you click 'Stop' button in the AnimeWatch player, then along with quitting current playing instance, it will stop Torrent also. Therefore, if you want torrent to continue, and only restart of the the internal player then use key 'q'.
+Once Torrent streaming will start, a progress bar will appear to the right side, which will show basic information about torrent.
+If user will click on this progress bar then they will get controls for stopping torrent and for setting upload/download speed.
 
 If torrent contains multiple files then users can enqueue the desired files by selecting appropriate entry in Playlist column and pressing 'key q'.
  
@@ -135,13 +140,99 @@ Note: Key 'q' used on playing video will quit the playing instance, and the same
 ######[Index](#index)
 From version 2.6.0-0, it's possible to use AnimeWatch player as media server. The media server functionality can be started by clicking 'More' button, and selecting 'Start Media Server' option. By default media server will start on 'http://127.0.0.1:9001' i.e. default loop-back address of your machine. In order to use it as media server which can be accessed from any device on the same local network, you have to change this loop-back address '127.0.0.1' to your local network address which normally starts with '192.168.x.y'. You can check, default local network address using cli tools like 'ifconfig' on any gnu/linux based systems. Once you know local network address of your server, then manually edit '~/.config/AnimeWatch/other_options.txt' file and change the field "LOCAL_STREAM_IP" appropriately with local network address. Once you've set up the 'LOCAL_STREAM_IP' field properly, then you should be able to access the current playlist on the AnimeWatch, from any device on the network. 
 
-For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current selected file in the playlist at the address 'http://192.168.1.1:9001/play'.
+For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current running file in the playlist at the address 'http://192.168.1.1:9001/play' or 'http://192.168.2.1:9001/'. If user will use this media server IP address in repeat (loop) mode on the client side, then the client will automatically play everything, which is being played by the media server in it's playlist.
 
-**Update:**A very simple web interface is provided for media server in the latest git commit, from which users can access their audio/video collection managed by AnimeWatch player. If your media server is '192.168.1.1:9001', then web interface can be opened at **192.168.1.1:9001/stream_continue.htm**. From this interface, users can generate universal media server playlist in m3u format which can be played by any media player on the local network, which supports http streaming such as mpv,vlc etc..and that too on any platform.
+**Update: Only available in latest git commit, not in release section**
 
-Note: You need to use separate port number for media server and torrent streaming feature. Port number along with local IP for torrent streaming feature needs to be set in 'torrent_config.txt' (TORRENT_STREAM_IP field) and that of media server in 'other_options.txt' (LOCAL_STREAM_IP field). 
-Default Settings: 'TORRENT_STREAM_IP=127.0.0.1:8001' and 'LOCAL_STREAM_IP=127.0.0.1:9001'. In default settings one can't access local media from another computer. Users need to change default loopback address to local ip address. Users have to set local IP address and port once only. If local IP address of the media server changes dynamically next time, then the AnimeWatch application will try to find out new address automatically. If the application can't find new address then users have to manually change the config files again.
+A very simple web interface has been provided for media server in the latest git commit, from which users can access their audio/video collection managed by AnimeWatch player. If your media server is '192.168.1.1:9001', then web interface can be opened at **192.168.1.1:9001/stream_continue.htm**. From this interface, users can generate universal playlist in m3u format which can be played by any media player on the local network, which supports http streaming such as mpv,vlc etc..and that too on any platform. If users don't want to open web interface then they can get the media server playlist directly on any player by opening url 'http://192.168.1.1:9001/stream_continue.m3u' from within the player itself, and the current media server playlist will be directly available in the player. Alternatively users can use curl or wget to get the playlist, and save it with extension '.m3u', which then can be opened with any player which recognizes the m3u format.
 
+In local home network, if cookie and https is not enabled for media server then, one can access various media server playlists directly from vlc using simple urls.  
+
+If url ends with .htm then media server will return html page which can be viewed with the help of browser. But if you attach '.m3u' or '.pls' to url then it will directly return the playlist which can be played by any player.If no extension is attached at the end, then m3u playlist will be sent to the client.
+
+Urls which can access the media server have a very simple structure. Default url is **'/stream_continue.htm'** which will return current playlist viewable in browser, while **'/stream_continue.m3u'** will directly send playlist in m3u format. 
+The AnimeWatch player, has many sections like music,video,playlist etc..which are referred as site in url. Some of them have subsections like music has subsection such as artist,album etc..which you can see in the player. Now if you want to search for artist say 'yuki kajiura', then required url should look like **'/site=music&opt=artist&s=yuki+kajiura'.** If user will open this url using vlc then then they will directly get all songs of artist 'yuki kajiura' directly on vlc as m3u playlist. And as players such as vlc or mpv can play every format you throw at them, transcoding is not required at all on the client side, without even going to web browser. vlc is also available on various mobile platforms, hence users won't need transcoding if they will use vlc as client on mobile platform for playing playlist generated by AnimeWatch server. If cookie is not enabled, then url entries of the playlist won't change in the local private network. Therefore, user can create various playlist and can use them with vlc or mpv (if playlists has mixed audio and video content) all the time; or they can use some native music player like audacious or clementine in case playlist contains only audio.
+
+Basic Authentication: There is option for setting username and password for media server which is available in 'More' menu. Currently it supports authentication for only single user.
+
+By Default, it doesn't use cookie based authentication. It can be enabled by changing 'MEDIA_SERVER_COOKIE' field to 'True', in 'other_options.txt' file. In cookie based authentication, one can't access the media server directly from normal player. Users need to use web browser to access the media server. And once playlist is generated from the browser, it can be played by any media player till the expiry of either cookies or playlist. Users can separately set the expiry field in **hours** for both cookies and playlist, in the 'other_options.txt' file. Default setting is 24 hours for both. If user will stop the server then playlist will be dead won't be usable any more, in case of cookie based authentication. Users can also use curl or wget via command line with appropriate fields for accessing media server playlists.
+
+HTTPS Support: It's possible to enable HTTPS support, with the help of self signed certificate. Users can set 'HTTPS_ON' to 'True' in the other_options.txt. Once this field is set to True, the application can generate self signed certificate automatically in 'pem' format, if 'openssl' is installed and configured properly on the system. The application will only ask user to provide atleast eight character long passphrase. And afterward it will generate 'cert.pem' file automatically, which will be placed in '~/.config/AnimeWatch' directory. Alternatively if user want to generate self signed certificate on their own, then they should generate the certificate in 'pem' format and rename it as 'cert.pem' and must place in the config directory i.e. '~/.config/AnimeWatch', for the application to use while starting the media server function.
+
+Problems with self-signed certificate: Once self-signed certificate is used, one has to access the media server using 'https' protocol instead of 'http'. And once we do that, every browser will start showing security warning to us. Therefore, users need to add the certificate in the exemption list of the browser, in order to visit the media server. From the point of view of encryption, there is no difference between self signed certicate and certificate signed by any other authority. But While surfing on the internet, one should stay away from sites using self signed certificate, unless you know what you are doing.
+ 
+Access From Outside network: HTTPS support was mainly added to facilitate secure access of media server from outside the network.
+It is possible to access the media server from outside the network, by setting 'ACCESS_FROM_OUTSIDE_NETWORK' to 'True'. In order to use this feature, user needs to know how to do port forwarding. Once router is configured for port forwarding, all the incoming requests to your router will be forwarded to local media server.
+
+'ACCESS_FROM_OUTSIDE_NETWORK' field has two parameters which are separated by colon. First parameter determines whether to allow access from outside or not, and second parameter allows changing the frequency of requests to opendns for determining your public IP. Therefore this field will look something like **'ACCESS_FROM_OUTSIDE_NETWORK=True:5'**, where 5 refers to 5 hours. It means after every five hours, the application will query opendns server for your public IP. In order to access from outside the local network, one needs to know public IP address of our machine. The application determines it by accessing 'https://diagnostic.opendns.com/myip' url, after certain specific interval decided by the user. Most of the users are allocated dynamic dns which is subject to change, hence it becomes necessary to know public IP of our machine after some specific interval, to detemine whether IP address has changed or not. 
+
+Now the question is how to get our changed IP address from outside the network? Now-a-days, most people have access to some or other cloud service. The application can write changed IP address to any cloud based file determined by user. The other_options.txt file contains 'CLOUD_IP_FILE' field, which should be set to any cloud based file of any cloud based service as per users' preference. Whenever IP address of users' machine changes, the application will write the new IP address to the cloud file, which user can access from any location.
+
+In order to access the server from outside the network, it is necessary to **enable both cookies and password for server**.
+
+It is possible to access the media server with plain 'http' protocol from outside the network, but it's not advisable because of security reasons. User must set 'HTTPS_ON' field to 'True', if they want to access media server from outside.
+
+In short, Recommanded settings for external access to media server are as follows.
+	(First set username and password from 'more' menu and then make changes in other_options.txt as below)
+	ACCESS_FROM_OUTSIDE_NETWORK=True:1
+	CLOUD_IP_FILE=cloud_file_name(optional)
+	HTTPS_ON=True
+	MEDIA_SERVER_COOKIE=True
+	COOKIE_EXPIRY_LIMIT=24
+	COOKIE_PLAYLIST_EXPIRY_LIMIT=24 
+
+Once https enabled, users will find that many media players might not play playlist generated from the browser due to self signed certificates. From popular players, I had some success with vlc and kodi. vlc sometimes work and sometimes won't play anything. kodi plays playlist very well but can't handle redirected url. mpv works perfectly with https streams in the playlist. AnimeWatch player by default uses mpv as backend, hence generated playlist works well in it. mplayer can also play https streams but can't handle redirected url of the media server. In AnimeWatch player, playlist can be anything from audio, video, youtube urls or addons url or even torrent streams. If playlist contains youtube url, then the server will return url of the video stream with the help of youtube-dl, and many players can't handle such redirection. In case of torrent streams (yes, users can start torrent streams directly on the media server, from any client playlist, which will be streamed back to client again), media server will send you redirected url, since torrent streams will start on different port (default 8001) than that of media server port (default 9001). Both kodi and mplayer can't handle it. But mpv (hence AnimeWatch) and vlc can handle it perfectly well. AnimeWatch player is optimized for streaming specially, hence users might get good streaming experience with it. It also contains offline mode, which might be useful for downloading, media server content to client for offline viewing.
+
+
+AnimeWatch player allows user to start media server on the fly. Basically I never thought of it as 24*7 on media server. (Therefore, I can't tell about it's performance if it is used 24*7.). I wanted to create a portable media server which user can start at any time and anywhere for a brief period so as to share content with family members, friends or colleagues with the help of simple playlist or simple urls, without depending on any third party. And sometimes we just want to enjoy the content, which we have piled up on our working computer, from other devices quickly, without much set up. Creating web interface was not even on my mind, but later I found that web interface might be good for generating playlist, hence at last I created a very simple (but dry and boaring) web interface just for easy playlist creation. Users can play media on the browser itself, but they won't be able to play all the media formats, because application does not use any kind of transcoding. Media server feature is implemented using python's inbuilt http.server module, hence it doesn't require any other external dependency.
+
+Note: Users need to use separate port number for media server and torrent streaming feature. Port number along with local IP for torrent streaming feature needs to be set in 'torrent_config.txt' (TORRENT_STREAM_IP field) and that of media server in 'other_options.txt' (LOCAL_STREAM_IP field). Default Settings: 'TORRENT_STREAM_IP=127.0.0.1:8001' and 'LOCAL_STREAM_IP=127.0.0.1:9001'. In default settings one can't access local media from another computer. Users need to change default loopback address to local ip address. Users have to set local IP address and port once only. If local IP address of the media server changes dynamically next time, then the AnimeWatch application will try to find out new address automatically. If the application can't find new address then users have to manually change the config files again.
+
+## Universal Playlist Generation
+
+Universal playlist generation is the by-product of the way media server is implemented in this application. Media server of this application, allows creation of playlist in either m3u or pls format, on the fly, which can be played on any client supporting http streaming. For more details about playlist creation, read Media Server Section. This playlist can be anything from local audio, local video, some youtube urls, internet radio stations or addon urls or even torrent streams, or any mix of various media formats. (While creating playlist of mixed media format and content, torrent streams should not be mixed with them. Torrent streams should be in separate playlist.) As the playlist can be played on any client which supports http streaming, users do not have to attach themselves to particular client application specified by media server for accessing their files. They can use any client of their choice for playing playlist, from any platform. 
+
+Recommanded media players for playing playlist of mixed content: mpv,mplayer,vlc,kodi { or AnimeWatch :) }
+
+For Local audio only content: audacious, clementine or any client that can play m3u files. (audacious can directly read metadata from streaming audio, hence it's much better choice for streaming audio)
+
+**Using curl for getting media server playlist:**
+
+	consider media server ip:port combination is 192.168.3.2:9001
+	
+	1. Getting current playlist and saving it as playlist.m3u.
+	
+		$ curl -L http://192.168.3.2:9001/stream_continue -o playlist.m3u
+	
+	2. Getting current playlist with password enabled.
+		
+		$ curl -L --user username:password http://192.168.3.2:9001/stream_continue -o playlist.m3u
+		
+	3. Searching and getting custom playlist (e.g. From video category, search 'history' sub-section for 'mushishi' episodes):
+	
+		$ curl -L 'http://192.168.3.2:9001/site=video&opt=history&s=mushishi' -o playlist.m3u
+		
+	4. Getting playlist with cookie and password enabled.
+	
+		$ curl -L -c cookie.txt --user username:password http://192.168.3.2:9001/stream_continue {this command will establish session}
+		
+		$ curl -L -b cookie.txt --user username:password http://192.168.3.2:9001/stream_continue -o playlist.m3u {this command will get playlist}
+		
+	5. Accessing server with https and password enabled:
+		
+		$ curl -L -k --user username:password https://192.168.3.2:9001/stream_continue -o playlist.m3u
+		
+	6. Logout from terminal (with passwword, cookie and https enabled):
+		
+		$ curl -L -k --user username:password -b cookie.txt https://192.168.3.2:9001/logout {This will remove session cookies and client IP address from server}
+
+Playlist generated using curl can be opened with any media player.
+
+**Using Web Interface for getting playlist.**
+
+Web interface can be opened at 'http://192.168.3.2:9001/stream_continue.htm'. It will allow user to search easily and create m3u playlists. It allows user to search only within AnimeWatch media server collection. Once search results are displayed in the browser, user can click on the 'Get M3U' button to generate m3u playlist. User can save the playlist or can directly open it with their favourite media player application. If Firefox is directly playing the playlist, then it might be due to some external web plugin. For example, during installation of vlc, it can also install web plugin for firefox. Users need to disable such plugin to get the playlist, or they can simply open the url **without '.htm' extension** from within the vlc itself, if 'https' and cookie are not enabled. vlc can easily deal with username and password based authentication.
+
+Note: Once user logs out from cookie and password enabled session, he can't search anything within the server without logging in again. But the generated playlist can be played by any player till the expiry of playlist even after log out. Expiry period for playlist can be set in other_options.txt file (COOKIE_PLAYLIST_EXPIRY_LIMIT field) in hours.
 
 
 ## YouTube Support
@@ -179,21 +270,23 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 
 3. Using **setup.py** located in **Python-SETUP** directory: 
    
-   First clone the repository then execute following commands.
-
-		$ cd Python-SETUP
+		$ git clone https://github.com/kanishka-linux/AnimeWatch
+		$ cd AnimeWatch/Python-SETUP
 		$ python setup.py sdist (or python3 setup.py sdist)
 		$ cd dist
-		$ sudo pip3 install 'pkg_available_in_directory'
+		$ sudo pip3 install 'pkg_available_in_directory' (or pip install 'pkg_available_in_directory')
 	
 	pip3 will essentially install most of the python-based dependencies along with the package. Users only have to install non-python based dependencies such as mplayer/mpv,ffmpegthumbnailer,libtorrent and curl/wget manually. On windows ffmpegthumbnailer is not available, hence thumbnails will be generated by either mpv or mplayer itself.
+	**From non-python dependencies, users need to install atleast mpv (or mplayer) as playback engine; and atleast curl (or wget) for fetching web pages apart from default pycurl, in case there is some problem with pycurl.**
+	
+	If pycurl doesn't work or can't be installed, then users should edit other_options.txt file and set 'GET_LIBRARY' to either 'curl' or 'wget'.
 	
 	Note: GNU/Linux distros should install PyQt5 and other python based dependencies from their own repositories using their native package manager instead of using pip, in order to avoid conflicting files or other dependecies problems due to differing naming schemes of the package. They should remove or comment out the 'install_requires' field in the setup.py, before using this method.
 	
 	Once application is installed, launch the application using command **animewatch** from the terminal.
 
 4. Common Method: Users have to manually install all the dependencies listed below. Then they should clone the repository and go to AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable directory. Open terminal in that directory and run 'python3 install.py' (or 'python install.py' if default python points to python3). Application launcher will be created in '~/.local/share/applications/'.
-Or they can simply click on (or execute using command line) **'animewatch-start'** shell script located in the directory to start the player directly **without copying files anywhere**.
+Or they can simply click (or execute using command line) **'animewatch-start'** shell script located in the directory to start the player directly **without copying files anywhere**.
 
 
 #Dependencies
@@ -221,7 +314,7 @@ mpv or mplayer. (for playing media)
 
 ffmpegthumbnailer(Thumbnail Generator for Local Files)
 
-**For extra features such as Youtube support, torrent streaming, MPRIS D-Bus support and desktop notifications:**
+**For extra features such as Youtube support, torrent streaming, MPRIS D-Bus support, desktop notifications and HTTPS:**
 
 libtorrent-rasterbar {since version 2.5.0-0, For Torrent Streaming Support}
 
@@ -231,9 +324,11 @@ youtube-dl {for YouTube Support}
 
 python3-dbus {for MPRIS DBus support}
 
-libnotify(required for Desktop Notification)
+libnotify {required for Desktop Notification}
 
 curl or wget {In case pycurl doesn't work}
+
+openssl {for enabling HTTPS}
 
 python-psutil
 
@@ -256,7 +351,7 @@ AnimeWatch-PyQt5 from version number 2.8.0-0 onwards can be installed on ubuntu 
 
 **Dependencies installation in Ubuntu 16.04**
 
-sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl wget libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent python3-livestreamer youtube-dl python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebkit python3-dbus
+sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl wget libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent youtube-dl python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebkit python3-dbus
 
 **Once Dependencies are installed Download the Appropriate folder (AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable) containing 'install.py' file. Open Terminal in the directory and use following command:**
 
@@ -297,6 +392,10 @@ Simply remove the application launcher '~/.local/share/applications/AnimeWatch.d
 8. On Windows if 'lxml' can't be installed using pip then try finding binary available for it from other sources on the internet.
 
 9. On Windows, If fetching of web pages is very slow using pycurl, then try changing pycurl to 'curl' or 'wget' in 'other_options.txt' file located in '~\.config\AnimeWatch' folder.
+
+10. If the application is installed using setup.py script then it will install two launching scripts animewatch (gui script) and animewatch_console (console script). On windows, media server was not working properly if the application was opened with gui_script. When application was openened with console script i.e. animewatch_console, then media server functionality was working properly, once application was allowed access through windows firewall. There is basically no difference in animewatch and animewatch_console scripts, only difference is that in animewatch_console, terminal will remain openened behind the gui.
+
+11. If there are some other problems, then turn on logging by setting 'LOGGING' to 'ON', in other_options.txt. It will create 'animewatch.log' file in '~/.config/AnimeWatch/tmp' folder. Users can analyse the log on their own or can post the log on github issues section. Or alternatively users can post console output if application was started from console.
 
 ####Troubleshooting for common method
 
