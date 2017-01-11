@@ -196,6 +196,14 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	def process_HEAD(self):
 		global current_playing_file_path,path_final_Url,ui,curR
 		global epnArrList
+		
+		try:
+			get_bytes = int(self.headers['Range'].split('=')[1].replace('-',''))
+		except Exception as e:
+			get_bytes = 0
+		print(get_bytes,'--head--')
+		print(self.headers,'--head--')
+		
 		logger.info(self.path)
 		path = self.path.replace('/','',1)
 		if '/' in path:
@@ -274,7 +282,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				size = os.stat(nm).st_size
 				self.send_header('Content-Length', str(size))
 				self.send_header('Accept-Ranges', 'bytes')
-				#self.send_header('Content-Range', 'bytes ' +str('0-')+str(size)+'/'+str(size))
+				if get_bytes:
+					self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
 				self.send_header('Connection', 'close')
 				self.end_headers()
 					#print(size)
@@ -476,6 +485,12 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Location',nm)
 			self.end_headers()
 		else:
+			
+			if '.' in nm:
+				nm_ext = nm.rsplit('.',1)[1]
+			else:
+				nm_ext = 'nothing'
+			
 			self.proc_req = False
 			self.send_response(200)
 			self.send_header('Content-type','video/mp4')
@@ -486,10 +501,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
-			if '.' in nm:
-				nm_ext = nm.rsplit('.',1)[1]
-			else:
-				nm_ext = 'nothing'
+			
 			old_get_bytes = get_bytes
 			print(get_bytes,'--get--bytes--',nm_ext)
 			t = 0
