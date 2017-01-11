@@ -297,7 +297,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		logger.info(self.path)
 		path = self.path.replace('/','',1)
 		if '/' in path:
-			path = path.split('/')[0]
+			path = path.rsplit('/',1)[0]
 		path = urllib.parse.unquote(path)
 		#print(os.getcwd())
 		logger.info(self.requestline)
@@ -334,8 +334,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			except Exception as err_val:
 				print(err_val)
 		else:
-			if '/' in path:
-				path = path.split('/')[0]
+			#if '/' in path:
+			#	path = path.split('/')[0]
 			if '&pl_id=' in path:
 				path,pl_id = path.rsplit('&pl_id=',1)
 				del_uid = False
@@ -480,6 +480,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		self.do_init_function(type_request='get')
 		
 	def process_url(self,nm,get_bytes):
+		user_agent = self.headers['User-Agent']
+		content_range = True
+		if user_agent:
+			user_agent = (user_agent.lower()).strip()
+		else:
+			user_agent = 'mpv'
+		print('user_agent=',user_agent)
 		if nm.startswith('http'):
 			self.send_response(303)
 			self.send_header('Location',nm)
@@ -492,13 +499,26 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nm_ext = 'nothing'
 			
 			self.proc_req = False
-			self.send_response(200)
+			if get_bytes:
+				if user_agent.startswith('vlc'):
+					self.send_response(206)
+				else:
+					self.send_response(200)
+			else:
+				self.send_response(200)
 			self.send_header('Content-type','video/mp4')
 			size = os.stat(nm).st_size
-			#size = size - get_bytes
+			#if ('mozilla' in user_agent or 'chrome' in user_agent or 
+			#		'firefox' in user_agent or 'chromium' in user_agent):
+			if get_bytes:
+				nsize = size - get_bytes + 1
+			else:
+				nsize = size
+				#content_range = False
 			self.send_header('Content-Length', str(size))
 			self.send_header('Accept-Ranges', 'bytes')
-			self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
+			self.send_header(
+					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
 			
@@ -994,8 +1014,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		elif path.startswith('abs_path='):
 			try:
-				if '/' in path:
-					path = path.split('/')[0]
+				#if '/' in path:
+				#	path = path.rsplit('/',1)[0]
 				path = path.split('abs_path=',1)[1]
 				nm = path
 				nm = str(base64.b64decode(nm).decode('utf-8'))
@@ -1007,8 +1027,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		elif path.startswith('relative_path='):
 			try:
-				if '/' in path:
-					path = path.split('/')[0]
+				#if '/' in path:
+				#	path = path.rsplit('/',1)[0]
 				path = path.split('relative_path=',1)[1]
 				nm = path
 				nm = str(base64.b64decode(nm).decode('utf-8'))
