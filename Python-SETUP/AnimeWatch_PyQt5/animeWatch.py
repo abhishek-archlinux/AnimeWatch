@@ -297,9 +297,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		logger.info(self.path)
 		path = self.path.replace('/','',1)
 		if '/' in path:
-			path = path.split('/')[0]
-		path = urllib.parse.unquote(path)
+			path = path.rsplit('/',1)[0]
+		if path.startswith('relative_path=') or path.startswith('abs_path='):
+			pass
+		else:
+			path = urllib.parse.unquote(path)
 		#print(os.getcwd())
+		print('get__path__::{0}'.format(path))
 		logger.info(self.requestline)
 		#print(self.headers['Cookie'],'--cookie--')
 		playlist_id = None
@@ -334,8 +338,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			except Exception as err_val:
 				print(err_val)
 		else:
-			if '/' in path:
-				path = path.split('/')[0]
+			#if '/' in path:
+			#	path = path.split('/')[0]
 			if '&pl_id=' in path:
 				path,pl_id = path.rsplit('&pl_id=',1)
 				del_uid = False
@@ -480,6 +484,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		self.do_init_function(type_request='get')
 		
 	def process_url(self,nm,get_bytes):
+		user_agent = self.headers['User-Agent']
+		content_range = True
+		if user_agent:
+			user_agent = (user_agent.lower()).strip()
+		else:
+			user_agent = 'mpv'
+		print('user_agent=',user_agent)
 		if nm.startswith('http'):
 			self.send_response(303)
 			self.send_header('Location',nm)
@@ -492,13 +503,26 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nm_ext = 'nothing'
 			
 			self.proc_req = False
-			self.send_response(200)
+			if get_bytes:
+				if user_agent.startswith('vlc'):
+					self.send_response(206)
+				else:
+					self.send_response(200)
+			else:
+				self.send_response(200)
 			self.send_header('Content-type','video/mp4')
 			size = os.stat(nm).st_size
-			#size = size - get_bytes
+			#if ('mozilla' in user_agent or 'chrome' in user_agent or 
+			#		'firefox' in user_agent or 'chromium' in user_agent):
+			if get_bytes:
+				nsize = size - get_bytes + 1
+			else:
+				nsize = size
+				#content_range = False
 			self.send_header('Content-Length', str(size))
 			self.send_header('Accept-Ranges', 'bytes')
-			self.send_header('Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
+			self.send_header(
+					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
 			
@@ -629,15 +653,16 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					else:
 						j = 'relative_path='+n_url
 				#n_out = n_out.replace(' ','_')
+				logger.info('create-playlist----{0}'.format(j))
 				n_url = n_url.replace('"','')
 				n_art = n_art.replace('"','')
 				http_val = "http"
 				if ui.https_media_server:
 					http_val = "https" 
 				if play_id:
-					out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
+					out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
 				else:
-					out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)+'/'+urllib.parse.quote(n_url_name)
+					out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'/'+urllib.parse.quote(n_url_name)
 				if self.path.endswith('.pls'):
 					pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
 				elif self.path.endswith('.htm') or self.path.endswith('.html'):
@@ -727,7 +752,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				list1_row = ui.list1.currentRow()
 			else:
 				list1_row = None
-			book_mark = self.triggerBookmark(list1_row)
+			
+			#book_mark = self.triggerBookmark(list1_row)
 			
 			for i in range(ui.list2.count()):
 				new_arr.append(i)
@@ -798,6 +824,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						n_url = str(n_url_new,'utf-8')
 						j = 'abs_path='+n_url
 					else:
+						book_mark = self.triggerBookmark(k+1)
 						if '	' in epnArrList[k]:
 							n_out = epnArrList[k].split('	')[0]
 							if n_out.startswith('#'):
@@ -843,13 +870,14 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							n_url_name = n_url.split('&')[-1]
 						else:
 							n_url_name = os.path.basename(n_url)
-						n_url_name = os.path.basename(n_url)
+						logger.info('--n_url_name___::{0}'.format(n_url))
 						n_url_new = base64.b64encode(bytes(n_url,'utf-8'))
 						n_url = str(n_url_new,'utf-8')
 						if n_url_file:
 							j = 'abs_path='+n_url
 						else:
 							j = 'relative_path='+n_url
+					logger.info('--875---{0}'.format(j))
 					#n_out = n_out.replace(' ','_')
 					#n_url = n_url.replace('"','')
 					n_art = n_art.replace('"','')
@@ -857,9 +885,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					if ui.https_media_server:
 						http_val = "https" 
 					if play_id:
-						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
+						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
 					else:
-						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+urllib.parse.quote(j)+'/'+urllib.parse.quote(n_url_name)
+						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'/'+urllib.parse.quote(n_url_name)
 					if path.endswith('.pls'):
 						pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
 					elif path.endswith('.htm') or path.endswith('.html'):
@@ -994,8 +1022,8 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		elif path.startswith('abs_path='):
 			try:
-				if '/' in path:
-					path = path.split('/')[0]
+				#if '/' in path:
+				#	path = path.rsplit('/',1)[0]
 				path = path.split('abs_path=',1)[1]
 				nm = path
 				nm = str(base64.b64decode(nm).decode('utf-8'))
@@ -1007,11 +1035,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		elif path.startswith('relative_path='):
 			try:
-				if '/' in path:
-					path = path.split('/')[0]
+				#if '/' in path:
+				#	path = path.rsplit('/',1)[0]
+				logger.info('--------path---{0}'.format(path))
 				path = path.split('relative_path=',1)[1]
 				nm = path
 				nm = str(base64.b64decode(nm).decode('utf-8'))
+				logger.info('------------------{0}'.format(nm))
 				if nm.split('&')[4] == 'True':
 					old_nm = nm
 					#nm = ui.epn_return_from_bookmark(nm)
@@ -1025,7 +1055,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					else:
 						nm = https_val+"://"+str(my_ip_addr)+':'+str(ui.local_port)+'/'
 					new_torrent_signal.new_signal.emit(old_nm)
-					print(nm,'--nm---')
+					logger.info('--nm---{0}'.format(nm))
 				else:
 					nm = ui.epn_return_from_bookmark(nm,from_client=True)
 				self.process_url(nm,get_bytes)
@@ -1091,6 +1121,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.final_message(txt_b)
 			except Exception as e:
 				print(e)
+		elif path.startswith('index.htm'):
+			self.send_response(303)
+			self.send_header('Location','/stream_continue.htm')
+			self.end_headers()
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
