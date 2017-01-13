@@ -742,7 +742,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			if path.endswith(pl_id_val):
 				path = path.replace(pl_id_val,'',1)
 		if (path.lower().startswith('stream_continue') 
-				or path.lower().startswith('stream_shuffle')):
+				or path.lower().startswith('stream_shuffle') or path.lower().startswith('channel.htm')):
 			new_arr = []
 			n_out = ''
 			n_art = ''
@@ -754,9 +754,14 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				list1_row = None
 			
 			#book_mark = self.triggerBookmark(list1_row)
+			new_epnArrList = [i for i in epnArrList]
 			
-			for i in range(ui.list2.count()):
-				new_arr.append(i)
+			new_arr = [i for i in range(len(epnArrList))]
+			
+			if path.startswith('channel'):
+				new_arr = new_arr[curR:]
+				new_epnArrList = new_epnArrList[curR:]
+				logger.info('{0}++++++++++++++++++{1}'.format(new_arr,new_epnArrList))
 			if path.lower().startswith('stream_continue_from_'):
 				row_digit = 0
 				try:
@@ -884,6 +889,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					http_val = "http"
 					if ui.https_media_server:
 						http_val = "https" 
+					if path.startswith('channel'):
+						n_url_name = str(k)
+						n_url = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)
+						n_url_new = base64.b64encode(bytes(n_url,'utf-8'))
+						n_url = str(n_url_new,'utf-8')
+						j = 'abs_path='+n_url
+						
 					if play_id:
 						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
 					else:
@@ -894,7 +906,18 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
 					else:
 						pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
-					
+					if k == len(epnArrList) - 1:
+						if path.startswith('channel'):
+							n_art = 'Server'
+							n_out = "What I'm playing now"
+							out = out.rsplit('/',1)[0]
+							out = out + '/server' 
+							if path.endswith('.pls'):
+								pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
+							elif path.endswith('.htm') or path.endswith('.html'):
+								pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
+							else:
+								pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
 				except Exception as e:
 					print(e)
 			if path.endswith('.pls'):
@@ -924,6 +947,67 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.send_header('Content-type','audio/mpegurl')
 			size = len(pls_txt)
 			#size = size - get_bytes
+			self.send_header('Content-Length', str(size))
+			self.send_header('Connection', 'close')
+			self.end_headers()
+			try:
+				self.wfile.write(pls_txt)
+			except Exception as e:
+				print(e)
+		elif (path.lower().startswith('channel_fix')):
+			if path.endswith('.html') or path.endswith('.htm'):
+				pls_txt = '<ol id="playlist">'
+			elif path.endswith('.pls'):
+				pls_txt = '[playlist]'
+			else:
+				pls_txt = '#EXTM3U\n'
+			http_val = 'http'
+			if ui.https_media_server:
+				http_val = "https" 
+			n_url = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)
+			n_url_name = 'now_playing'
+			n_url_new = base64.b64encode(bytes(n_url,'utf-8'))
+			n_url = str(n_url_new,'utf-8')
+			j = 'abs_path='+n_url
+			if play_id:
+				out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
+			else:
+				out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'/'+urllib.parse.quote(n_url_name)
+			n_art = 'My Server'
+			n_out = "What I'm playing now"
+			if path.endswith('.pls'):
+				pls_txt = pls_txt+'\nTitle{0}={1}\nFile{0}={2}\n'.format(str(1),n_art,out)
+			elif path.endswith('.htm') or path.endswith('.html'):
+				pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
+			else:
+				pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+				
+			if path.endswith('.pls'):
+				footer = '\nNumberOfEntries='+str(1)+'\n'
+				pls_txt = pls_txt+footer
+			elif path.endswith('.htm') or path.endswith('.html'):
+				pls_txt = pls_txt+'</ol>'
+				playlist_htm = os.path.join(BASEDIR,'playlist.html')
+				if os.path.exists(playlist_htm):
+					play_htm = open_files(playlist_htm,False)
+					pls_txt = re.sub('<ol id="playlist"></ol>',pls_txt,play_htm)
+					new_field = ''
+					for i in html_default_arr:
+						new_field = new_field+'<option value="{0}">{1}</option>'.format(i.lower(),i)
+					new_field = '<select id="site" onchange="siteChange()">{0}</select>'.format(new_field)
+					logger.info(new_field)
+					pls_txt = pls_txt.replace('<select id="site" onchange="siteChange()"></select>',new_field)
+					extra_fields = self.get_extra_fields()
+					logger.info(extra_fields)
+					pls_txt = re.sub('<div id="site_option" hidden></div>',extra_fields,pls_txt)
+			logger.info('pls_txt_channel: '.format(pls_txt))
+			pls_txt = bytes(pls_txt,'utf-8')
+			self.send_response(200)
+			if path.endswith('.htm') or path.endswith('.html'):
+				self.send_header('Content-type','text/html')
+			else:
+				self.send_header('Content-type','audio/mpegurl')
+			size = len(pls_txt)
 			self.send_header('Content-Length', str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
@@ -1022,14 +1106,33 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		elif path.startswith('abs_path='):
 			try:
-				#if '/' in path:
-				#	path = path.rsplit('/',1)[0]
 				path = path.split('abs_path=',1)[1]
 				nm = path
 				nm = str(base64.b64decode(nm).decode('utf-8'))
 				logger.info(nm)
-				if 'youtube.com' in nm:
-					nm = get_yt_url(nm,ui.quality_val,ui.ytdl_path,logger).strip()
+				if nm.startswith('http'):
+					http_val = 'http'
+					if ui.https_media_server:
+						http_val = "https" 
+					n_url = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)
+					logger.info('abs_path_playing={0}'.format(n_url))
+					if nm.startswith(n_url):
+						try:
+							num_row = self.path.rsplit('/',1)[-1]
+							if num_row == 'server' or num_row == 'now_playing':
+								row = curR
+							else:
+								row = int(num_row)
+						except Exception as err_val:
+							print(err_val,'--1112--')
+							row = 0
+						if row < 0:
+							row = 0
+						nm = ui.epn_return(row)
+						if nm.startswith('"'):
+							nm = nm.replace('"','')
+					elif 'youtube.com' in nm:
+						nm = get_yt_url(nm,ui.quality_val,ui.ytdl_path,logger).strip()
 				self.process_url(nm,get_bytes)
 			except Exception as e:
 				print(e)
@@ -1121,6 +1224,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.final_message(txt_b)
 			except Exception as e:
 				print(e)
+		elif path.startswith('index.htm'):
+			self.send_response(303)
+			self.send_header('Location','/stream_continue.htm')
+			self.end_headers()
 		else:
 			nm = 'index.html'
 			self.send_header('Content-type','text/html')
