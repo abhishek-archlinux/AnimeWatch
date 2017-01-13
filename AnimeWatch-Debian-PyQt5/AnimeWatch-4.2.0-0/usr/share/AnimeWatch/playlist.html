@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <meta charset="UTF-8">
+
 <div class= "video_section">
+
 <video id="player" width="640" height = "480" controls></video>
 <br>
 <div id="title"></div>
@@ -17,27 +19,40 @@
 </div>
 <br>
 <div class="site_selection">
+<button id="home">Home</button>
 <select id="site" onchange="siteChange()"></select>
 <select id="opt" onchange="optChange()"></select>
 <input id="type_search" type="search" placeholder="Search Text" onkeypress="return searchFunction(event)" hidden="hidden">
 </div>
 </div>
+<br>
 <div id="site_option" hidden></div>
+<br>
 <div class = "pls">
 <ol id="playlist"></ol>
 </div>
-
+<div class="toTop">
+<div id="backToTop">Top</div>
+</div>
 <style>
 .selected {font-weight: bold}
-div.video_section{float:left}
-div.video_section.div.site_selection{float:right;}
-div.pls{float:right;max-width:400px;}
+div.toTop{position:fixed;bottom: 1em;right: 1em;}
+div.video_section{float:left;}
+div.video_section.div.site_selection{float:left}
+div.pls{max-width:640px;float:left;}
 div.title{max-width:640px;}
 </style>
 
 <script type = 'text/javascript'>
 //div.pls{float:right;max-width:400px;}
 // globals
+
+
+//div.video_section{float:left}
+//div.video_section.div.site_selection{float:right;}
+//div.pls{float:right;max-width:400px;}
+//div.title{max-width:640px;}
+
 var _player = document.getElementById("player"),
     _playlist = document.getElementById("playlist"),
     _stop = document.getElementById("stop"),
@@ -48,6 +63,7 @@ var _player = document.getElementById("player"),
     _shuffle = document.getElementById("shuffle"),
     _m3u = document.getElementById("m3u"),
     _logout = document.getElementById("logout"),
+    _home = document.getElementById("home"),
     _prev = document.getElementById("prev");
 
 // functions
@@ -198,6 +214,10 @@ _m3u.addEventListener("click", function () {
     window.location.href = x;
 });
 
+_home.addEventListener("click", function () {
+    window.location.href = 'stream_continue.htm';
+});
+
 _logout.addEventListener("click", function () {
     window.location.href = 'logout'
 });
@@ -276,6 +296,19 @@ _loop.addEventListener("click", function () {
 		_loop.innerHTML = 'Lock';
 	}
 });
+
+window.onscroll = function () {
+    if (pageYOffset >= 200) {
+        document.getElementById('backToTop').style.visibility = "visible";
+    } else {
+ document.getElementById('backToTop').style.visibility = "hidden";
+    }
+};
+
+document.getElementById('backToTop').onclick = function()
+{
+    window.scrollTo(0, 0);
+}
 
 _player.addEventListener("ended", playNext);
 _playlist.addEventListener("click", function (e) {
