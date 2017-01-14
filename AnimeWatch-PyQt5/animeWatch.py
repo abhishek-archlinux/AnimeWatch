@@ -483,8 +483,20 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		self.do_init_function(type_request='get')
 		
-	def process_url(self,nm,get_bytes):
+	def process_url(self,nm,get_bytes,status=None):
+		global ui,mplayerLength,mpvplayer
 		user_agent = self.headers['User-Agent']
+		range_hdr = self.headers['Range']
+		upper_range = None
+		try:
+			if range_hdr:
+				if '-' in range_hdr:
+					if not range_hdr.endswith('-'):
+						upper_range = int(range_hdr.split('-')[-1])
+						print(upper_range,'--upper--range--')
+		except Exception as err_val:
+			print(err_val,'--495--')
+			
 		content_range = True
 		if user_agent:
 			user_agent = (user_agent.lower()).strip()
@@ -496,48 +508,104 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Location',nm)
 			self.end_headers()
 		else:
-			
 			if '.' in nm:
 				nm_ext = nm.rsplit('.',1)[1]
 			else:
 				nm_ext = 'nothing'
-			
 			self.proc_req = False
 			if get_bytes:
-				if user_agent.startswith('vlc'):
-					self.send_response(206)
-				else:
-					self.send_response(200)
+				self.send_response(206)
 			else:
 				self.send_response(200)
-			self.send_header('Content-type','video/mp4')
+			if nm_ext == 'mp3':
+				self.send_header('Content-type','audio/mpeg')
+			else:
+				self.send_header('Content-type','video/mp4')
 			size = os.stat(nm).st_size
-			#if ('mozilla' in user_agent or 'chrome' in user_agent or 
-			#		'firefox' in user_agent or 'chromium' in user_agent):
 			if get_bytes:
 				nsize = size - get_bytes + 1
 			else:
 				nsize = size
-				#content_range = False
+			if upper_range is None:
+				upper_range = size - 1
 			self.send_header('Content-Length', str(size))
 			self.send_header('Accept-Ranges', 'bytes')
 			self.send_header(
-					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
+					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(upper_range)+'/'+str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
 			
-			old_get_bytes = get_bytes
 			print(get_bytes,'--get--bytes--',nm_ext)
 			t = 0
+			"""
+			if status == 'now_playing' and mpvplayer.processId() > 0:
+				size_per_second = int(size/mplayerLength)
+				print(size_per_second,'=--size-per-second')
+				time_clock = ui.progress_counter
+				t = 0
+				print(size_per_second,'=--size-per-second',time_clock)
+				cur_size = ui.progress_counter * size_per_second
+				end_read = False
+				with open(nm,'rb') as f:
+					total_content = 0
+					if t == 0 and get_bytes:
+						f.seek(get_bytes)
+						t = 1
+						total_content = get_bytes
+						if get_bytes > (size - 5 * size_per_second):
+							size_read = size - get_bytes
+							content = f.read(size_read)
+							self.wfile.write(content)
+							end_read = True
+					elif t == 0 and not get_bytes:
+						time_sec = ui.progress_counter
+						for i in range(time_sec):
+							content = f.read(size_per_second)
+							total_content = total_content + size_per_second
+							self.wfile.write(content)
+						t = 1
+					if not end_read:
+						content = f.read(size_per_second)
+						total_content = total_content + size_per_second
+					else:
+						content = None
+					time_sec = ui.progress_counter
+					prev_sec = 0
+					while(content) and not end_read:
+						if prev_sec != time_sec:
+							try:
+								self.wfile.write(content)
+								content = f.read(size_per_second)
+								total_content = total_content + size_per_second
+								get_bytes = 0
+							except Exception as err_val:
+								print(err_val,'--err--')
+								break
+						else:
+							time.sleep(0.5)
+						prev_sec = time_sec
+						time_sec = ui.progress_counter
+						if mpvplayer.processId() == 0:
+							break
+						#time.sleep(0.1)
+			else:
+			"""
 			old_time = time.time()
+			end_read = False
+			content = None
 			with open(nm,'rb') as f:
 				if get_bytes and t ==0:
 						f.seek(get_bytes)
 						t = 1
 						print('seeking')
-				
-				content = f.read(1024*512)
-				while(content):
+						if upper_range is not None:
+							if upper_range != size - 1:
+								content = f.read(upper_range-get_bytes+1)
+								self.wfile.write(content)
+								end_read = True
+				if not end_read:
+					content = f.read(1024*512)
+				while(content) and not end_read:
 					try:
 						self.wfile.write(content)
 					except Exception as e:
@@ -742,7 +810,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			if path.endswith(pl_id_val):
 				path = path.replace(pl_id_val,'',1)
 		if (path.lower().startswith('stream_continue') 
-				or path.lower().startswith('stream_shuffle') or path.lower().startswith('channel.htm')):
+				or path.lower().startswith('stream_shuffle') 
+				or path.lower().startswith('channel.') 
+				or path.lower().startswith('channel_sync.')):
 			new_arr = []
 			n_out = ''
 			n_art = ''
@@ -890,7 +960,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					if ui.https_media_server:
 						http_val = "https" 
 					if path.startswith('channel'):
-						n_url_name = str(k)
+						if path.startswith('channel.'):
+							n_url_name = str(k)
+						else:
+							n_url_name = 'now_playing'
 						n_url = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)
 						n_url_new = base64.b64encode(bytes(n_url,'utf-8'))
 						n_url = str(n_url_new,'utf-8')
@@ -954,7 +1027,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.wfile.write(pls_txt)
 			except Exception as e:
 				print(e)
-		elif (path.lower().startswith('channel_fix')):
+		elif (path.lower().startswith('channel_sync.')):
 			if path.endswith('.html') or path.endswith('.htm'):
 				pls_txt = '<ol id="playlist">'
 			elif path.endswith('.pls'):
@@ -973,8 +1046,26 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
 			else:
 				out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'/'+urllib.parse.quote(n_url_name)
-			n_art = 'My Server'
-			n_out = "What I'm playing now"
+			n_art = ''
+			n_out = ''
+			if ui.list1.currentItem():
+				n_art = ui.list1.currentItem().text()
+				n_out = "Server"
+			if epnArrList:
+				if '	' in epnArrList[curR]:
+					epn_arr = epnArrList[curR].strip()
+					length = len(epn_arr.split('	'))
+					if length == 3:
+						n_out,__,n_art = epn_arr.split('	')
+					elif length == 2:
+						n_out,__ = epn_arr.split('	')
+					else:
+						n_out = epn_arr
+				else:
+					n_out = epnArrList[curR].strip()
+					if not n_art:
+						n_art = 'Not Available'
+			
 			if path.endswith('.pls'):
 				pls_txt = pls_txt+'\nTitle{0}={1}\nFile{0}={2}\n'.format(str(1),n_art,out)
 			elif path.endswith('.htm') or path.endswith('.html'):
@@ -1110,6 +1201,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nm = path
 				nm = str(base64.b64decode(nm).decode('utf-8'))
 				logger.info(nm)
+				num_row = None
 				if nm.startswith('http'):
 					http_val = 'http'
 					if ui.https_media_server:
@@ -1133,7 +1225,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 							nm = nm.replace('"','')
 					elif 'youtube.com' in nm:
 						nm = get_yt_url(nm,ui.quality_val,ui.ytdl_path,logger).strip()
-				self.process_url(nm,get_bytes)
+				self.process_url(nm,get_bytes,status=num_row)
 			except Exception as e:
 				print(e)
 		elif path.startswith('relative_path='):
@@ -7956,6 +8048,7 @@ class Ui_MainWindow(object):
 		self.logging_module = False
 		self.ytdl_path = 'default'
 		self.https_cert_file = os.path.join(home,'cert.pem')
+		self.progress_counter = 0
 		self.posterfound_arr = []
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
@@ -16852,6 +16945,7 @@ class Ui_MainWindow(object):
 						self.slider.setValue(0)
 					else:
 						self.slider.setValue(val)
+					self.progress_counter = val
 					if not new_tray_widget.isHidden():
 						new_tray_widget.update_signal.emit(out,val)
 					if cache_empty == 'yes':
