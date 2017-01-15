@@ -177,6 +177,7 @@ class KissAnime():
 		sd = ''
 		hd = ''
 		sd480 = ''
+		full_hd = ''
 		content = self.ccurlN(url)
 		
 		
@@ -212,7 +213,13 @@ class KissAnime():
 			sd = hd
 		elif quality == 'sd480p' and sd480:
 			sd = sd480
-		
+		elif quality == 'best':
+			if full_hd:
+				sd = full_hd
+			elif hd:
+				sd = hd
+			elif sd480:
+				sd = sd480
 		if not sd:
 			if sd480:
 				sd = sd480

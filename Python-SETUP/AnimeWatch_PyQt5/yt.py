@@ -93,6 +93,11 @@ def get_yt_url(url,quality,ytdl_path,logger):
 							[youtube_dl,'--youtube-skip-dash-manifest','-f',
 							'18','-g','--playlist-end','1',url])
 				final_url = str(final_url,'utf-8')
+			elif quality == 'best':
+				final_url = subprocess.check_output(
+							[youtube_dl,'--youtube-skip-dash-manifest','-f',
+							'best','-g','--playlist-end','1',url])
+				final_url = str(final_url,'utf-8')
 			elif quality == 'hd':
 				try:
 					final_url = subprocess.check_output(
@@ -114,6 +119,11 @@ def get_yt_url(url,quality,ytdl_path,logger):
 				final_url = subprocess.check_output(
 							[youtube_dl,'--youtube-skip-dash-manifest','-f',
 							'18','-g','--playlist-end','1',url],shell=True)
+				final_url = str(final_url,'utf-8')
+			elif quality == 'best':
+				final_url = subprocess.check_output(
+							[youtube_dl,'--youtube-skip-dash-manifest','-f',
+							'best','-g','--playlist-end','1',url],shell=True)
 				final_url = str(final_url,'utf-8')
 			elif quality == 'hd':
 				try:

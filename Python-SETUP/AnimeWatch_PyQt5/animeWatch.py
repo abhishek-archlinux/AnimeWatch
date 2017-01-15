@@ -483,8 +483,33 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 	def do_GET(self):
 		self.do_init_function(type_request='get')
 		
-	def process_url(self,nm,get_bytes):
+	def process_url(self,nm,get_bytes,status=None):
+		global ui,mplayerLength,mpvplayer
 		user_agent = self.headers['User-Agent']
+		range_hdr = self.headers['Range']
+		upper_range = None
+		lower_range = None
+		try:
+			if range_hdr:
+				if range_hdr.startswith('bytes='):
+					range_hdr = range_hdr.replace('bytes=','',1)
+				if '-' in range_hdr:
+					if not range_hdr.endswith('-'):
+						low,up = range_hdr.split('-')
+						lower_range = int(low)
+						upper_range = int(up)
+						print(lower_range,upper_range)
+					else:
+						lower_range = int(range_hdr.replace('-',''))
+				else:
+					lower_range = int(range_hdr)
+		except Exception as err_val:
+			print(err_val,'--495--')
+		
+		if lower_range is not None:
+			get_bytes = lower_range
+		
+		logger.info('Range: {0}-{1}'.format(get_bytes,upper_range))
 		content_range = True
 		if user_agent:
 			user_agent = (user_agent.lower()).strip()
@@ -496,48 +521,106 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			self.send_header('Location',nm)
 			self.end_headers()
 		else:
-			
 			if '.' in nm:
 				nm_ext = nm.rsplit('.',1)[1]
 			else:
 				nm_ext = 'nothing'
-			
 			self.proc_req = False
 			if get_bytes:
-				if user_agent.startswith('vlc'):
-					self.send_response(206)
-				else:
-					self.send_response(200)
+				self.send_response(206)
 			else:
 				self.send_response(200)
-			self.send_header('Content-type','video/mp4')
+			if nm_ext == 'mp3':
+				self.send_header('Content-type','audio/mpeg')
+			else:
+				self.send_header('Content-type','video/mp4')
 			size = os.stat(nm).st_size
-			#if ('mozilla' in user_agent or 'chrome' in user_agent or 
-			#		'firefox' in user_agent or 'chromium' in user_agent):
 			if get_bytes:
 				nsize = size - get_bytes + 1
 			else:
 				nsize = size
-				#content_range = False
-			self.send_header('Content-Length', str(size))
 			self.send_header('Accept-Ranges', 'bytes')
-			self.send_header(
-					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(size)+'/'+str(size))
+			self.send_header('Content-Length', str(size))
+			if get_bytes or upper_range is not None:
+				if upper_range is None:
+					upper_range = size - 1
+				logger.info('...sending range...{0}-{1}/{2}'.format(get_bytes,upper_range,size))
+				self.send_header(
+					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(upper_range)+'/'+str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
 			
-			old_get_bytes = get_bytes
 			print(get_bytes,'--get--bytes--',nm_ext)
 			t = 0
+			"""
+			if status == 'now_playing' and mpvplayer.processId() > 0:
+				size_per_second = int(size/mplayerLength)
+				print(size_per_second,'=--size-per-second')
+				time_clock = ui.progress_counter
+				t = 0
+				print(size_per_second,'=--size-per-second',time_clock)
+				cur_size = ui.progress_counter * size_per_second
+				end_read = False
+				with open(nm,'rb') as f:
+					total_content = 0
+					if t == 0 and get_bytes:
+						f.seek(get_bytes)
+						t = 1
+						total_content = get_bytes
+						if get_bytes > (size - 5 * size_per_second):
+							size_read = size - get_bytes
+							content = f.read(size_read)
+							self.wfile.write(content)
+							end_read = True
+					elif t == 0 and not get_bytes:
+						time_sec = ui.progress_counter
+						for i in range(time_sec):
+							content = f.read(size_per_second)
+							total_content = total_content + size_per_second
+							self.wfile.write(content)
+						t = 1
+					if not end_read:
+						content = f.read(size_per_second)
+						total_content = total_content + size_per_second
+					else:
+						content = None
+					time_sec = ui.progress_counter
+					prev_sec = 0
+					while(content) and not end_read:
+						if prev_sec != time_sec:
+							try:
+								self.wfile.write(content)
+								content = f.read(size_per_second)
+								total_content = total_content + size_per_second
+								get_bytes = 0
+							except Exception as err_val:
+								print(err_val,'--err--')
+								break
+						else:
+							time.sleep(0.5)
+						prev_sec = time_sec
+						time_sec = ui.progress_counter
+						if mpvplayer.processId() == 0:
+							break
+						#time.sleep(0.1)
+			else:
+			"""
 			old_time = time.time()
+			end_read = False
+			content = None
 			with open(nm,'rb') as f:
 				if get_bytes and t ==0:
 						f.seek(get_bytes)
 						t = 1
 						print('seeking')
-				
-				content = f.read(1024*512)
-				while(content):
+						if upper_range is not None:
+							if upper_range != size - 1:
+								content = f.read(upper_range-get_bytes+1)
+								self.wfile.write(content)
+								end_read = True
+				if not end_read:
+					content = f.read(1024*512)
+				while(content) and not end_read:
 					try:
 						self.wfile.write(content)
 					except Exception as e:
@@ -742,7 +825,9 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			if path.endswith(pl_id_val):
 				path = path.replace(pl_id_val,'',1)
 		if (path.lower().startswith('stream_continue') 
-				or path.lower().startswith('stream_shuffle')):
+				or path.lower().startswith('stream_shuffle') 
+				or path.lower().startswith('channel.') 
+				or path.lower().startswith('channel_sync.')):
 			new_arr = []
 			n_out = ''
 			n_art = ''
@@ -754,9 +839,14 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				list1_row = None
 			
 			#book_mark = self.triggerBookmark(list1_row)
+			new_epnArrList = [i for i in epnArrList]
 			
-			for i in range(ui.list2.count()):
-				new_arr.append(i)
+			new_arr = [i for i in range(len(epnArrList))]
+			
+			if path.startswith('channel'):
+				new_arr = new_arr[curR:]
+				new_epnArrList = new_epnArrList[curR:]
+				logger.info('{0}++++++++++++++++++{1}'.format(new_arr,new_epnArrList))
 			if path.lower().startswith('stream_continue_from_'):
 				row_digit = 0
 				try:
@@ -884,6 +974,16 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 					http_val = "http"
 					if ui.https_media_server:
 						http_val = "https" 
+					if path.startswith('channel'):
+						if path.startswith('channel.'):
+							n_url_name = str(k)
+						else:
+							n_url_name = 'now_playing'
+						n_url = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)
+						n_url_new = base64.b64encode(bytes(n_url,'utf-8'))
+						n_url = str(n_url_new,'utf-8')
+						j = 'abs_path='+n_url
+						
 					if play_id:
 						out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
 					else:
@@ -894,7 +994,18 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
 					else:
 						pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
-					
+					if k == len(epnArrList) - 1:
+						if path.startswith('channel'):
+							n_art = 'Server'
+							n_out = "What I'm playing now"
+							out = out.rsplit('/',1)[0]
+							out = out + '/server' 
+							if path.endswith('.pls'):
+								pls_txt = pls_txt+'\nFile{0}={1}\nTitle{0}={2}-{3}\n'.format(str(i),out,n_art,n_out)
+							elif path.endswith('.htm') or path.endswith('.html'):
+								pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
+							else:
+								pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
 				except Exception as e:
 					print(e)
 			if path.endswith('.pls'):
@@ -924,6 +1035,85 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				self.send_header('Content-type','audio/mpegurl')
 			size = len(pls_txt)
 			#size = size - get_bytes
+			self.send_header('Content-Length', str(size))
+			self.send_header('Connection', 'close')
+			self.end_headers()
+			try:
+				self.wfile.write(pls_txt)
+			except Exception as e:
+				print(e)
+		elif (path.lower().startswith('channel_sync.')):
+			if path.endswith('.html') or path.endswith('.htm'):
+				pls_txt = '<ol id="playlist">'
+			elif path.endswith('.pls'):
+				pls_txt = '[playlist]'
+			else:
+				pls_txt = '#EXTM3U\n'
+			http_val = 'http'
+			if ui.https_media_server:
+				http_val = "https" 
+			n_url = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)
+			n_url_name = 'now_playing'
+			n_url_new = base64.b64encode(bytes(n_url,'utf-8'))
+			n_url = str(n_url_new,'utf-8')
+			j = 'abs_path='+n_url
+			if play_id:
+				out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'&pl_id='+play_id+'/'+urllib.parse.quote(n_url_name)
+			else:
+				out = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)+'/'+j+'/'+urllib.parse.quote(n_url_name)
+			n_art = ''
+			n_out = ''
+			if ui.list1.currentItem():
+				n_art = ui.list1.currentItem().text()
+				n_out = "Server"
+			if epnArrList:
+				if '	' in epnArrList[curR]:
+					epn_arr = epnArrList[curR].strip()
+					length = len(epn_arr.split('	'))
+					if length == 3:
+						n_out,__,n_art = epn_arr.split('	')
+					elif length == 2:
+						n_out,__ = epn_arr.split('	')
+					else:
+						n_out = epn_arr
+				else:
+					n_out = epnArrList[curR].strip()
+					if not n_art:
+						n_art = 'Not Available'
+			
+			if path.endswith('.pls'):
+				pls_txt = pls_txt+'\nTitle{0}={1}\nFile{0}={2}\n'.format(str(1),n_art,out)
+			elif path.endswith('.htm') or path.endswith('.html'):
+				pls_txt = pls_txt+'<li data-mp3="{2}">{0} - {1}</li>'.format(n_art,n_out,out)
+			else:
+				pls_txt = pls_txt+'#EXTINF:0,{0} - {1}\n{2}\n'.format(n_art,n_out,out)
+				
+			if path.endswith('.pls'):
+				footer = '\nNumberOfEntries='+str(1)+'\n'
+				pls_txt = pls_txt+footer
+			elif path.endswith('.htm') or path.endswith('.html'):
+				pls_txt = pls_txt+'</ol>'
+				playlist_htm = os.path.join(BASEDIR,'playlist.html')
+				if os.path.exists(playlist_htm):
+					play_htm = open_files(playlist_htm,False)
+					pls_txt = re.sub('<ol id="playlist"></ol>',pls_txt,play_htm)
+					new_field = ''
+					for i in html_default_arr:
+						new_field = new_field+'<option value="{0}">{1}</option>'.format(i.lower(),i)
+					new_field = '<select id="site" onchange="siteChange()">{0}</select>'.format(new_field)
+					logger.info(new_field)
+					pls_txt = pls_txt.replace('<select id="site" onchange="siteChange()"></select>',new_field)
+					extra_fields = self.get_extra_fields()
+					logger.info(extra_fields)
+					pls_txt = re.sub('<div id="site_option" hidden></div>',extra_fields,pls_txt)
+			logger.info('pls_txt_channel: '.format(pls_txt))
+			pls_txt = bytes(pls_txt,'utf-8')
+			self.send_response(200)
+			if path.endswith('.htm') or path.endswith('.html'):
+				self.send_header('Content-type','text/html')
+			else:
+				self.send_header('Content-type','audio/mpegurl')
+			size = len(pls_txt)
 			self.send_header('Content-Length', str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
@@ -1022,15 +1212,35 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				print(e)
 		elif path.startswith('abs_path='):
 			try:
-				#if '/' in path:
-				#	path = path.rsplit('/',1)[0]
 				path = path.split('abs_path=',1)[1]
 				nm = path
 				nm = str(base64.b64decode(nm).decode('utf-8'))
 				logger.info(nm)
-				if 'youtube.com' in nm:
-					nm = get_yt_url(nm,ui.quality_val,ui.ytdl_path,logger).strip()
-				self.process_url(nm,get_bytes)
+				num_row = None
+				if nm.startswith('http'):
+					http_val = 'http'
+					if ui.https_media_server:
+						http_val = "https" 
+					n_url = http_val+'://'+str(my_ipaddress)+':'+str(ui.local_port_stream)
+					logger.info('abs_path_playing={0}'.format(n_url))
+					if nm.startswith(n_url):
+						try:
+							num_row = self.path.rsplit('/',1)[-1]
+							if num_row == 'server' or num_row == 'now_playing':
+								row = curR
+							else:
+								row = int(num_row)
+						except Exception as err_val:
+							print(err_val,'--1112--')
+							row = 0
+						if row < 0:
+							row = 0
+						nm = ui.epn_return(row)
+						if nm.startswith('"'):
+							nm = nm.replace('"','')
+					elif 'youtube.com' in nm:
+						nm = get_yt_url(nm,ui.quality_val,ui.ytdl_path,logger).strip()
+				self.process_url(nm,get_bytes,status=num_row)
 			except Exception as e:
 				print(e)
 		elif path.startswith('relative_path='):
@@ -7318,13 +7528,14 @@ class Ui_MainWindow(object):
 				'Show/Hide Video','Show/Hide Cover And Summary',
 				'Lock Playlist','Shuffle','Stop After Current File',
 				'Continue(default Mode)','Set Media Server User/PassWord',
-				'Start Media Server','Set As Default Background','Settings'
+				'Start Media Server','Set Current Background As Default','Settings'
 				]
 								
 		self.action_player_menu =[]
 		for i in self.player_menu_option:
 			self.action_player_menu.append(
 				self.player_menu.addAction(i, lambda x=i:self.playerPlaylist(x)))
+				
 			
 		self.player_playlist.setMenu(self.player_menu)
 		self.player_playlist.setCheckable(True)
@@ -7853,6 +8064,7 @@ class Ui_MainWindow(object):
 		self.logging_module = False
 		self.ytdl_path = 'default'
 		self.https_cert_file = os.path.join(home,'cert.pem')
+		self.progress_counter = 0
 		self.posterfound_arr = []
 		self.client_auth_arr = ['127.0.0.1','0.0.0.0']
 		self.current_background = os.path.join(home,'default.jpg')
@@ -8915,7 +9127,7 @@ class Ui_MainWindow(object):
 			'Show/Hide Video','Show/Hide Cover And Summary',
 			'Lock Playlist','Shuffle','Stop After Current File',
 			'Continue(default Mode)','Set Media Server User/PassWord',
-			'Start Media Server','Set As Default Background','Settings'
+			'Start Media Server','Set Current Background As Default','Settings'
 			]
 		
 		print(val)
@@ -9041,7 +9253,7 @@ class Ui_MainWindow(object):
 			new_set = LoginAuth(parent=MainWindow,media_server=True)
 		elif val.lower() == 'settings':
 			new_set = LoginAuth(parent=MainWindow,settings=True)
-		elif val == "Set As Default Background":
+		elif val == "Set Current Background As Default":
 			if (os.path.exists(self.current_background) 
 						and self.current_background != self.default_background):
 					shutil.copy(self.current_background,self.default_background)
@@ -9109,6 +9321,9 @@ class Ui_MainWindow(object):
 			quality = "hd"
 			self.sd_hd.setText("HD")
 		elif txt == "HD":
+			quality = "best"
+			self.sd_hd.setText("BEST")
+		elif txt == "BEST":
 			quality = "sd"
 			self.sd_hd.setText("SD")
 		self.quality_val = quality
@@ -16749,6 +16964,7 @@ class Ui_MainWindow(object):
 						self.slider.setValue(0)
 					else:
 						self.slider.setValue(val)
+					self.progress_counter = val
 					if not new_tray_widget.isHidden():
 						new_tray_widget.update_signal.emit(out,val)
 					if cache_empty == 'yes':
@@ -20665,6 +20881,8 @@ def main():
 						ui.sd_hd.setText("HD")
 					elif quality == 'sd480p':
 						ui.sd_hd.setText("480")
+					elif quality == 'BEST':
+						ui.sd_hd.setText("Best")
 					else:
 						ui.sd_hd.setText("SD")
 				elif "Dock_Option" in i:

@@ -105,12 +105,14 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			if (os.path.exists(file_name) and 
 					os.stat(file_name).st_size == content_length):
 				complete_file = True
-				
-		self.send_response(200)
+		if get_bytes:
+			self.send_response(206)
+		else:
+			self.send_response(200)
 		self.send_header('Content-type','video/mp4')
 		self.send_header('Content-Length', str(content_length))
 		self.send_header('Accept-Ranges', 'bytes')
-		size_field = 'bytes {0}-{1}/{1}'.format(str(get_bytes),str(content_length))
+		size_field = 'bytes {0}-{1}/{2}'.format(str(get_bytes),str(content_length-1),str(content_length))
 		self.send_header('Content-Range', size_field)
 		self.send_header('Connection', 'close')
 		self.end_headers()
