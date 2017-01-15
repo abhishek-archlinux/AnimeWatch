@@ -100,7 +100,8 @@ class Shoutcast():
 				j = j+1
 			m.sort()
 			print(m)
-			n = ["History","Genre","TV"]
+			#n = ["History","Genre","TV"]
+			n = ["History","Genre"]
 			m = n + m
 		elif opt == 'History':
 			a =0

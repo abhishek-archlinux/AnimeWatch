@@ -179,7 +179,8 @@ class KissDrama():
 		lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
 		if os.path.exists(lnk_file):
 			os.remove(lnk_file)
-			
+		if quality == 'best':
+			quality = 'hd'
 		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
 		print(url,quality,self.cookie_file)
 		cloudfare(url,quality,self.cookie_file)
