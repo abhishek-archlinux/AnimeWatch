@@ -488,15 +488,28 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		user_agent = self.headers['User-Agent']
 		range_hdr = self.headers['Range']
 		upper_range = None
+		lower_range = None
 		try:
 			if range_hdr:
+				if range_hdr.startswith('bytes='):
+					range_hdr = range_hdr.replace('bytes=','',1)
 				if '-' in range_hdr:
 					if not range_hdr.endswith('-'):
-						upper_range = int(range_hdr.split('-')[-1])
-						print(upper_range,'--upper--range--')
+						low,up = range_hdr.split('-')
+						lower_range = int(low)
+						upper_range = int(up)
+						print(lower_range,upper_range)
+					else:
+						lower_range = int(range_hdr.replace('-',''))
+				else:
+					lower_range = int(range_hdr)
 		except Exception as err_val:
 			print(err_val,'--495--')
-			
+		
+		if lower_range is not None:
+			get_bytes = lower_range
+		
+		logger.info('Range: {0}-{1}'.format(get_bytes,upper_range))
 		content_range = True
 		if user_agent:
 			user_agent = (user_agent.lower()).strip()
@@ -526,11 +539,13 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				nsize = size - get_bytes + 1
 			else:
 				nsize = size
-			if upper_range is None:
-				upper_range = size - 1
-			self.send_header('Content-Length', str(size))
 			self.send_header('Accept-Ranges', 'bytes')
-			self.send_header(
+			self.send_header('Content-Length', str(size))
+			if get_bytes or upper_range is not None:
+				if upper_range is None:
+					upper_range = size - 1
+				logger.info('...sending range...{0}-{1}/{2}'.format(get_bytes,upper_range,size))
+				self.send_header(
 					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(upper_range)+'/'+str(size))
 			self.send_header('Connection', 'close')
 			self.end_headers()
@@ -7513,13 +7528,14 @@ class Ui_MainWindow(object):
 				'Show/Hide Video','Show/Hide Cover And Summary',
 				'Lock Playlist','Shuffle','Stop After Current File',
 				'Continue(default Mode)','Set Media Server User/PassWord',
-				'Start Media Server','Set As Default Background','Settings'
+				'Start Media Server','Set Current Background As Default','Settings'
 				]
 								
 		self.action_player_menu =[]
 		for i in self.player_menu_option:
 			self.action_player_menu.append(
 				self.player_menu.addAction(i, lambda x=i:self.playerPlaylist(x)))
+				
 			
 		self.player_playlist.setMenu(self.player_menu)
 		self.player_playlist.setCheckable(True)
@@ -9111,7 +9127,7 @@ class Ui_MainWindow(object):
 			'Show/Hide Video','Show/Hide Cover And Summary',
 			'Lock Playlist','Shuffle','Stop After Current File',
 			'Continue(default Mode)','Set Media Server User/PassWord',
-			'Start Media Server','Set As Default Background','Settings'
+			'Start Media Server','Set Current Background As Default','Settings'
 			]
 		
 		print(val)
@@ -9237,7 +9253,7 @@ class Ui_MainWindow(object):
 			new_set = LoginAuth(parent=MainWindow,media_server=True)
 		elif val.lower() == 'settings':
 			new_set = LoginAuth(parent=MainWindow,settings=True)
-		elif val == "Set As Default Background":
+		elif val == "Set Current Background As Default":
 			if (os.path.exists(self.current_background) 
 						and self.current_background != self.default_background):
 					shutil.copy(self.current_background,self.default_background)
@@ -9305,6 +9321,9 @@ class Ui_MainWindow(object):
 			quality = "hd"
 			self.sd_hd.setText("HD")
 		elif txt == "HD":
+			quality = "best"
+			self.sd_hd.setText("BEST")
+		elif txt == "BEST":
 			quality = "sd"
 			self.sd_hd.setText("SD")
 		self.quality_val = quality
@@ -20862,6 +20881,8 @@ def main():
 						ui.sd_hd.setText("HD")
 					elif quality == 'sd480p':
 						ui.sd_hd.setText("480")
+					elif quality == 'BEST':
+						ui.sd_hd.setText("Best")
 					else:
 						ui.sd_hd.setText("SD")
 				elif "Dock_Option" in i:
