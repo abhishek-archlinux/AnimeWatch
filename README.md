@@ -173,13 +173,14 @@ In order to access the server from outside the network, it is necessary to **ena
 It is possible to access the media server with plain 'http' protocol from outside the network, but it's not advisable because of security reasons. User must set 'HTTPS_ON' field to 'True', if they want to access media server from outside.
 
 In short, Recommanded settings for external access to media server are as follows.
-	(First set username and password from 'more' menu and then make changes in other_options.txt as below)
-	ACCESS_FROM_OUTSIDE_NETWORK=True:1
-	CLOUD_IP_FILE=cloud_file_name(optional)
-	HTTPS_ON=True
-	MEDIA_SERVER_COOKIE=True
-	COOKIE_EXPIRY_LIMIT=24
-	COOKIE_PLAYLIST_EXPIRY_LIMIT=24 
+		
+		(First set username and password from 'more' menu and then make changes in other_options.txt as below)
+		ACCESS_FROM_OUTSIDE_NETWORK=True:1
+		CLOUD_IP_FILE=cloud_file_name(optional)
+		HTTPS_ON=True
+		MEDIA_SERVER_COOKIE=True
+		COOKIE_EXPIRY_LIMIT=24
+		COOKIE_PLAYLIST_EXPIRY_LIMIT=24 
 
 Once https enabled, users will find that many media players might not play playlist generated from the browser due to self signed certificates. From popular players, I had some success with vlc and kodi. vlc sometimes work and sometimes won't play anything. kodi plays playlist very well but can't handle redirected url. mpv works perfectly with https streams in the playlist. AnimeWatch player by default uses mpv as backend, hence generated playlist works well in it. mplayer can also play https streams but can't handle redirected url of the media server. In AnimeWatch player, playlist can be anything from audio, video, youtube urls or addons url or even torrent streams. If playlist contains youtube url, then the server will return url of the video stream with the help of youtube-dl, and many players can't handle such redirection. In case of torrent streams (yes, users can start torrent streams directly on the media server, from any client playlist, which will be streamed back to client again), media server will send you redirected url, since torrent streams will start on different port (default 8001) than that of media server port (default 9001). Both kodi and mplayer can't handle it. But mpv (hence AnimeWatch) and vlc can handle it perfectly well. AnimeWatch player is optimized for streaming specially, hence users might get good streaming experience with it. It also contains offline mode, which might be useful for downloading, media server content to client for offline viewing.
 
