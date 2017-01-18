@@ -57,6 +57,32 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		global handle,ses,info,cnt,cnt_limit,file_name,torrent_download_path
 		global tmp_dir_folder,httpd,media_server_key,client_auth_arr
 		
+		user_agent = self.headers['User-Agent']
+		range_hdr = self.headers['Range']
+		upper_range = None
+		lower_range = None
+		try:
+			if range_hdr:
+				if range_hdr.startswith('bytes='):
+					range_hdr = range_hdr.replace('bytes=','',1)
+				if '-' in range_hdr:
+					if not range_hdr.endswith('-'):
+						low,up = range_hdr.split('-')
+						lower_range = int(low)
+						upper_range = int(up)
+						print(lower_range,upper_range)
+					else:
+						lower_range = int(range_hdr.replace('-',''))
+				else:
+					lower_range = int(range_hdr)
+		except Exception as err_val:
+			print(err_val,'--495--')
+		
+		if lower_range is not None:
+			get_bytes = lower_range
+		
+		print('Range: {0}-{1}'.format(str(get_bytes),str(upper_range)))
+		
 		tmp_file = os.path.join(tmp_dir_folder,'row.txt')
 		tmp_seek_file = os.path.join(tmp_dir_folder,'seek.txt')
 		tmp_pl_file = os.path.join(tmp_dir_folder,'player_stop.txt')
@@ -112,11 +138,15 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		self.send_header('Content-type','video/mp4')
 		self.send_header('Content-Length', str(content_length))
 		self.send_header('Accept-Ranges', 'bytes')
-		size_field = 'bytes {0}-{1}/{2}'.format(str(get_bytes),str(content_length-1),str(content_length))
-		self.send_header('Content-Range', size_field)
+		if get_bytes or upper_range is not None:
+				if upper_range is None:
+					upper_range = content_length - 1
+				print('...sending range...{0}-{1}/{2}'.format(str(get_bytes),str(upper_range),str(content_length)))
+				self.send_header(
+					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(upper_range)+'/'+str(content_length))
 		self.send_header('Connection', 'close')
 		self.end_headers()
-		
+		seek_end = False
 		f = open(file_name,'rb')
 		if get_bytes:
 			new_piece = int(get_bytes/length)+1
@@ -124,6 +154,8 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 			i = cnt+new_piece
 			if i > cnt_limit -3:
 				i = cnt
+			if i > cnt_limit - 10:
+				seek_end = True
 			print(new_piece,'--new_piece--',i,get_bytes,content_length)
 		else:
 			i = cnt
@@ -177,7 +209,11 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 						handle.piece_priority(i,7)
 						#print(cnt_arr)
 						if get_bytes and not pri_lowered:
-							k = cnt
+							if seek_end:
+								k = cnt+10
+							else:
+								k = cnt
+							print(k,i,'---k,i--')
 							while k < i:
 								handle.piece_priority(k,1)
 								print(k,' lowered')

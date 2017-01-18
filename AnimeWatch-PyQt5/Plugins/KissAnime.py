@@ -76,31 +76,19 @@ class KissAnime():
 		url = 'http://kissanime.ru/Anime/' + name
 		print(url)
 		content = self.ccurlN(url)
-		
-			
-		#f = open('/tmp/AnimeWatch/1.txt','w')
-		#f.write(content)
-		#f.close()
 		epl = re.findall('/Anime/' + name + '[^"]*["?"]id[^"]*', content)
-		#if not epl:
-		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
 			img = re.findall('https://kissanime.ru/Uploads/Etc/[^"]*.jpg', content)
 			if not img:
 				img = re.findall('http://cdn.myanimelist.net/[^"]*.jpg', content)	
 			print(img)
-			#jpgn = img[0].split('/')[-1]
-			#print('Pic Name=' + jpgn
-			picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			print(picn)
 			if img:
-				#img[0]=img[0].replace('kissanime.com','kissanime.ru')
 				print(img[0])
 			if not os.path.isfile(picn):
 				ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 		except:
-			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 		j = 0
 		for i in epl:
@@ -114,7 +102,6 @@ class KissAnime():
 		summary1 = ""
 		try:
 			link = soup.findAll('span',{'class':'info'})
-			#link = soup.findAll('div',{'class':'barContent'})
 			for i in link:
 				l = (i.text).lower()
 				if "genres" in l or "other name" in l or "country" in l or "date aired" in l or 'status' in l:
@@ -179,13 +166,7 @@ class KissAnime():
 		sd480 = ''
 		full_hd = ''
 		content = self.ccurlN(url)
-		
-		
-		#print (content)
 		soup = BeautifulSoup(content,'lxml')
-		#f = open('/tmp/AnimeWatch/k.txt','w')
-		#f.write(content)
-		#f.close()
 		m = soup.findAll('select',{'id':'selectQuality'})
 		print(m)
 		arr = []

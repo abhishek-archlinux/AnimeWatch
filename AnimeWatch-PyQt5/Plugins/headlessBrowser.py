@@ -36,10 +36,15 @@ class BrowseUrl(QWebEngineView):
 	def Browse(self,url):
 		hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		html = ''
-		#url = sys.argv[1]	
 		home1 = os.path.expanduser("~")
-		#home1 = "/usr/local/share"
-		enginePath = os.path.join(home1,'.config','AnimeWatch','src','Plugins','headlessEngine.py')
+		
+		BASEDIR,BASEFILE = os.path.split(os.path.abspath(__file__))
+		
+		if 'AnimeWatch' in BASEDIR:
+			enginePath = os.path.join(home1,'.config','AnimeWatch','src','Plugins','headlessEngine.py')
+		elif 'kawaii-player' in BASEDIR:
+			enginePath = os.path.join(home1,'.config','kawaii-player','src','Plugins','headlessEngine.py')
+			
 		tmp_dir,new_c = os.path.split(self.cookie_file)
 		
 		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:
@@ -58,7 +63,6 @@ class BrowseUrl(QWebEngineView):
 			lnk_file = os.path.join(tmp_dir,'lnk.txt')
 			if os.path.exists(lnk_file):
 				os.remove(lnk_file)
-			#cloud_cookie = '/tmp/AnimeWatch/cloud_cookie.txt'
 			while(not os.path.exists(self.cookie_file) and cnt < 20):
 				print(cnt)
 				print('wait Clouflare ')
