@@ -44,7 +44,6 @@ class BrowseUrl(QWebEngineView):
 			enginePath = os.path.join(home1,'.config','AnimeWatch','src','Plugins','headlessEngine.py')
 		elif 'kawaii-player' in BASEDIR:
 			enginePath = os.path.join(home1,'.config','kawaii-player','src','Plugins','headlessEngine.py')
-			
 		tmp_dir,new_c = os.path.split(self.cookie_file)
 		
 		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:

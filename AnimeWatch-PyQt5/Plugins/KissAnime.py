@@ -27,6 +27,7 @@ def cloudfare(url,quality,cookie):
 	web = BrowseUrl(url,quality,cookie)
 
 class KissAnime():
+	
 	def __init__(self,tmp):
 		global tmp_working_dir
 		self.tmp_dir = tmp
@@ -35,6 +36,7 @@ class KissAnime():
 		if not os.path.exists(self.cookie_file):
 			f = open(self.cookie_file,'w')
 			f.close()
+			
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
@@ -65,10 +67,9 @@ class KissAnime():
 					nm,ep = i.split('/')
 					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
-
 			return m
-	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 			
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		epn_num = ''
 		if extra_info:
 			name,epn_num = name.rsplit('--',1) 
@@ -133,6 +134,7 @@ class KissAnime():
 		record_history = True
 		display_list = True
 		return (epl,summary,picn,record_history,depth_list)
+		
 	def urlResolve(self,txt):
 		m =[]
 
@@ -270,10 +272,9 @@ class KissAnime():
 					nm,ep = i.split('/')
 					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
-
 			return m
+			
 	def getNextPage(self,opt,pgn,genre_num,name):
-		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
@@ -293,11 +294,10 @@ class KissAnime():
 					nm,ep = i.split('/')
 					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
-
 			if m:
 				return m
+				
 	def getPrevPage(self,opt,pgn,genre_num,name):
-		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:
