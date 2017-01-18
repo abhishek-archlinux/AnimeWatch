@@ -203,10 +203,7 @@ class testHTTPServer_RequestHandler(BaseHTTPRequestHandler):
 									cnt_arr.append(i+l)
 									handle.piece_priority(i+l,6)
 							print(cnt_arr)
-						#print("seeking i={0},cnt={1},get_bytes={2},
-						#pri_lowered={3}".format(i,cnt,get_bytes,pri_lowered))
 						handle.piece_priority(i,7)
-						#print(cnt_arr)
 						if get_bytes and not pri_lowered:
 							if seek_end:
 								k = cnt+10
