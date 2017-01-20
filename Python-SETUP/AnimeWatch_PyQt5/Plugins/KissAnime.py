@@ -27,6 +27,7 @@ def cloudfare(url,quality,cookie):
 	web = BrowseUrl(url,quality,cookie)
 
 class KissAnime():
+	
 	def __init__(self,tmp):
 		global tmp_working_dir
 		self.tmp_dir = tmp
@@ -35,6 +36,7 @@ class KissAnime():
 		if not os.path.exists(self.cookie_file):
 			f = open(self.cookie_file,'w')
 			f.close()
+			
 	def getOptions(self):
 			criteria = ['MostPopular','Newest','LatestUpdate','Genre','History']
 			return criteria
@@ -65,10 +67,9 @@ class KissAnime():
 					nm,ep = i.split('/')
 					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
-
 			return m
-	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 			
+	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
 		epn_num = ''
 		if extra_info:
 			name,epn_num = name.rsplit('--',1) 
@@ -76,31 +77,19 @@ class KissAnime():
 		url = 'http://kissanime.ru/Anime/' + name
 		print(url)
 		content = self.ccurlN(url)
-		
-			
-		#f = open('/tmp/AnimeWatch/1.txt','w')
-		#f.write(content)
-		#f.close()
 		epl = re.findall('/Anime/' + name + '[^"]*["?"]id[^"]*', content)
-		#if not epl:
-		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
 			img = re.findall('https://kissanime.ru/Uploads/Etc/[^"]*.jpg', content)
 			if not img:
 				img = re.findall('http://cdn.myanimelist.net/[^"]*.jpg', content)	
 			print(img)
-			#jpgn = img[0].split('/')[-1]
-			#print('Pic Name=' + jpgn
-			picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 			print(picn)
 			if img:
-				#img[0]=img[0].replace('kissanime.com','kissanime.ru')
 				print(img[0])
 			if not os.path.isfile(picn):
 				ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 		except:
-			#picn = '/tmp/AnimeWatch/' + name + '.jpg'
 			picn = os.path.join(self.tmp_dir,name+'.jpg')
 		j = 0
 		for i in epl:
@@ -114,7 +103,6 @@ class KissAnime():
 		summary1 = ""
 		try:
 			link = soup.findAll('span',{'class':'info'})
-			#link = soup.findAll('div',{'class':'barContent'})
 			for i in link:
 				l = (i.text).lower()
 				if "genres" in l or "other name" in l or "country" in l or "date aired" in l or 'status' in l:
@@ -146,6 +134,7 @@ class KissAnime():
 		record_history = True
 		display_list = True
 		return (epl,summary,picn,record_history,depth_list)
+		
 	def urlResolve(self,txt):
 		m =[]
 
@@ -179,13 +168,7 @@ class KissAnime():
 		sd480 = ''
 		full_hd = ''
 		content = self.ccurlN(url)
-		
-		
-		#print (content)
 		soup = BeautifulSoup(content,'lxml')
-		#f = open('/tmp/AnimeWatch/k.txt','w')
-		#f.write(content)
-		#f.close()
 		m = soup.findAll('select',{'id':'selectQuality'})
 		print(m)
 		arr = []
@@ -289,10 +272,9 @@ class KissAnime():
 					nm,ep = i.split('/')
 					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
-
 			return m
+			
 	def getNextPage(self,opt,pgn,genre_num,name):
-		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
@@ -312,11 +294,10 @@ class KissAnime():
 					nm,ep = i.split('/')
 					m[j] = nm+'--'+ep+'	'+'Newest Episode: '+ep
 				j = j + 1
-
 			if m:
 				return m
+				
 	def getPrevPage(self,opt,pgn,genre_num,name):
-		
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:

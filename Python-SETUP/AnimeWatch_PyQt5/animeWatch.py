@@ -24,8 +24,9 @@ import sys
 
 BASEDIR,BASEFILE = os.path.split(os.path.abspath(__file__))
 print(BASEDIR,BASEFILE,os.getcwd())
-sys.path.append(BASEDIR)
-
+#sys.path.append(BASEDIR)
+sys.path.insert(0,BASEDIR)
+print(sys.path)
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets
 import urllib.parse
 import urllib.request
