@@ -142,9 +142,7 @@ From version 2.6.0-0, it's possible to use AnimeWatch player as media server. Th
 
 For example, if server address is set to '192.168.1.1:9001', then you should be able to access the current running file in the playlist at the address 'http://192.168.1.1:9001/play' or 'http://192.168.2.1:9001/'. If user will use this media server IP address in repeat (loop) mode on the client side, then the client will automatically play everything, which is being played by the media server in it's playlist.
 
-**Update: Only available in latest git commit, not in release section**
-
-A very simple web interface has been provided for media server in the latest git commit, from which users can access their audio/video collection managed by AnimeWatch player. If your media server is '192.168.1.1:9001', then web interface can be opened at **192.168.1.1:9001/stream_continue.htm**. From this interface, users can generate universal playlist in m3u format which can be played by any media player on the local network, which supports http streaming such as mpv,vlc etc..and that too on any platform. If users don't want to open web interface then they can get the media server playlist directly on any player by opening url 'http://192.168.1.1:9001/stream_continue.m3u' from within the player itself, and the current media server playlist will be directly available in the player. Alternatively users can use curl or wget to get the playlist, and save it with extension '.m3u', which then can be opened with any player which recognizes the m3u format.
+A very simple web interface has been provided for media server (Available from version 4.2.2-0), from which users can access their audio/video collection managed by AnimeWatch player. If your media server is '192.168.1.1:9001', then web interface can be opened at **192.168.1.1:9001/stream_continue.htm**. From this interface, users can generate universal playlist in m3u format which can be played by any media player on the local network, which supports http streaming such as mpv,vlc etc..and that too on any platform. If users don't want to open web interface then they can get the media server playlist directly on any player by opening url 'http://192.168.1.1:9001/stream_continue.m3u' from within the player itself, and the current media server playlist will be directly available in the player. Alternatively users can use curl or wget to get the playlist, and save it with extension '.m3u', which then can be opened with any player which recognizes the m3u format.
 
 In local home network, if cookie and https is not enabled for media server then, one can access various media server playlists directly from vlc using simple urls.  
 
@@ -367,24 +365,6 @@ AnimeWatch-PyQt5 from version number 2.8.0-0 onwards can be installed on ubuntu 
 **Dependencies installation in Ubuntu 16.04**
 
 sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl wget libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent youtube-dl python3-dbus.mainloop.pyqt5 python3-pyqt5.qtwebkit python3-dbus
-
-**Once Dependencies are installed Download the Appropriate folder (AnimeWatch-PyQt5 or AnimeWatch-PyQt4-Stable) containing 'install.py' file. Open Terminal in the directory and use following command:**
-
-**In Arch:**
-
-python install.py
-
-**In Ubuntu 14.04,16.04:**
-
-python3 install.py
-
-Application Launcher will be created as "~/.local/share/applications/AnimeWatch.desktop"
-
-All other configuration files will be created in "~/.config/AnimeWatch/"
-
-**Uninstall**
-
-Simply remove the application launcher '~/.local/share/applications/AnimeWatch.desktop' and clear the directory '~/.config/AnimeWatch/src/'. If you want to remove all configuration files also, then simply delete directory '~/.config/AnimeWatch/'. Once you delete the configuration directory, all the settings will be lost.
 
 
 ## Troubleshooting
