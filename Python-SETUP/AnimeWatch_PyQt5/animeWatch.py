@@ -4109,17 +4109,23 @@ class List1(QtWidgets.QListWidget):
 	def addBookmarkList(self):
 		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt
 		global base_url,bookmark,status,siteName,finalUrlFound,refererNeeded
+		global original_path_name,video_local_stream
+		try:
+			new_path = original_path_name[self.currentRow()].split('	')[-1]
+		except Exception as e:
+			print(e)
+			new_path = 'NONE'
 		if bookmark == "False":
 				if opt != "History":
 					ui.listfound()
 				if site == "Music" or site == "Video":
 					if ui.list3.currentItem():
 						music_opt = str(ui.list3.currentItem().text())
-						tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
+						tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)+':'+str(new_path)
 					else:
 						return 0
 				else:
-					tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)
+					tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)+':'+str(new_path)
 				file_path = os.path.join(home,'Bookmark','bookmark.txt')
 				write_files(file_path,tmp,line_by_line=True)
 				note = name + " is Bookmarked"
@@ -4127,18 +4133,23 @@ class List1(QtWidgets.QListWidget):
 	def triggerBookmark(self,val):
 		global name,tmp_name,opt,list1_items,curR,nxtImg_cnt,home,site,pre_opt
 		global base_url,bookmark,status,siteName,finalUrlFound,refererNeeded,video_local_stream
-		
+		global original_path_name
+		try:
+			new_path = original_path_name[self.currentRow()].split('	')[-1]
+		except Exception as e:
+			print(e)
+			new_path = 'NONE'
 		if bookmark == "False":
 			self.addBookmarkList()
 		if site == "Music" or site == "Video":
 			if ui.list3.currentItem():
 				music_opt = str(ui.list3.currentItem().text())
-				tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
+				tmp = site+':'+(music_opt)+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)+':'+str(new_path)
 			else:
 				return 0
 		else:
 			if ui.list1.currentItem():
-				tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)
+				tmp = site+':'+"History"+':'+siteName+':'+str(base_url)+':'+str(embed)+':'+name+':'+str(finalUrlFound)+':'+str(refererNeeded)+':'+str(video_local_stream)+':'+str(new_path)
 			else:
 				return 0
 		file_path = os.path.join(home,'Bookmark',val+'.txt')
@@ -4342,13 +4353,20 @@ class List1(QtWidgets.QListWidget):
 				submenu = QtWidgets.QMenu(menu)
 				submenu.setTitle("Bookmark Options")
 				menu.addMenu(submenu)
-				submenu_arr_dict = {
-					'mal':'MyAnimeList','ap':'Anime-Planet',
-					'ans':'Anime-Source','tvdb':'TVDB',
-					'ann':'ANN','anidb':'AniDB','g':'Google',
-					'yt':'Youtube','ddg':'DuckDuckGo',
-					'last.fm':'last.fm','zerochan':'Zerochan'
-					}
+				if 'AnimeWatch' in home:
+					submenu_arr_dict = {
+						'mal':'MyAnimeList','ap':'Anime-Planet',
+						'ans':'Anime-Source','tvdb':'TVDB',
+						'ann':'ANN','anidb':'AniDB','g':'Google',
+						'yt':'Youtube','ddg':'DuckDuckGo',
+						'last.fm':'last.fm','zerochan':'Zerochan'
+						}
+				elif 'kawaii-player' in home:
+					submenu_arr_dict = {
+						'tvdb':'TVDB','g':'Google',
+						'yt':'Youtube','ddg':'DuckDuckGo',
+						'last.fm':'last.fm'
+						}
 				reviews = []
 				for i in submenu_arr_dict:
 					reviews.append(submenuR.addAction(submenu_arr_dict[i]))
@@ -5792,7 +5810,8 @@ class List6(QtWidgets.QListWidget):
 			r = self.currentRow()
 			if r > 0:
 				r1 = r - 1
-				ui.queue_url_list[r],ui.queue_url_list[r1] = ui.queue_url_list[r1],ui.queue_url_list[r]
+				if not video_local_stream:
+					ui.queue_url_list[r],ui.queue_url_list[r1] = ui.queue_url_list[r1],ui.queue_url_list[r]
 				item = self.item(r)
 				txt = item.text()
 				self.takeItem(r)
@@ -5803,7 +5822,8 @@ class List6(QtWidgets.QListWidget):
 			r = self.currentRow()
 			if r < self.count()-1 and r >=0:
 				r1 = r + 1
-				ui.queue_url_list[r],ui.queue_url_list[r1] = ui.queue_url_list[r1],ui.queue_url_list[r]
+				if not video_local_stream:
+					ui.queue_url_list[r],ui.queue_url_list[r1] = ui.queue_url_list[r1],ui.queue_url_list[r]
 				item = self.item(r)
 				txt = item.text()
 				self.takeItem(r)
@@ -13408,7 +13428,11 @@ class Ui_MainWindow(object):
 		
 		if not review_site:
 			review_site_tmp = self.btnWebReviews.currentText()
-			review_site = list(web_arr_dict.keys())[list(web_arr_dict.values()).index(review_site_tmp)]
+			for i in web_arr_dict:
+				if review_site_tmp == web_arr_dict[i]:
+					review_site = i
+					break
+			#review_site = list(web_arr_dict.keys())[list(web_arr_dict.values()).index(review_site_tmp)]
 			
 		print(self.web,'0')
 		if not self.web and review_site:
@@ -13494,7 +13518,7 @@ class Ui_MainWindow(object):
 			nam = NetWorkManager()
 			self.web.page().setNetworkAccessManager(nam)
 		self.webStyle(self.web)
-		
+		logger.info('--13510---{0}-{1}'.format(review_site,name1))
 		if review_site == "ap":
 			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
 		elif review_site == "mal":
@@ -13807,7 +13831,8 @@ class Ui_MainWindow(object):
 			name_t = self.line.text()
 			if name_t:
 				name = name_t
-				self.btnWebReviews.setCurrentIndex(8)
+				cnt = self.btnWebReviews.findText('Youtube')
+				self.btnWebReviews.setCurrentIndex(cnt)
 				self.reviewsWeb(srch_txt=name,review_site='yt',action='line_return_pressed')
 		elif site == "DubbedAnime" or site == "SubbedAnime":
 			video_local_stream = False
@@ -13916,6 +13941,10 @@ class Ui_MainWindow(object):
 		opt = ''
 		status = site_option
 		siteName = site_option
+		new_dir_path = None
+		new_name = 'Not Available'
+		send_list_direct = False
+		new_epnArrList = []
 		if site.lower() == 'bookmark':
 			bookmark = True
 			status = site_option
@@ -13966,6 +13995,7 @@ class Ui_MainWindow(object):
 			base_url = int(tmp1[3])
 			embed = int(tmp1[4])
 			name = tmp1[5]
+			new_name = name
 			if site.lower() == "local":
 				name_path = name
 			video_local_stream = False
@@ -13984,6 +14014,8 @@ class Ui_MainWindow(object):
 						video_local_stream = True
 					else:
 						video_local_stream = False
+				if len(tmp1) >=10:
+					new_dir_path = tmp1[9]
 				print(finalUrlFound)
 				print(refererNeeded)
 				
@@ -14147,28 +14179,74 @@ class Ui_MainWindow(object):
 					or video_opt.lower() == 'available'):
 				opt = video_opt
 			artist = []
+			m = []
 			print('----video-----opt',video_opt)
-			if video_opt.lower() == "available":
-				m = self.getVideoDB(video_db,"Directory","")
-			elif video_opt.lower() == "history":
-				m = self.getVideoDB(video_db,"History","")
+			if not bookmark:
+				if video_opt.lower() == "available":
+					m = self.getVideoDB(video_db,"Directory","")
+				elif video_opt.lower() == "history":
+					m = self.getVideoDB(video_db,"History","")
+				else:
+					video_opt = video_opt[0].upper()+video_opt[1:]
+					m = self.getVideoDB(video_db,video_opt,"")
 			else:
-				video_opt = video_opt[0].upper()+video_opt[1:]
-				m = self.getVideoDB(video_db,video_opt,"")
-			for i in m:
-				artist.append(i[0]+'	'+i[1])
-			original_path_name[:] = []
-			if video_opt.lower() == "available" or video_opt.lower() == "history":
+				book_file = os.path.join(home,'Bookmark',status+'.txt')
+				if os.path.exists(book_file):
+					line_a = open_files(book_file,True)
+					m = []
+					for i in line_a:
+						i = i.strip()
+						try:
+							new_name = i.split(':')[5]
+							try:
+								new_dir = i.split(':')[9]
+							except:
+								new_dir = new_name
+							logger.info('{0}-{1}-{2}'.format(search_term,new_name,new_dir))
+							if search_term and search_term in new_name.lower():
+								original_path_name.append(new_name+'	'+new_dir)
+								m1 = self.getVideoDB(video_db,"Directory",new_dir)
+								for i in m1:
+									m.append(i[0]+'	'+i[1]+'	'+new_name)
+								logger.info(m)
+								logger.info('---14226---')
+								video_opt = 'directory'
+							elif not search_term:
+								original_path_name.append(new_name+'	'+new_dir)
+						except Exception as e:
+							print(e)
+					send_list_direct = True
+			if not send_list_direct:
+				for i in m:
+					artist.append(i[0]+'	'+i[1])
+			else:
+				new_epnArrList = m
+			#original_path_name[:] = []
+			if (video_opt.lower() == "available" or video_opt.lower() == "history") and not send_list_direct:
 				for i in artist:
 					ti = i.split('	')[0]
 					di = i.split('	')[1]
 					if os.path.exists(di):
-						original_path_name.append(i)
-			elif video_opt.lower() == "directory":
+						if ti.lower().startswith('season'):
+							new_di,new_ti = os.path.split(di)
+							logger.info('new_di={0}-{1}'.format(new_di,new_ti))
+							new_di = os.path.basename(new_di)
+							ti = new_di+'-'+ti
+							original_path_name.append(ti+'	'+di)
+						else:
+							original_path_name.append(i)
+			elif video_opt.lower() == "directory" and not send_list_direct:
 				for i in artist:
 					ti = i.split('	')[0]
 					di = i.split('	')[1]
-					original_path_name.append(i)
+					if ti.lower().startswith('season'):
+						new_di,new_ti = os.path.split(di)
+						logger.info('new_di={0}-{1}'.format(new_di,new_ti))
+						new_di = os.path.basename(new_di)
+						ti = new_di+'-'+ti
+						original_path_name.append(ti+'	'+di)
+					else:
+						original_path_name.append(i)
 		elif site.lower().startswith("playlist"):
 			pls = os.path.join(home,'Playlists')
 			if os.path.exists(pls):
@@ -14178,8 +14256,11 @@ class Ui_MainWindow(object):
 					original_path_name.append(j+'	'+os.path.join(pls,i))
 		logger.info(original_path_name)
 		if search_term:
-			epnArrList = self.listfound_from_bookmark(
+			if not send_list_direct:
+				epnArrList = self.listfound_from_bookmark(
 					site,site_option,search_term,original_path_name,search_exact=search_exact)
+			else:
+				epnArrList = new_epnArrList
 			if site.lower() == 'video':
 				ret_tuple = (epnArrList,site,video_opt,False,siteName)
 			elif site.lower() == 'music':
@@ -14203,7 +14284,7 @@ class Ui_MainWindow(object):
 			if status.lower() == 'all':
 				status = 'bookmark'
 			else:
-				m = os.path.listdir(os.path.join(home,'Bookmark'))
+				m = os.listdir(os.path.join(home,'Bookmark'))
 				for i in m:
 					i = i.lower().replace('.txt','')
 					if i == site_option.lower():
@@ -14212,6 +14293,8 @@ class Ui_MainWindow(object):
 		m = []
 		search_term = search_term.lower()
 		epnArrList = []
+		new_dir_path = None
+		new_name = 'Not Available'
 		if bookmark and os.path.exists(os.path.join(home,'Bookmark',status+'.txt')):
 			line_a = open_files(os.path.join(home,'Bookmark',status+'.txt'),True)
 			r = 0
@@ -14243,6 +14326,7 @@ class Ui_MainWindow(object):
 			base_url = int(tmp1[3])
 			embed = int(tmp1[4])
 			name = tmp1[5]
+			new_name = name
 			if site.lower() == "local":
 				name_path = name
 			video_local_stream = False
@@ -14261,6 +14345,8 @@ class Ui_MainWindow(object):
 						video_local_stream = True
 					else:
 						video_local_stream = False
+				if len(tmp1) >=10:
+					new_dir_path = tmp1[9]
 				print(finalUrlFound)
 				print(refererNeeded)
 				print(video_local_stream)
@@ -14420,23 +14506,33 @@ class Ui_MainWindow(object):
 					video_file_bak = os.path.join(video_dir,'Video_bak.txt')
 					
 					artist =[]
-					if bookmark == "False":
+					if not bookmark:
 						video_opt = site_option[0].upper()+site_option[1:]
 						if video_opt == "Update" or video_opt == "UpdateAll":
 							video_opt = "Available"
 						if video_opt == "Available" or video_opt == "History":
-							art_n = original_path_name[index].split('	')[-1]
-							m = self.getVideoDB(video_db,"Directory",art_n)
+							n_art_n = original_path_name[index].split('	')[-1]
+							m = self.getVideoDB(video_db,"Directory",n_art_n)
 						elif video_opt == "Directory":
-							art_n = original_path_name[index].split('	')[-1]
-							m = self.getVideoDB(video_db,video_opt,art_n)
+							n_art_n = original_path_name[index].split('	')[-1]
+							m = self.getVideoDB(video_db,video_opt,n_art_n)
 					else:
-						m = self.getVideoDB(video_db,"Bookmark",art_n)
+						try:
+							new_dir_path = search_field.split('	')[-1]
+						except Exception as e:
+							print(e)
+						logger.info(new_dir_path)
+						if new_dir_path is not None:
+							if new_dir_path.lower() != 'none':
+								m = self.getVideoDB(video_db,"Directory",new_dir_path)
+							else:
+								m = self.getVideoDB(video_db,"Bookmark",art_n)
+						else:
+							m = self.getVideoDB(video_db,"Bookmark",art_n)
 						
 					for i in m:
 						artist.append(i[0]+'	'+i[1]+'	'+art_n)
 						
-					
 					for i in artist:
 						epnArrList.append((i))
 					dir_path = os.path.join(home,'Local',art_n)
@@ -14496,7 +14592,7 @@ class Ui_MainWindow(object):
 		
 		img_arr_artist[:]=[]
 		opt_movies_indicator[:]=[]
-		
+		new_dir_path = None
 		fanart = os.path.join(TMPDIR,name+'-fanart.jpg')
 		thumbnail = os.path.join(TMPDIR,name+'-thumbnail.jpg')
 		summary = "Summary Not Available"
@@ -14545,6 +14641,8 @@ class Ui_MainWindow(object):
 						video_local_stream = True
 					else:
 						video_local_stream = False
+				if len(tmp1) >=10:
+					new_dir_path = tmp1[9]
 				print(finalUrlFound)
 				print(refererNeeded)
 				print(video_local_stream)
@@ -14853,7 +14951,15 @@ class Ui_MainWindow(object):
 						art_n = original_path_name[index].split('	')[-1]
 						m = self.getVideoDB(video_db,video_opt,art_n)
 				else:
-					m = self.getVideoDB(video_db,"Bookmark",art_n)
+					new_art_n = art_n
+					if new_dir_path is not None:
+						if new_dir_path.lower() != 'none':
+							new_art_n = new_dir_path
+							m = self.getVideoDB(video_db,"Directory",new_art_n)
+						else:
+							m = self.getVideoDB(video_db,"Bookmark",new_art_n)
+					else:
+						m = self.getVideoDB(video_db,"Bookmark",new_art_n)
 					
 				for i in m:
 					artist.append(i[0]+'	'+i[1])
@@ -18622,13 +18728,27 @@ class Ui_MainWindow(object):
 					ti = i.split('	')[0]
 					di = i.split('	')[1]
 					if os.path.exists(di):
-						original_path_name.append(i)
+						if ti.lower().startswith('season'):
+							new_di,new_ti = os.path.split(di)
+							logger.info('new_di={0}-{1}'.format(new_di,new_ti))
+							new_di = os.path.basename(new_di)
+							ti = new_di+'-'+ti
+							original_path_name.append(ti+'	'+di)
+						else:
+							original_path_name.append(i)
 						self.list1.addItem((ti))
 			elif video_opt == "Directory":
 				for i in artist:
 					ti = i.split('	')[0]
 					di = i.split('	')[1]
-					original_path_name.append(i)
+					if ti.lower().startswith('season'):
+						new_di,new_ti = os.path.split(di)
+						logger.info('new_di={0}-{1}'.format(new_di,new_ti))
+						new_di = os.path.basename(new_di)
+						ti = new_di+'-'+ti
+						original_path_name.append(ti+'	'+di)
+					else:
+						original_path_name.append(i)
 					self.list1.addItem((ti))
 		elif site == "PlayLists" and val == 'clicked':
 			if self.list3.currentItem():
