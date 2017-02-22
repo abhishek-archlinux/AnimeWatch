@@ -323,6 +323,7 @@ def mp4starUrl(content,site):
 	m = dict(d)
 	di = dict(d1)
 	print(di)
+	print('------326---------')
 	#print(di)
 	if site == 'mp4star':
 		n = m['https']
@@ -392,9 +393,9 @@ def mp4starUrl(content,site):
 	u = u.replace('\\','')
 	
 	#u = re.sub('["?"]|"','',u)
-	print(u)
+	print(u,'---396--')
 	r = re.findall('[0-9a-zA-Z][^\.|\%|\/|\-|\=|\:|\?|\&]*',u)
-	print(r)
+	print(r,'--398---')
 	url = ""
 	token = ''
 	found = False
@@ -403,6 +404,20 @@ def mp4starUrl(content,site):
 	token_index = 0
 	l = 0
 	#print(di['c'])
+	for i in range(len(u)):
+		#print(u[i],'--408--')
+		u_val = str(u[i])
+		if u_val.isalnum():
+			try:
+				url = url + di[u_val]
+			except Exception as e:
+				print(e)
+				url = url + u_val
+		else:
+			url = url+u_val
+		#print(url)
+	
+	"""
 	while (i < len(u)):
 		#print(i)
 		token = ""
@@ -433,6 +448,7 @@ def mp4starUrl(content,site):
 		if l > 200:
 			break
 		print(l)
+	"""
 	print(url)
 	url = re.sub('"','',url)
 	url = re.sub("'",'',url)
@@ -587,17 +603,18 @@ class DubbedAnime():
 				post = 'confirm="Click+Here+to+Watch+Free!!"'
 				for i in n:
 					content = ccurlNew(i+'#'+'-d'+'#'+post)
-					print(content)
-					m = re.findall('file:[^"]*"http[^"]*',content)
+					#print(content)
+					m = re.findall('file: "http[^"]*',content)
+					print(m)
 					if m:
 						final1 = re.findall('http://[^"]*',m[0])
 						if final1:
-							print(final1[0])
+							print(final1[0],'++++++++++++++++++++++')
 							k = final1[0]
 							replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
 							k = re.sub('\n','',k)
 							content = ccurlNew(k+'#'+'-I')
-							print('----------------',content,'-------------------')
+							print(content,'-------------ccurlNew--------')
 							
 							n = re.findall('Location: [^\n]*',content)
 							if n:

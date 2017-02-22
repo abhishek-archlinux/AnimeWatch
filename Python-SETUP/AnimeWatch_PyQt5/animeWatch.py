@@ -520,6 +520,7 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 		if nm.startswith('http'):
 			self.send_response(303)
 			self.send_header('Location',nm)
+			self.send_header('Connection', 'close')
 			self.end_headers()
 		else:
 			if '.' in nm:
@@ -548,7 +549,10 @@ class HTTPServer_RequestHandler(BaseHTTPRequestHandler):
 				logger.info('...sending range...{0}-{1}/{2}'.format(get_bytes,upper_range,size))
 				self.send_header(
 					'Content-Range', 'bytes ' +str(get_bytes)+'-'+str(upper_range)+'/'+str(size))
-			self.send_header('Connection', 'close')
+			if get_bytes and 'firefox' in user_agent:
+				self.send_header('Connection','keep-alive')
+			else:
+				self.send_header('Connection', 'close')
 			self.end_headers()
 			
 			print(get_bytes,'--get--bytes--',nm_ext)
@@ -1436,7 +1440,7 @@ class ThreadServerLocal(QtCore.QThread):
 			elif ui.https_media_server and os.path.exists(cert):
 				server_address = (self.ip,self.port)
 				httpd = ThreadedHTTPServerLocal(server_address, HTTPServer_RequestHandler)
-				httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert,ssl_version=ssl.PROTOCOL_TLSv1_1)
+				httpd.socket = ssl.wrap_socket(httpd.socket,certfile=cert,ssl_version=ssl.PROTOCOL_TLSv1_2)
 				self.media_server_start.emit('https')
 			#httpd = MyTCPServer(server_address, HTTPServer_RequestHandler)
 		except OSError as e:
@@ -2010,13 +2014,13 @@ class find_poster_thread(QtCore.QThread):
 				poster_text = os.path.join(TMPDIR,name+'-poster.txt')
 				fanart_text = os.path.join(TMPDIR,name+'-fanart.txt')
 				
-				if os.path.isfile(poster_text):
+				if os.path.isfile(poster_text) and os.stat(poster_text).st_size:
 					lines = open_files(poster_text,True)
 					logger.info(lines)
 					url1 = re.sub('\n|#','',lines[0])
 					url = "http://thetvdb.com/" + url1
 					ccurl(url+'#'+'-o'+'#'+thumb)
-				if os.path.isfile(fanart_text):
+				if os.path.isfile(fanart_text) and os.stat(fanart_text).st_size:
 					lines = open_files(fanart_text,True)
 					logger.info(lines)
 					url1 = re.sub('\n|#','',lines[0])
@@ -2296,6 +2300,19 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		global fullscr,idwMain,idw,quitReally,new_epn,toggleCache,quitReally
 		global pause_indicator,iconv_r,tab_6_size_indicator,ui,MainWindow
 		global mpv_indicator
+		if Player == 'mplayer':
+			if site == "Local" or site == "None" or site == "PlayLists":
+				pass
+			else:
+				try:
+					if self.seek_timer.isActive():
+						logger.info('--seek-timer-available--')
+				except Exception as e:
+					print(e,'--2309--')
+					logger.info('seek timer variable not available, creating new seek timer')
+					self.seek_timer = QtCore.QTimer()
+					self.seek_timer.timeout.connect(self.seek_mplayer)
+					self.seek_timer.setSingleShot(True)
 		if mpvplayer:
 			if mpvplayer.processId() > 0:
 					#self.setCursor(QtGui.QCursor(QtCore.Qt.BlankCursor))
@@ -3456,27 +3473,31 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 		elif action == list_mode:
 			ui.thumbnailHide('none')
 		elif action == removeThumb:
-			nm = (ui.list1.currentItem().text())
+			if ui.list1.currentItem():
+				nm = ui.list1.currentItem().text()
+			else:
+				nm = ''
 			if site != "Local" and finalUrlFound == False:
 				if '	' in epnArrList[num]:
 					a = epnArrList[num].split('	')[0]
 					a = a.replace('#','',1)
 					if a.startswith(ui.check_symbol):
 						a = a[1:]
-					picn = os.path.join(home,'thumbnails',nm,a+'.jpg')
+					#picn = os.path.join(home,'thumbnails',nm,a+'.jpg')
 				else:
 					a = (str(epnArrList[num])).replace('#','',1)
 					if a.startswith(ui.check_symbol):
 						a = a[1:]
-					picn = os.path.join(home,'thumbnails',nm,name+'-'+a+'.jpg')
+					#picn = os.path.join(home,'thumbnails',nm,name+'-'+a+'.jpg')
+				if ui.list3.currentItem() and site == 'Music':
+					if ui.list3.currentItem().text() == 'Playlist':
+						picn = os.path.join(home,'thumbnails','PlayLists',nm,a+'.jpg')
+					else:
+						picn = os.path.join(home,'thumbnails',site,nm,a+'.jpg')
+				else:
+					picn = os.path.join(home,'thumbnails',site,nm,a+'.jpg')
 				if os.path.exists(picn):
 					os.remove(picn)
-					if thumbnail_grid:
-						q1="ui.label_epn_"+str(num)+".clear()"
-					else:
-						q1="ui.label.clear()"
-					exec(q1)
-				if os.path.exists(picn):
 					small_nm_1,new_title = os.path.split(picn)
 					small_nm_2 = '128px.'+new_title
 					#small_nm_2 = '128px.'+picn.rsplit('/',1)[-1]
@@ -3484,6 +3505,12 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					logger.info(new_small_thumb)
 					if os.path.exists(new_small_thumb):
 						os.remove(new_small_thumb)
+					if thumbnail_grid:
+						q1="ui.label_epn_"+str(num)+".clear()"
+					else:
+						q1="ui.label.clear()"
+					exec(q1)
+					
 			elif site =="Local" or finalUrlFound == True or site=="PlayLists":
 				if '	' in epnArrList[num]:
 					a = (epnArrList[num]).split('	')[0]
@@ -3622,6 +3649,7 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 					if not os.path.exists(picnD):
 						os.makedirs(picnD)
 					picn = os.path.join(picnD,a1)+'.jpg'
+					picn_new = picn
 					ui.generate_thumbnail_method(picn,inter,path)
 				picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
 				img = QtGui.QPixmap(picn, "1")			
@@ -3632,66 +3660,73 @@ class ExtendedQLabelEpn(QtWidgets.QLabel):
 				exec (q1)
 				if interval == 100:
 					interval = 10
+				if os.path.exists(picn_new):
+					small_nm_1,new_title = os.path.split(picn_new)
+					small_nm_2 = '128px.'+new_title
+					new_small_thumb = os.path.join(small_nm_1,small_nm_2)
+					logger.info(new_small_thumb)
+					if os.path.exists(new_small_thumb):
+						os.remove(new_small_thumb)
 			else:
-					width = ui.label.width()
-					height = ui.label.height()
-					print("num="+str(num))
-					ui.list2.setCurrentRow(num)
-					if memory_num_arr:
-						t_num = memory_num_arr.pop()
-					else:
-						t_num = -1
+				width = ui.label.width()
+				height = ui.label.height()
+				print("num="+str(num))
+				ui.list2.setCurrentRow(num)
+				if memory_num_arr:
+					t_num = memory_num_arr.pop()
+				else:
+					t_num = -1
+			
+				if t_num != num:
+					#ui.epnfound_return()
+					path_final_Url = ui.epn_return(num)
+					interval = 10
+				memory_num_arr.append(num)
+				if '	' in epnArrList[num]:
+					a = (((epnArrList[num])).split('	')[0])
+				else:			
+					a = ((epnArrList[num]))
+				a = a.replace('#','',1)
+				if a.startswith(ui.check_symbol):
+					a = a[1:]
+				picnD = os.path.join(home,'thumbnails',name)
+				if not os.path.exists(picnD):
+					os.makedirs(picnD)
+				picn = os.path.join(picnD,a+'.jpg')
+				interval = (interval + 10)
+				inter = str(interval)+'s'
+				path_final_Url = str(path_final_Url)
+				path_final_Url = path_final_Url.replace('"','')
+				if path_final_Url.startswith('/'):
+					path_final_Url = '"'+path_final_Url+'"'
+				subprocess.call(
+						["mpv","--no-sub","--ytdl=no","--quiet","--no-audio",
+						"--vo=image:outdir="+TMPDIR,
+						"--start="+str(interval)+"%","--frames=1",
+						path_final_Url])
+				tmp_img = os.path.join(TMPDIR,'00000001.jpg')
+				if os.path.exists(tmp_img):
+					tmp_new_img = ui.change_aspect_only(tmp_img)
+					shutil.copy(tmp_new_img,picn)
+					os.remove(tmp_img)
+				print(width,height)
+				#picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
 				
-					if t_num != num:
-						#ui.epnfound_return()
-						path_final_Url = ui.epn_return(num)
-						interval = 10
-					memory_num_arr.append(num)
-					if '	' in epnArrList[num]:
-						a = (((epnArrList[num])).split('	')[0])
-					else:			
-						a = ((epnArrList[num]))
-					a = a.replace('#','',1)
-					if a.startswith(ui.check_symbol):
-						a = a[1:]
-					picnD = os.path.join(home,'thumbnails',name)
-					if not os.path.exists(picnD):
-						os.makedirs(picnD)
-					picn = os.path.join(picnD,a+'.jpg')
-					interval = (interval + 10)
-					inter = str(interval)+'s'
-					path_final_Url = str(path_final_Url)
-					path_final_Url = path_final_Url.replace('"','')
-					if path_final_Url.startswith('/'):
-						path_final_Url = '"'+path_final_Url+'"'
-					subprocess.call(
-							["mpv","--no-sub","--ytdl=no","--quiet","--no-audio",
-							"--vo=image:outdir="+TMPDIR,
-							"--start="+str(interval)+"%","--frames=1",
-							path_final_Url])
-					tmp_img = os.path.join(TMPDIR,'00000001.jpg')
-					if os.path.exists(tmp_img):
-						tmp_new_img = ui.change_aspect_only(tmp_img)
-						shutil.copy(tmp_new_img,picn)
-						os.remove(tmp_img)
-					print(width,height)
-					#picn = ui.image_fit_option(picn,'',fit_size=6,widget_size=(int(width),int(height)))
-					
-					img = QtGui.QPixmap(picn, "1")			
-					if thumbnail_grid:
-						q1="ui.label_epn_"+str(num)+".setPixmap(img)"
-					else:
-						q1="ui.label.setPixmap(img)"
-					exec (q1)
-					if interval == 100:
-						interval = 10
-			if os.path.exists(picn):
-				small_nm_1,new_title = os.path.split(picn)
-				small_nm_2 = '128px.'+new_title
-				new_small_thumb = os.path.join(small_nm_1,small_nm_2)
-				logger.info(new_small_thumb)
-				if os.path.exists(new_small_thumb):
-					os.remove(new_small_thumb)
+				img = QtGui.QPixmap(picn, "1")			
+				if thumbnail_grid:
+					q1="ui.label_epn_"+str(num)+".setPixmap(img)"
+				else:
+					q1="ui.label.setPixmap(img)"
+				exec (q1)
+				if interval == 100:
+					interval = 10
+				if os.path.exists(picn):
+					small_nm_1,new_title = os.path.split(picn)
+					small_nm_2 = '128px.'+new_title
+					new_small_thumb = os.path.join(small_nm_1,small_nm_2)
+					logger.info(new_small_thumb)
+					if os.path.exists(new_small_thumb):
+						os.remove(new_small_thumb)
 
 
 class MySlider(QtWidgets.QSlider):
@@ -4400,7 +4435,15 @@ class List1(QtWidgets.QListWidget):
 						
 				for i in range(len(reviews)):
 					if action == reviews[i]:
-						st = list(submenu_arr_dict.keys())[list(submenu_arr_dict.values()).index(reviews[i].text())]
+						new_review = reviews[i].text()
+						if new_review.startswith('&'):
+							new_review = new_review[1:]
+						try:
+							st = list(submenu_arr_dict.keys())[list(submenu_arr_dict.values()).index(new_review)]
+							logger.info('review-site: {0}'.format(st))
+						except ValueError as e:
+							print(e,'--key--not--found--')
+							st = 'ddg'
 						ui.reviewsWeb(srch_txt=name,review_site=st,action='context_menu')
 						
 				if action == new_pls:
@@ -8052,7 +8095,7 @@ class Ui_MainWindow(object):
 		self.mplayer_timer.timeout.connect(self.mplayer_unpause)
 		self.mplayer_timer.setSingleShot(True)
 		#self.frame_timer.start(5000)
-		self.version_number = (4,2,0,0)
+		self.version_number = (4,3,0,0)
 		self.threadPool = []
 		self.threadPoolthumb = []
 		self.thumbnail_cnt = 0
@@ -14566,6 +14609,7 @@ class Ui_MainWindow(object):
 				if str(self.list3.currentItem().text()) == "Artist":
 					nm = ui.list1.item(row).text()
 				else:
+					row = self.list2.currentRow()
 					nm = epnArrList[row].split('	')[2]
 					nm = nm.replace('"','')
 			except Exception as e:
@@ -16671,7 +16715,7 @@ class Ui_MainWindow(object):
 		
 	def finishedM(self,nm):
 		global name,epnArrList,site
-		if site == "Music" and self.list3.currentItem():
+		if (site == "Music" and self.list3.currentItem()) or (site == 'PlayLists'):
 			if nm:
 				m_path = os.path.join(home,'Music','Artist',nm,'poster.jpg')
 				t_path = os.path.join(home,'Music','Artist',nm,'thumbnail.jpg')
@@ -18728,7 +18772,7 @@ class Ui_MainWindow(object):
 					ti = i.split('	')[0]
 					di = i.split('	')[1]
 					if os.path.exists(di):
-						if ti.lower().startswith('season'):
+						if ti.lower().startswith('season') or ti.lower().startswith('special'):
 							new_di,new_ti = os.path.split(di)
 							logger.info('new_di={0}-{1}'.format(new_di,new_ti))
 							new_di = os.path.basename(new_di)
@@ -18741,7 +18785,7 @@ class Ui_MainWindow(object):
 				for i in artist:
 					ti = i.split('	')[0]
 					di = i.split('	')[1]
-					if ti.lower().startswith('season'):
+					if ti.lower().startswith('season') or ti.lower().startswith('special'):
 						new_di,new_ti = os.path.split(di)
 						logger.info('new_di={0}-{1}'.format(new_di,new_ti))
 						new_di = os.path.basename(new_di)
