@@ -514,6 +514,7 @@ def ccurl(url,external_cookie=None,user_auth=None):
 			c.close()
 			content = storage.getvalue()
 			content = getContentUnicode(content)
+			#print(content)
 		except:
 			print('curl failure try again')
 			content = ''
