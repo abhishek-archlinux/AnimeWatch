@@ -205,7 +205,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 			self.ui.tab_5.show()
 			self.ui.frame1.show()
-			self.ui.tab_2.setMaximumWidth(400)
+			self.ui.tab_2.setMaximumWidth(self.ui.width_allowed+50)
 			
 	@pyqtSlot(str)
 	def got_playlist_html(self,final_url):
@@ -347,7 +347,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
-				self.ui.tab_2.setMaximumWidth(400)
+				self.ui.tab_2.setMaximumWidth(self.ui.width_allowed+50)
 				
 	def custom_links(self,q_url):
 		url = q_url
@@ -660,7 +660,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
-				self.ui.tab_2.setMaximumWidth(400)
+				self.ui.tab_2.setMaximumWidth(self.ui.width_allowed+50)
 		elif option.lower() == 'add as local playlist':
 			self.get_playlist = True
 			if self.playlist_dict:
