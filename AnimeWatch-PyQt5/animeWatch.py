@@ -11411,7 +11411,8 @@ class Ui_MainWindow(object):
 			print('--stretch -- added--to --label and text widget--')
 		
 		self.tmp_web_srch = ''
-		self.web.setHtml('<html>Reviews:</html>')
+		if self.web:
+			self.web.setHtml('<html>Reviews:</html>')
 		if platform_name == 'ubuntu':
 			print('--page--cleared--')
 		else:
@@ -11432,9 +11433,10 @@ class Ui_MainWindow(object):
 		self.frame1.show()
 		
 	def delete_web_instance(self,web):
-		web.close()
-		web.deleteLater()
-		self.web = None
+		if self.web:
+			web.close()
+			web.deleteLater()
+			self.web = None
 		
 	def webHide(self):
 		global mpvplayer
