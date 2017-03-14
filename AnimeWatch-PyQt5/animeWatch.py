@@ -11410,17 +11410,17 @@ class Ui_MainWindow(object):
 			print('--stretch -- added--to --label and text widget--')
 		
 		self.tmp_web_srch = ''
-		
+		self.web.setHtml('<html>Reviews:</html>')
 		if platform_name == 'ubuntu':
-			self.web.setHtml('<html>Reviews:</html>')
 			print('--page--cleared--')
 		else:
 			try:
-				self.web.close()
-				self.web.deleteLater()
+				QtCore.QTimer.singleShot(2000, partial(self.delete_web_instance,self.web))
+				#self.web.close()
+				#self.web.deleteLater()
 			except Exception as e:
 				print(e)
-			self.web = ''
+			#self.web = ''
 			print('--web closed--')
 			
 		self.tab_2.hide()
@@ -11429,6 +11429,11 @@ class Ui_MainWindow(object):
 		self.label.show()
 		self.text.show()
 		self.frame1.show()
+		
+	def delete_web_instance(self,web):
+		web.close()
+		web.deleteLater()
+		self.web = None
 		
 	def webHide(self):
 		global mpvplayer
@@ -20848,7 +20853,7 @@ def main():
 	except:
 		pass
 	platform_name = os.getenv('DESKTOP_SESSION')
-	print(platform_name)
+	print(OSNAME,platform_name)
 	app = QtWidgets.QApplication(sys.argv)
 	screen_resolution = app.desktop().screenGeometry()
 	screen_width = screen_resolution.width()
