@@ -9613,25 +9613,28 @@ class Ui_MainWindow(object):
 			ui.gridLayout.setSpacing(5)
 			
 	def webStyle(self,web):
-		web.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		web.setStyleSheet("""
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		""")
+		global platform_name
+		if platform_name.lower() != 'plasma':
+			web.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			web.setStyleSheet("""
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			""")
 		
 	def buttonStyle(self,widget=None):
-		global home,BASEDIR
+		global home,BASEDIR,platform_name
 		png_home = os.path.join(BASEDIR,'1.png')
 		if not widget:
 			ui.dockWidget_3.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.tab_6.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-			ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			if platform_name.lower() != 'plasma':
+				ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 			ui.tab_5.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-			ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-			ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-			ui.btnWebPrev.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-			ui.btnWebNext.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebPrev.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebNext.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
@@ -9885,24 +9888,24 @@ class Ui_MainWindow(object):
 			width: 10px;
 			margin: 0.5px;
 			}}""")
-
-			ui.btnWebReviews.setStyleSheet("""QComboBox {
-			min-height:0px;
-			max-height:50px;
-			border-radius: 3px;
-			font-size:10px;
-			padding: 1px 1px 1px 1px;
-			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-			}
-			QComboBox::drop-down {
-			width: 47px;
-			border: 0px;
-			color:white;
-			}
-			QComboBox::down-arrow {
-			width: 2px;
-			height: 2px;
-			}""")
+			if platform_name != 'plasma':
+				ui.btnWebReviews.setStyleSheet("""QComboBox {
+				min-height:0px;
+				max-height:50px;
+				border-radius: 3px;
+				font-size:10px;
+				padding: 1px 1px 1px 1px;
+				font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+				}
+				QComboBox::drop-down {
+				width: 47px;
+				border: 0px;
+				color:white;
+				}
+				QComboBox::down-arrow {
+				width: 2px;
+				height: 2px;
+				}""")
 		
 			ui.btn30.setStyleSheet("""QComboBox {
 			min-height:20px;
@@ -20844,7 +20847,8 @@ def main():
 		dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)
 	except:
 		pass
-	
+	platform_name = os.getenv('DESKTOP_SESSION')
+	print(platform_name)
 	app = QtWidgets.QApplication(sys.argv)
 	screen_resolution = app.desktop().screenGeometry()
 	screen_width = screen_resolution.width()
@@ -21508,8 +21512,7 @@ def main():
 	#myFilter	 = MyEventFilter()
 	#app.installEventFilter(myFilter)
 	
-	platform_name = os.getenv('DESKTOP_SESSION')
-	print(platform_name)
+	
 	try:
 		tray = SystemAppIndicator()
 		tray.show()
