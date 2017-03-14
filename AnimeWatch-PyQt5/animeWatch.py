@@ -11433,7 +11433,7 @@ class Ui_MainWindow(object):
 		self.frame1.show()
 		
 	def delete_web_instance(self,web):
-		if self.web:
+		if web:
 			web.close()
 			web.deleteLater()
 			self.web = None
