@@ -16068,8 +16068,13 @@ class Ui_MainWindow(object):
 				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
 				if type(finalUrl) is list:
-						if finalUrlFound == True or refererNeeded == True or site=="PlayLists":	
-							if refererNeeded == True:
+						rfr_exists = finalUrl[-1]
+						rfr_needed = False
+						if rfr_exists == 'referer sent':
+							rfr_needed = True
+							finalUrl.pop()
+						if finalUrlFound == True or refererNeeded == True or site=="PlayLists" or rfr_needed:	
+							if refererNeeded == True or rfr_needed:
 								rfr_url = finalUrl[1]
 								nepn = '"'+str(finalUrl[0])+'"'
 								
@@ -16103,8 +16108,13 @@ class Ui_MainWindow(object):
 				if mpvplayer.processId() > 0:
 					mpvplayer.kill()
 				if type(finalUrl) is list:
-					if finalUrlFound == True or site=="PlayLists":
-							if refererNeeded == True:
+					rfr_exists = finalUrl[-1]
+					rfr_needed = False
+					if rfr_exists == 'referer sent':
+						rfr_needed = True
+						finalUrl.pop()
+					if finalUrlFound == True or site=="PlayLists" or rfr_needed:
+							if refererNeeded == True or rfr_needed:
 								rfr_url = finalUrl[1]
 								if Player == "mplayer":
 									if mpvplayer.processId() > 0:
@@ -18211,6 +18221,11 @@ class Ui_MainWindow(object):
 			self.infoPlay(command)
 		else:
 			if type(finalUrl) is list:
+				rfr_exists = finalUrl[-1]
+				rfr_needed = False
+				if rfr_exists == 'referer sent':
+					rfr_needed = True
+					finalUrl.pop()
 				if mpvplayer:
 					if mpvplayer.processId() > 0:
 						if refererNeeded == "True":
@@ -18225,8 +18240,8 @@ class Ui_MainWindow(object):
 						self.queue_url_list.reverse()
 						logger.info('---hello-----{0}'.format(finalUrl))
 					else:
-						if finalUrlFound == True or site=="PlayLists":
-							if refererNeeded == True:
+						if finalUrlFound == True or site=="PlayLists" or rfr_needed:
+							if refererNeeded == True or rfr_needed:
 								rfr_url = finalUrl[1]
 								nepn = str(finalUrl[0])
 								epnShow = str(nepn)
@@ -21059,8 +21074,8 @@ def main():
 						ui.sd_hd.setText("HD")
 					elif quality == 'sd480p':
 						ui.sd_hd.setText("480")
-					elif quality == 'BEST':
-						ui.sd_hd.setText("Best")
+					elif quality == 'best':
+						ui.sd_hd.setText("BEST")
 					else:
 						ui.sd_hd.setText("SD")
 				elif "Dock_Option" in i:
