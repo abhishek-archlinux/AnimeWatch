@@ -148,7 +148,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				yt_url = True
 		except:
 			pass
-		if self.ui.btnWebReviews.currentText() == 'Youtube' or yt_url:
+		if self.ui.btnWebReviews.currentText() == 'Youtube' or yt_url or self.ui.review_site_code == 'yt':
 			self.hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
 		else:
 			self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -205,7 +205,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 			self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 			self.ui.tab_5.show()
 			self.ui.frame1.show()
-			self.ui.tab_2.setMaximumWidth(400)
+			self.ui.tab_2.setMaximumWidth(self.ui.width_allowed+50)
 			
 	@pyqtSlot(str)
 	def got_playlist_html(self,final_url):
@@ -347,7 +347,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.watchDirectly(final_url,self.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
-				self.ui.tab_2.setMaximumWidth(400)
+				self.ui.tab_2.setMaximumWidth(self.ui.width_allowed+50)
 				
 	def custom_links(self,q_url):
 		url = q_url
@@ -660,7 +660,7 @@ class Browser(QtWebEngineWidgets.QWebEngineView):
 				self.ui.watchDirectly(final_url,self.ui.epn_name_in_list,'no')
 				self.ui.tab_5.show()
 				self.ui.frame1.show()
-				self.ui.tab_2.setMaximumWidth(400)
+				self.ui.tab_2.setMaximumWidth(self.ui.width_allowed+50)
 		elif option.lower() == 'add as local playlist':
 			self.get_playlist = True
 			if self.playlist_dict:

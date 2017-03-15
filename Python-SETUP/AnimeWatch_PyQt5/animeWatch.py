@@ -8147,6 +8147,7 @@ class Ui_MainWindow(object):
 		self.tmp_download_folder = TMPDIR
 		self.logger = logger
 		self.epn_name_in_list = ''
+		self.review_site_code = 'g'
 		self.external_url = False
 		self.subtitle_new_added = False
 		self.window_frame = 'true'
@@ -9613,25 +9614,28 @@ class Ui_MainWindow(object):
 			ui.gridLayout.setSpacing(5)
 			
 	def webStyle(self,web):
-		web.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-		web.setStyleSheet("""
-		QMenu{
-			font: bold 12px;color:black;background-image:url('1.png');
-		}
-		""")
+		global platform_name
+		if platform_name.lower() != 'plasma':
+			web.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			web.setStyleSheet("""
+			QMenu{
+				font: bold 12px;color:black;background-image:url('1.png');
+			}
+			""")
 		
 	def buttonStyle(self,widget=None):
-		global home,BASEDIR
+		global home,BASEDIR,platform_name
 		png_home = os.path.join(BASEDIR,'1.png')
 		if not widget:
 			ui.dockWidget_3.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.tab_6.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-			ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
+			if platform_name.lower() != 'plasma':
+				ui.tab_2.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
 			ui.tab_5.setStyleSheet("font:bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);")
-			ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-			ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-			ui.btnWebPrev.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
-			ui.btnWebNext.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebClose.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebHide.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebPrev.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
+			#ui.btnWebNext.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btn20.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btn201.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
 			ui.btnOpt.setStyleSheet("font: bold 12px;color:white;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);border-radius: 3px;")
@@ -9885,24 +9889,24 @@ class Ui_MainWindow(object):
 			width: 10px;
 			margin: 0.5px;
 			}}""")
-
-			ui.btnWebReviews.setStyleSheet("""QComboBox {
-			min-height:0px;
-			max-height:50px;
-			border-radius: 3px;
-			font-size:10px;
-			padding: 1px 1px 1px 1px;
-			font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
-			}
-			QComboBox::drop-down {
-			width: 47px;
-			border: 0px;
-			color:white;
-			}
-			QComboBox::down-arrow {
-			width: 2px;
-			height: 2px;
-			}""")
+			if platform_name != 'plasma':
+				ui.btnWebReviews.setStyleSheet("""QComboBox {
+				min-height:0px;
+				max-height:50px;
+				border-radius: 3px;
+				font-size:10px;
+				padding: 1px 1px 1px 1px;
+				font:bold 10px;background:rgba(0,0,0,30%);border:rgba(0,0,0,30%);
+				}
+				QComboBox::drop-down {
+				width: 47px;
+				border: 0px;
+				color:white;
+				}
+				QComboBox::down-arrow {
+				width: 2px;
+				height: 2px;
+				}""")
 		
 			ui.btn30.setStyleSheet("""QComboBox {
 			min-height:20px;
@@ -11407,17 +11411,18 @@ class Ui_MainWindow(object):
 			print('--stretch -- added--to --label and text widget--')
 		
 		self.tmp_web_srch = ''
-		
-		if platform_name == 'ubuntu':
+		if self.web:
 			self.web.setHtml('<html>Reviews:</html>')
+		if platform_name == 'ubuntu':
 			print('--page--cleared--')
 		else:
 			try:
-				self.web.close()
-				self.web.deleteLater()
+				QtCore.QTimer.singleShot(2000, partial(self.delete_web_instance,self.web))
+				#self.web.close()
+				#self.web.deleteLater()
 			except Exception as e:
 				print(e)
-			self.web = ''
+			#self.web = ''
 			print('--web closed--')
 			
 		self.tab_2.hide()
@@ -11426,6 +11431,12 @@ class Ui_MainWindow(object):
 		self.label.show()
 		self.text.show()
 		self.frame1.show()
+		
+	def delete_web_instance(self,web):
+		if web:
+			web.close()
+			web.deleteLater()
+			self.web = None
 		
 	def webHide(self):
 		global mpvplayer
@@ -13476,7 +13487,7 @@ class Ui_MainWindow(object):
 					review_site = i
 					break
 			#review_site = list(web_arr_dict.keys())[list(web_arr_dict.values()).index(review_site_tmp)]
-			
+		self.review_site_code = review_site
 		print(self.web,'0')
 		if not self.web and review_site:
 			self.web = Browser(ui,home,screen_width,quality,site,epnArrList)
@@ -13562,6 +13573,7 @@ class Ui_MainWindow(object):
 			self.web.page().setNetworkAccessManager(nam)
 		self.webStyle(self.web)
 		logger.info('--13510---{0}-{1}'.format(review_site,name1))
+		self.review_site_code = review_site
 		if review_site == "ap":
 			self.web.load(QUrl("http://www.anime-planet.com/anime/all?name="+name1))
 		elif review_site == "mal":
@@ -20844,7 +20856,8 @@ def main():
 		dbus.mainloop.pyqt5.DBusQtMainLoop(set_as_default=True)
 	except:
 		pass
-	
+	platform_name = os.getenv('DESKTOP_SESSION')
+	print(OSNAME,platform_name)
 	app = QtWidgets.QApplication(sys.argv)
 	screen_resolution = app.desktop().screenGeometry()
 	screen_width = screen_resolution.width()
@@ -21508,8 +21521,7 @@ def main():
 	#myFilter	 = MyEventFilter()
 	#app.installEventFilter(myFilter)
 	
-	platform_name = os.getenv('DESKTOP_SESSION')
-	print(platform_name)
+	
 	try:
 		tray = SystemAppIndicator()
 		tray.show()
