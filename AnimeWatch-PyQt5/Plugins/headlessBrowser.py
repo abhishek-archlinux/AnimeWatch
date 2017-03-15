@@ -75,7 +75,7 @@ class BrowseUrl(QWebEngineView):
 				f = open(self.cookie_file,'a')
 				f.write(str3)
 				f.close()
-			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kisscartoon' in url or 'kissasian' in url):
+			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url):
 				cnt = 0
 				file_path = os.path.join(tmp_dir,'tmp_cookie')
 				while(not os.path.exists(lnk_file) and cnt < 30):

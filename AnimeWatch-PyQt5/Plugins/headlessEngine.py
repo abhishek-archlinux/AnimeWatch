@@ -161,17 +161,33 @@ def get_ca_certificate():
 			print(e)
 	return ca_cert
 
-def _get_video_val(url,c_file,q):
+def _get_video_val(htm,c_file,q,u):
 		
 		st =''
 		quality = q
 		#x = ccurl(url+'#'+'-b'+'#'+c_file)
 		
 		cookie_file = c_file
-		html = url
-		
+		html = htm
+		url = u
 		soup = BeautifulSoup(html,'lxml')
-		m = soup.findAll('select',{'id':'selectQuality'})
+		server_found = True
+		if 'kissanime' in url:
+			server_found = False
+			mir = soup.findAll('select',{'id':'selectServer'})
+			for i in mir:
+				j = i.findAll('option')
+				for k in j:
+					ltxt = k.text.lower()
+					if ltxt == 'kissanime':
+						server_found = True
+					print(ltxt,server_found)
+			if not server_found:
+				html = ccurl(url+'&s=beta'+'#'+'-b'+'#'+c_file)
+				soup = BeautifulSoup(html,'lxml')
+			m = soup.findAll('select',{'id':'slcQualix'})
+		else:
+			m = soup.findAll('select',{'id':'selectQuality'})
 		print(m,'---select--quality---')
 		if m:
 			#print(m)
@@ -202,9 +218,26 @@ def _get_video_val(url,c_file,q):
 					if quality == 'sd':
 						txt = arr_dict['360p']
 					elif quality == 'hd':
-						txt = arr_dict['720p']
+						if total_q >= 3:
+							txt = arr_dict['720p']
+						elif total_q == 2:
+							txt = arr_dict['480p']
+						else:
+							txt = arr_dict['360p']
 					elif quality == 'sd480p':
-						txt = arr_dict['480p']
+						if total_q >= 2:
+							txt = arr_dict['480p']
+						else:
+							txt = arr_dict['360p']
+					elif quality == 'best':
+						if total_q == 4:
+							txt = arr_dict['1080p']
+						elif total_q == 3:
+							txt = arr_dict['720p']
+						elif total_q == 2:
+							txt = arr_dict['480p']
+						else:
+							txt = arr_dict['360p']
 				except:
 					txt = arr_dict['360p']
 					
@@ -214,8 +247,11 @@ def _get_video_val(url,c_file,q):
 				#st = 'document.querySelector(select[id="selectQuality"]).value="'+txt+'"'
 				#st = 'document.querySelector(option[value="'+txt+'"])'
 				#st= 'document.getElementsByTagName("option").value="'+txt+'"'
-				st = "$('#selectQuality').val("+'"'+txt+'"'+")"
-				return st
+				if 'kissanime' in url:
+					st = "$('#slcQualix').val("+'"'+txt+'"'+")"
+				else:
+					st = "$('#selectQuality').val("+'"'+txt+'"'+")"
+				return st,server_found
 
 class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 	netS = pyqtSignal(str)
@@ -228,12 +264,13 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 		#print(info)
 		t = info.requestUrl()
 		urlLnk = t.url()
-		#print(m)
+		#print(urlLnk)
 		block_url = ''
-		if (quality == 'sd' or quality == 'sd480p') and ('kisscartoon' in self.url or 'kissasian' in self.url) and ('id=' in self.url):
+		if (quality == 'sd' or quality == 'sd480p') and ('kisscartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url) and ('id=' in self.url):
 			block_url = 'itag=22'
 		
 		lower_case = urlLnk.lower()
+		#lst = []
 		lst = ["doubleclick.net" ,"ads",'.jpg','.png','.gif','.css','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg']
 		block = False
 		for l in lst:
@@ -322,6 +359,8 @@ class BrowserPage(QWebEnginePage):
 		print(info)
 		f = open(lnk,'w')
 		f.write(info)
+		if 'kissanime' in self.url and self.url.endswith('&s=beta'):
+			f.write('\n'+self.url)
 		f.close()
 		self.media_signal.emit(info)
 		print('********')
@@ -468,7 +507,7 @@ class BrowserPage(QWebEnginePage):
 	def htm(self,x):
 		r = 0
 		#print(x)
-		if self.val and 'selectQuality' in x:
+		if self.val and ('selectQuality' in x or 'slcQualix' in x):
 			print(self.cnt,'---quality-----cnt----')
 			self.cnt = self.cnt+1
 		"""
@@ -510,7 +549,7 @@ class BrowserPage(QWebEnginePage):
 		
 		result =''
 		#
-		if ('kisscartoon' in self.url or 'kissasian' in self.url) and ('id=' in self.url):
+		if ('kisscartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url) and ('id=' in self.url):
 			#x = self.toHtml(self.htm)
 			if self.val:
 				#QtWidgets.QApplication.processEvents()
@@ -563,15 +602,17 @@ class BrowseUrlT(QWebEngineView):
 				self.add_cookie = True
 			else:
 				self.add_cookie = False
-				if ('kisscartoon' in url or 'kissasian' in url) and self.quality and ('id=' in url):
+				if ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 					print("--------------------",content)
-					self.media_val = _get_video_val(content,self.cookie_file,self.quality)
+					self.media_val,server_found = _get_video_val(content,self.cookie_file,self.quality,url)
+					if not server_found:
+						url = url + '&s=beta'
 					print(self.media_val,'--media--val--')
 		else:
 			self.add_cookie = True
 		
 		self.tab_web = QtWidgets.QWidget()
-		self.tab_web.setMaximumSize(300,50)
+		self.tab_web.setMaximumSize(500,500)
 		self.tab_web.setWindowTitle('Wait!')
 		self.horizontalLayout_5 = QtWidgets.QVBoxLayout(self.tab_web)
 		self.horizontalLayout_5.addWidget(self)
@@ -591,7 +632,7 @@ class BrowseUrlT(QWebEngineView):
 			self.cnt = 1
 			
 			
-		elif ('kisscartoon' in url or 'kissasian' in url) and self.quality and ('id=' in url):
+		elif ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 			print('+++++++++++++++++++')
 			self.tab_web.setWindowTitle('Wait! Resolving Link')
 			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val)
@@ -602,7 +643,7 @@ class BrowseUrlT(QWebEngineView):
 			self.load(QUrl(url))
 		QtWidgets.QApplication.processEvents()
 		QtWidgets.QApplication.processEvents()
-		self.tab_web.show()
+		self.tab_web.hide()
 		
 		
 		
@@ -611,7 +652,7 @@ class BrowseUrlT(QWebEngineView):
 		#global web
 		print('cookie')
 		self.add_cookie = False
-		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url):
+		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url):
 			print('Cookie Obtained, now link finding')
 			f = open(os.path.join(self.tmp_dir,'tmp_cookie'),'w')
 			f.write('Cookie Obtained, now link finding')
@@ -628,7 +669,7 @@ class BrowseUrlT(QWebEngineView):
 			f.write(content)
 			f.close()
 			os.remove(c_f)
-		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url):
+		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url):
 			sys.exit(0)
 	@pyqtSlot(str)
 	def media_source_found(self):

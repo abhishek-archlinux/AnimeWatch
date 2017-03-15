@@ -167,11 +167,43 @@ class KissAnime():
 		hd = ''
 		sd480 = ''
 		full_hd = ''
+		"""
 		content = self.ccurlN(url)
 		soup = BeautifulSoup(content,'lxml')
-		m = soup.findAll('select',{'id':'selectQuality'})
+		m = soup.findAll('select',{'id':'slcQualix'})
 		print(m)
+		if not m:
+			content = self.ccurlN(url+'&s=beta')
+			soup = BeautifulSoup(content,'lxml')
+			m = soup.findAll('select',{'id':'slcQualix'})
+			print(m)
 		arr = []
+		"""
+		lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
+		if os.path.exists(lnk_file):
+			os.remove(lnk_file)
+		#if quality == 'best':
+		#	quality = 'best'
+		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
+		cloudfare(url,quality,self.cookie_file)
+		
+		if os.path.exists(lnk_file):
+			link = open(lnk_file).readlines()
+			if len(link) == 1:
+				final = link
+			elif len(link) == 2:
+				final = []
+				final.append(link[0].strip())
+				final.append(link[1].strip())
+				final.append('referer sent')
+			print(link)
+			print(final)
+		else:
+			final = ''
+			print('No Link Available or Clear The Cache')
+		return final
+		
+		"""
 		for i in m:
 			j = i.findAll('option')
 			for k in j:
@@ -216,6 +248,7 @@ class KissAnime():
 			final = str(m[-1])
 			print(final)
 		return final
+		"""
 		
 	def getCompleteList(self,opt,genre_num):
 		
