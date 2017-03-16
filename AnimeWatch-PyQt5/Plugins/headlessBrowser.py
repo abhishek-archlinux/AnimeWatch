@@ -71,7 +71,7 @@ class BrowseUrl(QWebEngineView):
 				if 'kissasian' in url:
 					str3 = '\nkissasian.com	FALSE	/	FALSE	0		__test'
 				else:
-					str3 = '\nkisscartoon.me	FALSE	/	FALSE	0		__test'
+					str3 = '\nkisscartoon.se	FALSE	/	FALSE	0		__test'
 				f = open(self.cookie_file,'a')
 				f.write(str3)
 				f.close()

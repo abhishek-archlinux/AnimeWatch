@@ -49,7 +49,7 @@ class KissCartoon():
 	def search(self,name):
 		
 		if name != '':
-			url = 'http://kisscartoon.me/Search/Cartoon/?keyword=' + name
+			url = 'http://kisscartoon.se/Search/Cartoon/?keyword=' + name
 			content = self.ccurlN(url)
 			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
@@ -70,7 +70,7 @@ class KissCartoon():
 		if extra_info:
 			name,epn_num = name.rsplit('--',1) 
 		
-		url = 'http://kisscartoon.me/Cartoon/' + name
+		url = 'http://kisscartoon.se/Cartoon/' + name
 		print(url)
 		content = self.ccurlN(url)
 		#f = open('/tmp/AnimeWatch/1.txt','w')
@@ -80,7 +80,7 @@ class KissCartoon():
 		#if not epl:
 		#	epl = re.findall('[^"]*?id=[^"]*', content)
 		try:
-			img = re.findall('http://kisscartoon.me/Uploads/Etc/[^"]*.jpg', content)
+			img = re.findall('http://kisscartoon.se/Uploads/Etc/[^"]*.jpg', content)
 			if not img:
 				img = re.findall('http://cdn.myanimelist.net/[^"]*.jpg', content)	
 			print(img)
@@ -164,7 +164,7 @@ class KissCartoon():
 	def getFinalUrl(self,name,epn,mirror,quality):
 		if '--' in name and 'id=' in name:
 			name = name.split('--')[0]
-		url = 'http://kisscartoon.me/Cartoon/' + name + '/' + epn
+		url = 'http://kisscartoon.se/Cartoon/' + name + '/' + epn
 		print(url)
 		sd = ''
 		hd = ''
@@ -189,7 +189,7 @@ class KissCartoon():
 	def getCompleteList(self,opt,genre_num):
 		
 		if opt == 'Genre' and genre_num == 0:
-			url = 'http://kisscartoon.me/CartoonList/'
+			url = 'http://kisscartoon.se/CartoonList/'
 			content = self.ccurlN(url)
 			m = re.findall('/Genre/[^"]*', content)
 			m = list(set(m))
@@ -206,7 +206,7 @@ class KissCartoon():
 		if opt == 'History':
 			print('History')
 		elif opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate':
-			url = 'http://kisscartoon.me/CartoonList/' + opt
+			url = 'http://kisscartoon.se/CartoonList/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
 			m = re.findall('/Cartoon/[^"]*', content)
@@ -223,7 +223,7 @@ class KissCartoon():
 
 			return m
 		if genre_num == 1:
-			url = 'http://kisscartoon.me/Genre/' + opt
+			url = 'http://kisscartoon.se/Genre/' + opt
 			pgn = 1
 			content = self.ccurlN(url)
 			m = re.findall('/Cartoon/[^"]*', content)
@@ -244,9 +244,9 @@ class KissCartoon():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if (opt == 'MostPopular' or opt == 'Newest' or opt == 'LatestUpdate'):
-				url = 'http://kisscartoon.me/CartoonList/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.se/CartoonList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.se/Genre/' + opt + '?page=' + pgnum
 				#print(url
 			content = self.ccurlN(url)
 			m = re.findall('/Cartoon/[^"]*', content)
@@ -268,9 +268,9 @@ class KissCartoon():
 		if opt != '' and pgn >= 1:
 			pgnum = str(pgn)
 			if genre_num == 0:
-				url = 'http://kisscartoon.me/CartoonList/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.se/CartoonList/' + opt + '?page=' + pgnum
 			else:
-				url = 'http://kisscartoon.me/Genre/' + opt + '?page=' + pgnum
+				url = 'http://kisscartoon.se/Genre/' + opt + '?page=' + pgnum
 			content = self.ccurlN(url)
 			m = re.findall('/Cartoon/[^"]*', content)
 			m = list(set(m))
