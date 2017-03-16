@@ -16,7 +16,7 @@ AnimeWatch Player is Audio/Video manager and mutlimedia player (based on mpv and
 
 [Detached Video Mode](#detached-video-mode)
 
-[Torrent Streaming Player] (#torrent-streaming)
+[Torrent Streaming Player](#torrent-streaming)
 
 [Media Server](#media-server)
 
@@ -24,7 +24,7 @@ AnimeWatch Player is Audio/Video manager and mutlimedia player (based on mpv and
 
 [YouTube Player](#youtube-support)
 
-[Addons (Plugins) Structure] (#addon-structure)
+[Addons (Plugins) Structure](#addon-structure)
 
 [Dependencies and Installation](#dependencies-and-installation)
 
@@ -117,6 +117,7 @@ In this mode, video will be detached from the main application window and can fl
 
 ## Torrent Streaming
 ######[Index](#index)
+
 Torrent Streaming feature has been included since version 2.5.0-0. Now it is possible to play audio/video torrent directly with this player similar to any streaming media. By default the torrent will stream at 'http://127.0.0.1:8001', which is loop-back address of your local machine. You can change this default streaming IP and port location by manually editing 'torrent_config.txt' file located in '~/.config/AnimeWatch'. If you set 'TORRENT_STREAM_IP' field to your local network IP address which normally starts with something like '192.168.x.y' (You can check default ip using 'ifconfig' command), then it is possible to access the playing media from any device on your local network. For example, if the media is being played at computer A with TORRENT_STREAM_IP set to your default local ip address '192.168.1.1:8001', then you can access that media from computer B on the same network by simply connecting to 'http://192.168.2.1:8001'. If you have mplayer or mpv installed on computer B , then you can simply type the command 'mplayer http://192.168.2.1:8001' on that computer, to access the media which is being streamed on computer A. 
 
 In 'torrent_config.txt' you can set some other fields like upload , download rate in (KBps) and default download location.
