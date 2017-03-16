@@ -270,7 +270,7 @@ In this player, a weak addon structure has been created, so that one can write a
 
 Most of the above things are possible in KODI or Plex . But I wanted some simple player with either mpv or mplayer as backend with decent media management functionality and addon structure. Therefore, I decided to create the application.
 
-This player is made mainly for GNU/Linux systems. But probably it should work on BSD and other Unix-like systems, if dependencies are satisfied. ~~And one thing is sure it can't work on Windows.~~From version 4.0 onwards the player might work on Windows too if dependencies are satisfied. 
+This player is made mainly for GNU/Linux systems. But probably it should work on BSD and other Unix-like systems, if dependencies are satisfied. From version 4.0 onwards the player might work on Windows too if dependencies are satisfied. 
 
 It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(PyQt4 version) and ubuntu 16.04(PyQt5 version).
 
@@ -377,9 +377,6 @@ sudo pacman -S python python-pyqt5 qt5-webengine python-dbus python-pycurl pytho
 In ubuntu 14.04 only pyqt4 version can work
 
 sudo apt-get install python3 python3-pyqt4 python3-pycurl python3-urllib3 python3-pil python3-bs4 python3-lxml python3-psutil python3-taglib curl libnotify-bin mpv mplayer ffmpegthumbnailer sqlite3 python3-libtorrent
-
-
-~~PyQt5 version can't work on Ubuntu since qt5-webengine is not available on it as dependency.~~
 
 AnimeWatch-PyQt5 from version number 2.8.0-0 onwards can be installed on ubuntu (16.04 or higher) or any other distro which does not package qt5-webengine. In case qt5-webengine is not packaged in the distro, it will use qtwebkit in fallback mode.
 
