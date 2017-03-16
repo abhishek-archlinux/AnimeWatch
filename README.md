@@ -277,10 +277,14 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 		
 		Above three steps will create .deb package from latest source, which users can install using gdebi.
 				
-   **gdebi** will resolve all the dependencies while installing the package. Normally **dpkg -i** is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use **gdebi** for convenience. Ubuntu 14.04 users also have to install 'python3-dbus.mainloop.qt' for MPRIS2 support. ~~Pyqt5 version is not available for Ubuntu, since qt5-webengine is not availbale on it. Currently there are no significant featurewise differences between pyqt5 and pyqt4 version, there are only structural differences. Users won't notice any significant variation between the two while using.~~. PyQt5 version is now available for Ubuntu 16.04 (from version number 2.8.0-0 onwards) which uses qtwebkit in fallback mode if qtwebengine is not available. For removing the package use 'sudo apt-get remove animewatch'. PyQt5 version won't work on Ubuntu 14.04.
+   **gdebi** will resolve all the dependencies while installing the package. Normally **dpkg -i** is used for installing .deb package in Debian based distros, but 'dpkg' won't install dependencies automatically, which users have to install manually as per instructions given below. Hence try to use **gdebi** for convenience. 
 
    Note: From version number 2.8.0-0 onwards, only PyQt5 version will be available. It is difficult to maintain two different versions (i.e. PyQt4 and PyQt5) of the same programme. AnimeWatch 2.7.0-0 was the last PyQt4 release. All the subsequent release will be PyQt5 only.
 
+	**Note:** PyQt5 available in official ubuntu repository does not contain qtwebengine, which is backend for internal browser. As an alternative, the application falls back to qtwebkit which has been deprecated since qt version 5.7+. Therefore, if ubuntu users want to use latest PyQt5 with qtwebengine backend for better and faster browsing experience, then they should install PyQt5 using pip3 using following command.
+	
+		$ sudo pip3 install PyQt5
+		
 3. Using **setup.py** located in **Python-SETUP** directory: 
    
 		$ git clone https://github.com/kanishka-linux/AnimeWatch
