@@ -132,6 +132,8 @@ class BrowserPage(QWebPage):
 							txt = arr[-1]
 						elif total_q == 2 or total_q == 3 or total_q == 4:
 							txt = arr[-2]
+					elif self.quality == 'best':
+						txt = arr[0]
 						
 					doc = frame.documentElement()
 					if 'kissanime' in self.url:
