@@ -16,7 +16,7 @@ from os import remove, close
 from os.path import expanduser
 import base64
 import platform
-from player_functions import ccurl,naturallysorted
+from player_functions import ccurl,naturallysorted,send_notification
 
 try:
 	from headlessBrowser import BrowseUrl
@@ -185,12 +185,14 @@ class KissAnime():
 		#if quality == 'best':
 		#	quality = 'best'
 		#if not os.path.isfile('/tmp/AnimeWatch/kcookieD.txt'):
+		if mirror == 2:
+			url = url+'&s=beta'
 		cloudfare(url,quality,self.cookie_file)
 		
 		if os.path.exists(lnk_file):
 			link = open(lnk_file).readlines()
 			if len(link) == 1:
-				final = link
+				final = link[0]
 			elif len(link) == 2:
 				final = []
 				final.append(link[0].strip())
@@ -200,8 +202,16 @@ class KissAnime():
 			print(final)
 		else:
 			final = ''
-			print('No Link Available or Clear The Cache')
-		return final
+			msg = 'No Link Available. Try Clearing Cache or select Alternate Mirror by pressing keys 1 or 2'
+			send_notification(msg)
+		if final and final is not list and mirror == 2:
+			new_final = []
+			new_final.append(final)
+			new_final.append(url)
+			new_final.append('referer sent')
+			return new_final
+		else:
+			return final
 		
 		"""
 		for i in m:
