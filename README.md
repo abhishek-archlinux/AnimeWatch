@@ -80,7 +80,7 @@ AnimeWatch Player is Audio/Video manager and mutlimedia player (based on mpv and
 
 ## Normal Mode 
 
-######[Index](#index)
+###### [Index](#index)
 
 ![AnimeWatch](/Images/Video.png)
 
