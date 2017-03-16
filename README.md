@@ -300,9 +300,6 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 
    Note: From version number 2.8.0-0 onwards, only PyQt5 version will be available. It is difficult to maintain two different versions (i.e. PyQt4 and PyQt5) of the same programme. AnimeWatch 2.7.0-0 was the last PyQt4 release. All the subsequent release will be PyQt5 only.
 
-	**Note:** PyQt5 available in official ubuntu repository does not contain qtwebengine, which is backend for internal browser. As an alternative, the application falls back to qtwebkit which has been deprecated since qt version 5.7+. Therefore, if ubuntu users want to use latest PyQt5 with qtwebengine backend for better and faster browsing experience, then they should install PyQt5 using pip3 using following command.
-	
-		$ sudo pip3 install PyQt5
 		
 3. Using **setup.py** located in **Python-SETUP** directory: 
    
