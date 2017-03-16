@@ -86,7 +86,7 @@ AnimeWatch Player is Audio/Video manager and mutlimedia player (based on mpv and
 
 ## Playing Mode
 
-######[Index](#index)
+###### [Index](#index)
 
 ![AnimeWatch](/Images/Watch.png)
 
@@ -98,7 +98,7 @@ User can make as many playlists as possible. It is possible to merge various pla
 
 ## Thumbnail Mode
 
-######[Index](#index)
+###### [Index](#index)
 
 ![AnimeWatch](/Images/Thumbnail.png)
 
@@ -108,7 +108,7 @@ In thumbnail mode, Thumbnails of local video files are automatically generated w
 
 ## Minimal Music Player
 
-######[Index](#index)
+###### [Index](#index)
 
 ![AnimeWatch](/Images/Music.png)
 
@@ -118,7 +118,7 @@ It is not very powerful music organizer, but provide certain decent functionalit
 
 ## Detached Video Mode
 
-######[Index](#index)
+###### [Index](#index)
 
 ![AnimeWatch](/Images/Detached_Mode.png)
 
@@ -127,7 +127,7 @@ In this mode, video will be detached from the main application window and can fl
 
 ## Torrent Streaming
 
-######[Index](#index)
+###### [Index](#index)
 
 Torrent Streaming feature has been included since version 2.5.0-0. Now it is possible to play audio/video torrent directly with this player similar to any streaming media. By default the torrent will stream at 'http://127.0.0.1:8001', which is loop-back address of your local machine. You can change this default streaming IP and port location by manually editing 'torrent_config.txt' file located in '~/.config/AnimeWatch'. If you set 'TORRENT_STREAM_IP' field to your local network IP address which normally starts with something like '192.168.x.y' (You can check default ip using 'ifconfig' command), then it is possible to access the playing media from any device on your local network. For example, if the media is being played at computer A with TORRENT_STREAM_IP set to your default local ip address '192.168.1.1:8001', then you can access that media from computer B on the same network by simply connecting to 'http://192.168.2.1:8001'. If you have mplayer or mpv installed on computer B , then you can simply type the command 'mplayer http://192.168.2.1:8001' on that computer, to access the media which is being streamed on computer A. 
 
@@ -150,7 +150,7 @@ Note: Key 'q' used on playing video will quit the playing instance, and the same
 
 ## Media Server
 
-######[Index](#index)
+###### [Index](#index)
 
 From version 2.6.0-0, it's possible to use AnimeWatch player as media server. The media server functionality can be started by clicking 'More' button, and selecting 'Start Media Server' option. By default media server will start on 'http://127.0.0.1:9001' i.e. default loop-back address of your machine. In order to use it as media server which can be accessed from any device on the same local network, you have to change this loop-back address '127.0.0.1' to your local network address which normally starts with '192.168.x.y'. You can check, default local network address using cli tools like 'ifconfig' on any gnu/linux based systems. Once you know local network address of your server, then manually edit '~/.config/AnimeWatch/other_options.txt' file and change the field "LOCAL_STREAM_IP" appropriately with local network address. Once you've set up the 'LOCAL_STREAM_IP' field properly, then you should be able to access the current playlist on the AnimeWatch, from any device on the network. 
 
@@ -256,7 +256,7 @@ Note: Once user logs out from cookie and password enabled session, he can't sear
 
 ## YouTube Support
 
-######[Index](#index)
+###### [Index](#index)
 
 ![AnimeWatch](/Images/YT.png)
 
@@ -264,7 +264,7 @@ This player provides a wrapper around youtube site using qtwebengine (since vers
 
 ## Addon Structure
 
-######[Index](#index)
+###### [Index](#index)
 
 In this player, a weak addon structure has been created, so that one can write addon for viewing video contents of various sites directly on this player,similar to Kodi or Plex, so that you don't have to deal with horrible flash player of the web. Currently it supports certain anime sites. By default it shows SD video, if you select HD then whenever available it tries to pick up HD video. If multiple mirrors are available you will be notified about it and then you can select different mirror if default mirror fails.These extra addons are in the directory 'Plugins', which will be loaded once the application is started. These addons are optional and before using them please check copyright and licencing laws of your country. If viewing contents of these anime sites is not allowed in your country, then use it at your own risk. Author of the AnimeWatch player is not at all related to any of these anime sites or their content provider. And these addons are also not core part of the player, they are completely optional,it's decision of the user of this application to download and keep these addons or not. These addons will only feed videos of the website directly to desktop player without downloading. There is no warrantee or guarantee on these addons. They can become dead if the site on which they are depending becomes dead or changes it's source. After install, these addons will be in the directory '~/.config/AnimeWatch/src/Plugins'. If your country does not allow viewing contents of these anime sites, then you can simply delete contents of the 'Plugins' folder.
 
@@ -276,7 +276,7 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 
 ## Dependencies and Installation
 
-######[Index](#index)
+###### [Index](#index)
 
 1. For Arch Linux users, AnimeWatch is available in AUR as [animewatch-pyqt4](https://aur.archlinux.org/packages/animewatch-pyqt4) , [animewatch-pyqt5](https://aur.archlinux.org/packages/animewatch-pyqt5) and [animewatch-pyqt5-git](https://aur.archlinux.org/packages/animewatch-pyqt5-git) (thanks to Arch linux forum member **sesese9**). Arch users can install it using 'yaourt' or any other conventional method. Addons of pyqt4 and pyqt5 version are incompatible. Hence whenever user upgrade pyqt4 version to pyqt5 or downgrade pyqt5 version to pyqt4, then they have to manually remove '~/.config/AnimeWatch/src/' directory, before restart of newly upgraded or downgraded version. Otherwise player won't load addons or might even crash.  
 
@@ -325,9 +325,9 @@ It is developed mainly on Arch Linux and Tested on both Arch and Ubuntu 14.04(Py
 Or they can simply click (or execute using command line) **'animewatch-start'** shell script located in the directory to start the player directly **without copying files anywhere**.
 
 
-#Dependencies
+# Dependencies
 
-######[Index](#index)
+###### [Index](#index)
 
 **Minimum Dependencies on GNU/Linux:** 
 
@@ -393,7 +393,7 @@ sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python
 
 ## Troubleshooting
 
-######[Index](#index)
+###### [Index](#index)
 
 1. If you've installed the Application using .deb or .pkg.tar.xz package or using PKGBUILD, and somehow application launcher in the menu is not working, then open terminal and launch the application using command 'anime-watch' or 'python -B /usr/share/AnimeWatch/animeWatch.py' or 'python3 -B /usr/share/AnimeWatch/animeWatch.py'.
 
@@ -417,7 +417,7 @@ sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python
 
 11. If there are some other problems, then turn on logging by setting 'LOGGING' to 'ON', in other_options.txt. It will create 'animewatch.log' file in '~/.config/AnimeWatch/tmp' folder. Users can analyse the log on their own or can post the log on github issues section. Or alternatively users can post console output if application was started from console.
 
-####Troubleshooting for common method
+#### Troubleshooting for common method
 
 1. If Application Launcher in the menu is not working or programme is crashing then directly go to "~/.config/AnimeWatch/src/", open terminal there and run "python3 animeWatch.py" or "python animeWatch.py" as per your default python setup. If there is some problem in installation, then you will get idea about it, whether it is missing dependency or something else, or you can report the error as per the message in terminal.
 
@@ -427,7 +427,7 @@ sudo apt-get install python3 python3-pyqt5 python3-pycurl python3-urllib3 python
 
 ## Documentation
 
-######[Index](#index)
+###### [Index](#index)
 
 If everything goes well and if you are able to open the player, then you will come across Three Columns.
 
@@ -441,13 +441,13 @@ If you are still not satisfied with mpv or mplayer, then you can also launch any
 Middle column, is the “Title Column”, It will consists of name of the series.
 Last Column to the extreme right, is the “Playlist column”, which will contain playlist items which will be played sequentially in the default mode, you will just have to select entry and press enter or double click.
 
-###KeyBoard Shortcuts:
+### KeyBoard Shortcuts:
 
 Once video is opened, if it not focussed then take mouse pointer over the video. It will set focus on the video. Once the video is focussed, most of the mpv and mplayer shortcuts will work. There is no volume slider, it's volume will be in sync with global volume. So global volume key will work. If you've setup d-bus shortcut keys for play/pause/next/previous then they will also work.
 
 There is no fullscreen button. People have to use keyboard shortcut(f:fullscreen). It is not full fledge front end, the player has been written with different aim in mind. Therefore, i've tried to reduce buttons as much as possible so as not to clutter the interface, especially with respect to player. But if you still feel the need for more buttons or full fledged UI then you can select smplayer or vlc or kodi from settings menu instead of mpv or mplayer. 
 
-###Player Shortcuts(once video is focussed, if it's not focussed take mouse pointer over the playing video):
+### Player Shortcuts(once video is focussed, if it's not focussed take mouse pointer over the playing video):
 
 q : quit
 
@@ -536,7 +536,7 @@ vo=opengl {or anything that works on your system}
 
 cache-secs=120
 
-###Some global Shortcuts:
+### Some global Shortcuts:
 
 Shift + L : show/hide Player
 
@@ -556,7 +556,7 @@ Right,Left: set focus alternate between Option column, Title column and Playlist
 
 Ctrl+1 to Ctrl+8 : Change aspect ratio of background image
 
-###Title Column:(if Title list is focussed)
+### Title Column:(if Title list is focussed)
 
 h : show history (history of watched series)
 
@@ -578,7 +578,7 @@ shift+c : copy summary
 
 ctrl+c : copy poster
 
-###Playlist Column:(If playlist column is focussed)
+### Playlist Column:(If playlist column is focussed)
 
 q : queue the item
 
@@ -614,22 +614,23 @@ Ctrl+Down: Move to last entry
 
 F2 : Rename entry
 
-###Thumbnail Mode:
+### Thumbnail Mode:
 
 '=' (Remember '+' key) : increase size of Thumbnails
 
 '-' : decrease size of Thumbnails
 
-###Summary Text Browser
+### Summary Text Browser
 
 Ctrl+A : to select and save save edited summary.
 
-###Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in the mode.
+### Thumbnail mode occupies pretty good memory. If you want to get out of thumbnail mode and free up the memory then click 'close' button which is available in the mode.
 
-###Apart from shortcuts:
+### Apart from shortcuts:
+
 You can explore Right click menu of both Playlist Column and Title List Column for getting TVDB, Last.fm profiles for your collection either manually or automatically. If you are getting some problem while setting profiles from TVDB or Last.fm , or having problems accessing addons,then empty the cache directory '~/.config/AnimeWatch/tmp', This option is available with right click menu of Title List and Playlist column also.
 
-###Other Things for convenience:
+### Other Things for convenience:
 
 1. Please Enable Vertical Scrolling of Touchpad, because there are no scrollbars in this application, because they were looking very ugly in the total setup.
 
