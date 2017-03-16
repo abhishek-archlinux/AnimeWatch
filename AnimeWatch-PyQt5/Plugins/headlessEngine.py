@@ -192,6 +192,7 @@ def _get_video_val(htm,c_file,q,u):
 		if m:
 			#print(m)
 			arr = []
+			arr_lnk = []
 			for i in m:
 				j = i.findAll('option')
 				for k in j:
@@ -204,6 +205,7 @@ def _get_video_val(htm,c_file,q,u):
 					else:
 						l3 = ('Not Available',l)
 					arr.append(l3)
+					arr_lnk.append(l)
 			total_q = len(arr)
 			try:
 				arr_dict = dict(arr)
@@ -221,7 +223,7 @@ def _get_video_val(htm,c_file,q,u):
 						if total_q >= 3:
 							txt = arr_dict['720p']
 						elif total_q == 2:
-							txt = arr_dict['480p']
+							txt = arr_lnk[0]
 						else:
 							txt = arr_dict['360p']
 					elif quality == 'sd480p':
@@ -230,14 +232,7 @@ def _get_video_val(htm,c_file,q,u):
 						else:
 							txt = arr_dict['360p']
 					elif quality == 'best':
-						if total_q == 4:
-							txt = arr_dict['1080p']
-						elif total_q == 3:
-							txt = arr_dict['720p']
-						elif total_q == 2:
-							txt = arr_dict['480p']
-						else:
-							txt = arr_dict['360p']
+						txt = arr_lnk[0]
 				except:
 					txt = arr_dict['360p']
 					
