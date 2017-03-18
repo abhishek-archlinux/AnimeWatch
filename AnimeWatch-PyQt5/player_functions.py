@@ -133,6 +133,8 @@ def get_config_options(file_name,value_field):
 			if str(i.lower()) == str(value_field.lower()):
 				req_val = j
 				break
+	else:
+		req_val = 'file_not_exists'
 	return req_val
 
 
@@ -150,21 +152,39 @@ def replace_all(text, di):
 
 def get_tmp_dir():
 	TMPDIR = ''
+	home_dir = get_home_dir()
 	try:
-		option_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','other_options.txt')
-		tmp_option = get_config_options(option_file,'TMP_REMOVE')
-		if tmp_option:
-			if tmp_option.lower() == 'no':
-				TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
+		option_file = os.path.join(home_dir,'other_options.txt')
+		if os.path.exists(option_file):
+			tmp_option = get_config_options(option_file,'TMP_REMOVE')
+			if tmp_option:
+				if tmp_option.lower() == 'no':
+					TMPDIR = os.path.join(home_dir,'tmp')
+				else:
+					TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
 			else:
-				TMPDIR = mkdtemp(suffix=None,prefix='AnimeWatch_')
+				TMPDIR = os.path.join(home_dir,'tmp')
 		else:
-			TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
+			TMPDIR = os.path.join(home_dir,'tmp')
 	except Exception as e:
 		print(e,'--error-in--creating--TEMP--Directory--') 
-		TMPDIR = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp')
+		TMPDIR = os.path.join(home_dir,'tmp')
 	return TMPDIR
 
+def get_home_dir():
+	home = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch')
+	return home
+
+def change_opt_file(config_file,old,new):
+	if os.path.exists(config_file):
+		f = open(config_file,'r')
+		lines = f.readlines()
+		f.close()
+		for i in range(len(lines)):
+			lines[i] = lines[i].strip()
+			if lines[i].startswith(old):
+				lines[i] = new
+		write_files(config_file,lines,line_by_line=True)
 
 def set_logger(file_name,TMPDIR):
 	file_name_log = os.path.join(TMPDIR,file_name)
