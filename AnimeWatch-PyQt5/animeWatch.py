@@ -37,7 +37,6 @@ import subprocess
 from subprocess import check_output
 from bs4 import BeautifulSoup
 
-
 from PyQt5.QtCore import QUrl
 import imp
 import shutil
@@ -89,7 +88,7 @@ elif BROWSER_BACKEND == 'QTWEBKIT':
 		from adb_webkit import NetWorkManager
 		from browser_webkit import Browser
 		QT_WEB_ENGINE = False
-		print('Using QTWEBKIT')
+		print('Directly Using QTWEBKIT')
 	except:
 		msg_txt = 'QTWEBKIT Not Available, Try QTWEBENGINE'
 		send_notification(msg_txt)
