@@ -37,20 +37,6 @@ import subprocess
 from subprocess import check_output
 from bs4 import BeautifulSoup
 
-try:
-	from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
-	from PyQt5.QtWebEngineWidgets import QWebEngineView
-	from adb import NetWorkManager
-	from browser import Browser
-	QT_WEB_ENGINE = True
-	print('Using QTWEBENGINE')
-except:
-	from PyQt5 import QtWebKitWidgets
-	from PyQt5.QtWebKitWidgets import QWebView
-	from adb_webkit import NetWorkManager
-	from browser_webkit import Browser
-	QT_WEB_ENGINE = False
-	print('Using QTWEBKIT')
 
 from PyQt5.QtCore import QUrl
 import imp
@@ -59,9 +45,55 @@ from tempfile import mkstemp,mkdtemp
 from player_functions import write_files,ccurl,send_notification
 from player_functions import wget_string,open_files,get_config_options
 from player_functions import get_tmp_dir,naturallysorted,set_logger
+from player_functions import get_home_dir,change_opt_file
 from musicArtist import musicArtist
 from yt import get_yt_url
 
+HOME_DIR = get_home_dir()
+HOME_OPT_FILE = os.path.join(HOME_DIR,'other_options.txt')
+BROWSER_BACKEND = get_config_options(HOME_OPT_FILE,'BROWSER_BACKEND')
+QT_WEB_ENGINE = True
+print(BROWSER_BACKEND)
+if (not BROWSER_BACKEND or (BROWSER_BACKEND != 'QTWEBKIT' 
+		and BROWSER_BACKEND != 'QTWEBENGINE')):
+	change_opt_file(HOME_OPT_FILE,'BROWSER_BACKEND=','BROWSER_BACKEND=QTWEBENGINE')
+	BROWSER_BACKEND = 'QTWEBENGINE'
+
+if BROWSER_BACKEND == 'QTWEBENGINE':
+	try:
+		from PyQt5 import QtWebEngineWidgets,QtWebEngineCore
+		from PyQt5.QtWebEngineWidgets import QWebEngineView
+		from adb import NetWorkManager
+		from browser import Browser
+		QT_WEB_ENGINE = True
+		print('Using QTWEBENGINE')
+	except Exception as err_msg:
+		print(err_msg)
+		try:
+			from PyQt5 import QtWebKitWidgets
+			from PyQt5.QtWebKitWidgets import QWebView
+			from adb_webkit import NetWorkManager
+			from browser_webkit import Browser
+			QT_WEB_ENGINE = False
+			print('Using QTWEBKIT')
+			change_opt_file(HOME_OPT_FILE,'BROWSER_BACKEND=','BROWSER_BACKEND=QTWEBKIT')
+			BROWSER_BACKEND = 'QTWEBKIT'
+		except Exception as err_msg:
+			print(err_msg)
+			msg_txt = 'Browser Backend Not Available. Install either QtWebKit or QtWebEngine'
+			send_notification(msg_txt)
+elif BROWSER_BACKEND == 'QTWEBKIT':
+	try:
+		from PyQt5 import QtWebKitWidgets
+		from PyQt5.QtWebKitWidgets import QWebView
+		from adb_webkit import NetWorkManager
+		from browser_webkit import Browser
+		QT_WEB_ENGINE = False
+		print('Using QTWEBKIT')
+	except:
+		msg_txt = 'QTWEBKIT Not Available, Try QTWEBENGINE'
+		send_notification(msg_txt)
+		
 TMPDIR = get_tmp_dir()
 
 if TMPDIR and not os.path.exists(TMPDIR):
@@ -21384,7 +21416,11 @@ def main():
 					ui.ytdl_path = 'default'
 	else:
 		f = open(os.path.join(home,'other_options.txt'),'w')
-		f.write("LOCAL_STREAM_IP=127.0.0.1:9001")
+		if BROWSER_BACKEND == 'QTWEBENGINE':
+			f.write("BROWSER_BACKEND=QTWEBENGINE")
+		elif BROWSER_BACKEND == 'QTWEBKIT':
+			f.write("BROWSER_BACKEND=QTWEBKIT")
+		f.write("\nLOCAL_STREAM_IP=127.0.0.1:9001")
 		f.write("\nDEFAULT_DOWNLOAD_LOCATION="+TMPDIR)
 		f.write("\nKEEP_BACKGROUND_CONSTANT=no")
 		f.write("\nTMP_REMOVE=no")
@@ -21404,7 +21440,6 @@ def main():
 		ui.local_port_stream = 9001
 		
 	print(ui.torrent_download_limit,ui.torrent_upload_limit)
-	
 	
 	if not ui.logging_module:
 		logger.disabled = True
