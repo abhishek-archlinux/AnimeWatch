@@ -200,7 +200,7 @@ def set_logger(file_name,TMPDIR):
 
 
 def write_files(file_name,content,line_by_line):
-	tmp_new_file = os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','tmp','tmp_write.txt')
+	tmp_new_file = os.path.join(get_home_dir(),'tmp','tmp_write.txt')
 	file_exists = False
 	write_operation = True
 	if os.path.exists(file_name):
@@ -305,8 +305,7 @@ def write_files(file_name,content,line_by_line):
 
 
 get_lib = get_config_options(
-			os.path.join(os.path.expanduser('~'),'.config','AnimeWatch','other_options.txt'),
-			'GET_LIBRARY')
+			os.path.join(get_home_dir(),'other_options.txt'),'GET_LIBRARY')
 
 
 if get_lib.lower() == 'pycurl':
