@@ -31,7 +31,7 @@ elif os.name == 'nt':
 	install_dependencies = ['PyQt5','pycurl','bs4','Pillow','mutagen','lxml','youtube_dl','certifi']
 setup(
     name='animewatch',
-    version='4.3.1',
+    version='4.3.2',
     license='GPLv3',
     author='kanishka-linux',
     author_email='kanishka.linux@gmail.com',
