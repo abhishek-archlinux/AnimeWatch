@@ -970,10 +970,15 @@ class SubbedAnime():
 				j = i.find('a')['href']
 				j = j.replace('/anime/','')
 				k = j.split('/')
-				m.append(k[1]+'-'+k[0])
+				print(k)
+				if len(k) >= 2:
+					if k[1]:
+						m.append(k[1]+'-'+k[0])
+					
 			
 			if opt == "Random":
 				m = random.sample(m, len(m))
+			print(m)
 		elif siteName == "GoodAnime":
 			m = re.findall('category/[^"]*', content)
 			m = list(set(m))
@@ -2767,7 +2772,7 @@ class SubbedAnime():
 			post_dict = {'id':new_c,'ep':epn,'chk':'2'}
 			#content = ccurlHQ('http://www.moetube.net/rui.php',self.cookie_file,post)
 			#print(content)
-			content = self.ccurlN('http://www.moetube.net/rui.php',cookie=self.cookie_file,post=post_dict)
+			content = self.ccurlN('http://www.moetube.net/rui.php',siteName,cookie=self.cookie_file,post=post_dict)
 			print(content)
 			#final = content
 			glink = content.split('/')[-1]

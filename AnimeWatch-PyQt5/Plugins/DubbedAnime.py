@@ -167,73 +167,7 @@ def mp4star(url):
 			print(found)
 		else:
 			found = url1
-		"""
-		m = re.findall('value="[^"]*',content)
-	
-		value = re.sub('value="',"",m[0])
-		#print(value
 		
-		#content = (subprocess.check_output(["curl","-A",hdr,'-d','id='+'"'+value+'"',found]))
-		content = ccurl(found,value)
-		if isinstance(content,bytes):
-			print("I'm byte")
-			try:
-				content = str((content).decode('utf-8'))
-			except:
-				content = str(content)
-		else:
-			print(type(content))
-			content = str(content)
-			print("I'm unicode")
-		#content = ccurl(found,value)
-		
-		"""
-	"""
-	else:
-		content = ccurl(url,'')
-
-		m = re.findall('value="[^"]*',content)
-	
-		value = re.sub('value="',"",m[0])
-		#print(value
-		
-		content = ccurl(url,value)
-		
-	#print(content
-	#m = re.findall('https[^"]*googleusercontent[^"]*',content)
-	if 'mp4star' in url:
-		m = re.findall('https[^"]*redirector[^"]*',content)
-	else:
-		m = re.findall("file: 'http[^']*",content)
-		n = []
-		for i in m:
-			i = i.replace("file: '",'')
-			n.append(i)
-		m[:]=[]
-		m = n
-	print(m)
-	if m:
-		#content = ccurl(m[0],"")
-		if qualityVideo == "sd":
-			#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[0]]))
-			content = ccurlNew(m[0]+'#'+'-I')
-		else:
-			#content = (subprocess.check_output(["curl","-L","-I","-A",hdr,m[-1]]))
-			content = ccurlNew(m[-1]+'#'+'-I')
-		
-		if "Location:" in content:
-			m = re.findall('Location: [^\n]*',content)
-			found = re.sub('Location: |\r','',m[-1])
-			print(found)
-	else:
-		url1 = mp4starUrl(content,'mp4star')
-		print(url1,'**********')
-		content = ccurlNew(url1+'#'+'-I')
-		if "Location:" in content:
-			m = re.findall('Location: [^\n]*',content)
-			found = re.sub('Location: |\r','',m[-1])
-			print(found)
-	"""
 	url = str(urllib.parse.unquote(found))
 	return url
 
@@ -295,6 +229,7 @@ def mp4starUrl(content,site):
 	d = []
 	k = 100
 	d1 = []
+	print(m)
 	for i in range(len(m)):
 		if not(m[i]):
 			k = k+1
@@ -309,11 +244,12 @@ def mp4starUrl(content,site):
 			else:
 				r = (m[i],arr[j])
 				r1 = (arr[j],m[i])
+			print(r1)
 			j = j+1
 		else:
 			if not m[i]:
 				r = (k,arr[j])
-				r1 = (arr[j],k)
+				r1 = (arr[j]+arr[n],k)
 			else:
 				r = (m[i],arr[j]+arr[n])
 				r1 = (arr[j]+arr[n],m[i])
@@ -321,11 +257,24 @@ def mp4starUrl(content,site):
 		d.append(r)
 		d1.append(r1)
 	m = dict(d)
+	print(d1)
 	di = dict(d1)
 	print(di)
 	print('------326---------')
 	#print(di)
+	u_arr = []
 	if site == 'mp4star':
+		v = m['https']
+		o = re.findall('"'+v+':[^"]*',content)
+		print(o)
+		if o:
+			print(o)
+			for i in o:
+				u = re.sub('"','',i)
+				u = u.replace("'",'')
+				u_arr.append(u)
+			#u = u.replace(",",'')
+		"""
 		n = m['https']
 		v = m['file']
 		n1 = m['http']
@@ -356,7 +305,7 @@ def mp4starUrl(content,site):
 				u = re.sub(v+"[^']*",'',u1)
 				u = u.replace("'",'')
 	
-	
+		"""
 	elif site == 'myvidstream':
 		v = m['file']
 		n1 = m['http']
@@ -364,18 +313,22 @@ def mp4starUrl(content,site):
 		print(o)
 		if o:
 			print(o)
-			u = re.sub("'"+v+'[^,]*','',o[0])
-			u = u.replace("'",'')
-			u = u.replace(",",'')
+			for i in o:
+				u = re.sub("'"+v+'[^,]*','',i)
+				u = u.replace("'",'')
+				u = u.replace(",",'')
+				u_arr.apend(u)
 	elif site == 'uploadcrazy':
 		v = m['http']
 		o = re.findall('"'+v+':[^"]*',content)
 		print(o)
 		if o:
 			print(o)
-			u = re.sub('"','',o[0])
-			u = u.replace("'",'')
-			u = u.replace(",",'')
+			for i in o:
+				u = re.sub('"','',i)
+				u = u.replace("'",'')
+				u = u.replace(",",'')
+				u_arr.append(u)
 	else:
 		n = m['https']
 		v = m['url']
@@ -383,72 +336,93 @@ def mp4starUrl(content,site):
 		o = re.findall('"'+v+'[^:]*:'+'"'+n1+'[^"]*',content)
 		if o:
 			print(o)
-			u = re.sub('"'+v+'[^:]*:','',o[0])
+			for i in o:
+				u = re.sub('"'+v+'[^:]*:','',i)
+				u_arr.append(u)
 		else:
 			o = re.findall('"'+v+'[^:]*:'+'"'+n+'[^"]*',content)
 			if o:
 				print(o)
-				u = re.sub('"'+v+'[^:]*:','',o[0])
-	
-	u = u.replace('\\','')
-	
+				for i in o:
+					u = re.sub('"'+v+'[^:]*:','',i)
+					u_arr.append(u)
+	new_u_arr = []
+	#print(u_arr,'--347--')
+	for i in u_arr:
+		i = i.replace('\\','')
+		new_u_arr.append(i)
 	#u = re.sub('["?"]|"','',u)
-	print(u,'---396--')
-	r = re.findall('[0-9a-zA-Z][^\.|\%|\/|\-|\=|\:|\?|\&]*',u)
-	print(r,'--398---')
+	#print(u,'---396--',len(u))
+	print(new_u_arr)
+	#r = re.findall('[0-9a-zA-Z][^\.|\%|\/|\-|\=|\:|\?|\&]*',u)
+	#print(r,'--398---')
 	url = ""
 	token = ''
 	found = False
-	special_arr = ['.','%','-','=','/','?',':','&']
+	special_arr = ['.','%','-','=','/','?',':','&',',','(',')','[',']']
 	i = 0
 	token_index = 0
 	l = 0
 	#print(di['c'])
-	for i in range(len(u)):
-		#print(u[i],'--408--')
-		u_val = str(u[i])
-		if u_val.isalnum():
-			try:
-				url = url + di[u_val]
-			except Exception as e:
-				print(e)
-				url = url + u_val
-		else:
-			url = url+u_val
-		#print(url)
-	
-	"""
-	while (i < len(u)):
-		#print(i)
-		token = ""
-		found = False
-		#print(url)
-		if u[i] in special_arr:
-			url = url+u[i]
-		else:
+	final_arr = []
+	for index in new_u_arr:
+		u = index
+		i = 0
+		url = ''
+		while (i < len(u)):
+			#print(u[i],'--408--')
+			pat = ''
 			j = i
-			while(j <= len(u)):
-				token = token + u[j]
-				if token in r:
-					#print(token)
-					found = True
-					try:
-						url = url+di[token]
-					except:
-						url = url+token
-					token_index = j+1
-					break
+			special_char = False
+			while(u[j] not in special_arr and j < len(u)):
+				special_char = True
+				pat = pat + u[j]
+				#print(pat)
 				j = j+1
+				if j == len(u):
+					break
+			
+			u_val = str(pat)
+			if u_val.isalnum() and special_char:
+				#print(pat)
+				try:
+					url = url + di[u_val]
+				except Exception as e:
+					print(e,'--369--',u[i])
+					url = url + u_val
+			else:
+				#print(u[i],'--except--')
+				u_val = str(u[i])
+				url = url+u_val
+			if special_char:
+				i = j
+			else:
+				i = i+1
+			if i >= 1000:
+				break
+		final_arr.append(url)
+	
+	final_sd = ''
+	final_hd = ''
+	final_nd = ''
+	print(final_arr)
+	for i in final_arr:
+		if 'itag=18' in i:
+			final_sd = i
+		elif 'itag=22' in i:
+			final_hd = i
+	
+	if not final_sd and not final_hd and final_arr:
+		final_sd = final_arr[0]
+	
+	if final_hd and not final_sd:
+		final_sd = final_hd
+	
+	if qualityVideo == 'hd' and final_hd:
+		url = final_hd
+	elif final_sd:
+		url = final_sd
 		
-		if found:
-			i = token_index
-		else:
-			i = i+1
-		l = l+1
-		if l > 200:
-			break
-		print(l)
-	"""
 	print(url)
 	url = re.sub('"','',url)
 	url = re.sub("'",'',url)
@@ -458,13 +432,7 @@ def mp4starUrl(content,site):
 
 def uploadcrazy(url):
 	content = ccurlNew(url)
-	"""
-	m = re.findall('file: "http[^"]*uploadcrazy.net[^"]*mp4[^"]*',content)
-	if m:
-		url = re.sub('file: "','',m[0])
-	else:
-		url = ""
-	"""
+	
 	url = mp4starUrl(content,'uploadcrazy')
 	return url
 	
@@ -538,7 +506,9 @@ class DubbedAnime():
 				final = findurl(src)
 			elif 'mp4star' in src or 'justmp4' in src: 
 				try:
-					final = newMp4star(src)
+					content = ccurlNew(src)
+					print(content)
+					final = mp4starUrl(content,'mp4star')
 				except Exception as e:
 					print(e,'getting next link')
 			print(final,'--final--')
