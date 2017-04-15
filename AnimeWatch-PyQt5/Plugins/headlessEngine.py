@@ -171,6 +171,9 @@ def _get_video_val(htm,c_file,q,u):
 		html = htm
 		url = u
 		soup = BeautifulSoup(html,'lxml')
+		#title_page = soup.find('title').text.strip().lower()
+		if 'Are You Human' in html:
+			return ('Nothing',False,True)
 		server_found = True
 		if 'kissanime' in url:
 			server_found = False
@@ -246,7 +249,7 @@ def _get_video_val(htm,c_file,q,u):
 					st = "$('#slcQualix').val("+'"'+txt+'"'+")"
 				else:
 					st = "$('#selectQuality').val("+'"'+txt+'"'+")"
-				return st,server_found
+				return (st,server_found,False)
 
 class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 	netS = pyqtSignal(str)
@@ -299,7 +302,7 @@ class BrowserPage(QWebEnginePage):
 	cookie_signal = pyqtSignal(str)
 	media_signal = pyqtSignal(str)
 	#val_signal = pyqtSignal(str)
-	def __init__(self,url,quality,add_cookie,c_file,m_val):
+	def __init__(self,url,quality,add_cookie,c_file,m_val,end_pt=None):
 		super(BrowserPage, self).__init__()
 		print('hello')
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -327,13 +330,16 @@ class BrowserPage(QWebEnginePage):
 		self.quality = quality
 		self.val = m_val
 		self.add_cookie = add_cookie
-		
+		if end_pt:
+			self.end_point = end_pt
+		else:
+			self.end_point = 'cf_clearance'
 		
 		if not self.add_cookie:
 			self.m.deleteAllCookies()
 			self.set_cookie(self.cookie_file)
 			
-		
+		self.got_cookie = False
 		self.text = ''
 		
 		#ag = self.page().profile().httpUserAgent()
@@ -374,34 +380,35 @@ class BrowserPage(QWebEnginePage):
 		f.close()
 		for i in lines:
 			k = re.sub('\n','',i)
-			l = k.split('	')
-			d = QtNetwork.QNetworkCookie()
-			d.setDomain(l[0])
-			print(l[0])
-			if l[1]== 'TRUE':
-				l1= True
-			else:
-				l1= False
-			d.setHttpOnly(l1)
-			d.setPath(l[2])
-			print(l1)
-			print(l[2])
-			if l[3]== 'TRUE':
-				l3= True
-			else:
-				l3= False
-			d.setSecure(l3)
-			print(l[3])
-			l4 = int(l[4])
-			print(l4)
-			d.setExpirationDate(QtCore.QDateTime.fromTime_t(l4))
-			l5 = bytes(l[5],'utf-8')
-			d.setName((l5))
-			l6 = bytes(l[6],'utf-8')
-			d.setValue(l6)
-			c.append(d)
-			#cookie_arr.append(d)
-			self.profile().cookieStore().setCookie(d)
+			if k:
+				l = k.split('	')
+				d = QtNetwork.QNetworkCookie()
+				d.setDomain(l[0])
+				print(l[0])
+				if l[1]== 'TRUE':
+					l1= True
+				else:
+					l1= False
+				d.setHttpOnly(l1)
+				d.setPath(l[2])
+				print(l1)
+				print(l[2])
+				if l[3]== 'TRUE':
+					l3= True
+				else:
+					l3= False
+				d.setSecure(l3)
+				print(l[3])
+				l4 = int(l[4])
+				print(l4)
+				d.setExpirationDate(QtCore.QDateTime.fromTime_t(l4))
+				l5 = bytes(l[5],'utf-8')
+				d.setName((l5))
+				l6 = bytes(l[6],'utf-8')
+				d.setValue(l6)
+				c.append(d)
+				#cookie_arr.append(d)
+				self.profile().cookieStore().setCookie(d)
 		
 		
 	def _cookie(self,x):
@@ -422,9 +429,11 @@ class BrowserPage(QWebEnginePage):
 		else :
 			#print(l)
 			#if self.add_cookie:
-			self._writeCookies(l)
-			if 'cf_clearance' in l:
+			if not self.got_cookie:
+				self._writeCookies(l)
+			if self.end_point in l and not self.got_cookie:
 				self.cookie_signal.emit("Cookie Found")
+				self.got_cookie = True
 			#f = open('/tmp/ck.txt','w')
 			#f.close()
 			print('------cf----------')
@@ -454,6 +463,7 @@ class BrowserPage(QWebEnginePage):
 		cfd = ''
 		asp = ''
 		idt = ''
+		utmc = ''
 		if 'cf_clearance' in i:
 			cfc = self.cookie_split(i)
 		elif '__cfduid' in i:
@@ -462,7 +472,9 @@ class BrowserPage(QWebEnginePage):
 			asp = self.cookie_split(i)
 		elif 'idtz' in i:
 			idt = self.cookie_split(i)
-		if cfc or cfd or asp or idt:
+		elif '__utmc' in i:
+			utmc = self.cookie_split(i)
+		if cfc or cfd or asp or idt or utmc:
 			str1 = ''
 			#print(cfc)
 			#print(cfd)
@@ -476,6 +488,8 @@ class BrowserPage(QWebEnginePage):
 				str1 = asp['domain']+'	'+'FALSE'+'	'+asp['path']+'	'+'FALSE'+'	'+str(0)+'	'+'ASP.NET_SessionId'+'	'+asp['ASP.NET_SessionId']
 			if idt:
 				str1 = idt['domain']+'	'+'FALSE'+'	'+idt['path']+'	'+'FALSE'+'	'+str(0)+'	'+'idtz'+'	'+idt['idtz']
+			if utmc:
+				str1 = utmc['domain']+'	'+'FALSE'+'	'+utmc['path']+'	'+'FALSE'+'	'+str(0)+'	'+'__utmc'+'	'+utmc['__utmc']
 			cc = os.path.join(self.tmp_dir,'cloud_cookie.txt')
 			if not os.path.exists(cc):
 				f = open(cc,'w')
@@ -484,8 +498,10 @@ class BrowserPage(QWebEnginePage):
 				f = open(cc,'a')
 				f.write('\n'+str1)
 			#print('written--cloud_cookie--------------')
+			print(str1,'--496--')
 			f.close()
-			
+			content = open(cc).read()
+			print(content,'--499--')
 			
 	def _getTime(self,i):
 		j = re.findall('expires=[^;]*',i)
@@ -575,7 +591,7 @@ class BrowserPage(QWebEnginePage):
 
 class BrowseUrlT(QWebEngineView):
 	#cookie_s = pyqtSignal(str)
-	def __init__(self,url,quality,cookie):
+	def __init__(self,url,quality,cookie,end_point=None):
 		super(BrowseUrlT, self).__init__()
 		#QtWidgets.__init__()
 		self.url = url
@@ -584,11 +600,16 @@ class BrowseUrlT(QWebEngineView):
 		self.media_val = ''
 		self.cnt = 0
 		self.cookie_file = cookie
+		if end_point:
+			self.end_pt = end_point
+		else:
+			self.end_pt = 'cf_clearance'
 		self.Browse(self.url)
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
 		
 	def Browse(self,url):
-		
+		print('---browse---591---')
+		captcha = False
 		if os.path.exists(self.cookie_file):
 			content = ccurl(url+'#'+'-b'+'#'+self.cookie_file)
 			print(content)
@@ -599,7 +620,11 @@ class BrowseUrlT(QWebEngineView):
 				self.add_cookie = False
 				if ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 					print("--------------------",content)
-					self.media_val,server_found = _get_video_val(content,self.cookie_file,self.quality,url)
+					try:
+						self.media_val,server_found,captcha = _get_video_val(content,self.cookie_file,self.quality,url)
+					except Exception as e:
+						print(e,'--622--')
+						server_found = ''
 					if not server_found:
 						url = url + '&s=beta'
 					print(self.media_val,'--media--val--')
@@ -615,7 +640,7 @@ class BrowseUrlT(QWebEngineView):
 		if self.add_cookie:
 			#if 'moetube' not in url:
 			#self.tab_web.setWindowTitle('Wait! Cloudflare')
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val)
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,end_pt=self.end_pt)
 			
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
@@ -630,7 +655,7 @@ class BrowseUrlT(QWebEngineView):
 		elif ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 			print('+++++++++++++++++++')
 			self.tab_web.setWindowTitle('Wait! Resolving Link')
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val)
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,end_pt=self.end_pt)
 			
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
@@ -638,8 +663,11 @@ class BrowseUrlT(QWebEngineView):
 			self.load(QUrl(url))
 		QtWidgets.QApplication.processEvents()
 		QtWidgets.QApplication.processEvents()
-		self.tab_web.hide()
-		
+		print(captcha,'--captcha--')
+		if not captcha:
+			self.tab_web.hide()
+		else:
+			self.tab_web.show()
 		
 		
 	@pyqtSlot(str)
@@ -660,6 +688,7 @@ class BrowseUrlT(QWebEngineView):
 		c_f = os.path.join(self.tmp_dir,'cloud_cookie.txt')
 		if os.path.exists(c_f):
 			content = open(c_f).read()
+			print(content,'--676---')
 			f = open(self.cookie_file,'w')
 			f.write(content)
 			f.close()
@@ -676,14 +705,16 @@ class BrowseUrlT(QWebEngineView):
 		
 
 if __name__ == "__main__":
-		
+		print('---------------679--------Engine--start--')
 		url = sys.argv[1]	
 		print(url)
 		quality = sys.argv[2]
 		print(quality)
 		cookie = sys.argv[3]
+		end_pt = sys.argv[4]
 		app = QtWidgets.QApplication(sys.argv)
-		web = BrowseUrlT(url,quality,cookie)
+		print(url,quality,cookie,'--685---',end_pt)
+		web = BrowseUrlT(url,quality,cookie,end_point=end_pt)
 		ret = app.exec_()
 		sys.exit(ret)
 

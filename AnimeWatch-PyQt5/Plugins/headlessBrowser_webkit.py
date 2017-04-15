@@ -56,7 +56,7 @@ class NetWorkManager(QNetworkAccessManager):
 
   
 class BrowserPage(QWebPage):  
-	def __init__(self,url,quality,c):
+	def __init__(self,url,quality,c,end_point=None):
 		super(BrowserPage, self).__init__()
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		#self.loadFinished.connect(self._loadFinished)
@@ -66,7 +66,11 @@ class BrowserPage(QWebPage):
 		self.quality = quality
 		self.cookie_file = c
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
-		
+		if not end_point:
+			self.end_point = 'cf_clearance'
+		else:
+			self.end_point = end_point
+			
 	def userAgentForUrl(self, url):
 		return self.hdr
 		
@@ -175,9 +179,10 @@ class BrowserPage(QWebPage):
 		asp = ''
 		idt = ''
 		test_idt = ''
+		utmc = ''
 		clr = False
 		for i in n:
-			if 'cf_clearance' in i:
+			if self.end_point in i:
 				clr = True
 				#print(n)
 		if clr:
@@ -190,6 +195,8 @@ class BrowserPage(QWebPage):
 					asp = self.cookie_split(i)
 				elif 'idtz' in i:
 					idt = self.cookie_split(i)
+				elif '__utmc' in i:
+					utmc = self.cookie_split(i)
 				
 		if cfc and cfd:
 			#print(cfc)
@@ -206,6 +213,9 @@ class BrowserPage(QWebPage):
 				
 			if 'kissasian' in self.url:
 				str3 = 'kissasian.com	FALSE	/	FALSE	0		__test'
+			
+			if utmc:
+				str3 = utmc['domain']+'	'+'FALSE'+'	'+utmc['path']+'	'+'FALSE'+'	'+str(0)+'	'+'__utmc'+'	'+utmc['__utmc']
 			
 			f = open(self.cookie_file,'w')
 			if str3:
@@ -233,21 +243,24 @@ class BrowserPage(QWebPage):
 		return(d)
 		
 class Browser(QWebView):
-	def __init__(self,url,quality,c):
+	def __init__(self,url,quality,c,end_point=None):
 		super(Browser, self).__init__()
-		self.setPage(BrowserPage(url,quality,c))
+		self.setPage(BrowserPage(url,quality,c,end_point))
 		
 
 class BrowseUrl(QtWidgets.QWidget):
-
-	def __init__(self,url,quality,c):
+	def __init__(self,url,quality,c,end_point=None):
 		super(BrowseUrl, self).__init__()
 		global TMP_DIR
 		self.cookie_file = c
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
 		TMP_DIR = self.tmp_dir
+		if not end_point:
+			self.end_point = 'cf_clearance'
+		else:
+			self.end_point = end_point
 		self.Browse(url,quality)
-	
+		
 		
 	def Browse(self,url,quality):
 			
@@ -295,7 +308,7 @@ class BrowseUrl(QtWidgets.QWidget):
 				self.nam = NetWorkManager()
 				self.nam.setCookieJar(cookie_arr)
 			
-			self.web = Browser(url,quality,self.cookie_file)
+			self.web = Browser(url,quality,self.cookie_file,self.end_point)
 			self.tab_2 = QtWidgets.QWidget()
 			self.tab_2.setMaximumSize(300,50)
 			self.tab_2.setWindowTitle('Wait!')

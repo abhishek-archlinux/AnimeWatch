@@ -22,7 +22,7 @@ from player_functions import ccurl
 
 class BrowseUrl(QWebEngineView):
 	
-	def __init__(self,url,quality,c):
+	def __init__(self,url,quality,c,end_point=None):
 		super(BrowseUrl, self).__init__()
 		#QtWidgets.__init__()
 		self.url = url
@@ -31,6 +31,10 @@ class BrowseUrl(QWebEngineView):
 		self.media_val = ''
 		self.cnt = 0
 		self.cookie_file = c
+		if end_point:
+			self.end_pt = end_point
+		else:
+			self.end_pt = 'cf_clearance'
 		self.Browse(self.url)
 		
 	def Browse(self,url):
@@ -51,17 +55,21 @@ class BrowseUrl(QWebEngineView):
 		else:
 			content = 'checking_browser'
 		#web = BrowseUrl(url,quality)
+		#print(content)
 		if 'checking_browser' in content:
 			if os.name == 'posix':
-				p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file])
+				print('--checking__browser-----57--')
+				print(enginePath,url,self.quality,self.cookie_file)
+				p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt])
 			else:
-				p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file],shell=True)
+				p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt],shell=True)
 			
 			cnt = 0
 			
 			lnk_file = os.path.join(tmp_dir,'lnk.txt')
 			if os.path.exists(lnk_file):
 				os.remove(lnk_file)
+			print(lnk_file,'--lnk--file--')
 			while(not os.path.exists(self.cookie_file) and cnt < 20):
 				print(cnt)
 				print('wait Clouflare ')
@@ -82,9 +90,9 @@ class BrowseUrl(QWebEngineView):
 					if os.path.exists(file_path):
 						os.remove(file_path)
 						if os.name == 'posix':
-							p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file])
+							p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt])
 						else:
-							p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file],shell=True)
+							p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt],shell=True)
 					print(cnt)
 					print('wait Clouflare ')
 					time.sleep(1)

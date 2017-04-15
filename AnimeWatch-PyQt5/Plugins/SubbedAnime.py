@@ -64,8 +64,8 @@ def unshorten_url(url):
 
 
 
-def cloudfareUrl(url,quality,c):
-	web = BrowseUrl(url,quality,c)
+def cloudfareUrl(url,quality,c,end_pt):
+	web = BrowseUrl(url,quality,c,end_point=end_pt)
 
 			
 	
@@ -548,13 +548,13 @@ def findurl(i):
 			return final
 	elif "mp4upload" in i:
 			content = ccurl(i)
-			m = re.findall("'file': 'http://[^']*mp4upload.com[^']*video.mp4",content)
+			m = re.findall("'file': 'https://[^']*mp4upload.com[^']*video.mp4",content)
 				
 			print(m)
 			if m:
 				url = re.sub("'file': '","",m[0])
 			else:
-				m = re.findall('"file": "http://[^"]*mp4upload.com[^"]*video.mp4',content)
+				m = re.findall('"file": "https://[^"]*mp4upload.com[^"]*video.mp4',content)
 				if m:
 					url = re.sub('"file": "',"",m[0])
 				else:
@@ -763,9 +763,16 @@ class SubbedAnime():
 				content = ccurl(url+'#-c#'+self.cookie_file)
 			else:
 				content = ccurl(url+'#-b#'+self.cookie_file)
+			#print(content)
 			if siteName == 'AnimeSquare' or siteName == 'AnimeHQ' or siteName=='Animeget':
 				if 'checking_browser' in content:
-					cloudfareUrl(url,'',self.cookie_file)
+					if os.path.exists(self.cookie_file):
+						os.remove(self.cookie_file)
+					if siteName.lower() == 'animesquare':
+						end_pt = '__utmc'
+					else:
+						end_pt = 'cf_clearance'
+					cloudfareUrl(url,'sd',self.cookie_file,end_pt)
 					if post:
 						post_dict = urllib.parse.urlen(post)
 						content = ccurl(url+'#-d#'+post_dict,self.cookie_file)
@@ -776,7 +783,7 @@ class SubbedAnime():
 				url1,url2 = url.split('#')
 				content1 = ccurl(url1)
 				content2 = ccurl(url2)
-				content = content1+content2
+				content = content1+'\n'+content2
 			else:
 				content = ccurl(url)
 		else:
@@ -841,9 +848,9 @@ class SubbedAnime():
 		elif siteName == "AnimeMix":
 			url = "http://www.animechiby.com/index/"
 		elif siteName == "AnimeSquare":
-			url = "http://www.masterani.me/"
-			#url = "http://www.masterani.me/api/anime-all"
-			url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page=1'
+			url = "https://www.masterani.me/"
+			#url = "https://www.masterani.me/api/anime-all"
+			url_new = 'https://www.masterani.me/api/anime/filter?order=score_desc&page=1'
 			self.cookie_file = os.path.join(self.tmp_dir,'animeSquare.txt')
 		elif siteName == "Anime1":
 			url = "http://www.anime1.com/content/list/"
@@ -867,7 +874,7 @@ class SubbedAnime():
 		
 			
 		content = self.ccurlN(url,siteName)
-		
+		m = []
 		if siteName == "Anime44":
 			m = []
 			soup = BeautifulSoup(content,'lxml')
@@ -1029,7 +1036,7 @@ class SubbedAnime():
 			m = random.sample(m, len(m))
 		elif siteName == "AnimeNet":
 			m = []
-			soup = BeautifulSoup(content2,'lxml')
+			soup = BeautifulSoup(content,'lxml')
 			link = soup.findAll('li')
 			for i in link:
 				j = i.findAll('a')
@@ -1038,14 +1045,6 @@ class SubbedAnime():
 					if tmp :
 						m.append(tmp)
 
-			soup = BeautifulSoup(content1,'lxml')
-			link = soup.findAll('li')
-			for i in link:
-				j = i.findAll('a')
-				for k in j:
-					tmp = k['href'].split('/')[-2]
-					if tmp :
-						m.append(tmp)
 			m = random.sample(m, len(m))
 		elif siteName == "AnimeMax":
 			m = []
@@ -1078,34 +1077,38 @@ class SubbedAnime():
 		
 			m = random.sample(m, len(m))
 		elif siteName == "AnimeSquare":
-			l = json.loads(content)
-			n=l['data']
-			last_page = int(l['last_page'])
-			index = 2
-			print(n)
-			m = []
-			for i in n:
-				title = i['title']
-				nm = i['slug']
-				ep_cnt = i['episode_count']
-				nm_app = str(ep_cnt) +','+str(nm)
-				m.append(nm_app)
-				
-			for pg in range(index,last_page+1):
-				url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page='+str(pg)
-				content = self.ccurlN(url,siteName)
-				
+			try:
+				if os.path.exists(self.cookie_file):
+					content = self.ccurlN(url_new,siteName)
 				l = json.loads(content)
-				n = l['data']
+				n=l['data']
+				last_page = int(l['last_page'])
+				index = 2
+				print(n)
+				m = []
 				for i in n:
 					title = i['title']
 					nm = i['slug']
 					ep_cnt = i['episode_count']
 					nm_app = str(ep_cnt) +','+str(nm)
 					m.append(nm_app)
-				time.sleep(0.2)
-				print(pg)
-				
+					
+				for pg in range(index,last_page+1):
+					url = 'https://www.masterani.me/api/anime/filter?order=score_desc&page='+str(pg)
+					content = self.ccurlN(url,siteName)
+					
+					l = json.loads(content)
+					n = l['data']
+					for i in n:
+						title = i['title']
+						nm = i['slug']
+						ep_cnt = i['episode_count']
+						nm_app = str(ep_cnt) +','+str(nm)
+						m.append(nm_app)
+					time.sleep(0.2)
+					print(pg)
+			except Exception as e:
+				print(e,'--1111---')
 				
 			
 		elif siteName == "AnimeMix":
@@ -1236,8 +1239,8 @@ class SubbedAnime():
 		elif siteName == "AnimeSquare":
 			name1 = name.split(',',1)[1]
 			epncnt = name.split(',',1)[0]
-			url = "http://www.masterani.me/anime/info/" + name1 
-			base = "http://www.masterani.me/anime/"
+			url = "https://www.masterani.me/anime/info/" + name1 
+			base = "https://www.masterani.me/anime/"
 			self.cookie_file = os.path.join(self.tmp_dir,'animeSquare.txt')
 			print(url)
 		elif siteName == "AnimeMix":
@@ -1550,15 +1553,9 @@ class SubbedAnime():
 					emb = emb.replace(' ','')
 					embed = int(emb)
 				summary = ""
-				link = soup.find('div',{ 'class':'synopsis'})
+				link = soup.find('meta',{ 'name':'description'})
 				img = []
-				summary = link.text
-				link = soup.find('div',{ 'class':'title'})
-				link1 = link.find('h1')
-				title = link1.text
-				desc = link.find('div',{ 'class':'description'})
-				descr = desc.text
-				summary = title + " (" + descr + ")\n" + summary 
+				summary = link['content']
 			except:
 				pass 
 		if not summary:
@@ -1589,7 +1586,7 @@ class SubbedAnime():
 				img = re.findall('/[^"]*.jpg',content)
 				img[0] = "http://www.ryuanime.com" + img[0]
 			elif siteName == "AnimeSquare":
-				img = re.findall('http[^"]*.jpg[^"]*',content)
+				img = re.findall('https[^"]*.jpg[^"]*',content)
 				print(img)
 				
 			elif siteName == "AnimeNet":
@@ -1654,7 +1651,7 @@ class SubbedAnime():
 			if not os.path.isfile(picn) and '#' not in picn:
 				print(img[0])
 				#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img[0]])
-				if siteName == "Animeget" or siteName == 'AnimePlus':
+				if siteName == "Animeget" or siteName == 'AnimePlus' or siteName.lower() == 'animesquare':
 					ccurl(img[0]+'#'+'-o'+'#'+picn,self.cookie_file)
 				else:
 					ccurl(img[0]+'#'+'-o'+'#'+picn)
@@ -2168,7 +2165,7 @@ class SubbedAnime():
 						m[j] = i
 						j = j+1
 			elif opt_val.lower() == 'animesquare':
-				url = 'http://www.masterani.me/api/anime/filter?order=score_desc&page='+str(pgn)
+				url = 'https://www.masterani.me/api/anime/filter?order=score_desc&page='+str(pgn)
 				content = self.ccurlN(url,opt_val)
 				
 				l = json.loads(content)
@@ -2238,7 +2235,7 @@ class SubbedAnime():
 		elif siteName == "AnimeSquare":
 			name1 = name.split(',',1)[1]
 			epncnt = name.split(',',1)[0]
-			url = "http://www.masterani.me/anime/watch/" + name1+"/" + epn
+			url = "https://www.masterani.me/anime/watch/" + name1+"/" + epn
 			self.cookie_file = os.path.join(self.tmp_dir,'animeSquare.txt')
 		elif siteName == "Anime1":
 			url = "http://www.anime1.com/watch/"+name+"/" + epn
@@ -2393,85 +2390,109 @@ class SubbedAnime():
 			soup = BeautifulSoup(content,'lxml')
 			content1 = soup.findAll('script',{'type':'text/javascript'})
 			final = ""
+			vid_arr = []
+			new_vid_arr = []
 			for i in content1:
 				#print (i.text)
-				if 'mirrors:' in i.text:
+				if 'mirrors:' in i.text or '"label":' in i.text:
 					content11 = (i.text)
-			m = re.findall('"quality"[^,]*|"embed_id"[^,]*|"embed_prefix"[^,]*',content11)
-			#print(m)
-			for i in range(len(m)):
-				m[i] = re.sub('"|embed_id":|embed_prefix":|quality":','',m[i])
-				m[i] = re.sub("'",'',m[i])
-				m[i] = m[i].replace('[\\]','')
-			#print(m)
-			n = []
-			for i in m:
-				
-				if '/' in i:
-					#print (i)
-					j = i.split('\\')
-					#print(j)
-					nm = j[0]
-					for k in range(len(j)-1):
-						nm = nm + j[k+1]
-					#print(nm)
-					n.append(nm)
+					vid_arr = ''
+					if '"label":' in i.text:
+						vid_arr = re.findall('{"label":[^}]*',i.text)
+			if vid_arr:
+				print(vid_arr)
+				hd_vid = ''
+				sd_vid = ''
+				for i in vid_arr:
+					if '"label":"HD"' in i:
+						hd_vid = re.findall('http[^"]*',i)
+					elif '"label":"SD"' in i:
+						sd_vid = re.findall('http[^"]*',i)
+					else:
+						sd_vid = re.findall('http[^"]*',i)
+						
+				if quality == 'hd' and hd_vid:
+					final = hd_vid
+				elif quality == 'sd' and sd_vid:
+					final = sd_vid
 				else:
-					#print(i)
-					n.append(i)
-			sd_arr =[]
-			hd_arr =[]
-			for i in range(0,len(n),3):
-				if '480' in n[i+1]:
-					sd_arr.append(n[i+2]+n[i])
-				elif '720' in n[i+1]:
-					hd_arr.append(n[i+2]+n[i])
+					final = sd_vid
+			else:
+				m = re.findall('"quality"[^,]*|"embed_id"[^,]*|"embed_prefix"[^,]*',content11)
+				#print(m)
+				for i in range(len(m)):
+					m[i] = re.sub('"|embed_id":|embed_prefix":|quality":','',m[i])
+					m[i] = re.sub("'",'',m[i])
+					m[i] = m[i].replace('[\\]','')
+				#print(m)
+				n = []
+				for i in m:
+					
+					if '/' in i:
+						#print (i)
+						j = i.split('\\')
+						#print(j)
+						nm = j[0]
+						for k in range(len(j)-1):
+							nm = nm + j[k+1]
+						#print(nm)
+						n.append(nm)
+					else:
+						#print(i)
+						n.append(i)
+				sd_arr =[]
+				hd_arr =[]
+				for i in range(0,len(n),3):
+					if '480' in n[i+1]:
+						sd_arr.append(n[i+2]+n[i])
+					elif '720' in n[i+1]:
+						hd_arr.append(n[i+2]+n[i])
 
-			print(sd_arr)
-			print(hd_arr)
-			
-			
-			total_cnt = 0
-			final_sd_hd_arr =[]
-			if quality == 'sd' and sd_arr:
-				url = sd_arr[mirrorNo-1]
-				total_cnt = len(sd_arr)
-				final_sd_hd_arr = sd_arr
-			elif quality == 'hd' and hd_arr:
-				url = hd_arr[mirrorNo-1]
-				total_cnt = len(hd_arr)
-				final_sd_hd_arr = hd_arr
-			elif quality == 'hd' and not hd_arr:
-				url = sd_arr[mirrorNo-1]
-				total_cnt = len(sd_arr)
-				final_sd_hd_arr = sd_arr
-				quality = 'sd'
-			print(url)
-			msg = "Total " + str(len(sd_arr)) + " SD Mirrors And \n"+ str(len(hd_arr)) + " HD Mirrors+\n"+'Selecting '+str(quality) + " Mirror No. " + str(mirrorNo)
-			#subprocess.Popen(["notify-send",msg]) 
-			send_notification(msg)
-			if mirrorNo == 1:
-				for i in range(len(final_sd_hd_arr)):
-					msg = 'Selecting '+str(quality) + " Mirror No. " + str(i+1)
-					#subprocess.Popen(["notify-send",msg]) 
-					send_notification(msg)
-					url = final_sd_hd_arr[i]
+				print(sd_arr)
+				print(hd_arr)
+				
+				
+				total_cnt = 0
+				final_sd_hd_arr =[]
+				if quality == 'sd' and sd_arr:
+					url = sd_arr[mirrorNo-1]
+					total_cnt = len(sd_arr)
+					final_sd_hd_arr = sd_arr
+				elif quality == 'hd' and hd_arr:
+					url = hd_arr[mirrorNo-1]
+					total_cnt = len(hd_arr)
+					final_sd_hd_arr = hd_arr
+				elif quality == 'hd' and not hd_arr:
+					url = sd_arr[mirrorNo-1]
+					total_cnt = len(sd_arr)
+					final_sd_hd_arr = sd_arr
+					quality = 'sd'
+				print(url)
+				msg = "Total " + str(len(sd_arr)) + " SD Mirrors And \n"+ str(len(hd_arr)) + " HD Mirrors+\n"+'Selecting '+str(quality) + " Mirror No. " + str(mirrorNo)
+				#subprocess.Popen(["notify-send",msg]) 
+				send_notification(msg)
+				if mirrorNo == 1:
+					for i in range(len(final_sd_hd_arr)):
+						msg = 'Selecting '+str(quality) + " Mirror No. " + str(i+1)
+						#subprocess.Popen(["notify-send",msg]) 
+						send_notification(msg)
+						url = final_sd_hd_arr[i]
+						if 'mp4upload' in url and not url.endswith('.html'):
+							url = url+'.html'
+						if url.startswith('null'):
+							url=url.replace('null','')
+						final = findurl(url)
+						if final:
+							break
+						
+							
+				else:
+					url = final_sd_hd_arr[mirrorNo-1]
 					if 'mp4upload' in url and not url.endswith('.html'):
 						url = url+'.html'
 					if url.startswith('null'):
 						url=url.replace('null','')
 					final = findurl(url)
-					if final:
-						break
-					
-						
-			else:
-				url = final_sd_hd_arr[mirrorNo-1]
-				if 'mp4upload' in url and not url.endswith('.html'):
-					url = url+'.html'
-				if url.startswith('null'):
-					url=url.replace('null','')
-				final = findurl(url)
 			
 		elif siteName == "AnimeMix":
 			shrink_link = ''
