@@ -17,6 +17,7 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl,pyqtSlot,pyqtSignal
 
+
 def getContentUnicode(content):
 	if isinstance(content,bytes):
 		print("I'm byte")
@@ -173,7 +174,7 @@ def _get_video_val(htm,c_file,q,u):
 		soup = BeautifulSoup(html,'lxml')
 		#title_page = soup.find('title').text.strip().lower()
 		if 'Are You Human' in html:
-			return ('Nothing',False,True)
+			return ('Nothing',False,True,'txt')
 		server_found = True
 		if 'kissanime' in url:
 			server_found = False
@@ -249,7 +250,63 @@ def _get_video_val(htm,c_file,q,u):
 					st = "$('#slcQualix').val("+'"'+txt+'"'+")"
 				else:
 					st = "$('#selectQuality').val("+'"'+txt+'"'+")"
-				return (st,server_found,False)
+				return (st,server_found,False,txt)
+
+
+def parse_file(content,url):
+		txt = ''
+		soup = BeautifulSoup(content,'lxml')
+		if 'kissanime' in url:
+			m = soup.findAll('select',{'id':'slcQualix'})
+		else:
+			m = soup.findAll('select',{'id':'selectQuality'})
+		print(m,'---select--quality---')
+		if m:
+			arr = []
+			arr_lnk = []
+			for i in m:
+				j = i.findAll('option')
+				for k in j:
+					l = k['value']
+					#print(l)
+					l1 = k.text
+					l1 = re.sub(' ','',l1)
+					if l1:
+						l3 = (l1,l)
+					else:
+						l3 = ('Not Available',l)
+					arr.append(l3)
+					arr_lnk.append(l)
+			total_q = len(arr)
+			try:
+				arr_dict = dict(arr)
+			except:
+				arr_dict = []
+			
+			print(arr_dict)
+			
+			if arr_dict or arr:
+				print('----------total Different Quality Video------',total_q)
+				try:
+					if quality == 'sd':
+						txt = arr_dict['360p']
+					elif quality == 'hd':
+						if total_q >= 3:
+							txt = arr_dict['720p']
+						elif total_q == 2:
+							txt = arr_lnk[0]
+						else:
+							txt = arr_dict['360p']
+					elif quality == 'sd480p':
+						if total_q >= 2:
+							txt = arr_dict['480p']
+						else:
+							txt = arr_dict['360p']
+					elif quality == 'best':
+						txt = arr_lnk[0]
+				except:
+					txt = arr_dict['360p']
+		return txt
 
 class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 	netS = pyqtSignal(str)
@@ -286,10 +343,13 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 			
 			if 'itag=' in urlLnk and 'redirector' not in urlLnk:
 				if block_url and block_url in urlLnk:
-					info.block(True)
+					#info.block(True)
+					print('networkmanager found link')
 				else:
-					print(urlLnk)
-					self.netS.emit(urlLnk)
+					#print(urlLnk,'--nets--')
+					#self.netS.emit(urlLnk)
+					#print('----')
+					a = 0
 			
 		
 			
@@ -301,8 +361,9 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 class BrowserPage(QWebEnginePage):  
 	cookie_signal = pyqtSignal(str)
 	media_signal = pyqtSignal(str)
+	media_received = pyqtSignal(str)
 	#val_signal = pyqtSignal(str)
-	def __init__(self,url,quality,add_cookie,c_file,m_val,end_pt=None):
+	def __init__(self,url,quality,add_cookie,c_file,m_val,v_e,end_pt=None):
 		super(BrowserPage, self).__init__()
 		print('hello')
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -316,6 +377,7 @@ class BrowserPage(QWebEnginePage):
 		self.loadStarted.connect(self._loadstart)
 		p = NetWorkManager(self,quality,url)
 		p.netS.connect(lambda y = x : self.urlMedia(y))
+		self.media_received.connect(lambda y = x : self.urlMedia(y))
 		self.profile().setRequestInterceptor(p)
 		#self.profile().clearHttpCache()
 		self.profile().setCachePath(self.tmp_dir)
@@ -330,6 +392,7 @@ class BrowserPage(QWebEnginePage):
 		self.quality = quality
 		self.val = m_val
 		self.add_cookie = add_cookie
+		self.value_encode = v_e
 		if end_pt:
 			self.end_point = end_pt
 		else:
@@ -345,7 +408,7 @@ class BrowserPage(QWebEnginePage):
 		#ag = self.page().profile().httpUserAgent()
 		#print(ag)
 		#self.m.loadAllCookies()
-		
+		self.final_url_got = False
 		#if self.add_cookie:
 		if self.add_cookie:
 			self.m.deleteAllCookies()
@@ -516,19 +579,11 @@ class BrowserPage(QWebEnginePage):
 		return i
 	
 	def htm(self,x):
+		"""
 		r = 0
-		#print(x)
 		if self.val and ('selectQuality' in x or 'slcQualix' in x):
 			print(self.cnt,'---quality-----cnt----')
 			self.cnt = self.cnt+1
-		"""
-		if self.val and 'selectQuality' in x and self.cnt == 0:
-			if os.path.exists('/tmp/AnimeWatch/lnk.txt'):
-				os.remove('/tmp/AnimeWatch/lnk.txt')
-				print('------link--------found-------media------')
-			self.cnt = 1
-			self.runJavaScript(self.val,self.val_scr)
-			self.triggerAction(QWebEnginePage.Reload)
 		"""
 		#if self.cnt == 1:
 			#super(BrowserPage,self).stop()
@@ -536,6 +591,18 @@ class BrowserPage(QWebEnginePage):
 		#	self.runJavaScript(self.val,self.val_scr)
 		#	
 		#	self.runJavaScript(self.val,self.val_scr)
+		self.js = ''
+		#print(x)
+		if 'checking_browser' not in x:
+			if 'slcQualix' in x or 'selectQuality' in x:
+				self.value_encode = parse_file(x,self.url)
+				if self.value_encode:
+					if 'slcQualix' in x:
+						print(self.value_encode)
+						self.runJavaScript('ovelWrap("{0}");'.format(self.value_encode),self.val_scr)
+						#self.runJavaScript('window'.format(self.value_encode),self.val_scr)
+					else:
+						self.runJavaScript('$kissenc.decrypt("{0}");'.format(self.value_encode),self.val_scr)
 	def _loadstart(self):
 		result = ''
 		#self.cnt = 0
@@ -553,40 +620,39 @@ class BrowserPage(QWebEnginePage):
 			self.cookie_signal.emit("Cookie Found")
 	def val_scr(self,x):
 		print('===============java----------scr')
-		print(x)
+		val = str(x)
+		print(val)
+		if val.startswith('http') and not self.final_url_got:
+			y1 = re.findall("http[^']*",val)
+			print(y1)
+			for y in y1:
+				content = ccurl(y+'#'+'-I')
+				if "Location:" in content:
+					m = re.findall('Location: [^\n]*',content)
+					url = re.sub('Location: |\r','',m[-1])
+				else:
+					url = y
+				self.media_received.emit(url)
+				self.final_url_got = True
+				print(url)
 		#self.runJavaScript("$('#selectQuality').change();")
 		print('===============java----------scr')
 	def _loadProgress(self):
 		
 		result =''
 		#
-		if ('kisscartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url) and ('id=' in self.url):
-			#x = self.toHtml(self.htm)
-			if self.val:
-				#QtWidgets.QApplication.processEvents()
-				#st = 'document.getElementById("selectQuality").value="'+self.val+'"'
-				#st = "$('#selectQuality').val("+'"'+self.val+'"'+")"
-				#self.runJavaScript("$('#selectQuality').change();",self.val_scr)
-				self.runJavaScript(self.val,self.val_scr)
-				#QtWidgets.QApplication.processEvents()
+		if (('kisscartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url) 
+				and ('id=' in self.url) and self.got_cookie):
+			if self.val or 'kissanime' in self.url:
+				x = self.toHtml(self.htm)
+				#self.runJavaScript(self.val,self.val_scr)
 				
-				#self.runJavaScript("$('#selectQuality').change();",self.val_scr)
-				#self.runJavaScript('document.location.reload(true)')
-		#elif 'moetube' in url:
-		#	x = self.toHtml(self.htm_src)
 			
 		self.cnt = self.cnt+1
 		
 	def _loadFinished(self):
 		result = ""
 		print('Finished')
-		
-		#if self.cnt == 1:
-		#	self.runJavaScript(self.val,self.val_scr)
-		#	self.triggerAction(QWebEnginePage.Reload)
-			
-		#self.cnt = self.cnt+1
-		#x = self.page().toHtml(lambda x = result: self.htm(x))
 		
 
 class BrowseUrlT(QWebEngineView):
@@ -600,6 +666,7 @@ class BrowseUrlT(QWebEngineView):
 		self.media_val = ''
 		self.cnt = 0
 		self.cookie_file = cookie
+		self.value_encode = ''
 		if end_point:
 			self.end_pt = end_point
 		else:
@@ -619,9 +686,9 @@ class BrowseUrlT(QWebEngineView):
 			else:
 				self.add_cookie = False
 				if ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
-					print("--------------------",content)
+					#print("--------------------",content)
 					try:
-						self.media_val,server_found,captcha = _get_video_val(content,self.cookie_file,self.quality,url)
+						self.media_val,server_found,captcha,self.value_encode = _get_video_val(content,self.cookie_file,self.quality,url)
 					except Exception as e:
 						print(e,'--622--')
 						server_found = ''
@@ -638,9 +705,7 @@ class BrowseUrlT(QWebEngineView):
 		self.horizontalLayout_5.addWidget(self)
 		
 		if self.add_cookie:
-			#if 'moetube' not in url:
-			#self.tab_web.setWindowTitle('Wait! Cloudflare')
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,end_pt=self.end_pt)
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt)
 			
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
@@ -650,13 +715,11 @@ class BrowseUrlT(QWebEngineView):
 			print('--')
 			#self.load(QUrl(url))
 			self.cnt = 1
-			
-			
 		elif ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 			print('+++++++++++++++++++')
 			self.tab_web.setWindowTitle('Wait! Resolving Link')
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,end_pt=self.end_pt)
-			
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt)
+			self.web.got_cookie = True
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
 			self.setPage(self.web)

@@ -418,7 +418,7 @@ def mp4starUrl(content,site):
 	if final_hd and not final_sd:
 		final_sd = final_hd
 	
-	if qualityVideo == 'hd' and final_hd:
+	if (qualityVideo == 'hd' or qualityVideo == 'best') and final_hd:
 		url = final_hd
 	elif final_sd:
 		url = final_sd
