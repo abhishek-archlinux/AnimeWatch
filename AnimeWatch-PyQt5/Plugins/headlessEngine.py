@@ -192,7 +192,7 @@ def _get_video_val(htm,c_file,q,u):
 			m = soup.findAll('select',{'id':'slcQualix'})
 		else:
 			m = soup.findAll('select',{'id':'selectQuality'})
-		print(m,'---select--quality---')
+		#print(m,'---select--quality---')
 		if m:
 			#print(m)
 			arr = []
@@ -216,7 +216,7 @@ def _get_video_val(htm,c_file,q,u):
 			except:
 				arr_dict = []
 			
-			print(arr_dict)
+			#print(arr_dict)
 			
 			if arr_dict or arr:
 				print('----------total Different Quality Video------',total_q)
@@ -240,12 +240,6 @@ def _get_video_val(htm,c_file,q,u):
 				except:
 					txt = arr_dict['360p']
 					
-					
-				#st = 'document.getElementById("selectQuality").value="'+txt+'"'
-				#st = 'document.getElementById("selectQuality").selected="360p"'
-				#st = 'document.querySelector(select[id="selectQuality"]).value="'+txt+'"'
-				#st = 'document.querySelector(option[value="'+txt+'"])'
-				#st= 'document.getElementsByTagName("option").value="'+txt+'"'
 				if 'kissanime' in url:
 					st = "$('#slcQualix').val("+'"'+txt+'"'+")"
 				else:
@@ -260,7 +254,7 @@ def parse_file(content,url):
 			m = soup.findAll('select',{'id':'slcQualix'})
 		else:
 			m = soup.findAll('select',{'id':'selectQuality'})
-		print(m,'---select--quality---')
+		#print(m,'---select--quality---')
 		if m:
 			arr = []
 			arr_lnk = []
@@ -434,7 +428,9 @@ class BrowserPage(QWebEnginePage):
 		#self.page().runJavaScript(info)
 		self.val = info
 	
-	
+	def javaScriptAlert(self,url,msg):
+		print(msg,'--msg--',url.url())
+		
 	def set_cookie(self,cookie_file):
 		cookie_arr = QtNetwork.QNetworkCookie()
 		c = []
@@ -579,12 +575,7 @@ class BrowserPage(QWebEnginePage):
 		return i
 	
 	def htm(self,x):
-		"""
-		r = 0
-		if self.val and ('selectQuality' in x or 'slcQualix' in x):
-			print(self.cnt,'---quality-----cnt----')
-			self.cnt = self.cnt+1
-		"""
+		
 		#if self.cnt == 1:
 			#super(BrowserPage,self).stop()
 		#	self.triggerAction(QWebEnginePage.Stop)
@@ -671,8 +662,8 @@ class BrowseUrlT(QWebEngineView):
 			self.end_pt = end_point
 		else:
 			self.end_pt = 'cf_clearance'
-		self.Browse(self.url)
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
+		self.Browse(self.url)
 		
 	def Browse(self,url):
 		print('---browse---591---')
