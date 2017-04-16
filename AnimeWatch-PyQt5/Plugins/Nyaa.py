@@ -88,6 +88,7 @@ class Nyaa():
 		
 	def getCompleteList(self,opt,genre_num,ui,tmp_dir,hist_folder):
 		global tmp_working_dir
+		instr = "Press . or > for next page	-1"
 		tmp_working_dir = tmp_dir
 		if opt == 'Date':
 			url = 'https://www.nyaa.se/?cats=1_37'
@@ -99,28 +100,33 @@ class Nyaa():
 			url = 'https://www.nyaa.se/?cats=1_37&sort=4'
 		print(opt,url)
 		m = self.process_page(url)
+		m.append(instr)
 		return m
 	
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
-		print(extra_info)
-		name_id = (re.search('id=[^\n]*',extra_info).group()).split('=')[1]
-		url = "https://www.nyaa.se/?page=download&tid=" + name_id
-		print(url)
-		summary = ""
-		
-		torrent_dest = os.path.join(siteName,name+'.torrent')
-		
-		if not os.path.exists(torrent_dest):
-			ccurl(url+'#'+'-o'+'#'+torrent_dest,self.cookie_file)
-		
-		info = lt.torrent_info(torrent_dest)
-		file_arr = []
-		for f in info.files():
-			file_path = f.path
-			file_path = os.path.basename(file_path)	
-			file_arr.append(file_path)
-		record_history = True
-		return (file_arr,'Summary Not Available','No.jpg',record_history,depth_list)
+		if extra_info == '-1':
+			arr = []
+			return (arr,'Instructions','No.jpg',False,depth_list)
+		else:
+			print(extra_info)
+			name_id = (re.search('id=[^\n]*',extra_info).group()).split('=')[1]
+			url = "https://www.nyaa.se/?page=download&tid=" + name_id
+			print(url)
+			summary = ""
+			
+			torrent_dest = os.path.join(siteName,name+'.torrent')
+			
+			if not os.path.exists(torrent_dest):
+				ccurl(url+'#'+'-o'+'#'+torrent_dest,self.cookie_file)
+			
+			info = lt.torrent_info(torrent_dest)
+			file_arr = []
+			for f in info.files():
+				file_path = f.path
+				file_path = os.path.basename(file_path)	
+				file_arr.append(file_path)
+			record_history = True
+			return (file_arr,'Summary Not Available','No.jpg',record_history,depth_list)
 
 	def getNextPage(self,opt,pgn,genre_num,name):
 		if opt == 'Date':

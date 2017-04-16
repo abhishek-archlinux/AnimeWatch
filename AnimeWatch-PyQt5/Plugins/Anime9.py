@@ -56,53 +56,56 @@ class Anime9():
 			return arr
 			
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
-		
-		base_url = 'https://9anime.to'
-		url = extra_info
-		print(url,'--74--')
-		content = ccurl(url)
-		soup = BeautifulSoup(content,'lxml')
-		arr = []
-		
-		m = soup.findAll('div',{'class':'server row'})
-		p = 0
-		index = 0
-		for i in m:
+		if extra_info == '-1':
+			arr = []
+			return (arr,'Instructions','No.jpg',False,depth_list)
+		else:
+			base_url = 'https://9anime.to'
+			url = extra_info
+			print(url,'--74--')
+			content = ccurl(url)
+			soup = BeautifulSoup(content,'lxml')
+			arr = []
+			
+			m = soup.findAll('div',{'class':'server row'})
+			p = 0
 			index = 0
-			j = i.findAll('li')
-			if p == 0:
-				for k in j:
-					l = k.find('a')
-					n = l.text+'	'+os.path.join(base_url,l['href'])
-					arr.append(n)
-			else:
-				for k in j:
-					l = k.find('a')
-					try:
-						n = os.path.join(l['href'].split('/')[-1])
-					except Exception as e:
-						print(e,'--84--')
-						n = 'NONE'
-					arr[index] = arr[index]+'::'+n
-					index = index + 1
-			p = p +1
-		record_history = True
-		display_list = True
-		summary = 'Not Available'
-		picn = 'No.jpg'
-		
-		try:
-			m = soup.find('h1',{'class':'title'})
-			pic_url = m.findNext('img')['src']
-			l = m.findNext('div',{'id':'info'})
-			summary = m.text.strip()+'\n'+l.text.strip()
-			picn = os.path.join(self.tmp_dir,name+'.jpg')
-			if not os.path.exists(picn):
-				ccurl(pic_url+'#'+'-o'+'#'+picn)
-			print(picn,'--98--')
-		except Exception as e:
-			print(e)
-		return (arr,summary,picn,record_history,depth_list)
+			for i in m:
+				index = 0
+				j = i.findAll('li')
+				if p == 0:
+					for k in j:
+						l = k.find('a')
+						n = l.text+'	'+os.path.join(base_url,l['href'])
+						arr.append(n)
+				else:
+					for k in j:
+						l = k.find('a')
+						try:
+							n = os.path.join(l['href'].split('/')[-1])
+						except Exception as e:
+							print(e,'--84--')
+							n = 'NONE'
+						arr[index] = arr[index]+'::'+n
+						index = index + 1
+				p = p +1
+			record_history = True
+			display_list = True
+			summary = 'Not Available'
+			picn = 'No.jpg'
+			
+			try:
+				m = soup.find('h1',{'class':'title'})
+				pic_url = m.findNext('img')['src']
+				l = m.findNext('div',{'id':'info'})
+				summary = m.text.strip()+'\n'+l.text.strip()
+				picn = os.path.join(self.tmp_dir,name+'.jpg')
+				if not os.path.exists(picn):
+					ccurl(pic_url+'#'+'-o'+'#'+picn)
+				print(picn,'--98--')
+			except Exception as e:
+				print(e)
+			return (arr,summary,picn,record_history,depth_list)
 	
 	def getFinalUrl(self,name,epn,mirror,quality):
 		final = ''
@@ -215,6 +218,10 @@ class Anime9():
 			k = i.find('a')['href']
 			try:
 				l = i.find('img')['alt']
+				if l.startswith('.'):
+					l = l[1:]
+				if '/' in l:
+					l = l.replace('/','-')
 			except Exception as e:
 				print(e)
 				l = ''
@@ -224,6 +231,7 @@ class Anime9():
 	
 	def getCompleteList(self,opt,genre_num):
 		m = []
+		instr = "Press . or > for next page	-1"
 		opt_arr = [
 			'genre','mostpopular','newest','latestupdate',
 			'history','series','movies','ongoing'
@@ -260,11 +268,11 @@ class Anime9():
 				new_opt = 'ongoing'
 			url = 'https://9anime.to/'+new_opt
 			m = self.parse_page(url)
-			
+			m.append(instr)
 		if genre_num == 1 or opt.lower() not in opt_arr:
 			url = 'https://9anime.to/genre/' + opt
 			m = self.parse_page(url)
-		
+			m.append(instr)
 		return m
 		
 	def getNextPage(self,opt,pgn,genre_num,name):
