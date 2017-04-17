@@ -75,15 +75,15 @@ class BrowseUrl(QWebEngineView):
 				print('wait Clouflare ')
 				time.sleep(1)
 				cnt = cnt+1
-			if 'kissasian' in url or 'kisscartoon' in url:
+			if 'kissasian' in url or 'kimcartoon' in url:
 				if 'kissasian' in url:
 					str3 = '\nkissasian.com	FALSE	/	FALSE	0		__test'
 				else:
-					str3 = '\nkisscartoon.se	FALSE	/	FALSE	0		__test'
+					str3 = '\nkimcartoon.me	FALSE	/	FALSE	0		__test'
 				f = open(self.cookie_file,'a')
 				f.write(str3)
 				f.close()
-			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url):
+			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
 				cnt = 0
 				file_path = os.path.join(tmp_dir,'tmp_cookie')
 				while(not os.path.exists(lnk_file) and cnt < 30):

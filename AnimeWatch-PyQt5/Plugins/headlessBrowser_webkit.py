@@ -98,7 +98,7 @@ class BrowserPage(QWebPage):
 				f.write(html)
 				f.close()
 		
-		if self.cnt == 0 and os.path.exists(self.cookie_file) and ('kisscartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url):
+		if self.cnt == 0 and os.path.exists(self.cookie_file) and ('kimcartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url):
 			frame = self.mainFrame()
 			html = frame.toHtml()
 			soup = BeautifulSoup(html,'lxml')
@@ -163,7 +163,7 @@ class BrowserPage(QWebPage):
 			j = re.findall("'[^']*",k)
 			for i in j:
 				i = re.sub("'",'',i)
-				if 'kissanime.ru' in i or 'kissasian.com' in i or 'kisscartoon.se' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i or 'nyaa.se' in i:
+				if 'kissanime.ru' in i or 'kissasian.com' in i or 'kimcartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i or 'nyaa.se' in i:
 					j = re.findall('expires=[^;]*',i)
 					if j:
 						l = re.sub('expires=','',j[0])
@@ -339,7 +339,7 @@ class BrowseUrl(QtWidgets.QWidget):
 			if os.path.exists(lnk_file):
 				os.remove(lnk_file)
 			cnt = 0
-			if ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and quality:
+			if ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url) and quality:
 				while(not os.path.exists(lnk_file) and cnt < 30):
 					print('wait Finding Link ')
 					time.sleep(1)

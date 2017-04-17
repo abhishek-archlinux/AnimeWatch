@@ -309,14 +309,9 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 		self.quality = quality
 		self.url = url
 	def interceptRequest(self,info):
-		#print('hello network')
-		#print(info)
 		t = info.requestUrl()
 		urlLnk = t.url()
-		#print(urlLnk)
 		block_url = ''
-		if (quality == 'sd' or quality == 'sd480p') and ('kisscartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url) and ('id=' in self.url):
-			block_url = 'itag=22'
 		
 		lower_case = urlLnk.lower()
 		#lst = []
@@ -325,33 +320,11 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 		for l in lst:
 			if lower_case.find(l) != -1:
 				block = True
-				#info.block(True)
-				#print(m,'---blocking----')
 				break
 		if block:
 			info.block(True)
-			#print(m,'---blocking----')
 			
 			
-		else:
-			
-			if 'itag=' in urlLnk and 'redirector' not in urlLnk:
-				if block_url and block_url in urlLnk:
-					#info.block(True)
-					print('networkmanager found link')
-				else:
-					#print(urlLnk,'--nets--')
-					#self.netS.emit(urlLnk)
-					#print('----')
-					a = 0
-			
-		
-			
-
-
-
-
-
 class BrowserPage(QWebEnginePage):  
 	cookie_signal = pyqtSignal(str)
 	media_signal = pyqtSignal(str)
@@ -359,7 +332,6 @@ class BrowserPage(QWebEnginePage):
 	#val_signal = pyqtSignal(str)
 	def __init__(self,url,quality,add_cookie,c_file,m_val,v_e,end_pt=None):
 		super(BrowserPage, self).__init__()
-		print('hello')
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		self.cookie_file = c_file
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
@@ -398,16 +370,11 @@ class BrowserPage(QWebEnginePage):
 			
 		self.got_cookie = False
 		self.text = ''
-		
-		#ag = self.page().profile().httpUserAgent()
-		#print(ag)
-		#self.m.loadAllCookies()
 		self.final_url_got = False
-		#if self.add_cookie:
 		if self.add_cookie:
 			self.m.deleteAllCookies()
 			self.m.cookieAdded.connect(lambda  x = t : self._cookie(x))
-		print("end")
+			
 	@pyqtSlot(str)
 	def urlMedia(self,info):
 		lnk = os.path.join(self.tmp_dir,'lnk.txt')
@@ -422,6 +389,7 @@ class BrowserPage(QWebEnginePage):
 		f.close()
 		self.media_signal.emit(info)
 		print('********')
+		
 	@pyqtSlot(str)
 	def val_found(self,info):
 		print(info,'*******info*********')
@@ -594,9 +562,11 @@ class BrowserPage(QWebEnginePage):
 						#self.runJavaScript('window'.format(self.value_encode),self.val_scr)
 					else:
 						self.runJavaScript('$kissenc.decrypt("{0}");'.format(self.value_encode),self.val_scr)
+						
 	def _loadstart(self):
 		result = ''
 		#self.cnt = 0
+		
 	def htm_src(self,x):
 		html = x
 		if 'var glink = ' in html:
@@ -609,6 +579,7 @@ class BrowserPage(QWebEnginePage):
 			f.write(html)
 			f.close()
 			self.cookie_signal.emit("Cookie Found")
+			
 	def val_scr(self,x):
 		print('===============java----------scr')
 		val = str(x)
@@ -626,18 +597,15 @@ class BrowserPage(QWebEnginePage):
 				self.media_received.emit(url)
 				self.final_url_got = True
 				print(url)
-		#self.runJavaScript("$('#selectQuality').change();")
 		print('===============java----------scr')
-	def _loadProgress(self):
 		
+	def _loadProgress(self):
 		result =''
-		#
-		if (('kisscartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url) 
+		if (('kimcartoon' in self.url or 'kissasian' in self.url or 'kissanime' in self.url) 
 				and ('id=' in self.url) and self.got_cookie):
 			if self.val or 'kissanime' in self.url:
 				x = self.toHtml(self.htm)
 				#self.runJavaScript(self.val,self.val_scr)
-				
 			
 		self.cnt = self.cnt+1
 		
@@ -676,7 +644,7 @@ class BrowseUrlT(QWebEngineView):
 				self.add_cookie = True
 			else:
 				self.add_cookie = False
-				if ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
+				if ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 					#print("--------------------",content)
 					try:
 						self.media_val,server_found,captcha,self.value_encode = _get_video_val(content,self.cookie_file,self.quality,url)
@@ -706,7 +674,7 @@ class BrowseUrlT(QWebEngineView):
 			print('--')
 			#self.load(QUrl(url))
 			self.cnt = 1
-		elif ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
+		elif ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 			print('+++++++++++++++++++')
 			self.tab_web.setWindowTitle('Wait! Resolving Link')
 			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt)
@@ -729,7 +697,7 @@ class BrowseUrlT(QWebEngineView):
 		#global web
 		print('cookie')
 		self.add_cookie = False
-		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url):
+		if ('id=' in self.url) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
 			print('Cookie Obtained, now link finding')
 			f = open(os.path.join(self.tmp_dir,'tmp_cookie'),'w')
 			f.write('Cookie Obtained, now link finding')
@@ -747,7 +715,7 @@ class BrowseUrlT(QWebEngineView):
 			f.write(content)
 			f.close()
 			os.remove(c_f)
-		if ('id=' in self.url) and ('kisscartoon' in url or 'kissasian' in url or 'kissanime' in url):
+		if ('id=' in self.url) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
 			sys.exit(0)
 	@pyqtSlot(str)
 	def media_source_found(self):
