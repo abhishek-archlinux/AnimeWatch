@@ -57,6 +57,8 @@ class BrowseUrl(QWebEngineView):
 		#web = BrowseUrl(url,quality)
 		#print(content)
 		if 'checking_browser' in content:
+			if os.path.exists(self.cookie_file):
+				os.remove(self.cookie_file)
 			if os.name == 'posix':
 				print('--checking__browser-----57--')
 				print(enginePath,url,self.quality,self.cookie_file)
