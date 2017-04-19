@@ -50,10 +50,10 @@ class BrowseUrl(QWebEngineView):
 			enginePath = os.path.join(home1,'.config','kawaii-player','src','Plugins','headlessEngine.py')
 		tmp_dir,new_c = os.path.split(self.cookie_file)
 		
-		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:
-			content = ccurl(url)
-		else:
-			content = 'checking_browser'
+		#if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:
+		#	content = ccurl(url)
+		#else:
+		content = ccurl(url+'#-b#'+self.cookie_file)
 		#web = BrowseUrl(url,quality)
 		#print(content)
 		if 'checking_browser' in content:
@@ -77,6 +77,7 @@ class BrowseUrl(QWebEngineView):
 				print('wait Clouflare ')
 				time.sleep(1)
 				cnt = cnt+1
+			p.kill()
 			if 'kissasian' in url or 'kimcartoon' in url:
 				if 'kissasian' in url:
 					str3 = '\nkissasian.com	FALSE	/	FALSE	0		__test'
@@ -86,25 +87,38 @@ class BrowseUrl(QWebEngineView):
 				f.write(str3)
 				f.close()
 			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
+				if os.name == 'posix':
+					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt])
+				else:
+					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt],shell=True)
 				cnt = 0
-				file_path = os.path.join(tmp_dir,'tmp_cookie')
 				while(not os.path.exists(lnk_file) and cnt < 30):
-					if os.path.exists(file_path):
-						os.remove(file_path)
-						if os.name == 'posix':
-							p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt])
-						else:
-							p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt],shell=True)
 					print(cnt)
 					print('wait Clouflare ')
 					time.sleep(1)
 					cnt = cnt+1
-					
-				
 			p.kill()
 		else:
-			f = open(self.cookie_file,'w')
-			f.close()
+			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
+				lnk_file = os.path.join(tmp_dir,'lnk.txt')
+				if os.path.exists(lnk_file):
+					os.remove(lnk_file)
+				print(lnk_file,'--lnk--file--')
+				if os.name == 'posix':
+					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt])
+				else:
+					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt],shell=True)
+				cnt = 0
+				file_path = os.path.join(tmp_dir,'tmp_cookie')
+				while(not os.path.exists(lnk_file) and cnt < 30):
+					print(cnt)
+					print('wait Clouflare ')
+					time.sleep(1)
+					cnt = cnt+1
+				p.kill()
+			else:
+				f = open(self.cookie_file,'w')
+				f.close()
 		
 
 
