@@ -92,7 +92,7 @@ class BrowseUrl(QWebEngineView):
 				else:
 					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt],shell=True)
 				cnt = 0
-				while(not os.path.exists(lnk_file) and cnt < 30):
+				while(not os.path.exists(lnk_file) and cnt < 60):
 					print(cnt)
 					print('wait Clouflare ')
 					time.sleep(1)
@@ -110,7 +110,7 @@ class BrowseUrl(QWebEngineView):
 					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt],shell=True)
 				cnt = 0
 				file_path = os.path.join(tmp_dir,'tmp_cookie')
-				while(not os.path.exists(lnk_file) and cnt < 30):
+				while(not os.path.exists(lnk_file) and cnt < 60):
 					print(cnt)
 					print('wait Clouflare ')
 					time.sleep(1)
