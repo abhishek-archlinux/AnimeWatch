@@ -39,8 +39,8 @@ try:
 except:
 	from headlessBrowser_webkit import BrowseUrl
 	
-def cloudfare(url,quality,cookie):
-	web = BrowseUrl(url,quality,cookie)
+def cloudfare(url,quality,cookie,end_point,get_cookie,dm):
+	web = BrowseUrl(url,quality,cookie,end_point=end_point,get_cookie=get_cookie,domain_name=dm)
 
 class Anime9():
 	
@@ -134,8 +134,12 @@ class Anime9():
 				epn_id = id_arr[0]
 		else:
 			epn_id = new_epn
+		if not os.path.isfile(self.cookie_file):
+			new_url = 'https://9anime.to'+epn.split('::')[0]
+			print(new_url)
+			cloudfare(new_url,quality,self.cookie_file,'watching',True,'9anime.to')
 		url = 'https://9anime.to/ajax/episode/info?id='+epn_id+'&update=0'
-		content = ccurl(url)
+		content = ccurl(url+'#-b#'+self.cookie_file)
 		l = json.loads(content)
 		for i in l:
 			print(i,l[i])

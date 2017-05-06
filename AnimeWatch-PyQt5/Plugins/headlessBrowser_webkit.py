@@ -71,7 +71,7 @@ class NetWorkManager(QNetworkAccessManager):
 
   
 class BrowserPage(QWebPage):  
-	def __init__(self,url,quality,c,end_point=None):
+	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None):
 		super(BrowserPage, self).__init__()
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		#self.loadFinished.connect(self._loadFinished)
@@ -85,6 +85,11 @@ class BrowserPage(QWebPage):
 			self.end_point = 'cf_clearance'
 		else:
 			self.end_point = end_point
+		self.domain_name = domain_name
+		if self.domain_name:
+			if self.domain_name.lower() == 'none':
+				self.domain_name = None
+		self.get_cookie = get_cookie
 			
 	def userAgentForUrl(self, url):
 		return self.hdr
@@ -96,9 +101,6 @@ class BrowserPage(QWebPage):
 		
 		
 	def _loadProgress(self):
-		#print('Progress')
-		#print(self.url)
-		
 		
 		if 'moetube' in self.url:
 			txt_file = (self.tmp_dir,'moetube.txt')
@@ -178,7 +180,7 @@ class BrowserPage(QWebPage):
 			j = re.findall("'[^']*",k)
 			for i in j:
 				i = re.sub("'",'',i)
-				if 'kissanime.ru' in i or 'kissasian.com' in i or 'kimcartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i or 'nyaa.se' in i:
+				if 'kissanime.ru' in i or 'kissasian.com' in i or 'kimcartoon.me' in i or 'masterani.me' in i or 'animeget.io' in i or 'animeplace.co' in i or 'moetube.net' in i or 'nyaa.se' in i or self.domain_name:
 					j = re.findall('expires=[^;]*',i)
 					if j:
 						l = re.sub('expires=','',j[0])
@@ -196,10 +198,12 @@ class BrowserPage(QWebPage):
 		test_idt = ''
 		utmc = ''
 		clr = False
+		reqkey = ''
+		new_arr = []
 		for i in n:
 			if self.end_point in i:
 				clr = True
-				#print(n)
+				print(n)
 		if clr:
 			for i in n:
 				if 'cf_clearance' in i:
@@ -212,8 +216,32 @@ class BrowserPage(QWebPage):
 					idt = self.cookie_split(i)
 				elif '__utmc' in i:
 					utmc = self.cookie_split(i)
-				
-		if cfc and cfd:
+				elif self.domain_name:
+					reqkey = self.cookie_split(i)
+					try:
+						if reqkey['domain']:
+							if self.domain_name in reqkey['domain']:
+								dm = True
+							try:
+								reqkey['expiry']
+							except:
+								reqkey.update({'expiry':'0'})
+							try:
+								reqkey['HttpOnly']
+							except:
+								reqkey.update({'HttpOnly':'False'})
+							if reqkey:
+								str3 = reqkey['domain']+'	'+'FALSE'+'	'+reqkey['path']+'	'+'FALSE'+'	'+reqkey['expiry']+'	'+reqkey['name_id']+'	'+reqkey[reqkey['name_id']]
+								new_arr.append(str3)
+					except Exception as e:
+						print(e,'--240--')
+						
+		if new_arr:
+			f = open(self.cookie_file,'w')
+			for i in new_arr:
+				f.write(i+'\n')
+			f.close()
+		elif (cfc and cfd):
 			#print(cfc)
 			#print(cfd)
 			#print(asp)
@@ -232,6 +260,9 @@ class BrowserPage(QWebPage):
 			if utmc:
 				str3 = utmc['domain']+'	'+'FALSE'+'	'+utmc['path']+'	'+'FALSE'+'	'+str(0)+'	'+'__utmc'+'	'+utmc['__utmc']
 			
+			if reqkey:
+				str3 = reqkey['domain']+'	'+'FALSE'+'	'+reqkey['path']+'	'+'FALSE'+'	'+reqkey['expiry']+'	'+reqkey['name_id']+'	'+reqkey[reqkey['name_id']]
+			
 			f = open(self.cookie_file,'w')
 			if str3:
 				f.write(str2+'\n'+str1+'\n'+str3)
@@ -244,6 +275,7 @@ class BrowserPage(QWebPage):
 	def cookie_split(self,i):
 		m = []
 		j = i.split(';')
+		index = 0
 		for k in j:
 			if '=' in k:
 				l = k.split('=')
@@ -253,18 +285,21 @@ class BrowserPage(QWebPage):
 				k = re.sub(' ','',k)
 				t = (k,'TRUE')
 			m.append(t)
+			if index == 0 and '=' in k:
+				m.append(('name_id',l[0]))
+			index = index + 1
 		d = dict(m)
-		#print(d)
+		print(d)
 		return(d)
 		
 class Browser(QWebView):
-	def __init__(self,url,quality,c,end_point=None):
+	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None):
 		super(Browser, self).__init__()
-		self.setPage(BrowserPage(url,quality,c,end_point))
+		self.setPage(BrowserPage(url,quality,c,end_point,get_cookie,domain_name))
 		
 
 class BrowseUrl(QtWidgets.QWidget):
-	def __init__(self,url,quality,c,end_point=None):
+	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None):
 		super(BrowseUrl, self).__init__()
 		global TMP_DIR
 		self.cookie_file = c
@@ -274,17 +309,22 @@ class BrowseUrl(QtWidgets.QWidget):
 			self.end_point = 'cf_clearance'
 		else:
 			self.end_point = end_point
+		if get_cookie:
+			self.get_cookie = True
+		else:
+			self.get_cookie = False
+		if domain_name:
+			self.domain_name = domain_name
+		else:
+			self.domain_name= 'None'
+			
 		self.Browse(url,quality)
 		
 		
 	def Browse(self,url,quality):
 			
-		if 'animeget' in url or 'masterani' in url or 'animeplace' in url or 'moetube' in url or 'nyaa' in url:
-			content = ccurl(url)
-		else:
-			content = 'checking_browser'
-		
-		if 'checking_browser' in content:
+		content = ccurl(url+'#-b#'+self.cookie_file)
+		if 'checking_browser' in content or self.get_cookie:
 			if not os.path.exists(self.cookie_file):
 				
 				self.cookie = QtNetwork.QNetworkCookieJar()
@@ -322,8 +362,8 @@ class BrowseUrl(QtWidgets.QWidget):
 				cookie_arr.setAllCookies(c)
 				self.nam = NetWorkManager()
 				self.nam.setCookieJar(cookie_arr)
-			
-			self.web = Browser(url,quality,self.cookie_file,self.end_point)
+			print('---364----')
+			self.web = Browser(url,quality,self.cookie_file,self.end_point,self.get_cookie,self.domain_name)
 			self.tab_2 = QtWidgets.QWidget()
 			self.tab_2.setMaximumSize(300,50)
 			self.tab_2.setWindowTitle('Wait!')
@@ -347,8 +387,8 @@ class BrowseUrl(QtWidgets.QWidget):
 				cnt = cnt+1
 				self.tab_2.setWindowTitle('Wait! Cloudflare '+str(cnt)+'s')
 				
-			if cnt >= 30 and not os.path.exists(cookie_file):
-				f = open(cookie_file,'w')
+			if cnt >= 30 and not os.path.exists(self.cookie_file):
+				f = open(self.cookie_file,'w')
 				f.close()
 			lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
 			if os.path.exists(lnk_file):
@@ -373,7 +413,7 @@ class BrowseUrl(QtWidgets.QWidget):
 				self.web.setHtml('<html>cookie Obtained</html>')
 			self.tab_2.hide()
 		else:
-			f = open(cookie_file,'w')
+			f = open(self.cookie_file,'w')
 			f.close()
 
 

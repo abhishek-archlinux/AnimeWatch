@@ -345,7 +345,7 @@ class BrowserPage(QWebEnginePage):
 	media_signal = pyqtSignal(str)
 	media_received = pyqtSignal(str)
 	#val_signal = pyqtSignal(str)
-	def __init__(self,url,quality,add_cookie,c_file,m_val,v_e,end_pt=None):
+	def __init__(self,url,quality,add_cookie,c_file,m_val,v_e,end_pt=None,get_cookie=None,domain_name=None):
 		super(BrowserPage, self).__init__()
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		self.cookie_file = c_file
@@ -378,7 +378,11 @@ class BrowserPage(QWebEnginePage):
 			self.end_point = end_pt
 		else:
 			self.end_point = 'cf_clearance'
-		
+		self.domain_name = domain_name
+		if self.domain_name:
+			if self.domain_name.lower() == 'none':
+				self.domain_name = None
+		self.get_cookie = get_cookie
 		if not self.add_cookie:
 			self.m.deleteAllCookies()
 			self.set_cookie(self.cookie_file)
@@ -487,6 +491,7 @@ class BrowserPage(QWebEnginePage):
 	def cookie_split(self,i):
 		m = []
 		j = i.split(';')
+		index = 0
 		for k in j:
 			if '=' in k:
 				l = k.split('=')
@@ -496,6 +501,9 @@ class BrowserPage(QWebEnginePage):
 				k = re.sub(' ','',k)
 				t = (k,'TRUE')
 			m.append(t)
+			if index == 0 and '=' in k:
+				m.append(('name_id',l[0]))
+			index = index + 1
 		d = dict(m)
 		#print(d)
 		return(d)
@@ -506,6 +514,8 @@ class BrowserPage(QWebEnginePage):
 		asp = ''
 		idt = ''
 		utmc = ''
+		reqkey = ''
+		dm = False
 		if 'cf_clearance' in i:
 			cfc = self.cookie_split(i)
 		elif '__cfduid' in i:
@@ -516,7 +526,19 @@ class BrowserPage(QWebEnginePage):
 			idt = self.cookie_split(i)
 		elif '__utmc' in i:
 			utmc = self.cookie_split(i)
-		if cfc or cfd or asp or idt or utmc:
+		elif self.domain_name:
+			reqkey = self.cookie_split(i)
+			if self.domain_name in reqkey['domain']:
+				dm = True
+			try:
+				reqkey['expiry']
+			except:
+				reqkey.update({'expiry':'0'})
+			try:
+				reqkey['HttpOnly']
+			except:
+				reqkey.update({'HttpOnly':'False'})
+		if cfc or cfd or asp or idt or utmc or dm:
 			str1 = ''
 			#print(cfc)
 			#print(cfd)
@@ -532,6 +554,8 @@ class BrowserPage(QWebEnginePage):
 				str1 = idt['domain']+'	'+'FALSE'+'	'+idt['path']+'	'+'FALSE'+'	'+str(0)+'	'+'idtz'+'	'+idt['idtz']
 			if utmc:
 				str1 = utmc['domain']+'	'+'FALSE'+'	'+utmc['path']+'	'+'FALSE'+'	'+str(0)+'	'+'__utmc'+'	'+utmc['__utmc']
+			if reqkey:
+				str1 = reqkey['domain']+'	'+'FALSE'+'	'+reqkey['path']+'	'+'FALSE'+'	'+reqkey['expiry']+'	'+reqkey['name_id']+'	'+reqkey[reqkey['name_id']]
 			cc = os.path.join(self.tmp_dir,'cloud_cookie.txt')
 			if not os.path.exists(cc):
 				f = open(cc,'w')
@@ -559,14 +583,7 @@ class BrowserPage(QWebEnginePage):
 	
 	def htm(self,x):
 		
-		#if self.cnt == 1:
-			#super(BrowserPage,self).stop()
-		#	self.triggerAction(QWebEnginePage.Stop)
-		#	self.runJavaScript(self.val,self.val_scr)
-		#	
-		#	self.runJavaScript(self.val,self.val_scr)
 		self.js = ''
-		#print(x)
 		if 'checking_browser' not in x:
 			if 'slcQualix' in x or 'selectQuality' in x:
 				self.value_encode = parse_file(x,self.url)
@@ -631,7 +648,7 @@ class BrowserPage(QWebEnginePage):
 
 class BrowseUrlT(QWebEngineView):
 	#cookie_s = pyqtSignal(str)
-	def __init__(self,url,quality,cookie,end_point=None):
+	def __init__(self,url,quality,cookie,end_point=None,get_cookie=None,domain_name=None):
 		super(BrowseUrlT, self).__init__()
 		#QtWidgets.__init__()
 		self.url = url
@@ -645,16 +662,19 @@ class BrowseUrlT(QWebEngineView):
 			self.end_pt = end_point
 		else:
 			self.end_pt = 'cf_clearance'
+		self.domain_name = domain_name
+		print(self.end_pt,get_cookie)
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
+		self.get_cookie = get_cookie
 		self.Browse(self.url)
 		
 	def Browse(self,url):
 		print('---browse---591---')
 		captcha = False
-		if os.path.exists(self.cookie_file):
+		if os.path.exists(self.cookie_file) and not self.get_cookie:
 			content = ccurl(url+'#'+'-b'+'#'+self.cookie_file)
 			print(content)
-			if 'checking_browser' in content:
+			if 'checking_browser' in content or self.get_cookie:
 				os.remove(self.cookie_file)
 				self.add_cookie = True
 			else:
@@ -679,7 +699,7 @@ class BrowseUrlT(QWebEngineView):
 		self.horizontalLayout_5.addWidget(self)
 		
 		if self.add_cookie:
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt)
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt,get_cookie=self.get_cookie,domain_name=self.domain_name)
 			
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
@@ -692,7 +712,7 @@ class BrowseUrlT(QWebEngineView):
 		elif ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 			print('+++++++++++++++++++')
 			self.tab_web.setWindowTitle('Wait! Resolving Link')
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt)
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt,get_cookie=self.get_cookie,domain_name=self.domain_name)
 			self.web.got_cookie = True
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
@@ -749,9 +769,15 @@ if __name__ == "__main__":
 		print(quality)
 		cookie = sys.argv[3]
 		end_pt = sys.argv[4]
+		get_cookie = sys.argv[5]
+		if get_cookie == 'true':
+			get_cookie = True
+		else:
+			get_cookie = False
+		dm = sys.argv[6]
 		app = QtWidgets.QApplication(sys.argv)
 		print(url,quality,cookie,'--685---',end_pt)
-		web = BrowseUrlT(url,quality,cookie,end_point=end_pt)
+		web = BrowseUrlT(url,quality,cookie,end_point=end_pt,get_cookie=get_cookie,domain_name=dm)
 		ret = app.exec_()
 		sys.exit(ret)
 
