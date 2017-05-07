@@ -15,14 +15,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys  
 import re
-import urllib
 import time
 import os
-import os.path
-import sys
 import calendar
 import weakref
-import threading
 from bs4 import BeautifulSoup
 from datetime import datetime
 import pycurl
@@ -58,6 +54,18 @@ class BrowseUrl(QWebEngineView):
 			self.domain_name = domain_name
 		else:
 			self.domain_name= 'None'
+		self.path_val = ''
+		j = 0
+		print(sys.path)
+		new_path = [i for i in sys.path]
+		new_path.reverse()
+		print(new_path)
+		for i in new_path:
+			if j == 0:
+				self.path_val = i
+			else:
+				self.path_val = self.path_val + '::' + i
+			j = j+1
 		self.Browse(self.url)
 		
 	def Browse(self,url):
@@ -80,9 +88,11 @@ class BrowseUrl(QWebEngineView):
 			if os.name == 'posix':
 				print('--checking__browser-----57--')
 				print(enginePath,url,self.quality,self.cookie_file)
-				p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt,self.get_cookie,self.domain_name])
+				p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,
+						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
 			else:
-				p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt,self.get_cookie,self.domain_name],shell=True)
+				p = subprocess.Popen(['python','-B',enginePath,url,self.quality,
+						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
 			
 			cnt = 0
 			
@@ -106,9 +116,11 @@ class BrowseUrl(QWebEngineView):
 				f.close()
 			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
 				if os.name == 'posix':
-					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt,self.get_cookie,self.domain_name])
+					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
 				else:
-					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt,self.get_cookie,self.domain_name],shell=True)
+					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
 				cnt = 0
 				while(not os.path.exists(lnk_file) and cnt < 60):
 					print(cnt)
@@ -123,9 +135,11 @@ class BrowseUrl(QWebEngineView):
 					os.remove(lnk_file)
 				print(lnk_file,'--lnk--file--')
 				if os.name == 'posix':
-					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt,self.get_cookie,self.domain_name])
+					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
 				else:
-					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,self.cookie_file,self.end_pt,self.get_cookie,self.domain_name],shell=True)
+					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
 				cnt = 0
 				file_path = os.path.join(tmp_dir,'tmp_cookie')
 				while(not os.path.exists(lnk_file) and cnt < 60):

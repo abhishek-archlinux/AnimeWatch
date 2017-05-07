@@ -13,16 +13,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import sys  
+import sys
+import os
+path_val = sys.argv[7]
+path_val_arr = path_val.split('::')
+for i in path_val_arr:
+	if os.path.exists(i):
+		sys.path.insert(0,i)
+print(sys.path,'---path---')  
 import re
 import urllib.parse
 import time
-import os
-import os.path
-import sys
 import calendar
 import weakref
-import threading
 from bs4 import BeautifulSoup
 from datetime import datetime
 import pycurl
@@ -330,7 +333,7 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 		
 		lower_case = urlLnk.lower()
 		#lst = []
-		lst = ["doubleclick.net" ,"ads",'.jpg','.gif','.css','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg']
+		lst = ["doubleclick.net" ,"ads",'.jpg','.gif','.css','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
 		block = False
 		for l in lst:
 			if lower_case.find(l) != -1:
