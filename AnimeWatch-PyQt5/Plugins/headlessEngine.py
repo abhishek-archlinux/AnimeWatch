@@ -15,247 +15,145 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import os
+import re
+import urllib.parse
+import urllib.request
+import time
+import calendar
+from datetime import datetime
+
 path_val = sys.argv[7]
 path_val_arr = path_val.split('::')
 for i in path_val_arr:
 	if os.path.exists(i):
 		sys.path.insert(0,i)
 print(sys.path,'---path---')  
-import re
-import urllib.parse
-import time
-import calendar
-import weakref
-from bs4 import BeautifulSoup
-from datetime import datetime
-import pycurl
-from io import StringIO,BytesIO
+
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
 from PyQt5.QtNetwork import QNetworkAccessManager
 from PyQt5.QtCore import QUrl,pyqtSlot,pyqtSignal
 
-
-def getContentUnicode(content):
-	if isinstance(content,bytes):
-		print("I'm byte")
-		try:
-			content = str((content).decode('utf-8'))
-		except:
-			content = str(content)
-	else:
-		print(type(content))
-		content = str(content)
-		print("I'm unicode")
-	return content
-
-def ccurl(url,external_cookie=None):
+def ccurl(url,method=None,curl_opt=None,cookie=None):
 	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 	if 'youtube.com' in url:
 		hdr = 'Mozilla/5.0 (Linux; Android 4.4.4; SM-G928X Build/LMY47X) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.83 Mobile Safari/537.36'
 	print(url)
-	c = pycurl.Curl()
-	curl_opt = ''
-	picn_op = ''
-	rfr = ''
-	nUrl = url
-	cookie_file = ''
-	postfield = ''
-	if '#' in url:
-		curl_opt = nUrl.split('#')[1]
-		url = nUrl.split('#')[0]
-		if curl_opt == '-o':
-			picn_op = nUrl.split('#')[2]
-		elif curl_opt == '-Ie' or curl_opt == '-e':
-			rfr = nUrl.split('#')[2]
-		elif curl_opt == '-Icb' or curl_opt == '-bc' or curl_opt == '-b' or curl_opt == '-Ib':
-			cookie_file = nUrl.split('#')[2]
-		if curl_opt == '-d':
-			post = nUrl.split('#')[2]
-			post = re.sub('"','',post)
-			post = re.sub("'","",post)
-			post1 = post.split('=')[0]
-			post2 = post.split('=')[1]
-			post_data = {post1:post2}
-			postfield = urllib.parse.urlencode(post_data)
-	url = str(url)
-	#c.setopt(c.URL, url)
-	try:
-		c.setopt(c.URL, url)
-	except UnicodeEncodeError:
-		c.setopt(c.URL, url.encode('utf-8'))
-	storage = BytesIO()
-	if os.name == 'nt':
-		ca_cert = get_ca_certificate()
-		if ca_cert:
-			c.setopt(c.CAINFO, ca_cert)
-		else:
-			c.setopt(c.SSL_VERIFYPEER,False)
-	if curl_opt == '-o':
-		c.setopt(c.FOLLOWLOCATION, True)
-		c.setopt(c.USERAGENT, hdr)
-		try:
-			f = open(picn_op,'wb')
-			c.setopt(c.WRITEDATA, f)
-		except:
-			return 0
-		
-		try:
-			c.perform()
-			c.close()
-		except:
-			print('failure in obtaining image try again')
-			pass
-		f.close()
-	else:
-		if curl_opt == '-I':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Ie':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-e':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(pycurl.REFERER, rfr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-IA':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-		elif curl_opt == '-Icb':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.NOBODY, 1)
-			c.setopt(c.HEADERFUNCTION, storage.write)
-			if os.path.exists(cookie_file):
-				os.remove(cookie_file)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-bc':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEJAR,cookie_file)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		elif curl_opt == '-L':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		elif curl_opt == '-d':
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.POSTFIELDS,postfield)
-		elif curl_opt == '-b':
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-			c.setopt(c.COOKIEFILE,cookie_file)
-		else:
-			c.setopt(c.FOLLOWLOCATION, True)
-			c.setopt(c.USERAGENT, hdr)
-			c.setopt(c.WRITEDATA, storage)
-		try:
-			c.perform()
-			c.close()
-			content = storage.getvalue()
-			content = getContentUnicode(content)
-		except:
-			print('curl failure try again')
-			content = ''
-		return content
 
-def get_ca_certificate():
-	ca_cert = ''
-	if os.name == 'nt':
-		try:
-			import certifi
-			ca_cert = certifi.where()
-		except Exception as e:
-			print(e)
-	return ca_cert
+	header_dict = {'User-Agent':hdr}
+	
+	if method is None:
+		method_val = 'GET'
+	else:
+		method_val = method
+	
+	if curl_opt == '-b':
+		cookie_file = cookie
+		if os.path.exists(cookie_file):
+			f = open(cookie_file,'r')
+			lines = f.readlines()
+			f.close()
+			value = ''
+			for i in lines:
+				i = i.strip()
+				j = i.split('	')
+				try:
+					key = j[5]
+					key_val = j[6]
+					value = value+key+'='+key_val+';'
+					print(value)
+				except Exception as e:
+					print(e,'--78--')
+			header_dict.update({'Cookie':value})
+	print(header_dict)
+	req = urllib.request.Request(url,headers=header_dict,method=method_val)
+	content = urllib.request.urlopen(req)
+	if curl_opt == '-IL':
+		return content.geturl()
+	elif curl_opt == '-I':
+		return content.info()
+	else:
+		return content.read().decode('utf-8')
 
 def _get_video_val(htm,c_file,q,u):
-		
 		st =''
 		quality = q
-		#x = ccurl(url+'#'+'-b'+'#'+c_file)
-		
 		cookie_file = c_file
 		html = htm
 		url = u
-		soup = BeautifulSoup(html,'lxml')
-		#title_page = soup.find('title').text.strip().lower()
 		if 'Are You Human' in html:
 			return ('Nothing',False,True,'txt')
 		server_found = True
 		if 'kissanime' in url:
 			server_found = False
 			mir = soup.findAll('select',{'id':'selectServer'})
-			for i in mir:
-				j = i.findAll('option')
-				for k in j:
-					ltxt = k.text.lower()
+			mir = re.search('<select id="selectServer">[^^]*</select>',html).group()
+			if mir:
+				r = re.findall('<option value=[^<]*</option>',mir)
+				for i in r:
+					_txt = re.search('>[^<]*',i).group()
+					_txt = _txt[1:]
+					_txt = _txt.strip()
+					_val = re.search('value="[^"]*',i).group()
+					_val = val.replace('value="','',1)
+					#print(_txt,_val)
+					ltxt = _txt.text.lower()
 					if ltxt == 'kissanime':
 						server_found = True
 					print(ltxt,server_found)
 			if not server_found:
-				html = ccurl(url+'&s=beta'+'#'+'-b'+'#'+c_file)
-				soup = BeautifulSoup(html,'lxml')
-			m = soup.findAll('select',{'id':'slcQualix'})
+				html = ccurl(url+'&s=beta',method='GET',curl_opt='-b',cookie=c_file)
+			m = re.search('<select id="slcQualix">[^^]*</select>',html).group()
 		else:
-			m = soup.findAll('select',{'id':'selectQuality'})
-		#print(m,'---select--quality---')
+			m = re.search('<select id="selectQuality">[^^]*</select>',html).group()
 		if m:
-			#print(m)
-			arr = []
-			arr_lnk = []
-			for i in m:
-				j = i.findAll('option')
-				for k in j:
-					l = k['value']
-					#print(l)
-					l1 = k.text
-					l1 = re.sub(' ','',l1)
-					if l1:
-						l3 = (l1,l)
-					else:
-						l3 = ('Not Available',l)
-					arr.append(l3)
-					arr_lnk.append(l)
-			total_q = len(arr)
-			try:
-				arr_dict = dict(arr)
-			except:
-				arr_dict = []
-			
+			r = re.findall('<option value=[^<]*</option>',m)
+			print(r)
+			arr_dict = {}
+			best = ""
+			j = 0
+			for i in r:
+				txt = re.search('>[^<]*',i).group()
+				txt = txt[1:]
+				txt = txt.strip()
+				val = re.search('value="[^"]*',i).group()
+				val = val.replace('value="','',1)
+				#print(txt,val)
+				if j == 0:
+					best = val
+				arr_dict.update({txt:val})
+				j = j + 1
 			#print(arr_dict)
-			
-			if arr_dict or arr:
+			total_q = len(arr_dict)
+			if arr_dict:
 				print('----------total Different Quality Video------',total_q)
 				try:
 					if quality == 'sd':
-						txt = arr_dict['360p']
-					elif quality == 'hd':
-						if total_q >= 3:
-							txt = arr_dict['720p']
-						elif total_q == 2:
-							txt = arr_lnk[0]
-						else:
+						try:
 							txt = arr_dict['360p']
+						except Exception as e:
+							print(e,'--196--')
+							txt = best
+					elif quality == 'hd':
+						try:
+							txt = arr_dict['720p']
+						except Exception as e:
+							print(e,'--194--')
+							try:
+								txt = arr_dict['480p']
+							except Exception as e:
+								print(e,'--198--')
+								txt = arr_dict['360p']
 					elif quality == 'sd480p':
-						if total_q >= 2:
+						try:
 							txt = arr_dict['480p']
-						else:
+						except Exception as e:
+							print(e,'--208--')
 							txt = arr_dict['360p']
 					elif quality == 'best':
-						txt = arr_lnk[0]
-				except:
+						txt = best
+				except Exception as e:
+					print(e,'--213--')
 					txt = arr_dict['360p']
 					
 				if 'kissanime' in url:
@@ -267,56 +165,59 @@ def _get_video_val(htm,c_file,q,u):
 
 def parse_file(content,url,quality):
 		txt = ''
-		soup = BeautifulSoup(content,'lxml')
 		if 'kissanime' in url:
-			m = soup.findAll('select',{'id':'slcQualix'})
+			m = re.search('<select id="slcQualix">[^^]*</select>',content).group()
 		else:
-			m = soup.findAll('select',{'id':'selectQuality'})
+			m = re.search('<select id="selectQuality">[^^]*</select>',content).group()
 		#print(m,'---select--quality---')
 		if m:
-			arr = []
-			arr_lnk = []
-			for i in m:
-				j = i.findAll('option')
-				for k in j:
-					l = k['value']
-					#print(l)
-					l1 = k.text
-					l1 = re.sub(' ','',l1)
-					if l1:
-						l3 = (l1,l)
-					else:
-						l3 = ('Not Available',l)
-					arr.append(l3)
-					arr_lnk.append(l)
-			total_q = len(arr)
-			try:
-				arr_dict = dict(arr)
-			except:
-				arr_dict = []
-			
-			print(arr_dict)
-			
-			if arr_dict or arr:
+			r = re.findall('<option value=[^<]*</option>',m)
+			#print(r)
+			arr_dict = {}
+			best = ""
+			j = 0
+			for i in r:
+				txt = re.search('>[^<]*',i).group()
+				txt = txt[1:]
+				txt = txt.strip()
+				val = re.search('value="[^"]*',i).group()
+				val = val.replace('value="','',1)
+				#print(txt,val)
+				if j == 0:
+					best = val
+				arr_dict.update({txt:val})
+				j = j + 1
+			#print(arr_dict)
+			total_q = len(arr_dict)
+			if arr_dict:
 				print('----------total Different Quality Video------',total_q)
 				try:
 					if quality == 'sd':
-						txt = arr_dict['360p']
-					elif quality == 'hd':
-						if total_q >= 3:
-							txt = arr_dict['720p']
-						elif total_q == 2:
-							txt = arr_lnk[0]
-						else:
+						try:
 							txt = arr_dict['360p']
+						except Exception as e:
+							print(e,'--196--')
+							txt = best
+					elif quality == 'hd':
+						try:
+							txt = arr_dict['720p']
+						except Exception as e:
+							print(e,'--194--')
+							try:
+								txt = arr_dict['480p']
+							except Exception as e:
+								print(e,'--198--')
+								txt = arr_dict['360p']
 					elif quality == 'sd480p':
-						if total_q >= 2:
+						try:
 							txt = arr_dict['480p']
-						else:
+						except Exception as e:
+							print(e,'--208--')
 							txt = arr_dict['360p']
 					elif quality == 'best':
-						txt = arr_lnk[0]
-				except:
+						txt = best
+				except Exception as e:
+					print(e,'--213--')
 					txt = arr_dict['360p']
 		return txt
 
@@ -623,11 +524,10 @@ class BrowserPage(QWebEnginePage):
 			y1 = re.findall("http[^']*",val)
 			print(y1)
 			for y in y1:
-				content = ccurl(y+'#'+'-I')
-				if "Location:" in content:
-					m = re.findall('Location: [^\n]*',content)
-					url = re.sub('Location: |\r','',m[-1])
-				else:
+				try:
+					url = ccurl(y,method='HEAD',curl_opt='-IL')
+				except Exception as e:
+					print(e,'--530--')
 					url = y
 				self.media_received.emit(url)
 				self.final_url_got = True
@@ -675,7 +575,7 @@ class BrowseUrlT(QWebEngineView):
 		print('---browse---591---')
 		captcha = False
 		if os.path.exists(self.cookie_file) and not self.get_cookie:
-			content = ccurl(url+'#'+'-b'+'#'+self.cookie_file)
+			content = ccurl(url,method='GET',curl_opt='-b',cookie=self.cookie_file)
 			print(content)
 			if 'checking_browser' in content or self.get_cookie:
 				os.remove(self.cookie_file)

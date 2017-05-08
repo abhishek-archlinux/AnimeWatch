@@ -122,7 +122,7 @@ class Anime9():
 				print(e)
 			return (arr,summary,picn,record_history,depth_list)
 	
-	def getFinalUrl(self,name,epn,mirror,quality):
+	def get_epn_url(self,name,epn,mirror,quality):
 		final = ''
 		new_epn = epn.split('/')[-1]
 		if '::' in new_epn:
@@ -150,7 +150,17 @@ class Anime9():
 				_token = l[i]['token']
 				_opt = l[i]['options']
 		nurl = '?id={0}&token={1}&options={2}&mobile=0'.format(_id,_token,_opt)
-		print(nurl)
+		return (_api,nurl)
+	
+	def getFinalUrl(self,name,epn,mirror,quality):
+		try:
+			_api,nurl = self.get_epn_url(name,epn,mirror,quality)
+		except Exception as e:
+			print(e,'--158--')
+			if os.path.isfile(self.cookie_file):
+				os.remove(self.cookie_file)
+			_api,nurl = self.get_epn_url(name,epn,mirror,quality)
+			
 		url = os.path.join(_api,nurl)
 		print(url)
 
