@@ -265,7 +265,7 @@ def _get_video_val(htm,c_file,q,u):
 				return (st,server_found,False,txt)
 
 
-def parse_file(content,url):
+def parse_file(content,url,quality):
 		txt = ''
 		soup = BeautifulSoup(content,'lxml')
 		if 'kissanime' in url:
@@ -589,7 +589,7 @@ class BrowserPage(QWebEnginePage):
 		self.js = ''
 		if 'checking_browser' not in x:
 			if 'slcQualix' in x or 'selectQuality' in x:
-				self.value_encode = parse_file(x,self.url)
+				self.value_encode = parse_file(x,self.url,self.quality)
 				if self.value_encode:
 					if 'slcQualix' in x:
 						print(self.value_encode)
