@@ -60,6 +60,19 @@ class BrowseUrl(QWebEngineView):
 		new_path = [i for i in sys.path]
 		new_path.reverse()
 		print(new_path)
+		self.py = sys.executable
+		if self.py.endswith('kawaii_player'):
+			bs,nm = os.path.split(self.py)
+			new_ = os.path.join(bs,'python3.5')
+			new_lib = os.path.join(bs,'lib','python3.5')
+			if os.path.exists(new_lib):
+				sys.path.insert(0,new_lib)
+			new_ = os.path.join(bs,'python3.6')
+			new_lib = os.path.join(bs,'lib','python3.6')
+			if os.path.exists(new_lib):
+				sys.path.insert(0,new_lib)
+			if os.path.exists(new_):
+				self.py = new_
 		for i in new_path:
 			if j == 0:
 				self.path_val = i
@@ -86,12 +99,12 @@ class BrowseUrl(QWebEngineView):
 			if os.path.exists(self.cookie_file):
 				os.remove(self.cookie_file)
 			if os.name == 'posix':
-				print('--checking__browser-----57--')
+				print('--checking__browser-----57--',self.py,sys.executable)
 				print(enginePath,url,self.quality,self.cookie_file)
-				p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,
+				p = subprocess.Popen([self.py,enginePath,url,self.quality,
 						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
 			else:
-				p = subprocess.Popen(['python','-B',enginePath,url,self.quality,
+				p = subprocess.Popen([self.py,enginePath,url,self.quality,
 						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
 			
 			cnt = 0
@@ -116,10 +129,10 @@ class BrowseUrl(QWebEngineView):
 				f.close()
 			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
 				if os.name == 'posix':
-					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,
+					p = subprocess.Popen([self.py,enginePath,url,self.quality,
 							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
 				else:
-					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,
+					p = subprocess.Popen([self.py,enginePath,url,self.quality,
 							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
 				cnt = 0
 				while(not os.path.exists(lnk_file) and cnt < 60):
@@ -135,10 +148,10 @@ class BrowseUrl(QWebEngineView):
 					os.remove(lnk_file)
 				print(lnk_file,'--lnk--file--')
 				if os.name == 'posix':
-					p = subprocess.Popen(['python3','-B',enginePath,url,self.quality,
+					p = subprocess.Popen([self.py,enginePath,url,self.quality,
 							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
 				else:
-					p = subprocess.Popen(['python','-B',enginePath,url,self.quality,
+					p = subprocess.Popen([self.py,enginePath,url,self.quality,
 							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
 				cnt = 0
 				file_path = os.path.join(tmp_dir,'tmp_cookie')

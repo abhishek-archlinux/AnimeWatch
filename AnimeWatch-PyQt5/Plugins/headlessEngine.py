@@ -15,19 +15,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import os
+path_val = sys.argv[7]
+path_val_arr = path_val.split('::')
+for i in path_val_arr:
+	if os.path.exists(i):
+		sys.path.insert(0,i)
+print(sys.path,'---path---')    
 import re
 import urllib.parse
 import urllib.request
 import time
 import calendar
 from datetime import datetime
-
-path_val = sys.argv[7]
-path_val_arr = path_val.split('::')
-for i in path_val_arr:
-	if os.path.exists(i):
-		sys.path.insert(0,i)
-print(sys.path,'---path---')  
 
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
