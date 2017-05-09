@@ -66,8 +66,22 @@ class Anime9():
 	def search(self,name):
 		
 		if name:
+			if not os.path.isfile(self.cookie_file):
+				new_url = 'https://9anime.to/'
+				print(new_url)
+				cloudfare(new_url,'sd',self.cookie_file,'user-info',True,'9anime.to')
 			url = 'https://9anime.to/search?keyword=' + name
-			arr = self.parse_page(url)
+			arr = self.parse_page(url,cookie=self.cookie_file)
+			if len(arr) == 1:
+				print(arr,'--76---')
+				if arr[0] == 'get_cookie':
+					if os.path.isfile(self.cookie_file):
+						os.remove(self.cookie_file)
+					new_url = 'https://9anime.to/'
+					print(new_url)
+					cloudfare(new_url,'sd',self.cookie_file,'user-info',True,'9anime.to')
+					url = 'https://9anime.to/search?keyword=' + name
+					arr = self.parse_page(url,cookie=self.cookie_file)
 			return arr
 			
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
@@ -238,8 +252,11 @@ class Anime9():
 				final = re.sub('Location: |\r','',m[-1])
 		return final
 	
-	def parse_page(self,url):
-		content = ccurl(url)
+	def parse_page(self,url,cookie=None):
+		if cookie is None:
+			content = ccurl(url)
+		else:
+			content = ccurl(url+'#-b#'+cookie)
 		soup = BeautifulSoup(content,'lxml')
 		arr = []
 		m = soup.findAll('div',{'class':'item'})
@@ -256,6 +273,9 @@ class Anime9():
 				l = ''
 			n = l+'	'+k
 			arr.append(n)
+		if not arr:
+			if 'make sure your browser supports cookie' in content:
+				arr.append('get_cookie')
 		return arr
 	
 	def getCompleteList(self,opt,genre_num):
