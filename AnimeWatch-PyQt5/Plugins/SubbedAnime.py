@@ -539,19 +539,29 @@ def findurl(i):
 		return found
 	elif "videowing" in i or "easyvideo" in i:
 		content = ccurl(i)
-		if 'videowing' in i:
-			found = mp4starUrl(content,'videowing')
-		else:
-			found = mp4starUrl(content,'easyvideo')
-			if found.startswith('https:'):
-				pass
-			elif found.startswith('http:'):
-				content = ccurl(found+'#'+'-I')
-				if "Location:" in content:
-					m = re.findall('Location: [^\n]*',content)
-					found = re.sub('Location: |\r','',m[-1])
-				else:
-					found = url
+		found = ''
+		try:
+			if 'videowing' in i:
+				found = mp4starUrl(content,'videowing')
+			else:
+				found = mp4starUrl(content,'easyvideo')
+		except Exception as e:
+			print(e,'--549--')
+			try:
+				found = re.search('file: "http[^"]*',content).group()
+				found = found.replace('file: "','',1)
+			except Exception as e:
+				print(e,'--553--')
+			
+		if found.startswith('https:'):
+			pass
+		elif found.startswith('http:'):
+			content = ccurl(found+'#'+'-I')
+			if "Location:" in content:
+				m = re.findall('Location: [^\n]*',content)
+				found = re.sub('Location: |\r','',m[-1])
+			else:
+				found = url
 		
 		return found
 	elif "myvidstream" in i:
@@ -675,37 +685,39 @@ def findurl(i):
 				
 	elif ("playbb" in i) or ("playpanda" in i) or ("video44" in i):
 			content = ccurl(i)
-			
+			m = []
 			m = re.findall("url: 'http[^']*",content)
-			n = re.sub("url: '",'',m[0])
+			found = ''
+			try:
+				n = re.sub("url: '",'',m[0])
+			except Exception as e:
+				print(e,'--694--')
+				try:
+					found = re.search('file: "http[^"]*',content).group()
+					found = found.replace('file: "','',1)
+					m.append(found)
+					n = found
+				except Exception as e:
+					print(e,'--553--')
 			
 			if m:
-				#n = re.sub("url: '",'',m[0])
-				#print(n
 				found = str(urllib.parse.unquote(n))
 				print(found)
-				#content1 = (subprocess.check_output(['curl','-L','-I','-A',hdr,found]))
-				#content1 = getContentUnicode(content1)
 				content1 = ccurl(found+'#'+'-I')
 				if "Location:" in content1:
 					m = re.findall('Location: [^\n]*',content1)
 					found = re.sub('Location: |\r','',m[0])
-					print(found)
-					return found
 				else:
 					m1 = re.findall('_url = "http[^"]*',content)
 					if m1:
 						n1 = re.sub('_url = "','',m1[0])
 						found = str(urllib.parse.unquote(n1))
 						print(found)
-						#content2 = (subprocess.check_output(['curl','-L','-I','-A',hdr,found]))
-						#content2 = getContentUnicode(content2)
 						content2 = ccurl(found+'#'+'-I')
 						if "Location:" in content2:
 							m = re.findall('Location: [^\n]*',content2)
 							found = re.sub('Location: |\r','',m[-1])
-							print(found)
-							return found
+			return found
 	elif 'googleusercontent' in i or 'bp.blogspot' in i or 'google' in i:
 		content1 = ccurl(i+'#'+'-I')
 		if "Location:" in content1:
