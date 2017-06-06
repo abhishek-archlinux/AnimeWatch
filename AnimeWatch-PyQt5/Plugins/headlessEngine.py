@@ -85,8 +85,8 @@ def _get_video_val(htm,c_file,q,u):
 		server_found = True
 		if 'kissanime' in url:
 			server_found = False
-			mir = soup.findAll('select',{'id':'selectServer'})
-			mir = re.search('<select id="selectServer">[^^]*</select>',html).group()
+			#mir = soup.findAll('select',{'id':'selectServer'})
+			mir = re.search('id="selectServer">[^^]*</select>',html).group()
 			if mir:
 				r = re.findall('<option value=[^<]*</option>',mir)
 				for i in r:
@@ -233,7 +233,7 @@ class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 		
 		lower_case = urlLnk.lower()
 		#lst = []
-		lst = ["doubleclick.net" ,"ads",'.jpg','.gif','.css','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
+		lst = ["doubleclick.net" ,"ads",'.gif','.css','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
 		block = False
 		for l in lst:
 			if lower_case.find(l) != -1:
@@ -309,6 +309,7 @@ class BrowserPage(QWebEnginePage):
 		if 'kissanime' in self.url and self.url.endswith('&s=beta'):
 			f.write('\n'+self.url)
 		f.close()
+		print(self.url,'--url---','--312---')
 		self.media_signal.emit(info)
 		print('********')
 		
@@ -588,8 +589,8 @@ class BrowseUrlT(QWebEngineView):
 					except Exception as e:
 						print(e,'--622--')
 						server_found = ''
-					if not server_found:
-						url = url + '&s=beta'
+					#if not server_found:
+					#	url = url + '&s=beta'
 					print(self.media_val,'--media--val--')
 		else:
 			self.add_cookie = True

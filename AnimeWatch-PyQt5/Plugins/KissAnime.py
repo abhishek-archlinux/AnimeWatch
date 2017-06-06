@@ -230,13 +230,13 @@ class KissAnime():
 				final.append(link[0].strip())
 				final.append(link[1].strip())
 				final.append('referer sent')
-			print(link)
-			print(final)
+			print(link,'---233--')
+			print(final,'--234---')
 		else:
 			final = ''
 			msg = 'No Link Available. Try Clearing Cache or select Alternate Mirror by pressing keys 1 or 2'
 			send_notification(msg)
-		if final and final is not list and mirror == 2:
+		if final and type(final) is not list and mirror == 2:
 			new_final = []
 			new_final.append(final)
 			new_final.append(url)
