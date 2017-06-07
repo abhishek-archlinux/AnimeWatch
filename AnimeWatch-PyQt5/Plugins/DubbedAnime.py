@@ -15,6 +15,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
 import urllib.parse
+import urllib.request
 import pycurl
 from io import StringIO,BytesIO
 import re
@@ -24,6 +25,8 @@ import random
 from bs4 import BeautifulSoup  
 import os
 import os.path
+import base64
+import json
 from player_functions import send_notification,naturallysorted
 from player_functions import ccurl as ccurlNew
 
@@ -56,31 +59,6 @@ def findurl(url):
 		packed = ''
 		content = ccurlNew(url)
 		final = mp4starUrl(content,'myvidstream')
-		"""
-		soup = BeautifulSoup(content,'lxml')
-		link = soup.findAll('script',{'type':'text/javascript'})
-		for i in link:
-			if 'myvidstream' in i.text:
-				#print(i.text)
-				packed = i.text
-				break
-		if packed:
-			val = packer.unpack(packed)
-			print(val)
-			soup = BeautifulSoup(val,'lxml')
-			m = (re.search('file[^)]*',val)).group()
-			print(m)
-			if m:
-				n = re.search("http[^']*",m).group()
-				if n:
-					print(n)
-					final = n
-					final = re.sub(' |"','',final)
-					final = re.sub("'",'',final)
-					fi = final.split('\\')
-					if fi:
-						final = fi[0]
-		"""
 	elif 'mp4star' in str(url) or 'justmp4' in str(url):
 		final = mp4star(url) 
 	elif "vidup" in str(url):
@@ -97,7 +75,6 @@ def findurl(url):
 			final = re.sub('file: "','',m[0])
 		else:
 			final = ""
-	
 	elif "yourupload" in str(url):
 			i = url.replace(r'#038;','')
 			#content = subprocess.check_output(["curl","-L","-A",hdr,i])
@@ -135,7 +112,6 @@ def findurl(url):
 				print(final)
 			else:
 				final = ""
-	
 	elif "uploadc" in str(url):
 		content = ccurlNew(url)
 		replc = {' ':'%20', '[':'%5B', ']':'%5D','!':'%21'}
@@ -147,6 +123,89 @@ def findurl(url):
 			final = re.sub("[']",'',final)
 			final = final + "?start=0"
 			print(final)
+	elif 'mp4buddy' in str(url):
+		global mirror_number
+		content = ccurlNew(url)
+		soup = BeautifulSoup(content,'lxml')
+		links = soup.findAll('div',{'class':'pestana'})
+		arr = []
+		content_new = ''
+		for i in links:
+			l = i['data-src']
+			k = str(base64.b64decode(l).decode('utf-8'))
+			arr.append(k)
+		print(arr)
+		if arr:
+			if mirror_number < len(arr):
+				url = arr[mirror_number-1]
+			else:
+				url = arr[0]
+			content = ccurlNew(url)
+			soup = BeautifulSoup(content,'lxml')
+			m = soup.findAll('script,{"type":"text/javascript"}')
+			if not m:
+				m = soup.findAll('script')
+			print(m)
+			for i in m:
+				if 'eval(' in i.text and ('https' in i.text or 'http' in i.text):
+					print(i.text)
+					content_new = i.text
+					break
+			if content_new:
+				content_arr = content_new.split('|')
+				content_arr = content_arr[10:]
+				print(content_arr)
+				for p in range(0,5):
+					max_ = 0
+					max_len = ''
+					j = 0
+					mark_val = 0
+					for i in content_arr:
+						if len(i) >= max_:
+							max_len = i
+							max_ = len(i)
+							mark_val = j
+						j = j+1
+					print(max_len,max_)
+					del content_arr[mark_val]
+					final = 'http://mp4buddy.com/api/'+max_len
+					print(final)
+					content = ccurlNew(final)
+					print(content)
+					js = json.loads(content)
+					final = js['playlist'][0]['sources'][0]['file']
+					try:
+						#info = ccurlRequest(final,method='HEAD',curl_opt='-I')
+						info = ccurlNew(final+'#'+'-I')
+						print(info,'----------------')
+						if 'HTTP/1.1 503' in info or 'HTTP/1.1 200' in info:
+							print(final)
+							break
+						#if info['Content-Type'] == 'application/octet-stream' or info['Content-Type'] == 'video/mp4':
+						#	print(final)
+						#	break
+						#if info == 200 or info == 503:
+						#	print(final)
+						#	break
+					except Exception as e:
+						print(e)
+					print(final)
+	elif "mp4upload" in str(url):
+		content = ccurlRequest(url,method='GET')
+		m = re.findall("'file': 'https://[^']*mp4upload.com[^']*video.mp4",content)
+			
+		print(m)
+		if m:
+			url = re.sub("'file': '","",m[0])
+		else:
+			m = re.findall('"file": "https://[^"]*mp4upload.com[^"]*video.mp4',content)
+			if m:
+				url = re.sub('"file": "',"",m[0])
+			else:
+				url = ""
+				print("File Does Not exist")
+		print(url)
+		final = url
 	return final
 
 def mp4star(url):
@@ -279,7 +338,11 @@ def mp4starUrl(content,site):
 	#print(di)
 	u_arr = []
 	if site == 'mp4star':
-		v = m['https']
+		try:
+			v = m['https']
+		except Exception as e:
+			print(e,'--323--')
+			v = m['http']
 		o = re.findall('"'+v+':[^"]*',content)
 		print(o)
 		if o:
@@ -288,39 +351,6 @@ def mp4starUrl(content,site):
 				u = re.sub('"','',i)
 				u = u.replace("'",'')
 				u_arr.append(u)
-			#u = u.replace(",",'')
-		"""
-		n = m['https']
-		v = m['file']
-		n1 = m['http']
-		o = re.findall(v+"[^:]*:[^']"+n1+"[^']*",content)
-		print(o)
-		if o:
-			if len(o) == 1:
-				u1 = o[0]
-			else:
-				if qualityVideo == 'sd':
-					u1 = o[0]
-				else:
-					u1 = o[-1]
-			print(o)
-			u = re.sub(v+'[^:]*:','',o[0])
-		else:
-			print(v,n)
-			o = re.findall(v+"[^:]*:[^']'"+n+"[^']*",content)
-			print(o)
-			if o:
-				if len(o) == 1:
-					u1 = o[0]
-				else:
-					if qualityVideo == 'sd':
-						u1 = o[0]
-					else:
-						u1 = o[-1]
-				u = re.sub(v+"[^']*",'',u1)
-				u = u.replace("'",'')
-	
-		"""
 	elif site == 'myvidstream':
 		v = m['file']
 		n1 = m['http']
@@ -484,6 +514,48 @@ def newMp4star(url):
 		else:
 			final = src
 	return final
+	
+def ccurlRequest(url,method=None,curl_opt=None,cookie=None,getcode=None):
+	hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
+	print(url)
+	#url = url.encode('utf-8')
+	header_dict = {'User-Agent':hdr}
+	
+	if method is None:
+		method_val = 'GET'
+	else:
+		method_val = method
+	
+	if curl_opt == '-b':
+		cookie_file = cookie
+		if os.path.exists(cookie_file):
+			f = open(cookie_file,'r')
+			lines = f.readlines()
+			f.close()
+			value = ''
+			for i in lines:
+				i = i.strip()
+				j = i.split('	')
+				try:
+					key = j[5]
+					key_val = j[6]
+					value = value+key+'='+key_val+';'
+					print(value)
+				except Exception as e:
+					print(e,'--78--')
+			header_dict.update({'Cookie':value})
+	print(header_dict)
+	req = urllib.request.Request(url,headers=header_dict,method=method_val)
+	content = urllib.request.urlopen(req)
+	if getcode:
+		return content.getcode()
+	if curl_opt == '-IL':
+		return content.geturl()
+	elif curl_opt == '-I':
+		return content.info()
+	else:
+		return content.read().decode('utf-8')
+	
 class DubbedAnime():
 	def __init__(self,tmp):
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
@@ -513,7 +585,10 @@ class DubbedAnime():
 			msg = "Total " + str(len(m)) + " Mirrors, Selecting Mirror "+str(mirrorNo + 1)
 			#subprocess.Popen(["notify-send",msg])
 			send_notification(msg)
-			src = m[mirrorNo]
+			if mirrorNo < len(m):
+				src = m[mirrorNo]
+			else:
+				src = m[0]
 			print(src)
 			if 'vidcrazy' in src or 'uploadcrazy' in src:
 				final = uploadcrazy(src)
@@ -522,10 +597,15 @@ class DubbedAnime():
 			elif 'mp4star' in src or 'justmp4' in src: 
 				try:
 					content = ccurlNew(src)
+					content = content.replace('\\\\','')
+					print('????????????????????????????')
 					print(content)
+					print('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 					final = mp4starUrl(content,'mp4star')
 				except Exception as e:
 					print(e,'getting next link')
+			elif 'mp4buddy' in src or 'mp4upload' in src:
+				final = findurl(src)
 			print(final,'--final--')
 			if final and final.startswith('http'):
 				break
@@ -533,12 +613,16 @@ class DubbedAnime():
 			mirrorNo = j	
 		return final
 	def getFinalUrl(self,siteName,name,epn,mirrorNo,quality):
-		global qualityVideo
+		global qualityVideo,mirror_number
+		mirror_number = mirrorNo
 		qualityVideo = quality
 		final = ''
 		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
 				
-				url = "http://www.cartoon-world.tv/" + epn + "/"
+				if '	' in epn:
+					epn = epn.split('	')[1]
+				
+				url = "http://allmyanime.io" + epn
 				
 				
 				content = ccurlNew(url)
@@ -548,7 +632,7 @@ class DubbedAnime():
 				link = soup.findAll('iframe')
 				print(link)
 				for i in link:
-						if 'vidcrazy' in i['src'] or 'uploadcrazy' in i['src'] or 'mp4star' in i['src'] or 'justmp4' in i['src'] or 'gotvb8' in i['src'] or 'vidkai' in i['src']:
+						if 'vidcrazy' in i['src'] or 'uploadcrazy' in i['src'] or 'mp4star' in i['src'] or 'justmp4' in i['src'] or 'gotvb8' in i['src'] or 'vidkai' in i['src'] or 'mp4buddy' in i['src'] or 'mp4upload' in i['src']:
 								m.append(i['src'])
 				print(m)
 				final = self.get_correct_mirror(m,mirrorNo)
@@ -560,10 +644,16 @@ class DubbedAnime():
 				final = ""
 				m = re.findall('http://[^"]*uploadcrazy[^"]*|http://[^"]*vidkai[^"]*|http://[^"]*justmp4[^"]*|http://[^"]*mp4star[^"]*',content)
 				print(m)
-				final = self.get_correct_mirror(m,mirrorNo)
+				arr = []
+				for i in m:
+					if i.endswith('.jpg') or i.endswith('.jpeg'):
+						pass
+					else:
+						arr.append(i)
+				final = self.get_correct_mirror(arr,mirrorNo)
 				
 		elif siteName == "Dubcrazy":
-				url = "http://www.dubbedanimehere.com/" + epn + "/"
+				url = "http://www.dubbedanimeon.me/" + epn + "/"
 				content = ccurlNew(url)
 				print(url)
 				m = []
@@ -735,11 +825,11 @@ class DubbedAnime():
 		
 		if siteName == "Cartoon-World":
 			
-			url = "http://www.cartoon-world.tv/anime-list/"
+			url = "http://allmyanime.io/anime-list/"
 		elif siteName == "Cartoon-World-Movies":
-				url = "http://www.cartoon-world.tv/movie-list/"
+				url = "http://allmyanime.io/movie-list/"
 		elif siteName == "Cartoon-World-Cartoon":
-				url = "http://www.cartoon-world.tv/cartoon-list/"
+				url = "http://allmyanime.io/cartoon-list/"
 		elif siteName == "Dubcrazy":
 			if category == "Movies":
 				url = "http://www.dubbedanimeonline.us/dubbed-movies-list/"
@@ -833,13 +923,13 @@ class DubbedAnime():
 		return m
 	
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
-		
+		m = []
 		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
-			base = "http://www.cartoon-world.tv/"
+			base = "http://allmyanime.io/"
 			url = base+ "watch/" + name+"/"
 		elif siteName == "Dubcrazy":
 			#base = "http://www.dubbedanimeonline.us/"
-			base = "http://www.dubbedanimehere.com/"
+			base = "http://www.dubbedanimeon.me/"
 			url = base+ "view/" + name+"/" 
 		elif siteName == "Animetycoon":
 			base = "http://www.animetycoon.org/"
@@ -867,22 +957,17 @@ class DubbedAnime():
 		#else:
 		#	content = ccurl(url,"no_redir")
 		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
-			#content = (subprocess.check_output(['curl','-A',self.hdr,url]))
-			#content = self.getContent(content)
 			content = ccurlNew(url+'#'+'-L')
 		else:
-			"""
-			hdrs = {'user-agent':self.hdr}
-			req = requests.get(url,headers=hdrs)
-			summary = ""
-			content = req.text
-			"""
-			#content = (subprocess.check_output(['curl','-A',self.hdr,url]))
-			#content = self.getContent(content)
-			content = content = ccurlNew(url+'#'+'-L')
+			#content = ccurlNew(url+'#'+'-L')
+			if siteName == 'Dubcrazy':
+				content = ccurlRequest(url,method='GET',curl_opt='-L')
+			else:
+				content = ccurlNew(url+'#'+'-L')
 		soup = BeautifulSoup(content,'lxml')
+		print(soup.prettify())
 		if siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" or siteName == "Cartoon-World-Movies":
-	
+				"""
 				link1 = soup.findAll('div',{'class':'ani-row'})
 				print(link1)
 				try:
@@ -891,7 +976,7 @@ class DubbedAnime():
 					img = img1['src']
 					if not "http://" in img:
 						img2 = re.findall('/images/[^"]*',img)
-						img = "http://www.cartoon-world.tv"+img2[0]
+						img = "http://allmyanime.io"+img2[0]
 						print(img)
 					
 					#picn = "/tmp/AnimeWatch/"+name+'.jpg'
@@ -915,8 +1000,43 @@ class DubbedAnime():
 					summary = info[0].text+'\nType: '+ info[1].text+ '\nAired: ' + info[2].text + '\nGenre: ' + info[3].text+soup.find('div',{'class':'desc'}).text 
 				except:
 					summary = "No Summary Available"
+				"""
+				arr = []
+				try:
+					summary = ""
+					link = soup.find('p',{'class':'margin-top-10'})
+					#print(link
+					summary = link.text
+					
+					link_img = soup.findAll('img',{'class':'img-responsive margin-top-10'})
+					
+					
+					#img = "http://www.dubbedanimeon.me/images/" + name+".jpg"
+					img = link_img[-1]['src']
+					
+					print(img)
+					#picn = "/tmp/AnimeWatch/" + name + ".jpg"
+					picn = os.path.join(self.tmp_dir,name+'.jpg')
+					if not os.path.isfile(picn):
+						#subprocess.call(["curl","-A",self.hdr,"-L","-o",picn,img])
+						ccurlNew(img+'#'+'-o'+'#'+picn)
+				except:
+					summary = "No Summary Available"
+					picn = "No"
 				
-		
+				m = soup.findAll('a',{'class':'subbed'})
+				n = soup.findAll('a',{'class':'dubbed'})
+				
+				arr = []
+				
+				for i in m:
+					if 'href' in str(i):
+						arr.append(i['href'].split('/')[-1]+'-subbed'+'	'+i['href'])
+						
+				for i in n:
+					if 'href' in str(i):
+						arr.append(i['href'].split('/')[-1]+'-dubbed'+'	'+i['href'])
+				
 		elif siteName == "AniDub" or siteName == "AnimeStatic":
 			m = []
 			summary = ''
@@ -1036,14 +1156,16 @@ class DubbedAnime():
 			
 			try:
 				summary = ""
-				link = soup.findAll('div',{'class':'main_container'})
+				link = soup.find('div',{'class':'well well-sm'})
 				#print(link
-				for i in link:
-					j = i.findAll('p')
-					for k in j:
-						summary = k.text
+				summary = link.text
 				
-				img = "http://www.dubbedanimehere.com/images/" + name+".jpg"
+				link_img = soup.findAll('img',{'class':'img-responsive'})
+				
+				
+				#img = "http://www.dubbedanimeon.me/images/" + name+".jpg"
+				img = link_img[-1]['src']
+				
 				print(img)
 				#picn = "/tmp/AnimeWatch/" + name + ".jpg"
 				picn = os.path.join(self.tmp_dir,name+'.jpg')
@@ -1054,15 +1176,27 @@ class DubbedAnime():
 				summary = "No Summary Available"
 				picn = "No"
 			#print(img
-		if siteName != "AniDub" and siteName != "CartoonMax": 
-			fi = base + name+ '[^"]*/'
-			m = re.findall(fi, content)
-			j=0
-			for i in m:
-				i = re.sub(base,"",i)
-				m[j] = i[:-1]
-				j = j + 1
-		m=naturallysorted(m)
+		sort_arr = True
+		if siteName != "AniDub" and siteName != "CartoonMax":
+			if (siteName == "Cartoon-World" or siteName == "Cartoon-World-Cartoon" 
+					or siteName == "Cartoon-World-Movies"):
+				m = arr
+				sort_arr = False
+			else: 
+				fi = base + name+ '[^"]*/'
+				m = re.findall(fi, content)
+				found = False
+				if not m:
+					m = re.findall(name+'-dubbed-[^"]*', content)
+					found = True
+				j=0
+				if not found:
+					for i in m:
+						i = re.sub(base,"",i)
+						m[j] = i[:-1]
+						j = j + 1
+		if sort_arr:
+			m=naturallysorted(m)
 		#m.append(picn)
 		#m.append(summary)
 		record_history = True

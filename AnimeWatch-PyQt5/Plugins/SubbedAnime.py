@@ -315,6 +315,17 @@ def mp4starUrl(content,site):
 			u = u.replace("'",'')
 			u = u.replace(",",'')
 			u = u.replace('"','')
+	elif site == 'animepremium':
+		v = m['http']
+		o = re.findall('"'+v+':[^"]*',content)
+		print(o)
+		if o:
+			print(o)
+			#u = re.sub("'"+v+'[^,]*','',o[0])
+			u = o[0].replace('"','')
+			u = u.replace("'",'')
+			u = u.replace(",",'')
+			u = u.replace('"','')
 	elif site == 'tusfiles':
 		v = '"'+m['src']+'"'
 		v1 = m['value']
@@ -2314,6 +2325,8 @@ class SubbedAnime():
 					if links:
 						final = links[0]
 						print(final)
+					if not final:
+						final = mp4starUrl(content,'animepremium')
 					if not final:
 						content = ccurl(final1)
 						final2 = re.findall('http://[^"]*video44[^"]*',content)

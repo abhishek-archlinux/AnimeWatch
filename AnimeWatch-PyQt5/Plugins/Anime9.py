@@ -99,6 +99,7 @@ class Anime9():
 			m = soup.findAll('div',{'class':'server row'})
 			p = 0
 			index = 0
+			print(m,len(m))
 			for i in m:
 				index = 0
 				j = i.findAll('li')
@@ -115,7 +116,10 @@ class Anime9():
 						except Exception as e:
 							print(e,'--84--')
 							n = 'NONE'
-						arr[index] = arr[index]+'::'+n
+						try:
+							arr[index] = arr[index]+'::'+n
+						except Exception as e:
+							print(e,'--121---')
 						index = index + 1
 				p = p +1
 			record_history = True
