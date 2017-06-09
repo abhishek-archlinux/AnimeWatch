@@ -13,6 +13,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+
 import sys
 import urllib
 import pycurl
@@ -27,25 +28,7 @@ import os.path
 from subprocess import check_output
 import shutil
 import json
-try:
-	from headlessBrowser import BrowseUrl
-except:
-	from headlessBrowser_webkit import BrowseUrl
-from player_functions import ccurl
-
-def cloudfare(url,quality):
-	web = BrowseUrl(url,quality)
-
-def naturallysorted(l): 
-	convert = lambda text: int(text) if text.isdigit() else text.lower() 
-	alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ] 
-	return sorted(l, key = alphanum_key)
-	
-
-def replace_all(text, di):
-	for i, j in di.iteritems():
-		text = text.replace(i, j)
-	return text
+from player_functions import ccurl,naturallysorted
 
 
 class Shoutcast():
@@ -83,7 +66,7 @@ class Shoutcast():
 		for i in l:
 			try:
 				#print(i['ID'],i['Name'],i['Bitrate'],i['Listeners'])
-				s.append(i['Name'].replace('/','-')+'	id='+str(i['ID'])+'\nBitrate='+str(i['Bitrate'])+'\nListeners='+str(i['Listeners'])+'\n')
+				s.append(i['Name'].replace('/','-')+'	id='+str(i['ID'])+'|Bitrate='+str(i['Bitrate'])+'|Listeners='+str(i['Listeners']))
 			except:
 				pass
 		return s
@@ -165,7 +148,7 @@ class Shoutcast():
 		return m
 	
 	def getEpnList(self,name,opt,depth_list,extra_info,siteName,category):
-		name_id = (re.search('id=[^\n]*',extra_info).group()).split('=')[1]
+		name_id = (re.search('id=[^|]*',extra_info).group()).split('=')[1]
 		#nm = name.rsplit('-',1)
 		#name = nm[0]
 		#name_id = nm[1]

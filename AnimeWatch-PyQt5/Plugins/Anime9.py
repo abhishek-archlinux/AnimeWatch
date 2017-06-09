@@ -179,7 +179,10 @@ class Anime9():
 				os.remove(self.cookie_file)
 			_api,nurl = self.get_epn_url(name,epn,mirror,quality)
 			
-		url = os.path.join(_api,nurl)
+		#url = os.path.join(_api,nurl)
+		if nurl.startswith('?'):
+			nurl = nurl[1:]
+		url = _api + '&' + nurl
 		print(url)
 
 		content = ccurl(url)
