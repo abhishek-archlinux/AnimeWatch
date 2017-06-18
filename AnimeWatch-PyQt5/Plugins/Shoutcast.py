@@ -1,3 +1,18 @@
+"""
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
 import sys
 import urllib
 import pycurl
@@ -20,7 +35,7 @@ class Shoutcast():
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		self.tmp_dir = tmp
 	def getOptions(self):
-			criteria = ['History','Genre']
+			criteria = ['History','Genre','Anime','JPOP']
 			return criteria
 		
 	def getFinalUrl(self,name,epn,mir,quality):
