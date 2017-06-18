@@ -15948,6 +15948,8 @@ class Ui_MainWindow(object):
 							
 						write_files(file_path,lines,line_by_line=True)
 						txt = self.check_symbol + epnArrList[row]
+					if '	' in txt:
+						txt = txt.split('	')[0]
 					txt = txt.replace('_',' ',1)
 					self.list2.item(row).setText(txt)
 					
