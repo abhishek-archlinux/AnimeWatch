@@ -222,15 +222,22 @@ def parse_file(content,url,quality):
 
 class NetWorkManager(QtWebEngineCore.QWebEngineUrlRequestInterceptor):
 	netS = pyqtSignal(str)
-	def __init__(self,parent,quality,url):
+	def __init__(self,parent,quality,url,get_link=None):
 		super(NetWorkManager, self).__init__(parent)
 		self.quality = quality
 		self.url = url
+		if get_link:
+			self.get_link = get_link
+		else:
+			self.get_link = None
+			
 	def interceptRequest(self,info):
 		t = info.requestUrl()
 		urlLnk = t.url()
 		block_url = ''
-		
+		#print(self.get_link,urlLnk)
+		if '9anime.to' in urlLnk and 'episode/info?' in urlLnk and self.get_link:
+			self.netS.emit(urlLnk)
 		lower_case = urlLnk.lower()
 		#lst = []
 		lst = ["doubleclick.net" ,"ads",'.gif','.css','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
@@ -248,18 +255,24 @@ class BrowserPage(QWebEnginePage):
 	media_signal = pyqtSignal(str)
 	media_received = pyqtSignal(str)
 	#val_signal = pyqtSignal(str)
-	def __init__(self,url,quality,add_cookie,c_file,m_val,v_e,end_pt=None,get_cookie=None,domain_name=None):
+	def __init__(
+			self,url,quality,add_cookie,c_file,m_val,v_e,end_pt=None,
+			get_cookie=None,domain_name=None,get_link=None):
 		super(BrowserPage, self).__init__()
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		self.cookie_file = c_file
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
 		x = ''
+		if get_link:
+			self.get_link = get_link
+		else:
+			self.get_link = None
 		self.m = self.profile().cookieStore()
 		self.profile().setHttpUserAgent(self.hdr)
 		self.loadFinished.connect(self._loadFinished)
 		self.loadProgress.connect(self._loadProgress)
 		self.loadStarted.connect(self._loadstart)
-		p = NetWorkManager(self,quality,url)
+		p = NetWorkManager(self,quality,url,self.get_link)
 		p.netS.connect(lambda y = x : self.urlMedia(y))
 		self.media_received.connect(lambda y = x : self.urlMedia(y))
 		self.profile().setRequestInterceptor(p)
@@ -286,6 +299,7 @@ class BrowserPage(QWebEnginePage):
 			if self.domain_name.lower() == 'none':
 				self.domain_name = None
 		self.get_cookie = get_cookie
+		
 		if not self.add_cookie:
 			self.m.deleteAllCookies()
 			self.set_cookie(self.cookie_file)
@@ -334,7 +348,7 @@ class BrowserPage(QWebEnginePage):
 				l = k.split('	')
 				d = QtNetwork.QNetworkCookie()
 				d.setDomain(l[0])
-				print(l[0])
+				print(l[0],'--setting--')
 				if l[1]== 'TRUE':
 					l1= True
 				else:
@@ -359,6 +373,7 @@ class BrowserPage(QWebEnginePage):
 				c.append(d)
 				#cookie_arr.append(d)
 				self.profile().cookieStore().setCookie(d)
+				print('--cookie--set--')
 		
 		
 	def _cookie(self,x):
@@ -370,7 +385,7 @@ class BrowserPage(QWebEnginePage):
 		#print(l)
 		#self.c_list.append(l)
 		l = self._getTime(l)
-		print(l)
+		#print(l)
 		
 		if 'kissanime' in self.url:
 			self._writeCookies(l)
@@ -386,7 +401,7 @@ class BrowserPage(QWebEnginePage):
 				self.got_cookie = True
 			#f = open('/tmp/ck.txt','w')
 			#f.close()
-			print('------cf----------')
+			#print('------cf----------')
 		
 			
 		#self.setHtml('<html>cookie Obtained</html>')
@@ -468,10 +483,10 @@ class BrowserPage(QWebEnginePage):
 				f = open(cc,'a')
 				f.write('\n'+str1)
 			#print('written--cloud_cookie--------------')
-			print(str1,'--496--')
+			#print(str1,'--496--')
 			f.close()
-			content = open(cc).read()
-			print(content,'--499--')
+			#content = open(cc).read()
+			#print(content,'--499--')
 			
 	def _getTime(self,i):
 		j = re.findall('expires=[^;]*',i)
@@ -551,7 +566,7 @@ class BrowserPage(QWebEnginePage):
 
 class BrowseUrlT(QWebEngineView):
 	#cookie_s = pyqtSignal(str)
-	def __init__(self,url,quality,cookie,end_point=None,get_cookie=None,domain_name=None):
+	def __init__(self,url,quality,cookie,end_point=None,get_cookie=None,domain_name=None,get_link=None):
 		super(BrowseUrlT, self).__init__()
 		#QtWidgets.__init__()
 		self.url = url
@@ -565,6 +580,10 @@ class BrowseUrlT(QWebEngineView):
 			self.end_pt = end_point
 		else:
 			self.end_pt = 'cf_clearance'
+		if get_link:
+			self.get_link = True
+		else:
+			self.get_link = None
 		self.domain_name = domain_name
 		print(self.end_pt,get_cookie)
 		self.tmp_dir,self.new_c = os.path.split(self.cookie_file)
@@ -602,7 +621,7 @@ class BrowseUrlT(QWebEngineView):
 		self.horizontalLayout_5.addWidget(self)
 		
 		if self.add_cookie:
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt,get_cookie=self.get_cookie,domain_name=self.domain_name)
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt,get_cookie=self.get_cookie,domain_name=self.domain_name,get_link=self.get_link)
 			
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
@@ -615,7 +634,7 @@ class BrowseUrlT(QWebEngineView):
 		elif ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url) and self.quality and ('id=' in url):
 			print('+++++++++++++++++++')
 			self.tab_web.setWindowTitle('Wait! Resolving Link')
-			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt,get_cookie=self.get_cookie,domain_name=self.domain_name)
+			self.web = BrowserPage(url,self.quality,self.add_cookie,self.cookie_file,self.media_val,self.value_encode,end_pt=self.end_pt,get_cookie=self.get_cookie,domain_name=self.domain_name,get_link=self.get_link)
 			self.web.got_cookie = True
 			self.web.cookie_signal.connect(self.cookie_found)
 			self.web.media_signal.connect(self.media_source_found)
@@ -658,9 +677,9 @@ class BrowseUrlT(QWebEngineView):
 	@pyqtSlot(str)
 	def media_source_found(self):
 		#global web
-		#self.setHtml('<html>Media Source Obtained</html>')
+		self.setHtml('<html>Media Source Obtained</html>')
 		print('media found')
-		
+		sys.exit(0)
 	
 		
 
@@ -678,9 +697,15 @@ if __name__ == "__main__":
 		else:
 			get_cookie = False
 		dm = sys.argv[6]
+		lnk = sys.argv[8]
+		if lnk == 'true':
+			nlnk = True
+		else:
+			nlnk = None
+		print(nlnk,lnk,'--nlnk__---')
 		app = QtWidgets.QApplication(sys.argv)
 		print(url,quality,cookie,'--685---',end_pt)
-		web = BrowseUrlT(url,quality,cookie,end_point=end_pt,get_cookie=get_cookie,domain_name=dm)
+		web = BrowseUrlT(url,quality,cookie,end_point=end_pt,get_cookie=get_cookie,domain_name=dm,get_link=lnk)
 		ret = app.exec_()
 		sys.exit(ret)
 

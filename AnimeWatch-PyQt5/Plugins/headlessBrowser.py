@@ -33,7 +33,7 @@ from player_functions import ccurl
 
 class BrowseUrl(QWebEngineView):
 	
-	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None):
+	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None,get_link=None):
 		super(BrowseUrl, self).__init__()
 		#QtWidgets.__init__()
 		self.url = url
@@ -54,6 +54,10 @@ class BrowseUrl(QWebEngineView):
 			self.domain_name = domain_name
 		else:
 			self.domain_name= 'None'
+		if get_link:
+			self.get_link = 'true'
+		else:
+			self.get_link= 'None'
 		self.path_val = ''
 		j = 0
 		print(sys.path)
@@ -93,19 +97,19 @@ class BrowseUrl(QWebEngineView):
 		elif 'kawaii-player' in BASEDIR:
 			enginePath = os.path.join(home1,'.config','kawaii-player','src','Plugins','headlessEngine.py')
 		tmp_dir,new_c = os.path.split(self.cookie_file)
-		
+		print(self.get_link,'--get_link___--')
 		content = ccurl(url+'#-b#'+self.cookie_file)
-		if 'checking_browser' in content or self.get_cookie == 'true':
-			if os.path.exists(self.cookie_file):
+		if 'checking_browser' in content or self.get_cookie == 'true' or self.get_link == 'true':
+			if os.path.exists(self.cookie_file) and self.get_link == 'None':
 				os.remove(self.cookie_file)
 			if os.name == 'posix':
 				print('--checking__browser-----57--',self.py,sys.executable)
 				print(enginePath,url,self.quality,self.cookie_file)
 				p = subprocess.Popen([self.py,enginePath,url,self.quality,
-						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
+						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val,self.get_link])
 			else:
 				p = subprocess.Popen([self.py,enginePath,url,self.quality,
-						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
+						self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val,self.get_link],shell=True)
 			
 			cnt = 0
 			
@@ -113,7 +117,7 @@ class BrowseUrl(QWebEngineView):
 			if os.path.exists(lnk_file):
 				os.remove(lnk_file)
 			print(lnk_file,'--lnk--file--')
-			while(not os.path.exists(self.cookie_file) and cnt < 20):
+			while((not os.path.exists(self.cookie_file) or (self.get_link=='true' and not os.path.exists(lnk_file))) and cnt < 20):
 				print(cnt)
 				print('wait Clouflare ')
 				time.sleep(1)
@@ -130,10 +134,10 @@ class BrowseUrl(QWebEngineView):
 			if ('id=' in url) and os.path.exists(self.cookie_file) and ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url):
 				if os.name == 'posix':
 					p = subprocess.Popen([self.py,enginePath,url,self.quality,
-							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val,self.get_link])
 				else:
 					p = subprocess.Popen([self.py,enginePath,url,self.quality,
-							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val,self.get_link],shell=True)
 				cnt = 0
 				while(not os.path.exists(lnk_file) and cnt < 60):
 					print(cnt)
@@ -149,10 +153,10 @@ class BrowseUrl(QWebEngineView):
 				print(lnk_file,'--lnk--file--')
 				if os.name == 'posix':
 					p = subprocess.Popen([self.py,enginePath,url,self.quality,
-							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val])
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val,self.get_link])
 				else:
 					p = subprocess.Popen([self.py,enginePath,url,self.quality,
-							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val],shell=True)
+							self.cookie_file,self.end_pt,self.get_cookie,self.domain_name,self.path_val,self.get_link],shell=True)
 				cnt = 0
 				file_path = os.path.join(tmp_dir,'tmp_cookie')
 				while(not os.path.exists(lnk_file) and cnt < 60):

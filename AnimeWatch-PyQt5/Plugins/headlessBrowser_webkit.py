@@ -90,9 +90,13 @@ def parse_file(content,url,quality):
 	return txt
 
 class NetWorkManager(QNetworkAccessManager):
-	def __init__(self):
+	def __init__(self,get_link=None):
 		super(NetWorkManager, self).__init__()
-   
+		if get_link:
+			self.get_link = True
+		else:
+			self.get_link = None
+			
 	def createRequest(self, op, request, device = None ):
 		global block_list,TMP_DIR
 		try:
@@ -100,7 +104,11 @@ class NetWorkManager(QNetworkAccessManager):
 			path = (request.url().toString())
 		except UnicodeEncodeError:
 			path = (request.url().path())
-			
+		
+		if '9anime.to' in path and 'episode/info?' in path:
+			f = open(os.path.join(TMP_DIR,'lnk.txt'),'w')
+			f.write(path)
+			f.close()
 		lower_path = path.lower()
 		#block_list = []
 		block_list = ["doubleclick.net" ,"ads",'.gif','.css','facebook','.aspx', r"||youtube-nocookie.com/gen_204?", r"youtube.com###watch-branded-actions", "imagemapurl","b.scorecardresearch.com","rightstuff.com","scarywater.net","popup.js","banner.htm","_tribalfusion","||n4403ad.doubleclick.net^$third-party",".googlesyndication.com","graphics.js","fonts.googleapis.com/css","s0.2mdn.net","server.cpmstar.com","||banzai/banner.$subdocument","@@||anime-source.com^$document","/pagead2.","frugal.gif","jriver_banner.png","show_ads.js",'##a[href^="http://billing.frugalusenet.com/"]',"http://jriver.com/video.html","||animenewsnetwork.com^*.aframe?","||contextweb.com^$third-party",".gutter",".iab",'http://www.animenewsnetwork.com/assets/[^"]*.jpg','revcontent']
@@ -124,7 +132,7 @@ class NetWorkManager(QNetworkAccessManager):
 
   
 class BrowserPage(QWebPage):  
-	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None,captcha=None,get_epn=None):
+	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None,captcha=None,get_epn=None,get_link=None):
 		super(BrowserPage, self).__init__()
 		self.hdr = 'Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:45.0) Gecko/20100101 Firefox/45.0'
 		#self.loadFinished.connect(self._loadFinished)
@@ -138,6 +146,10 @@ class BrowserPage(QWebPage):
 			self.end_point = 'cf_clearance'
 		else:
 			self.end_point = end_point
+		if get_link:
+			self.get_link = True
+		else:
+			self.get_link = None
 		self.domain_name = domain_name
 		if self.domain_name:
 			if self.domain_name.lower() == 'none':
@@ -323,13 +335,13 @@ class BrowserPage(QWebPage):
 		return(d)
 		
 class Browser(QWebView):
-	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None,captcha=None,get_epn=None):
+	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None,captcha=None,get_epn=None,get_link=None):
 		super(Browser, self).__init__()
-		self.setPage(BrowserPage(url,quality,c,end_point,get_cookie,domain_name,captcha=captcha,get_epn=get_epn))
+		self.setPage(BrowserPage(url,quality,c,end_point,get_cookie,domain_name,captcha=captcha,get_epn=get_epn,get_link=get_link))
 		
 
 class BrowseUrl(QtWidgets.QWidget):
-	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None):
+	def __init__(self,url,quality,c,end_point=None,get_cookie=None,domain_name=None,get_link=None):
 		super(BrowseUrl, self).__init__()
 		global TMP_DIR
 		self.cookie_file = c
@@ -347,6 +359,10 @@ class BrowseUrl(QtWidgets.QWidget):
 			self.domain_name = domain_name
 		else:
 			self.domain_name= 'None'
+		if get_link:
+			self.get_link = True
+		else:
+			self.get_link = None
 		self.get_epn = False
 		if ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url) and quality and ('id=' in url):
 			self.get_epn = True
@@ -361,11 +377,13 @@ class BrowseUrl(QtWidgets.QWidget):
 		if 'checking_browser' in content:
 			self.get_cookie = True
 			
-		if self.get_cookie or self.get_epn or self.captcha:
+		if self.get_cookie or self.get_epn or self.captcha or self.get_link:
+			if os.path.exists(self.cookie_file) and not self.get_link:
+				os.remove(self.cookie_file)
 			if not os.path.exists(self.cookie_file):
 				
 				self.cookie = QtNetwork.QNetworkCookieJar()
-				self.nam = NetWorkManager()
+				self.nam = NetWorkManager(self.get_link)
 				self.nam.setCookieJar(self.cookie)
 			else:
 				cookie_arr = QtNetwork.QNetworkCookieJar()
@@ -397,10 +415,12 @@ class BrowseUrl(QtWidgets.QWidget):
 					c.append(d)
 					#cookie_arr.append(d)
 				cookie_arr.setAllCookies(c)
-				self.nam = NetWorkManager()
+				self.nam = NetWorkManager(self.get_link)
 				self.nam.setCookieJar(cookie_arr)
 			print('---364----')
-			self.web = Browser(url,quality,self.cookie_file,self.end_point,self.get_cookie,self.domain_name,self.captcha,self.get_epn)
+			self.web = Browser(
+				url,quality,self.cookie_file,self.end_point,self.get_cookie,
+				self.domain_name,self.captcha,self.get_epn,self.get_link)
 			self.tab_2 = QtWidgets.QWidget()
 			if self.captcha:
 				self.tab_2.setMaximumSize(700,700)
@@ -418,26 +438,30 @@ class BrowseUrl(QtWidgets.QWidget):
 			self.web.load(QUrl(url))
 			cnt = 0
 			
+			lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
+			if os.path.exists(lnk_file):
+				os.remove(lnk_file)
 			
-			while(not os.path.exists(self.cookie_file) and cnt < 30):
+			while((not os.path.exists(self.cookie_file) or (self.get_link and not os.path.exists(lnk_file))) and cnt < 30):
 				#print()
 				print('wait Clouflare ')
 				time.sleep(1)
 				QtWidgets.QApplication.processEvents()
 				cnt = cnt+1
-				self.tab_2.setWindowTitle('Wait! Cloudflare '+str(cnt)+'s')
+				if self.get_link:
+					self.tab_2.setWindowTitle('Link Resolving '+str(cnt)+'s')
+				else:
+					self.tab_2.setWindowTitle('Wait! Cloudflare '+str(cnt)+'s')
 				
 			if cnt >= 30 and not os.path.exists(self.cookie_file):
 				f = open(self.cookie_file,'w')
 				f.close()
-			lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
-			if os.path.exists(lnk_file):
-				os.remove(lnk_file)
+			
 			cnt = 0
 			cnt_limit = 30
 			if self.captcha:
 				cnt_limit = 60
-			if ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url) and quality:
+			if ('kimcartoon' in url or 'kissasian' in url or 'kissanime' in url or self.get_link) and quality:
 				while(not os.path.exists(lnk_file) and cnt < cnt_limit):
 					print('wait Finding Link ')
 					time.sleep(1)

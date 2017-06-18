@@ -39,8 +39,10 @@ try:
 except:
 	from headlessBrowser_webkit import BrowseUrl
 	
-def cloudfare(url,quality,cookie,end_point,get_cookie,dm):
-	web = BrowseUrl(url,quality,cookie,end_point=end_point,get_cookie=get_cookie,domain_name=dm)
+def cloudfare(url,quality,cookie,end_point,get_cookie,dm,get_link=None):
+	web = BrowseUrl(
+		url,quality,cookie,end_point=end_point,get_cookie=get_cookie,
+		domain_name=dm,get_link=get_link)
 
 class Anime9():
 	
@@ -159,26 +161,74 @@ class Anime9():
 		url = 'https://9anime.to/ajax/episode/info?id='+epn_id+'&update=0'
 		content = ccurl(url+'#-b#'+self.cookie_file)
 		l = json.loads(content)
+		_target_found = False
 		for i in l:
 			print(i,l[i])
 			if i == 'grabber':
 				_api = l[i]
 			if i == 'params':
-				_id = l[i]['id']
-				_token = l[i]['token']
-				_opt = l[i]['options']
-		nurl = '?id={0}&token={1}&options={2}&mobile=0'.format(_id,_token,_opt)
+				try:
+					_id = l[i]['id']
+					_token = l[i]['token']
+					_opt = l[i]['options']
+				except Exception as e:
+					print(e,'--172--')
+			if i == 'target':
+				_target = l[i]
+				if 'mycloud' in _target or 'openload' in _target:
+					_target_found = True
+		if _target_found:
+			nurl = _target
+			if not nurl.startswith('http'):
+				_target = re.search('[a-zA-Z0-9][^"]*',_target).group()
+				nurl = 'https://'+_target+'&autostart=true'
+			_api = None
+			print(nurl)
+		else:
+			nurl = '?id={0}&token={1}&options={2}&mobile=0'.format(_id,_token,_opt)
 		return (_api,nurl)
 	
-	def getFinalUrl(self,name,epn,mirror,quality):
-		try:
-			_api,nurl = self.get_epn_url(name,epn,mirror,quality)
-		except Exception as e:
-			print(e,'--158--')
-			if os.path.isfile(self.cookie_file):
-				os.remove(self.cookie_file)
-			_api,nurl = self.get_epn_url(name,epn,mirror,quality)
-			
+	def get_direct_grabber(self,url):
+		_ts = '0'
+		_val = '0'
+		link_split = url.split('?')[-1]
+		link_arr = link_split.split('&')
+		for i in link_arr:
+			if i.startswith('ts='):
+				_ts = i
+			elif i.startswith('_='):
+				_val = i
+		content = ccurl(url+'#-b#'+self.cookie_file)
+		l = json.loads(content)
+		_target_found = False
+		for i in l:
+			print(i,l[i])
+			if i == 'grabber':
+				_api = l[i]
+			if i == 'params':
+				try:
+					_id = l[i]['id']
+					_token = l[i]['token']
+					_opt = l[i]['options']
+				except Exception as e:
+					print(e,'--172--')
+			if i == 'target':
+				_target = l[i]
+				if 'mycloud' in _target or 'openload' in _target:
+					_target_found = True
+		if _target_found:
+			nurl = _target
+			if not nurl.startswith('http'):
+				_target = re.search('[a-zA-Z0-9][^"]*',_target).group()
+				nurl = 'https://'+_target+'&autostart=true'
+			_api = None
+			print(nurl)
+		else:
+			nurl = '?{0}&{1}id={2}&token={3}&options={4}&mobile=0'.format(_ts,_val,_id,_token,_opt)
+		return (_api,nurl)
+	
+	def get_old_server(self,_api,nurl,quality):
+		final = ''
 		#url = os.path.join(_api,nurl)
 		if nurl.startswith('?'):
 			nurl = nurl[1:]
@@ -257,6 +307,120 @@ class Anime9():
 			if m:
 				#print(m)
 				final = re.sub('Location: |\r','',m[-1])
+		
+		return final
+	
+	def get_quality_dict(self,d,quality):
+		final = ''
+		if quality == 'sd' and '360p' in d:
+			final = d['360p']
+		elif quality == 'sd480p':
+			if '480p' in d:
+				final = d['480p']
+			else:
+				final = d['360p']
+		elif quality == 'hd':
+			if '720p' in d:
+				final = d['720p']
+			elif '480p' in d:
+				final = d['480p']
+			else:
+				final = d['360p']
+		elif quality == 'best':
+			if 'best' in d:
+				final = d['best']
+			elif '1080p' in d:
+				final = d['1080p']
+			elif '720p' in d:
+				final = d['720p']
+			elif '480p' in d:
+				final = d['480p']
+			else:
+				final = d['360p']
+		return final
+	
+	def get_new_server(self,nurl,quality):
+		final = ''
+		if 'mycloud' in nurl:
+			content = ccurl(nurl)
+			tlink = re.search('"file":"[^"]*',content).group()
+			link = tlink.replace('"file":"','',1)
+			if 'http' not in link:
+				link = 'https://' + re.search('[a-zA-Z0-9][^"]*',link).group()
+			pre_link = link.rsplit('/',1)[0]
+			print(link,pre_link,'--310--')
+			content = ccurl(link)
+			arr = content.split('\n')
+			if '#EXTM3U' in arr[0]:
+				arr = arr[1:]
+			j = 0
+			quality_tuple = []
+			for i in arr:
+				i = i.strip()
+				if i.startswith('#'):
+					link_new = arr[j+1]
+					if i.endswith('x360'):
+						val = ('360p',link_new)
+					elif i.endswith('x480'):
+						val = ('480p',link_new)
+					elif i.endswith('x720'):
+						val = ('720p',link_new)
+					elif i.endswith('x1080'):
+						val = ('1080p',link_new)
+					quality_tuple.append(val)
+				j = j + 1
+			if quality_tuple:
+				quality_dict = dict(quality_tuple)
+				tfinal = self.get_quality_dict(quality_dict,quality)
+				if tfinal:
+					if tfinal.startswith('/'):
+						tfinal = tfinal[1:]
+					final = pre_link + '/' + tfinal
+				print(pre_link,tfinal)
+		return final 
+	
+	def getFinalUrl(self,name,epn,mirror,quality):
+		"""
+		try:
+			_api,nurl = self.get_epn_url(name,epn,mirror,quality)
+		except Exception as e:
+			print(e,'--158--')
+			if os.path.isfile(self.cookie_file):
+				os.remove(self.cookie_file)
+			_api,nurl = self.get_epn_url(name,epn,mirror,quality)
+			
+		if _api is None:
+			final = self.get_new_server(nurl,quality)
+		else:
+			final = self.get_old_server(_api,nurl,quality)
+		"""
+		new_epn = epn.split('/')[-1]
+		if '::' in new_epn:
+			id_arr = new_epn.split('::')
+			print(id_arr,mirror)
+			if mirror <= len(id_arr):
+				epn_id = id_arr[mirror-1]
+			else:
+				epn_id = id_arr[0]
+		else:
+			epn_id = new_epn
+			
+		new_url = 'https://9anime.to'+epn.split('::')[0]
+		print(new_url)
+			
+		lnk_file = os.path.join(self.tmp_dir,'lnk.txt')
+		if os.path.exists(lnk_file):
+			os.remove(lnk_file)
+		cloudfare(new_url,quality,self.cookie_file,'watching',True,'9anime.to',get_link=True)
+		if os.path.exists(lnk_file):
+			link = open(lnk_file).readlines()
+			link = link[0].strip()
+			print('----------link','>>>>>>>>',link)
+			
+					
+			_api,nurl = self.get_direct_grabber(link)
+			
+			final = self.get_old_server(_api,nurl,quality)
 		return final
 	
 	def parse_page(self,url,cookie=None):

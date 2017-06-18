@@ -79,8 +79,8 @@ def unshorten_url(url):
 
 
 
-def cloudfareUrl(url,quality,c,end_pt):
-	web = BrowseUrl(url,quality,c,end_point=end_pt)
+def cloudfareUrl(url,quality,c,end_pt,get_cookie=None,dm=None):
+	web = BrowseUrl(url,quality,c,end_point=end_pt,get_cookie=get_cookie,domain_name=dm)
 
 			
 	
@@ -160,7 +160,19 @@ def shrink_url(url,tmp_dir):
 	
 	return shrink_link
 
-
+def convert_base(val,arr):
+	length = len(arr)
+	i = val
+	num_arr = []
+	while(int(i/length)):
+		j = i%length
+		i = int(i/length)
+		num_arr.append(arr[j])
+		
+	num_arr.append(arr[i])
+	
+	num_arr.reverse()
+	return ''.join(num_arr)
 
 def mp4starUrl(content,site):
 	
@@ -234,6 +246,10 @@ def mp4starUrl(content,site):
 	k = 100
 	d1 = []
 	for i in range(len(m)):
+		g = convert_base(i,arr)
+		r = (m[i],g)
+		r1 = (g,m[i])
+		"""
 		if not(m[i]):
 			k = k+1
 		if i%length == 0 and i:
@@ -256,12 +272,13 @@ def mp4starUrl(content,site):
 				r = (m[i],arr[j]+arr[n])
 				r1 = (arr[j]+arr[n],m[i])
 			n = n+1
+		"""
 		d.append(r)
 		d1.append(r1)
 	m = dict(d)
 	di = dict(d1)
 	print(di)
-	#print(di)
+	print(m)
 	
 	if site == 'mp4star':
 		try:
@@ -573,7 +590,7 @@ def findurl(i):
 				found = re.sub('Location: |\r','',m[-1])
 			else:
 				found = url
-		
+		print(i,'--src--592----')
 		return found
 	elif "myvidstream" in i:
 			packed = ''
@@ -790,19 +807,19 @@ class SubbedAnime():
 		self.cookie_file = ''
 		
 	def getOptions(self):
-			criteria = ['Anime1','Anime44','AnimePlus','AnimeWow','Animehere','GoodAnime','AnimeNet','AnimeStream','Animefun','Animegalaxy','Animebox','Anime-Freak','AnimeBaka','AnimeHQ','AnimeSquare','Animeget','AnimeMax','AnimeAll','AnimeMix']
+			criteria = ['Anime1','Anime44','AnimePlus','AnimeWow','Animehere','GoodAnime','AnimeOut','AnimeNet','AnimeStream','Animefun','Animegalaxy','Animebox','Anime-Freak','AnimeHQ','AnimeSquare','Animeget']
 			return criteria
 			
 	def ccurlN(self,url,siteName,cookie=None,post=None):
 		
 			
-		if siteName == "AnimePlus" or siteName == 'AnimeSquare' or siteName == 'AnimeHQ' or siteName=='Animeget':
+		if siteName == "AnimePlus" or siteName == 'AnimeSquare' or siteName=='Animeget':
 			if not os.path.exists(self.cookie_file):
 				content = ccurl(url+'#-c#'+self.cookie_file)
 			else:
 				content = ccurl(url+'#-b#'+self.cookie_file)
 			#print(content)
-			if siteName == 'AnimeSquare' or siteName == 'AnimeHQ' or siteName=='Animeget':
+			if siteName == 'AnimeSquare' or siteName=='Animeget':
 				if 'checking_browser' in content:
 					if os.path.exists(self.cookie_file):
 						os.remove(self.cookie_file)
@@ -816,12 +833,40 @@ class SubbedAnime():
 						content = ccurl(url+'#-d#'+post_dict,self.cookie_file)
 					else:
 						content = ccurl(url+'#-b#'+self.cookie_file)
+		elif siteName == 'AnimeHQ':
+			print(url)
+			ext = url.split('/')[-1]
+			if ext.isnumeric():
+				find_ep = True
+			else:
+				find_ep = False
+			if os.path.exists(self.cookie_file):
+				content = ccurl(url+'#-b#'+self.cookie_file)
+			else:
+				if find_ep:
+					cloudfareUrl(url,'sd',self.cookie_file,'__utmt',True,'moetube.net')
+					content = ccurl(url+'#-b#'+self.cookie_file)
+				else:
+					content = ccurl(url)
+				print(self.cookie_file,'----843---')
+				#f = open(self.cookie_file,'a')
+				#f.write('\n_popfired=1')
+				#f.close()
 		elif siteName == "AnimeNet":
 			if '#' in url:
 				url1,url2 = url.split('#')
 				content1 = ccurl(url1)
 				content2 = ccurl(url2)
 				content = content1+'\n'+content2
+			else:
+				content = ccurl(url)
+		elif siteName == 'AnimeOut':
+			if '#' in url:
+				url1,url2,url3 = url.split('#')
+				content1 = ccurl(url1)
+				content2 = ccurl(url2)
+				content3 = ccurl(url3)
+				content = content1+'\n!@#$%^&*'+content2+'\n!@#$%^&*'+content3
 			else:
 				content = ccurl(url)
 		else:
@@ -897,6 +942,11 @@ class SubbedAnime():
 				url = "http://www.watchanimeshows.tv/movies-list/"
 			else:
 				url = "http://www.watchanimeshows.tv/anime-shows/"
+		elif siteName == 'AnimeOut':
+			url1 = 'https://www.animeout.xyz/complete-anime/'
+			url2 = 'http://www.animeout.xyz/ongoing-anime/'
+			url3 = 'http://www.animeout.xyz/download-anime-movies/'
+			url = url1+'#'+url2+'#'+url3
 		site_nm = siteName.lower()+'list.txt'
 		title_file_list = os.path.join(self.tmp_dir,site_nm)
 		if os.path.exists(title_file_list):
@@ -1202,10 +1252,38 @@ class SubbedAnime():
 						if 'href' in str(r):
 							t = r['href'].split('/')[-2]
 							m.append(t)
-			
-			
 			if opt == "Random":
 				m = random.sample(m, len(m))
+		elif siteName == 'AnimeOut':
+			m = []
+			ncontent = content.split('!@#$%^&*')
+			for content in ncontent:
+				soup = BeautifulSoup(content,'lxml')
+				"""
+				link = soup.findAll('li')
+				for i in link:
+					j = i.find('strong')
+					if j:
+						k = j.find('a')
+						if k:
+							if 'href' in str(k):
+								l = k['href']
+								txt = k.text
+								ntxt = txt+'	'+l
+								m.append(ntxt)
+				"""
+				
+				article = soup.findAll('div',{'class':'article-content'})
+				for i in article:
+					j = i.findAll('li')
+					for k in j:
+						l = k.find('a')
+						if 'href' in str(l):
+							o = l['href']
+							txt = l.text
+							ntxt = txt+'	'+o
+							m.append(ntxt)
+			
 		if not os.path.exists(title_file_list):
 			f = open(title_file_list,'w')
 			for i in range(len(m)):
@@ -1297,6 +1375,9 @@ class SubbedAnime():
 			else:
 				url = "http://www.watchanimeshows.tv/watch-anime/" + name+'/' 
 				base = "http://www.watchanimeshows.tv/watch-anime/"
+		elif siteName == 'AnimeOut':
+			url = extra_info
+			base = 'https://www.animeout.xyz/'
 		if siteName == "AnimeMix" and embed == 2:
 			content = "<html>Hello World</html>"
 		else:
@@ -1596,6 +1677,15 @@ class SubbedAnime():
 				summary = link['content']
 			except:
 				pass 
+		elif siteName == 'AnimeOut':
+			ilink = soup.find('div',{'class':'article-media'})
+			slink = soup.find('div',{'class':'article-content'})
+			if ilink:
+				img_link = ilink.find('img')['src']
+			else:
+				img_link = None
+			print(img_link)
+			summary = slink.text
 		if not summary:
 			summary = "Summary Not Available"
 		try:
@@ -1674,6 +1764,10 @@ class SubbedAnime():
 								k = re.sub(' ','',k)
 								img.append(k)
 								print(img)
+			elif siteName == 'AnimeOut':
+				img = []
+				if img_link is not None:
+					img.append(img_link)
 			#print(img
 			#if img[0] != "No.jpg":
 			#jpgn = img[0].split("/")[-1]
@@ -2030,6 +2124,32 @@ class SubbedAnime():
 						m.append(k[-1])
 			print(m)
 			print(len(m))
+		elif siteName == 'AnimeOut':
+			m = []
+			link = soup.find('div',{'class':'article-content'})
+			nlinks = link.findAll('a')
+			for i in nlinks:
+				txt_lower = i.text
+				if txt_lower:
+					txt_lower = txt_lower.lower()
+					if ('ddl' in txt_lower or 'direct download' in txt_lower 
+							or 'episode' in txt_lower or 'ova' in txt_lower):
+						link_found = True
+					else:
+						link_found = False
+				else:
+					link_found = False
+				if 'href' in str(i) and link_found:
+					j = i['href']
+					try:
+						ver_j = j.split('/')[2]
+						if not 'mega.nz' in ver_j:
+							ntxt = j.split('/')[-1]+'	'+j
+							m.append(ntxt)
+					except Exception as e:
+						print(e,'--2131---')
+			print(m)
+			print(len(m))
 		elif (siteName == "AnimeWow") or (siteName == "AnimePlus") or (siteName == "Anime44") or (siteName == "Animegalaxy") or (siteName == "Animehere") or (siteName == "GoodAnime") or (siteName == "Animeget"):
 			m=[]
 			if category == "Movies" and siteName == "Anime44":
@@ -2101,83 +2221,86 @@ class SubbedAnime():
 			
 		n = []
 		nxt = ""
-		for i in m:
-			if siteName != "AnimeHQ" and siteName != "AnimeHQ" and siteName != "Anime-Freak" and siteName != "AnimeBaka" and siteName != "Animeget" and siteName != "Animegalaxy" and siteName != "AnimeMix" and siteName != "GoodAnime" and siteName != "Animebox" and siteName != "AnimeAll":
-				i = re.sub(base,"",i)
-				i = re.sub("/","",i)
-				i = re.sub(".html","",i)
-				prev = i
-				if ('share=' not in i) and (prev != nxt) :
-					n.append(i)
-					nxt = i
-			elif siteName == "AnimeHQ":
-					i = re.sub("/watch/","",i)
-					n.append(i)
-			elif siteName == "AnimeWow":
-					i = re.sub(base,"",i)
-					n.append(i)
-			elif siteName == "GoodAnime":
-					i = i.split('/')[-1]
-					n.append(i)
-			elif siteName == "Anime-Freak":
-					k = i.split('/')
-					i = k[-1]
-					i = re.sub(".html","",i)
-					if i:
-						n.append(i)
-			elif siteName == "Animeget":
+		if siteName == 'AnimeOut':
+			pass
+		else:
+			for i in m:
+				if siteName != "AnimeHQ" and siteName != "AnimeHQ" and siteName != "Anime-Freak" and siteName != "AnimeBaka" and siteName != "Animeget" and siteName != "Animegalaxy" and siteName != "AnimeMix" and siteName != "GoodAnime" and siteName != "Animebox" and siteName != "AnimeAll":
 					i = re.sub(base,"",i)
 					i = re.sub("/","",i)
-					n.append(i) 
-			elif siteName == "Animegalaxy":
-					k = i.split('/')
-					print(k)
-					if len(k) >3:
-						j = k[-2]
-						if "chia-anime" not in j:
-							n.append(j) 
-			elif siteName == "Animebox":
-					k = i.split('/')
-					i = k[-1]+'-'+k[-2]
-					if i:
-					 	n.append(i)
-		if siteName != "AnimeBaka" and siteName != "AnimeMix" and siteName != "AnimeAll":
-			m = n	
-		if siteName != "AnimeMix" and siteName != "AnimeAll":   
-			m = list(set(m))
-			#m.sort()
-			m=naturallysorted(m)
-			
-		if m and (siteName == "Anime44" or siteName == "Animehere" or siteName == "AnimePlus" or siteName == "AnimeWow" or siteName == "GoodAnime") and category!="Movies":
-			if siteName == "AnimePlus":
-				tmp = m[0].split('-')[-2]
-			else:
-				tmp = m[0].split('-')[-1]
-			try:
-				num = int(tmp)
-			except:
-				num = 0
-			if num > 1:
-				arr = m[0].split('-')
+					i = re.sub(".html","",i)
+					prev = i
+					if ('share=' not in i) and (prev != nxt) :
+						n.append(i)
+						nxt = i
+				elif siteName == "AnimeHQ":
+						i = re.sub("/watch/","",i)
+						n.append(i)
+				elif siteName == "AnimeWow":
+						i = re.sub(base,"",i)
+						n.append(i)
+				elif siteName == "GoodAnime":
+						i = i.split('/')[-1]
+						n.append(i)
+				elif siteName == "Anime-Freak":
+						k = i.split('/')
+						i = k[-1]
+						i = re.sub(".html","",i)
+						if i:
+							n.append(i)
+				elif siteName == "Animeget":
+						i = re.sub(base,"",i)
+						i = re.sub("/","",i)
+						n.append(i) 
+				elif siteName == "Animegalaxy":
+						k = i.split('/')
+						print(k)
+						if len(k) >3:
+							j = k[-2]
+							if "chia-anime" not in j:
+								n.append(j) 
+				elif siteName == "Animebox":
+						k = i.split('/')
+						i = k[-1]+'-'+k[-2]
+						if i:
+							n.append(i)
+			if siteName != "AnimeBaka" and siteName != "AnimeMix" and siteName != "AnimeAll":
+				m = n	
+			if siteName != "AnimeMix" and siteName != "AnimeAll":   
+				m = list(set(m))
+				#m.sort()
+				m=naturallysorted(m)
+				
+			if m and (siteName == "Anime44" or siteName == "Animehere" or siteName == "AnimePlus" or siteName == "AnimeWow" or siteName == "GoodAnime") and category!="Movies":
 				if siteName == "AnimePlus":
-					arr.pop()
+					tmp = m[0].split('-')[-2]
+				else:
+					tmp = m[0].split('-')[-1]
 				try:
-					t_name = arr[0]
+					num = int(tmp)
 				except:
-					t_name = ""
-				i = 1
-				while(i<len(arr)-1):
-					t_name = t_name+'-'+arr[i]
-					i = i+1
-				i = 1
-				new_arr=[]
-				while(i<num):
+					num = 0
+				if num > 1:
+					arr = m[0].split('-')
 					if siteName == "AnimePlus":
-						new_arr.append(t_name+'-'+str(i)+'-online')
-					else:
-						new_arr.append(t_name+'-'+str(i))
-					i = i+1
-				m[:0]=new_arr
+						arr.pop()
+					try:
+						t_name = arr[0]
+					except:
+						t_name = ""
+					i = 1
+					while(i<len(arr)-1):
+						t_name = t_name+'-'+arr[i]
+						i = i+1
+					i = 1
+					new_arr=[]
+					while(i<num):
+						if siteName == "AnimePlus":
+							new_arr.append(t_name+'-'+str(i)+'-online')
+						else:
+							new_arr.append(t_name+'-'+str(i))
+						i = i+1
+					m[:0]=new_arr
 		#m.append(picn)
 		#m.append(summary)
 		record_history = True
@@ -2284,9 +2407,12 @@ class SubbedAnime():
 			print(url)
 		elif siteName == "AnimeMix":
 			url = epn.split(' ')[1]
-		print(url)
+		elif siteName == 'AnimeOut':
+			url = epn
+		print(url,'--2412--')
 		
-		content = self.ccurlN(url,siteName)
+		if siteName != 'AnimeOut':
+			content = self.ccurlN(url,siteName)
 		
 		if siteName == "Animegalaxy":
 				final = ""
@@ -2354,6 +2480,27 @@ class SubbedAnime():
 				print(n)
 				if n:
 					final = n[0]
+		elif siteName == 'AnimeOut':
+			content = ccurl(url+'#'+'-I')
+			print(content)
+			if "Content-Type: application/octet-stream" in content and 'Location:' not in content:
+				final = url
+			elif "Content-Type: application/octet-stream" in content and 'Location:' in content:
+				m = re.findall('Location: [^\n]*',content)
+				final = re.sub('Location: |\r','',m[-1])
+			else:
+				content = self.ccurlN(url,siteName)
+				soup = BeautifulSoup(content,'lxml')
+				link = soup.find('div',{'class':'Center'})
+				nlnk = link.find('a')['href']
+				print(nlnk,'--2430--')
+				content = ccurl(nlnk)
+				#print(content)
+				tmp = re.search('var url = "http[^"]*',content).group()
+				final = re.sub('var url = "','',tmp)
+			final = final.replace(' ','%20')
+			print(final,'--2430--')
+			return final
 		elif siteName == "AnimeAll":
 			m =[]
 			n = []
@@ -2820,7 +2967,20 @@ class SubbedAnime():
 							final1 = url4
 							print(final1)
 							final.append(final1)
-		elif siteName == "AnimeHQ":
+		elif siteName == 'AnimeHQ':
+			#print(content)
+			soup = BeautifulSoup(content,'lxml')
+			link = soup.find('div',{'class':'mediaplayer'})
+			nlnk = link.find('source')['src']
+			nlnk = nlnk.strip()
+			content = ccurl(nlnk+'#'+'-I')
+			#print(content)
+			if "Location:" in content:
+				m = re.findall('Location: [^\n]*',content)
+				final = re.sub('Location: |\r','',m[-1])
+			else:
+				final = url
+		elif siteName == "AnimeHQOld":
 			#content = ccurl(url)
 			#soup = BeautifulSoup(content,'lxml')
 			
