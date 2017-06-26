@@ -419,8 +419,10 @@ class Anime9():
 			
 					
 			_api,nurl = self.get_direct_grabber(link)
-			
-			final = self.get_old_server(_api,nurl,quality)
+			if _api is None:
+				final = self.get_new_server(nurl,quality)
+			else:
+				final = self.get_old_server(_api,nurl,quality)
 		return final
 	
 	def parse_page(self,url,cookie=None):
