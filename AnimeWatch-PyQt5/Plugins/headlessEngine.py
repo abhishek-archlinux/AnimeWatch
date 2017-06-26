@@ -26,6 +26,7 @@ import urllib.parse
 import urllib.request
 import time
 import calendar
+import ipaddress
 from datetime import datetime
 
 from PyQt5 import QtCore, QtGui,QtNetwork,QtWidgets,QtWebEngineWidgets,QtWebEngineCore
@@ -320,7 +321,14 @@ class BrowserPage(QWebEnginePage):
 		print(info)
 		f = open(lnk,'w')
 		f.write(info)
-		if 'kissanime' in self.url and self.url.endswith('&s=beta'):
+		chk_info = info.split('/')[2]
+		beta_server = False
+		try:
+			ipaddress.ip_address(chk_info)
+			beta_server = True
+		except Exception as e:
+			print(e,'--327--')
+		if 'kissanime' in self.url and (self.url.endswith('&s=beta') or beta_server):
 			f.write('\n'+self.url)
 		f.close()
 		print(self.url,'--url---','--312---')
