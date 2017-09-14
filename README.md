@@ -4,6 +4,8 @@ AnimeWatch Player is Audio/Video manager and mutlimedia player (based on mpv and
 
 ## Index
 
+**Note:** The AnimeWatch application is no longer maintained. Users should migrate to [kawaii-player](https://github.com/kanishka-linux/kawaii-player). Users can transfer settings/history/bookmarks of AnimeWatch to kawaii-player by copying configuration directory. Addons of Animewatch are no longer compatible with kawaii-player, however there are some addons located in Plugins directory of [testing](https://github.com/kanishka-linux/AnimeWatch/tree/testing) branch which may work with kawaii-player. Users can copy these working addons from plugins directory to '.config/kawaii-player/src/Plugins' in order to make them work with kawaii-player. 
+
 [Features](#features)
 
 [Normal Mode](#normal-mode)
