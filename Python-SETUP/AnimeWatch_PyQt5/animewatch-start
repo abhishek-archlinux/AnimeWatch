@@ -1,2 +1,0 @@
-#!/bin/bash
-if [ -z "$1" ]; then python3 -B animeWatch.py; else python3 -B animeWatch.py "$(pwd)/$1"; fi
