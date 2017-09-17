@@ -286,8 +286,15 @@ class KissDrama():
                 if quality == 'sd480p' and not final:
                     if '360p' in new_dict:
                         final = new_dict.get('360p')
-                        
             return final
+        else:
+            soup = BeautifulSoup(content, 'lxml')
+            link = soup.find('video')
+            print(link)
+            final = link.find('source')['src']
+            return final
+                        
+            
             
     def getFinalUrl(self, name, epn, mirror, quality):
         if '--' in name and 'id=' in name:
