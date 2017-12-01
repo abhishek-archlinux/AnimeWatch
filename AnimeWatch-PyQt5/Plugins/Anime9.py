@@ -55,9 +55,9 @@ def cloudfare(url, quality=None, cookie=None, get_link=None, get_cookie=None,
                         os.remove(cookie)
                 hls_exec = [
                     hls_path, url, '--set-cookie-file='+cookie, 
-                    '--cookie-end-pt='+end_pt, '--cookie-domain-name=9anime.to', 
+                    '--cookie-end-pt='+end_pt, '--cookie-domain-name=9anime.is', 
                     '--wait-for-cookie', '--output=false', '--tmp-dir='+tmp_dir, 
-                    '--block-request=.ads, ads., revcontent, .bebi, scorecard'
+                    '--block-request=revcontent, .bebi, scorecard'
                     ]
                 if not frozen_file:
                     hls_exec = [sys.executable, '-B'] + hls_exec
@@ -76,7 +76,7 @@ def cloudfare(url, quality=None, cookie=None, get_link=None, get_cookie=None,
                 hls_exec = [
                     hls_path, url, '--use-cookie-file='+cookie, 
                     '--output=false', '--tmp-dir='+tmp_dir, 
-                    '--block-request=.ads, ads., revcontent, .bebi, scorecard, .css', 
+                    '--block-request=revcontent, .bebi, scorecard', 
                     '--get-link='+get_raw_link
                     ]
                 if not frozen_file:
@@ -125,20 +125,20 @@ class Anime9():
         
         if name:
             if not os.path.isfile(self.cookie_file):
-                new_url = 'https://9anime.to/'
+                new_url = 'https://9anime.is/'
                 print(new_url)
                 cloudfare(new_url, quality='sd', cookie=self.cookie_file, end_pt='user-info', get_cookie=True, tmp_dir=self.tmp_dir)
-            url = 'https://9anime.to/search?keyword=' + name
+            url = 'https://9anime.is/search?keyword=' + name
             arr = self.parse_page(url, cookie=self.cookie_file)
             if len(arr) == 1:
                 print(arr, '--76---')
                 if arr[0] == 'get_cookie':
                     if os.path.isfile(self.cookie_file):
                         os.remove(self.cookie_file)
-                    new_url = 'https://9anime.to/'
+                    new_url = 'https://9anime.is/'
                     print(new_url)
                     cloudfare(new_url, quality='sd', cookie=self.cookie_file, end_pt='user-info', get_cookie=True, tmp_dir=self.tmp_dir)
-                    url = 'https://9anime.to/search?keyword=' + name
+                    url = 'https://9anime.is/search?keyword=' + name
                     arr = self.parse_page(url, cookie=self.cookie_file)
             return arr
             
@@ -147,7 +147,7 @@ class Anime9():
             arr = []
             return (arr, 'Instructions', 'No.jpg', False, depth_list)
         else:
-            base_url = 'https://9anime.to'
+            base_url = 'https://9anime.is'
             url = extra_info
             print(url, '--74--')
             content = ccurl(url)
@@ -211,10 +211,10 @@ class Anime9():
         else:
             epn_id = new_epn
         if not os.path.isfile(self.cookie_file):
-            new_url = 'https://9anime.to'+epn.split('::')[0]
+            new_url = 'https://9anime.is'+epn.split('::')[0]
             print(new_url)
             cloudfare(new_url, quality=quality, cookie=self.cookie_file, end_pt='watching', get_cookie=True, tmp_dir=self.tmp_dir)
-        url = 'https://9anime.to/ajax/episode/info?id='+epn_id+'&update=0'
+        url = 'https://9anime.is/ajax/episode/info?id='+epn_id+'&update=0'
         content = ccurl(url+'#-b#'+self.cookie_file)
         l = json.loads(content)
         _target_found = False
@@ -286,9 +286,12 @@ class Anime9():
     def get_old_server(self, _api, nurl, quality):
         final = ''
         #url = os.path.join(_api, nurl)
-        if nurl.startswith('?'):
-            nurl = nurl[1:]
-        url = _api + '&' + nurl
+        if nurl.startswith('http'):
+            url = nurl
+        else:
+            if nurl.startswith('?'):
+                nurl = nurl[1:]
+            url = _api + '&' + nurl
         print(url)
 
         content = ccurl(url)
@@ -395,9 +398,27 @@ class Anime9():
                 final = d['360p']
         return final
     
+    def rapidvideo_url(self, url):
+        final = ''
+        content = ccurl(url)
+        soup = BeautifulSoup(content, 'lxml')
+        src = soup.findAll('source')
+        for i in src:
+            try:
+                nsrc = i['src']
+                if nsrc.endswith('.mp4'):
+                    final = nsrc
+                    break
+            except:
+                pass
+        final_url = re.search('https://[^"].mp4', content)
+        if final_url:
+            final = final_url.group()
+        return final
+        
     def get_new_server(self, nurl, quality):
         final = ''
-        if 'mycloud' in nurl:
+        if 'mcloud' in nurl:
             content = ccurl(nurl)
             tlink = re.search('"file":"[^"]*', content).group()
             link = tlink.replace('"file":"', '', 1)
@@ -434,38 +455,85 @@ class Anime9():
                     final = pre_link + '/' + tfinal
                 print(pre_link, tfinal)
         elif 'rapidvideo' in nurl:
-            qd = {'sd':'360p', 'hd':'720p', 'best':'1080p', 'sd480p':'480p'}
-            content = ccurl(nurl)
-            m = re.findall('sources": \[[^\]]*]', content)
-            print(m)
-            new_dict = {}
-            lb = qd[quality]
-            if m:
-                nl = m[0].replace('sources": ', '')
-                ld = json.loads(nl)
-                for i in ld:
-                    print(i)
-                    key = i['label']
-                    val = i['file']
-                    new_dict.update({key:val})
-                final = new_dict.get(lb)
-                if not final and new_dict:
-                    if quality == 'best':
-                        if '720p' in new_dict:
-                            final = new_dict.get('720p')
-                        elif '480p' in new_dict:
-                            final = new_dict.get('720p')
-                        elif '360' in new_dict:
-                            final = new_dict.get('360p')
-                    if quality == 'hd' and not final:
-                        if '480p' in new_dict:
-                            final = new_dict.get('720p')
-                        elif '360p' in new_dict:
-                            final = new_dict.get('360p')
-                    if quality == 'sd480p' and not final:
-                        if '360p' in new_dict:
-                            final = new_dict.get('360p')
+            qd = {'sd':'360p', 'hd':'720p', 'best':'720p', 'sd480p':'480p'}
+            quality_arr = ['1080p', '720p', '480p', '360p']
+            if quality == 'best':
+                quality = 'hd'
+            if '?' in nurl:
+                url = nurl.rsplit('?', 1)[0]
+                if quality == 'hd':
+                    quality_arr = quality_arr[1:]
+                elif quality == 'sd480p':
+                    quality_arr = quality_arr[2:]
+                elif quality_arr == 'sd':
+                    quality_arr = quality_arr[3:]
+                else:
+                    pass
+                for i in quality_arr:
+                    url = url+'&q='+i
+                    print(url, ' loop')
+                    final_url = self.rapidvideo_url(url)
+                    if final_url:
+                        final = final_url
+                        break
+            else:
+                content = ccurl(nurl)
+                m = re.findall('sources": \[[^\]]*]', content)
+                print(m)
+                new_dict = {}
+                lb = qd[quality]
+                if m:
+                    nl = m[0].replace('sources": ', '')
+                    ld = json.loads(nl)
+                    for i in ld:
+                        print(i)
+                        key = i['label']
+                        val = i['file']
+                        new_dict.update({key:val})
+                    final = new_dict.get(lb)
+                    if not final and new_dict:
+                        if quality == 'best':
+                            if '720p' in new_dict:
+                                final = new_dict.get('720p')
+                            elif '480p' in new_dict:
+                                final = new_dict.get('720p')
+                            elif '360' in new_dict:
+                                final = new_dict.get('360p')
+                        if quality == 'hd' and not final:
+                            if '480p' in new_dict:
+                                final = new_dict.get('720p')
+                            elif '360p' in new_dict:
+                                final = new_dict.get('360p')
+                        if quality == 'sd480p' and not final:
+                            if '360p' in new_dict:
+                                final = new_dict.get('360p')
         return final 
+    
+    def check_mirror(self, link, epn_id):
+        content = ccurl(link)
+        soup = BeautifulSoup(content, 'lxml')
+        rows = soup.findAll('div', {'class':'server row'})
+        mydict = {}
+        mirror = ''
+        for i,j in enumerate(rows):
+            k = j.find('label')
+            if k:
+                txt = k.text
+            else:
+                txt = 'No Mirror Name'
+            mydict.update({i:txt})
+            l = j.findAll('a')
+            for n in l:
+                try:
+                    p = n['data-id']
+                    if p == epn_id:
+                        mirror = txt
+                        break
+                except:
+                    pass
+            if mirror:
+                break
+        return mydict, mirror
     
     def getFinalUrl(self, name, epn, mirror, quality):
         new_epn = epn.split('/')[-1]
@@ -479,42 +547,66 @@ class Anime9():
         else:
             epn_id = new_epn
             
-        new_url = 'https://9anime.to'+epn.split('::')[0]
+        new_url = 'https://9anime.is'+epn.rsplit('/', 1)[0]+'/'+epn_id
         print(new_url)
-        
+        mirror_name_dict, mirror_name = self.check_mirror(new_url, epn_id)
+        print(mirror_name_dict, mirror_name)
+        if mirror_name:
+            mirror_name = mirror_name.lower()
+        else:
+            mirror_name = mirror_name_dict.get(mirror-1)
+            if not mirror_name:
+                mirror_name = ''
+        if mirror_name:
+            msg = 'selecting '+mirror_name
+        else:
+            msg = 'mirror name not available'
+        send_notification(msg)
+        if 'rapidvideo' in mirror_name:
+            grab_url = 'rapidvideo.com'
+        elif 'mycloud' in mirror_name:
+            grab_url = 'mcloud.to'
+        else:
+            grab_url = 'grabber-api/?server='
         lnk_file = os.path.join(self.tmp_dir, 'lnk.txt')
-        for i in range(0, 2):
-            if os.path.exists(lnk_file):
-                os.remove(lnk_file)
-            if os.path.isfile(self.cookie_file):
-                cloudfare(
-                    new_url, quality=quality, cookie=self.cookie_file, get_link=True, 
-                    get_raw_link='episode/info?', tmp_dir=self.tmp_dir, end_pt='watching')
-            else:
-                cloudfare(
-                    new_url, quality=quality, cookie=self.cookie_file, get_link=True, 
-                    get_raw_link='episode/info?', tmp_dir=self.tmp_dir, end_pt='watching', 
-                    get_cookie=True)
-            if os.path.exists(lnk_file):
-                link = open(lnk_file).readlines()
-                link = link[0].strip()
-                print('----------link', '>>>>>>>>', link)
-                final = ''
-                try:
-                    _api, nurl = self.get_direct_grabber(link)
-                    if _api is None:
-                        final = self.get_new_server(nurl, quality)
-                    else:
-                        final = self.get_old_server(_api, nurl, quality)
-                except Exception as e:
-                    print(e, '--473--')
-                if final:
-                    break
+        
+        if os.path.exists(lnk_file):
+            os.remove(lnk_file)
+        if os.path.isfile(self.cookie_file):
+            cloudfare(
+                new_url, quality=quality, cookie=self.cookie_file, get_link=True, 
+                get_raw_link=grab_url, tmp_dir=self.tmp_dir, end_pt='watching')
+        else:
+            cloudfare(
+                new_url, quality=quality, cookie=self.cookie_file, get_link=True, 
+                get_raw_link=grab_url, tmp_dir=self.tmp_dir, end_pt='watching', 
+                get_cookie=True)
+        if os.path.exists(lnk_file):
+            link = open(lnk_file).readlines()
+            link = link[0].strip()
+            print('----------link', '>>>>>>>>', link)
+            final = ''
+            try:
+                if 'grabber-api/?server' in link:
+                    final = self.get_old_server('', link, quality)
                 else:
-                    if os.path.isfile(self.cookie_file):
-                        os.remove(self.cookie_file)
-                    print('--no-final-url-- trying again--')
-                print('try:{0}'.format(i))
+                    if 'rapidvideo' in link or 'mcloud' in link:
+                        print('mylink = ', link)
+                        final = self.get_new_server(link, quality)
+                    else:
+                        _api, nurl = self.get_direct_grabber(link)
+                        if _api is None:
+                            final = self.get_new_server(nurl, quality)
+                        else:
+                            final = self.get_old_server(_api, nurl, quality)
+            except Exception as e:
+                print(e, '--473--')
+            if final:
+                pass
+            else:
+                if os.path.isfile(self.cookie_file):
+                    os.remove(self.cookie_file)
+                print('--no-final-url-- trying again--')
         return final
     
     def parse_page(self, url, cookie=None):
@@ -553,7 +645,7 @@ class Anime9():
             ]
         self.pg_num = 1
         if opt == 'Genre':
-            url = 'https://9anime.to'
+            url = 'https://9anime.is'
             content = ccurl(url)
             m = re.findall('/genre/[^"]*', content)
             m = list(set(m))
@@ -588,13 +680,13 @@ class Anime9():
                 new_opt = 'movies'
             elif opt.lower() == 'ongoing':
                 new_opt = 'ongoing'
-            url = 'https://9anime.to/'+new_opt
+            url = 'https://9anime.is/'+new_opt
             m = self.parse_page(url)
             m.append(instr)
             m.append(1)
             
         if opt.lower() not in opt_arr:
-            url = 'https://9anime.to/genre/' + opt
+            url = 'https://9anime.is/genre/' + opt
             m = self.parse_page(url)
             m.append(instr)
             m.append(1)
@@ -623,9 +715,9 @@ class Anime9():
                     new_opt = 'movies'
                 elif opt.lower() == 'ongoing':
                     new_opt = 'ongoing'
-                url = 'https://9anime.to/'+new_opt+'?page='+str(self.pg_num)
+                url = 'https://9anime.is/'+new_opt+'?page='+str(self.pg_num)
             else:
-                url = 'https://9anime.to/genre/' + opt + '?page=' + str(self.pg_num)
+                url = 'https://9anime.is/genre/' + opt + '?page=' + str(self.pg_num)
             print(url)
             arr = self.parse_page(url)
             return arr
