@@ -56,8 +56,8 @@ def cloudfare(url, quality=None, cookie=None, get_link=None, get_cookie=None,
                 hls_exec = [
                     hls_path, url, '--set-cookie-file='+cookie, 
                     '--cookie-end-pt='+end_pt, '--cookie-domain-name=9anime.is', 
-                    '--wait-for-cookie', '--output=false', '--tmp-dir='+tmp_dir, 
-                    '--block-request=revcontent, .bebi, scorecard'
+                    '--output=false', '--tmp-dir='+tmp_dir, 
+                    '--block-request=revcontent, .bebi, scorecard, .css, .jpg, .mp4'
                     ]
                 if not frozen_file:
                     hls_exec = [sys.executable, '-B'] + hls_exec
@@ -76,7 +76,7 @@ def cloudfare(url, quality=None, cookie=None, get_link=None, get_cookie=None,
                 hls_exec = [
                     hls_path, url, '--use-cookie-file='+cookie, 
                     '--output=false', '--tmp-dir='+tmp_dir, 
-                    '--block-request=revcontent, .bebi, scorecard', 
+                    '--block-request=revcontent, .bebi, scorecard, .mp4, .css, .jpg', 
                     '--get-link='+get_raw_link
                     ]
                 if not frozen_file:
