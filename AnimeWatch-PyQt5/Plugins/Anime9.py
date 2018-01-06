@@ -154,7 +154,7 @@ class Anime9():
             soup = BeautifulSoup(content, 'lxml')
             arr = []
             
-            m = soup.findAll('div', {'class':'server row'})
+            m = soup.findAll('div', {'class':'widget servers'})
             p = 0
             index = 0
             print(m, len(m))
@@ -186,10 +186,10 @@ class Anime9():
             picn = 'No.jpg'
             
             try:
-                m = soup.find('h1', {'class':'title'})
+                m = soup.find('div', {'class':'widget info'})
                 pic_url = m.findNext('img')['src']
-                l = m.findNext('div', {'id':'info'})
-                summary = m.text.strip()+'\n'+l.text.strip()
+                #l = m.findNext('div', {'id':'info'})
+                summary = m.text.strip()
                 picn = os.path.join(self.tmp_dir, name+'.jpg')
                 if not os.path.exists(picn):
                     ccurl(pic_url+'#'+'-o'+'#'+picn)
@@ -459,7 +459,7 @@ class Anime9():
             quality_arr = ['1080p', '720p', '480p', '360p']
             if quality == 'best':
                 quality = 'hd'
-            if '?' in nurl:
+            if nurl:
                 url = nurl.rsplit('?', 1)[0]
                 if quality == 'hd':
                     quality_arr = quality_arr[1:]
@@ -536,6 +536,51 @@ class Anime9():
         return mydict, mirror
     
     def getFinalUrl(self, name, epn, mirror, quality):
+        final = ''
+        new_epn = epn.split('/')[-1]
+        if '::' in new_epn:
+            id_arr = new_epn.split('::')
+            print(id_arr, mirror)
+            if mirror <= len(id_arr):
+                epn_id = id_arr[mirror-1]
+            else:
+                epn_id = id_arr[0]
+        else:
+            epn_id = new_epn
+        print('mirror=', mirror)
+        print(type(mirror))
+        if mirror == 1:
+            server = '33'
+        else:
+            server = '28'
+        new_url = 'https://9anime.is/ajax/episode/info?id='+epn_id+'&server='+server
+        print(new_url)
+        content = ccurl(new_url+'#-b#'+self.cookie_file)
+        l = json.loads(content)
+        _target_found = False
+        for i in l:
+            print(i, l[i])
+            if i == 'grabber':
+                _api = l[i]
+            if i == 'params':
+                try:
+                    _id = l[i]['id']
+                    _token = l[i]['token']
+                    _opt = l[i]['options']
+                except Exception as e:
+                    print(e, '--172--')
+            if i == 'target':
+                _target = l[i]
+                if 'mycloud' in _target or 'openload' in _target or 'rapidvideo' in _target:
+                    _target_found = True
+        if _target_found:
+            link = _target
+            if 'rapidvideo' in link or 'mcloud' in link:
+                print('mylink = ', link)
+                final = self.get_new_server(link, quality)
+        return final
+        
+    def getFinalUrlOld(self, name, epn, mirror, quality):
         new_epn = epn.split('/')[-1]
         if '::' in new_epn:
             id_arr = new_epn.split('::')
