@@ -55,9 +55,9 @@ def cloudfare(url, quality=None, cookie=None, get_link=None, get_cookie=None,
                         os.remove(cookie)
                 hls_exec = [
                     hls_path, url, '--set-cookie-file='+cookie, 
-                    '--cookie-end-pt='+end_pt, '--cookie-domain-name=9anime.is', 
+                    '--cookie-domain-name=9anime.is', 
                     '--output=false', '--tmp-dir='+tmp_dir, 
-                    '--block-request=revcontent, .bebi, scorecard, .css, .jpg, .mp4'
+                    '--block-request=fidelity,disqus,revcontent,.bebi,.jpg,.png,.gif,twitter,facebook,mgid,ads,.ads,pool,bidswitch,addthis,mobpushup,rtmark,doubleclick'
                     ]
                 if not frozen_file:
                     hls_exec = [sys.executable, '-B'] + hls_exec
@@ -76,8 +76,8 @@ def cloudfare(url, quality=None, cookie=None, get_link=None, get_cookie=None,
                 hls_exec = [
                     hls_path, url, '--use-cookie-file='+cookie, 
                     '--output=false', '--tmp-dir='+tmp_dir, 
-                    '--block-request=revcontent, .bebi, scorecard, .mp4, .css, .jpg', 
-                    '--get-link='+get_raw_link
+                    '--block-request=fidelity,disqus,revcontent,.bebi,.jpg,.png,.gif,twitter,facebook,mgid,ads,.ads,pool,bidswitch,addthis,mobpushup,rtmark,doubleclick',
+                    '--get-link='+get_raw_link, '--js-file='+js, '--print-request'
                     ]
                 if not frozen_file:
                     hls_exec = [sys.executable, '-B'] + hls_exec
@@ -104,7 +104,17 @@ class Anime9():
         tmp_working_dir = tmp
         self.cookie_file = os.path.join(tmp, 'cookie9.txt')
         self.pg_num = 1
-            
+        self.js_template = """
+        var st = document.querySelectorAll('[data-id="@@"]');
+        console.log(st);
+        for (i =0; i<st.length; i++){
+            console.log(st[i].innerHTML);
+            console.log(st[i].getAttribute('href'));
+            st[i].click();
+        }
+        """
+        self.js_file = os.path.join(tmp, 'a9.js')
+        
     def getOptions(self):
             criteria = [
                 'MostPopular', 'Newest', 'LatestUpdate', 'Series',
@@ -270,7 +280,7 @@ class Anime9():
                     print(e, '--172--')
             if i == 'target':
                 _target = l[i]
-                if 'mycloud' in _target or 'openload' in _target or 'rapidvideo' in _target:
+                if 'mcloud' in _target or 'openload' in _target or 'rapidvideo' in _target:
                     _target_found = True
         if _target_found:
             nurl = _target
@@ -416,18 +426,24 @@ class Anime9():
             final = final_url.group()
         return final
         
-    def get_new_server(self, nurl, quality):
+    def get_new_server(self, nurl, quality, rfr=None):
         final = ''
         if 'mcloud' in nurl:
-            content = ccurl(nurl)
+            if rfr:
+                print(nurl, rfr)
+                content = ccurl(nurl, curl_opt='-e', referer=rfr)
+            else:
+                content = ccurl(nurl)
+            #print(content)
             tlink = re.search('"file":"[^"]*', content).group()
             link = tlink.replace('"file":"', '', 1)
             if 'http' not in link:
                 link = 'https://' + re.search('[a-zA-Z0-9][^"]*', link).group()
             pre_link = link.rsplit('/', 1)[0]
             print(link, pre_link, '--310--')
-            content = ccurl(link)
+            content = ccurl(link, curl_opt='-e', referer=nurl)
             arr = content.split('\n')
+            #print(content)
             if '#EXTM3U' in arr[0]:
                 arr = arr[1:]
             j = 0
@@ -535,7 +551,7 @@ class Anime9():
                 break
         return mydict, mirror
     
-    def getFinalUrl(self, name, epn, mirror, quality):
+    def getFinalUrlOld(self, name, epn, mirror, quality):
         final = ''
         new_epn = epn.split('/')[-1]
         if '::' in new_epn:
@@ -580,7 +596,7 @@ class Anime9():
                 final = self.get_new_server(link, quality)
         return final
         
-    def getFinalUrlOld(self, name, epn, mirror, quality):
+    def getFinalUrl(self, name, epn, mirror, quality):
         new_epn = epn.split('/')[-1]
         if '::' in new_epn:
             id_arr = new_epn.split('::')
@@ -594,6 +610,9 @@ class Anime9():
             
         new_url = 'https://9anime.is'+epn.rsplit('/', 1)[0]+'/'+epn_id
         print(new_url)
+        js_content = self.js_template.replace('@@', epn_id)
+        with open(self.js_file, 'w') as fl:
+            fl.write(js_content)
         mirror_name_dict, mirror_name = self.check_mirror(new_url, epn_id)
         print(mirror_name_dict, mirror_name)
         if mirror_name:
@@ -614,18 +633,18 @@ class Anime9():
         else:
             grab_url = 'grabber-api/?server='
         lnk_file = os.path.join(self.tmp_dir, 'lnk.txt')
-        
+        grab_url = 'ajax/episode'
         if os.path.exists(lnk_file):
             os.remove(lnk_file)
         if os.path.isfile(self.cookie_file):
             cloudfare(
                 new_url, quality=quality, cookie=self.cookie_file, get_link=True, 
-                get_raw_link=grab_url, tmp_dir=self.tmp_dir, end_pt='watching')
+                get_raw_link=grab_url, tmp_dir=self.tmp_dir, end_pt='watching', js=self.js_file)
         else:
             cloudfare(
                 new_url, quality=quality, cookie=self.cookie_file, get_link=True, 
                 get_raw_link=grab_url, tmp_dir=self.tmp_dir, end_pt='watching', 
-                get_cookie=True)
+                get_cookie=True, js=self.js_file)
         if os.path.exists(lnk_file):
             link = open(lnk_file).readlines()
             link = link[0].strip()
@@ -637,11 +656,15 @@ class Anime9():
                 else:
                     if 'rapidvideo' in link or 'mcloud' in link:
                         print('mylink = ', link)
-                        final = self.get_new_server(link, quality)
+                        final = self.get_new_server(link, quality, rfr=new_url)
                     else:
                         _api, nurl = self.get_direct_grabber(link)
+                        print('<<<<<<<<<<<<<<<<<<<<<', _api, nurl, new_url)
                         if _api is None:
-                            final = self.get_new_server(nurl, quality)
+                            final = self.get_new_server(nurl, quality, rfr=new_url)
+                            if 'mcloud' in nurl:
+                                final = [final, nurl, 'referer sent']
+                                print(final)
                         else:
                             final = self.get_old_server(_api, nurl, quality)
             except Exception as e:
